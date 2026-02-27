@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football Agent Platform - Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-body">
+  <div class="login-container">
+    <div class="login-left">
+      <div class="login-hero">
+        <h1>🏈 Football Agent Platform</h1>
+        <p class="tagline">Connecting High School Athletes with Opportunities</p>
+        <div class="features">
+          <div class="feature-item">
+            <span class="feature-icon">⚡</span>
+            <div>
+              <h3>For Players</h3>
+              <p>Create your profile, showcase your stats, and upload highlight videos</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🔍</span>
+            <div>
+              <h3>For Agents</h3>
+              <p>Discover talent, filter by metrics, and find the perfect recruit</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🎓</span>
+            <div>
+              <h3>College Offers</h3>
+              <p>Track and display scholarship offers from universities</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="login-right">
+      <div class="login-card">
+        <div class="login-header">
+          <h2>Welcome Back</h2>
+          <p>Sign in to your account</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="tab-btn active" onclick="showTab('login')">Login</button>
+          <button class="tab-btn" onclick="showTab('register')">Register</button>
+        </div>
+
+        <div id="loginForm" class="auth-form">
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="loginEmail" placeholder="Enter your email" required onkeypress="handleLoginKeyPress(event)">
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="Enter your password" required onkeypress="handleLoginKeyPress(event)">
+          </div>
+          <button onclick="login()" class="primary-btn">Login</button>
+          <p class="demo-hint">Demo Agent: agent@example.com / password</p>
+        </div>
+
+        <div id="registerForm" class="auth-form" style="display:none;">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="regFullName" placeholder="Enter your full name" required onkeypress="handleRegisterKeyPress(event)">
+          </div>
+          <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="regEmail" placeholder="Enter your email" required onkeypress="handleRegisterKeyPress(event)">
+          </div>
+          <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="Create a password" required onkeypress="handleRegisterKeyPress(event)">
+          </div>
+          <button onclick="register()" class="primary-btn">Create Account</button>
+          <p class="demo-hint">Register as a player to create your profile</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

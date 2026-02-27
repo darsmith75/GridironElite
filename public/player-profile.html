@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="profile-header">
+      <h1>🏈 My Player Profile</h1>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+
+    <div id="currentProfile"></div>
+
+    <div class="form-container">
+      <form id="profileForm" enctype="multipart/form-data">
+      <div class="form-grid">
+        <div class="form-section">
+          <h3>📋 Personal Information</h3>
+          <label>Full Name:</label>
+          <input type="text" name="fullName" placeholder="Full Name" required>
+          <label>High School:</label>
+          <input type="text" name="highSchool" placeholder="High School">
+          <label>Graduation Year:</label>
+          <input type="number" name="graduationYear" placeholder="Graduation Year">
+          <label>Position:</label>
+          <select name="position">
+            <option value="">Select Position</option>
+            <option value="QB">Quarterback (QB)</option>
+            <option value="RB">Running Back (RB)</option>
+            <option value="WR">Wide Receiver (WR)</option>
+            <option value="TE">Tight End (TE)</option>
+            <option value="OL">Offensive Line (OL)</option>
+            <option value="DL">Defensive Line (DL)</option>
+            <option value="LB">Linebacker (LB)</option>
+            <option value="CB">Cornerback (CB)</option>
+            <option value="S">Safety (S)</option>
+            <option value="K">Kicker (K)</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <h3>💪 Physical Metrics</h3>
+          <label>Height:</label>
+          <input type="text" name="height" placeholder="Height (e.g., 6'2&quot;)">
+          <label>Weight (lbs):</label>
+          <input type="number" name="weight" placeholder="Weight (lbs)">
+          <label>40-Yard Dash (seconds):</label>
+          <input type="number" step="0.01" name="fortyYardDash" placeholder="40-Yard Dash (seconds)">
+          <label>Bench Press (lbs):</label>
+          <input type="number" name="benchPress" placeholder="Bench Press (lbs)">
+          <label>Squat (lbs):</label>
+          <input type="number" name="squat" placeholder="Squat (lbs)">
+          <label>Vertical Jump (inches):</label>
+          <input type="number" step="0.1" name="verticalJump" placeholder="Vertical Jump (inches)">
+          <label>5-10-5 Shuttle (seconds):</label>
+          <input type="number" step="0.01" name="shuttle5105" placeholder="5-10-5 Shuttle (seconds)">
+          <label>L-Drill (seconds):</label>
+          <input type="number" step="0.01" name="lDrill" placeholder="L-Drill (seconds)">
+          <label>Broad Jump (inches):</label>
+          <input type="number" step="0.1" name="broadJump" placeholder="Broad Jump (inches)">
+          <label>Power Clean (lbs):</label>
+          <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
+          <label>Single Leg Squat (lbs):</label>
+          <input type="number" name="singleLegSquat" placeholder="Single Leg Squat (lbs)">
+        </div>
+
+        <div class="form-section">
+          <h3>🎓 Academic</h3>
+          <label>GPA:</label>
+          <input type="number" step="0.01" name="gpa" placeholder="GPA">
+        </div>
+
+        <div class="form-section">
+          <h3>📸 Media</h3>
+          <label>Profile Picture:</label>
+          <div class="file-input-wrapper">
+            <input type="file" name="profilePicture" accept="image/*">
+          </div>
+          
+          <label>Add Highlight Videos (you can select multiple):</label>
+          <div class="file-input-wrapper">
+            <input type="file" name="highlightVideos" accept="video/*" multiple>
+          </div>
+          
+          <label>Add Additional Images (you can select multiple):</label>
+          <div class="file-input-wrapper">
+            <input type="file" name="additionalImages" accept="image/*" multiple>
+          </div>
+          
+          <label>Add College Offer Logos (you can select multiple):</label>
+          <div class="file-input-wrapper">
+            <input type="file" name="collegeOffers" accept="image/*" multiple>
+          </div>
+          <p class="hint-text">Upload logos of colleges/universities that have offered you a scholarship or spot on their team</p>
+        </div>
+
+        <div class="form-section full-width">
+          <h3>📝 Bio</h3>
+          <label>About You:</label>
+          <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">💾 Save Profile</button>
+    </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth('player');
+    loadPlayerProfile();
+
+    async function loadPlayerProfile() {
+      const res = await fetch('/api/player/profile');
+      const profile = await res.json();
+      
+      // Display current profile media
+      if (profile.id) {
+        let mediaHTML = '<div class="current-profile-section"><h2>📁 Current Profile</h2><div class="current-media">';
+        
+        if (profile.profile_picture) {
+          mediaHTML += `
+            <div class="media-item">
+              <h3>Profile Picture</h3>
+              <img src="/uploads/${profile.profile_picture}" alt="Profile" class="current-profile-pic">
+            </div>
+          `;
+        }
+        
+        if (profile.highlight_videos) {
+          const videos = JSON.parse(profile.highlight_videos);
+          if (videos.length > 0) {
+            mediaHTML += `<div class="media-item full-width"><h3>Highlight Videos (${videos.length})</h3><div class="media-grid">`;
+            videos.forEach(video => {
+              mediaHTML += `
+                <div class="media-item-wrapper">
+                  <video controls src="/uploads/${video}" class="current-video"></video>
+                  <button onclick="deleteVideo('${video}')" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              `;
+            });
+            mediaHTML += `</div></div>`;
+          }
+        }
+        
+        if (profile.additional_images) {
+          const images = JSON.parse(profile.additional_images);
+          if (images.length > 0) {
+            mediaHTML += `
+              <div class="media-item full-width">
+                <h3>Additional Images (${images.length})</h3>
+                <div class="current-images-grid">`;
+            images.forEach(img => {
+              mediaHTML += `
+                <div class="media-item-wrapper">
+                  <img src="/uploads/${img}" alt="Additional" class="current-additional-img">
+                  <button onclick="deleteImage('${img}')" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              `;
+            });
+            mediaHTML += `</div></div>`;
+          }
+        }
+        
+        if (profile.college_offers) {
+          const offers = JSON.parse(profile.college_offers);
+          if (offers.length > 0) {
+            mediaHTML += `
+              <div class="media-item full-width">
+                <h3>🎓 College Offers (${offers.length})</h3>
+                <div class="college-offers-grid">`;
+            offers.forEach(offer => {
+              mediaHTML += `
+                <div class="media-item-wrapper college-offer-item">
+                  <img src="/uploads/${offer}" alt="College Offer" class="college-offer-logo">
+                  <button onclick="deleteOffer('${offer}')" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              `;
+            });
+            mediaHTML += `</div></div>`;
+          }
+        }
+        
+        mediaHTML += '</div></div>';
+        document.getElementById('currentProfile').innerHTML = mediaHTML;
+      }
+      
+      // Populate form fields
+      if (profile.id) {
+        document.querySelector('[name="fullName"]').value = profile.full_name || '';
+        document.querySelector('[name="highSchool"]').value = profile.high_school || '';
+        document.querySelector('[name="graduationYear"]').value = profile.graduation_year || '';
+        document.querySelector('[name="position"]').value = profile.position || '';
+        document.querySelector('[name="height"]').value = profile.height || '';
+        document.querySelector('[name="weight"]').value = profile.weight || '';
+        document.querySelector('[name="fortyYardDash"]').value = profile.forty_yard_dash || '';
+        document.querySelector('[name="benchPress"]').value = profile.bench_press || '';
+        document.querySelector('[name="squat"]').value = profile.squat || '';
+        document.querySelector('[name="verticalJump"]').value = profile.vertical_jump || '';
+        document.querySelector('[name="shuttle5105"]').value = profile.shuttle_5_10_5 || '';
+        document.querySelector('[name="lDrill"]').value = profile.l_drill || '';
+        document.querySelector('[name="broadJump"]').value = profile.broad_jump || '';
+        document.querySelector('[name="powerClean"]').value = profile.power_clean || '';
+        document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
+        document.querySelector('[name="gpa"]').value = profile.gpa || '';
+        document.querySelector('[name="bio"]').value = profile.bio || '';
+      }
+    }
+
+    async function deleteVideo(filename) {
+      if (!confirm('Are you sure you want to delete this video?')) return;
+      
+      const res = await fetch(`/api/player/video/${filename}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('Video deleted successfully');
+        loadPlayerProfile();
+      } else {
+        alert('Failed to delete video');
+      }
+    }
+
+    async function deleteImage(filename) {
+      if (!confirm('Are you sure you want to delete this image?')) return;
+      
+      const res = await fetch(`/api/player/image/${filename}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('Image deleted successfully');
+        loadPlayerProfile();
+      } else {
+        alert('Failed to delete image');
+      }
+    }
+
+    async function deleteOffer(filename) {
+      if (!confirm('Are you sure you want to delete this college offer?')) return;
+      
+      const res = await fetch(`/api/player/offer/${filename}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert('College offer deleted successfully');
+        loadPlayerProfile();
+      } else {
+        alert('Failed to delete college offer');
+      }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      const res = await fetch('/api/player/profile', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (res.ok) {
+        alert('Profile saved successfully!');
+        loadPlayerProfile();
+      } else {
+        alert('Error saving profile');
+      }
+    });
+  </script>
+</body>
+</html>
