@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="#" id="homeLink" class="nav-link">Home</a>
+          <a href="messages.html" class="nav-link">Messages</a>
+          <a href="#" id="profileLink" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="messages-container">
+        <!-- Conversations List -->
+        <div class="conversations-panel">
+          <h2>Conversations</h2>
+          <div id="conversationsList"></div>
+        </div>
+
+        <!-- Messages Panel -->
+        <div class="messages-panel">
+          <div id="messagesHeader" class="messages-header">
+            <p>Select a conversation to view messages</p>
+          </div>
+          <div id="messagesContent" class="messages-content"></div>
+          <div id="messageInput" class="message-input-container" style="display: none;">
+            <textarea id="messageText" placeholder="Type your message..." rows="3"></textarea>
+            <button onclick="sendMessage()" class="send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentRole = '';
+    let currentUserId = null;
+    let currentConversationUserId = null;
+
+    async function init() {
+      // Check authentication via API
+      try {
+        const res = await fetch('/api/user');
+        
+        if (!res.ok) {
+          window.location.href = 'index.html';
+          return;
+        }
+        
+        const user = await res.json();
+        currentRole = user.role;
+        currentUserId = user.id;
+      
+        // Set navigation links based on role
+        if (currentRole === 'agent') {
+          document.getElementById('homeLink').href = 'agent-dashboard.html';
+          document.getElementById('profileLink').href = 'agent-profile.html';
+        } else {
+          document.getElementById('homeLink').href = 'player-profile.html';
+          document.getElementById('profileLink').href = 'player-profile.html';
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      loadConversations();
+      
+      // Check if there's a userId parameter to open a specific conversation
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      if (userId) {
+        // Load messages with this user
+        setTimeout(() => {
+          // Find the conversation in the list to get the name
+          const convItems = document.querySelectorAll('.conversation-item');
+          let userName = 'User';
+          convItems.forEach(item => {
+            if (item.onclick.toString().includes(userId)) {
+              userName = item.querySelector('.conversation-name').textContent;
+            }
+          });
+          loadMessages(parseInt(userId), userName);
+        }, 500);
+      }
+      
+      // Auto-refresh conversations every 10 seconds
+      setInterval(loadConversations, 10000);
+    }
+
+    async function loadConversations() {
+      try {
+        const res = await fetch('/api/messages/conversations');
+        const conversations = await res.json();
+        
+        const list = document.getElementById('conversationsList');
+        
+        if (conversations.length === 0) {
+          list.innerHTML = '<p class="no-conversations">No conversations yet</p>';
+          return;
+        }
+        
+        list.innerHTML = conversations.map(conv => `
+          <div class="conversation-item ${conv.unread_count > 0 ? 'unread' : ''}" 
+               onclick="loadMessages(${conv.other_user_id}, '${conv.full_name || conv.email}')">
+            <div class="conversation-info">
+              <div class="conversation-name">${conv.full_name || conv.email}</div>
+              <div class="conversation-role">${conv.role === 'agent' ? 'Agent' : 'Player'}</div>
+            </div>
+            <div class="conversation-preview">
+              <div class="last-message">${conv.last_message ? conv.last_message.substring(0, 50) + (conv.last_message.length > 50 ? '...' : '') : ''}</div>
+              ${conv.unread_count > 0 ? `<span class="unread-badge">${conv.unread_count}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading conversations:', error);
+      }
+    }
+
+    async function loadMessages(userId, userName) {
+      currentConversationUserId = userId;
+      
+      document.getElementById('messagesHeader').innerHTML = `<h3>${userName}</h3>`;
+      document.getElementById('messageInput').style.display = 'flex';
+      
+      try {
+        const res = await fetch(`/api/messages/${userId}`);
+        const messages = await res.json();
+        
+        const content = document.getElementById('messagesContent');
+        
+        if (messages.length === 0) {
+          content.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
+        } else {
+          content.innerHTML = messages.map(msg => `
+            <div class="message ${msg.sender_id === currentUserId ? 'sent' : 'received'}">
+              <div class="message-sender">${msg.sender_name || msg.sender_email}</div>
+              <div class="message-text">${msg.message}</div>
+              <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
+            </div>
+          `).join('');
+          
+          // Scroll to bottom
+          content.scrollTop = content.scrollHeight;
+        }
+        
+        // Reload conversations to update unread counts
+        loadConversations();
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      }
+    }
+
+    async function sendMessage() {
+      const messageText = document.getElementById('messageText').value.trim();
+      
+      if (!messageText || !currentConversationUserId) {
+        return;
+      }
+      
+      try {
+        const res = await fetch('/api/messages/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientId: currentConversationUserId,
+            message: messageText
+          })
+        });
+        
+        if (res.ok) {
+          document.getElementById('messageText').value = '';
+          loadMessages(currentConversationUserId, document.querySelector('.messages-header h3').textContent);
+        } else {
+          alert('Failed to send message');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message');
+      }
+    }
+
+    // Send message on Enter (Shift+Enter for new line)
+    document.addEventListener('DOMContentLoaded', () => {
+      const textarea = document.getElementById('messageText');
+      if (textarea) {
+        textarea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

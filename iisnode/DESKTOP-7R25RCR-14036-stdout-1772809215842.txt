@@ -1,0 +1,3 @@
+Migrating highlight_video to highlight_videos...
+Migration complete
+Server running on iisnode

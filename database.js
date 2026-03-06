@@ -10,6 +10,12 @@ db.exec(`
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('player', 'agent')),
+    full_name TEXT,
+    phone TEXT,
+    organization TEXT,
+    title TEXT,
+    experience INTEGER,
+    bio TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -39,7 +45,61 @@ db.exec(`
     bio TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    recipient_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (recipient_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS agent_favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(agent_id, player_id),
+    FOREIGN KEY (agent_id) REFERENCES users(id),
+    FOREIGN KEY (player_id) REFERENCES users(id)
+  );
 `);
+
+// Add new columns to users table if they don't exist
+try {
+  const columns = db.prepare("PRAGMA table_info(users)").all();
+  const columnNames = columns.map(col => col.name);
+  
+  if (!columnNames.includes('full_name')) {
+    db.exec('ALTER TABLE users ADD COLUMN full_name TEXT');
+    console.log('Added full_name column to users table');
+  }
+  if (!columnNames.includes('phone')) {
+    db.exec('ALTER TABLE users ADD COLUMN phone TEXT');
+    console.log('Added phone column to users table');
+  }
+  if (!columnNames.includes('organization')) {
+    db.exec('ALTER TABLE users ADD COLUMN organization TEXT');
+    console.log('Added organization column to users table');
+  }
+  if (!columnNames.includes('title')) {
+    db.exec('ALTER TABLE users ADD COLUMN title TEXT');
+    console.log('Added title column to users table');
+  }
+  if (!columnNames.includes('experience')) {
+    db.exec('ALTER TABLE users ADD COLUMN experience INTEGER');
+    console.log('Added experience column to users table');
+  }
+  if (!columnNames.includes('bio')) {
+    db.exec('ALTER TABLE users ADD COLUMN bio TEXT');
+    console.log('Added bio column to users table');
+  }
+} catch (error) {
+  console.error('Error adding columns to users table:', error);
+}
 
 // Migrate old highlight_video column to highlight_videos if needed
 try {
@@ -79,8 +139,35 @@ try {
     db.exec('ALTER TABLE player_profiles ADD COLUMN college_offers TEXT');
     console.log('College offers column added');
   }
+} catch (error) {
+  console.log('College offers column check:', error.message);
+}
+
+// Add contact information columns if they don't exist
+try {
+  const columns = db.prepare("PRAGMA table_info(player_profiles)").all();
+  const columnNames = columns.map(col => col.name);
   
-  // Add new physical metrics columns
+  const contactColumns = [
+    'father_name', 'father_email', 'father_phone',
+    'mother_name', 'mother_email', 'mother_phone',
+    'coach_name', 'coach_email', 'coach_phone'
+  ];
+  
+  contactColumns.forEach(colName => {
+    if (!columnNames.includes(colName)) {
+      db.exec(`ALTER TABLE player_profiles ADD COLUMN ${colName} TEXT`);
+      console.log(`Added ${colName} column to player_profiles table`);
+    }
+  });
+} catch (error) {
+  console.error('Error adding contact columns:', error);
+}
+
+// Add new physical metrics columns if they don't exist
+try {
+  const columns = db.prepare("PRAGMA table_info(player_profiles)").all();
+  
   const newColumns = [
     { name: 'shuttle_5_10_5', type: 'REAL' },
     { name: 'l_drill', type: 'REAL' },

@@ -1,0 +1,26 @@
+LOGO SETUP INSTRUCTIONS
+========================
+
+To complete the logo integration:
+
+1. Save your logo image (the one you uploaded) as: trajectory-logo.png
+
+2. Place it in the "images" folder of your project
+
+3. The logo will automatically appear on all pages:
+   - Agent Dashboard
+   - Agent Profile
+   - Player Profile
+   - Player Detail
+   - Messages
+
+The logo has been styled to:
+- Display at 60px height (width auto-scales)
+- Show in white color (inverted) to contrast with the blue header
+- Maintain proper aspect ratio
+
+If you need to adjust the logo size, edit the .header-logo class in public/styles.css:
+- Change "height: 60px" to your preferred size
+- Remove "filter: brightness(0) invert(1);" if you want the original logo colors
+
+All pages now use your logo instead of the football emoji and text headers.

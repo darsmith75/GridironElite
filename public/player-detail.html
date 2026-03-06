@@ -3,20 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Player Details</title>
+  <title>Player Profile</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🏈 Player Profile</h1>
-      <div>
-        <button onclick="window.location.href='agent-dashboard.html'" style="margin-right: 10px;">Back to Dashboard</button>
-        <button onclick="logout()" class="logout-btn">Logout</button>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">Home</a>
+          <a href="messages.html" class="nav-link">Messages</a>
+          <a href="agent-profile.html" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
       </div>
     </header>
 
-    <div id="playerDetail"></div>
+    <div class="dashboard-container">
+      <div id="playerDetail"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>
@@ -47,146 +55,558 @@
       }
       
       const player = await res.json();
+      currentPlayerData = player; // Store for messaging
       
       document.getElementById('playerDetail').innerHTML = `
-        <div class="player-detail-card">
-          <!-- Hero Section -->
-          <div class="player-hero">
-            ${player.profile_picture ? 
-              `<img src="/uploads/${player.profile_picture}" alt="${player.full_name}" class="hero-photo">` : 
-              '<div class="hero-photo no-photo">No Photo</div>'}
-            <div class="hero-info">
-              <h1>${player.full_name}</h1>
-              <div class="player-quick-stats">
-                ${player.graduation_year || 'N/A'}
-                ${player.position ? ` | ${player.position}` : ''}
-                ${player.height ? ` | ${player.height}` : ''}
-                ${player.weight ? ` | ${player.weight} lbs` : ''}
-                ${player.high_school ? ` | ${player.high_school}` : ''}
-                ${player.gpa ? ` | GPA: ${player.gpa}` : ''}
-              </div>
+        <div class="profile-container">
+          <!-- Hero Section with Gradient Background -->
+          <div class="profile-hero">
+            <div class="hero-gradient"></div>
+            <div class="profile-photo-wrapper">
+              ${player.profile_picture ? 
+                `<img src="/uploads/${player.profile_picture}" alt="${player.full_name}" class="profile-photo-large">` : 
+                '<div class="profile-photo-large no-photo">No Photo</div>'}
             </div>
           </div>
           
-          <!-- Stats Grid -->
-          <div class="detail-section">
-            <h3><span class="section-icon">📊</span> Physical Metrics</h3>
-            <div class="stats-grid-detail">
-              <div class="stat-card">
-                <div class="stat-icon">📏</div>
-                <div class="stat-label">Height</div>
-                <div class="stat-value-large">${player.height || 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">⚖️</div>
-                <div class="stat-label">Weight</div>
-                <div class="stat-value-large">${player.weight ? player.weight + ' lbs' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-label">40-Yard Dash</div>
-                <div class="stat-value-large">${player.forty_yard_dash ? player.forty_yard_dash + 's' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">💪</div>
-                <div class="stat-label">Bench Press</div>
-                <div class="stat-value-large">${player.bench_press ? player.bench_press + ' lbs' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🏋️</div>
-                <div class="stat-label">Squat</div>
-                <div class="stat-value-large">${player.squat ? player.squat + ' lbs' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🦘</div>
-                <div class="stat-label">Vertical Jump</div>
-                <div class="stat-value-large">${player.vertical_jump ? player.vertical_jump + '"' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🏃</div>
-                <div class="stat-label">5-10-5 Shuttle</div>
-                <div class="stat-value-large">${player.shuttle_5_10_5 ? player.shuttle_5_10_5 + 's' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">↩️</div>
-                <div class="stat-label">L-Drill</div>
-                <div class="stat-value-large">${player.l_drill ? player.l_drill + 's' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🦘</div>
-                <div class="stat-label">Broad Jump</div>
-                <div class="stat-value-large">${player.broad_jump ? player.broad_jump + '"' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🏋️</div>
-                <div class="stat-label">Power Clean</div>
-                <div class="stat-value-large">${player.power_clean ? player.power_clean + ' lbs' : 'N/A'}</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-icon">🦵</div>
-                <div class="stat-label">Single Leg Squat</div>
-                <div class="stat-value-large">${player.single_leg_squat ? player.single_leg_squat + ' lbs' : 'N/A'}</div>
-              </div>
+          <!-- Player Header Info -->
+          <div class="profile-header-info">
+            <h1 class="player-name-large">${player.full_name}</h1>
+            <div class="meta-badges">
+              ${player.position ? `<span class="meta-badge">${player.position}</span>` : ''}
+              ${player.graduation_year ? `<span class="meta-badge">Class of ${player.graduation_year}</span>` : ''}
+              ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
+            </div>
+            <div style="margin-top: 20px;">
+              <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn" id="favoriteBtn">
+                <span id="favoriteBtnIcon">☆</span> <span id="favoriteBtnText">Favorite</span>
+              </button>
+              <button onclick="startConversation()" class="message-btn" id="messageBtn">Message Player</button>
+              <button onclick="viewPlayerCard()" class="player-card-btn" style="margin-left: 10px;">🏈 Player Card</button>
+              <button onclick="exportPlayerData()" class="export-btn" style="margin-left: 10px;">📊 Export to Excel</button>
             </div>
           </div>
           
-          <!-- Academic Section -->
-          <div class="detail-section">
-            <h3><span class="section-icon">🎓</span> Academic</h3>
-            <div class="stats-grid-detail">
-              <div class="stat-card highlight">
-                <div class="stat-icon">📚</div>
-                <div class="stat-label">GPA</div>
-                <div class="stat-value-large">${player.gpa || 'N/A'}</div>
-              </div>
+          <!-- Physical Stats Inline -->
+          <div class="profile-section">
+            <h2 class="section-title-small">PHYSICAL</h2>
+            <div class="physical-stats-inline">
+              ${player.height ? `<div class="stat-inline"><span class="stat-label-inline">Height</span><span class="stat-value-inline">${player.height}</span></div>` : ''}
+              ${player.weight ? `<div class="stat-inline"><span class="stat-label-inline">Weight</span><span class="stat-value-inline">${player.weight} lbs</span></div>` : ''}
+              ${player.gpa ? `<div class="stat-inline"><span class="stat-label-inline">GPA</span><span class="stat-value-inline">${player.gpa}</span></div>` : ''}
             </div>
           </div>
           
           ${player.bio ? `
-            <div class="detail-section">
-              <h3><span class="section-icon">📝</span> Bio</h3>
-              <div class="bio-content">${player.bio}</div>
+            <div class="profile-section">
+              <h2 class="section-title-small">ABOUT</h2>
+              <p class="bio-text">${player.bio}</p>
             </div>
           ` : ''}
           
+          <!-- Social Media Links -->
+          ${(player.hudl_link || player.instagram_link || player.twitter_link) ? `
+            <div class="profile-section">
+              <h2 class="section-title-small">SOCIAL MEDIA</h2>
+              <div class="social-links">
+                ${player.hudl_link ? `
+                  <a href="${player.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
+                    <img src="/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">Hudl</span>
+                      ${player.hudl_username ? `<span class="social-username">${player.hudl_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
+                ${player.instagram_link ? `
+                  <a href="${player.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
+                    <img src="/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">Instagram</span>
+                      ${player.instagram_username ? `<span class="social-username">${player.instagram_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
+                ${player.twitter_link ? `
+                  <a href="${player.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
+                    <img src="/logos/X_logo.png" alt="X" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">X (Twitter)</span>
+                      ${player.twitter_username ? `<span class="social-username">${player.twitter_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Athletic Metrics Grid -->
+          <div class="profile-section">
+            <h2 class="section-title-small">ATHLETIC METRICS</h2>
+            <div class="metrics-grid">
+              ${player.forty_yard_dash ? `
+                <div class="metric-item">
+                  <div class="metric-label">40-Yard Dash</div>
+                  <div class="metric-value">${player.forty_yard_dash}s</div>
+                </div>
+              ` : ''}
+              ${player.vertical_jump ? `
+                <div class="metric-item">
+                  <div class="metric-label">Vertical Jump</div>
+                  <div class="metric-value">${player.vertical_jump}"</div>
+                </div>
+              ` : ''}
+              ${player.bench_press ? `
+                <div class="metric-item">
+                  <div class="metric-label">Bench Press</div>
+                  <div class="metric-value">${player.bench_press} lbs</div>
+                </div>
+              ` : ''}
+              ${player.squat ? `
+                <div class="metric-item">
+                  <div class="metric-label">Squat</div>
+                  <div class="metric-value">${player.squat} lbs</div>
+                </div>
+              ` : ''}
+              ${player.shuttle_5_10_5 ? `
+                <div class="metric-item">
+                  <div class="metric-label">5-10-5 Shuttle</div>
+                  <div class="metric-value">${player.shuttle_5_10_5}s</div>
+                </div>
+              ` : ''}
+              ${player.l_drill ? `
+                <div class="metric-item">
+                  <div class="metric-label">L-Drill</div>
+                  <div class="metric-value">${player.l_drill}s</div>
+                </div>
+              ` : ''}
+              ${player.broad_jump ? `
+                <div class="metric-item">
+                  <div class="metric-label">Broad Jump</div>
+                  <div class="metric-value">${player.broad_jump}"</div>
+                </div>
+              ` : ''}
+              ${player.power_clean ? `
+                <div class="metric-item">
+                  <div class="metric-label">Power Clean</div>
+                  <div class="metric-value">${player.power_clean} lbs</div>
+                </div>
+              ` : ''}
+              ${player.single_leg_squat ? `
+                <div class="metric-item">
+                  <div class="metric-label">Single Leg Squat</div>
+                  <div class="metric-value">${player.single_leg_squat} lbs</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          
           ${player.highlight_videos ? `
-            <div class="detail-section">
-              <h3><span class="section-icon">🎬</span> Highlight Videos</h3>
-              <div class="media-grid-detail">
+            <div class="profile-section">
+              <h2 class="section-title-small">HIGHLIGHT VIDEOS</h2>
+              <div class="videos-list">
                 ${JSON.parse(player.highlight_videos).map(video => 
-                  `<div class="video-wrapper">
-                    <video controls src="/uploads/${video}" class="detail-video"></video>
-                  </div>`
+                  `<video controls src="/uploads/${video}" class="profile-video"></video>`
                 ).join('')}
               </div>
             </div>
           ` : ''}
           
           ${player.additional_images ? `
-            <div class="detail-section">
-              <h3><span class="section-icon">📸</span> Additional Images</h3>
-              <div class="image-gallery-detail">
+            <div class="profile-section">
+              <h2 class="section-title-small">IMAGES</h2>
+              <div class="images-grid-profile">
                 ${JSON.parse(player.additional_images).map(img => 
-                  `<img src="/uploads/${img}" alt="Player image" class="gallery-image-detail">`
+                  `<img src="/uploads/${img}" alt="Player image" class="profile-image">`
                 ).join('')}
               </div>
             </div>
           ` : ''}
           
           ${player.college_offers ? `
-            <div class="detail-section">
-              <h3><span class="section-icon">🎓</span> College Offers</h3>
-              <div class="college-offers-display">
+            <div class="profile-section">
+              <h2 class="section-title-small">COLLEGE OFFERS</h2>
+              <div class="college-offers-grid-profile">
                 ${JSON.parse(player.college_offers).map(offer => 
-                  `<div class="college-offer-card">
-                    <img src="/uploads/${offer}" alt="College Offer" class="college-offer-display-logo">
+                  `<div class="college-logo-card">
+                    <img src="/uploads/${offer}" alt="College Offer" class="college-logo-img">
                   </div>`
                 ).join('')}
               </div>
             </div>
           ` : ''}
+          
+          <!-- Contact Information -->
+          ${(player.father_name || player.mother_name || player.coach_name) ? `
+            <div class="profile-section">
+              <h2 class="section-title-small">CONTACT INFORMATION</h2>
+              <div class="contact-info-grid">
+                ${player.father_name ? `
+                  <div class="contact-card">
+                    <h4>Father</h4>
+                    <div class="contact-details">
+                      ${player.father_name ? `<p><strong>Name:</strong> ${player.father_name}</p>` : ''}
+                      ${player.father_email ? `<p><strong>Email:</strong> <a href="mailto:${player.father_email}">${player.father_email}</a></p>` : ''}
+                      ${player.father_phone ? `<p><strong>Phone:</strong> <a href="tel:${player.father_phone}">${player.father_phone}</a></p>` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+                ${player.mother_name ? `
+                  <div class="contact-card">
+                    <h4>Mother</h4>
+                    <div class="contact-details">
+                      ${player.mother_name ? `<p><strong>Name:</strong> ${player.mother_name}</p>` : ''}
+                      ${player.mother_email ? `<p><strong>Email:</strong> <a href="mailto:${player.mother_email}">${player.mother_email}</a></p>` : ''}
+                      ${player.mother_phone ? `<p><strong>Phone:</strong> <a href="tel:${player.mother_phone}">${player.mother_phone}</a></p>` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+                ${player.coach_name ? `
+                  <div class="contact-card">
+                    <h4>Head Coach</h4>
+                    <div class="contact-details">
+                      ${player.coach_name ? `<p><strong>Name:</strong> ${player.coach_name}</p>` : ''}
+                      ${player.coach_email ? `<p><strong>Email:</strong> <a href="mailto:${player.coach_email}">${player.coach_email}</a></p>` : ''}
+                      ${player.coach_phone ? `<p><strong>Phone:</strong> <a href="tel:${player.coach_phone}">${player.coach_phone}</a></p>` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
+      
+      // Check if player is favorited
+      checkFavoriteStatus();
+    }
+    
+    async function checkFavoriteStatus() {
+      try {
+        const res = await fetch(`/api/agent/favorites/${currentPlayerData.user_id}`);
+        const data = await res.json();
+        updateFavoriteButton(data.isFavorite);
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    }
+    
+    function updateFavoriteButton(isFavorite) {
+      const btn = document.getElementById('favoriteBtn');
+      const icon = document.getElementById('favoriteBtnIcon');
+      const text = document.getElementById('favoriteBtnText');
+      
+      if (isFavorite) {
+        icon.textContent = '⭐';
+        text.textContent = 'Favorite';
+        btn.classList.add('favorited');
+      } else {
+        icon.textContent = '☆';
+        text.textContent = 'Favorite';
+        btn.classList.remove('favorited');
+      }
+    }
+    
+    async function toggleFavoriteDetail() {
+      const btn = document.getElementById('favoriteBtn');
+      const isFavorite = btn.classList.contains('favorited');
+      
+      try {
+        if (isFavorite) {
+          await fetch(`/api/agent/favorites/${currentPlayerData.user_id}`, { method: 'DELETE' });
+          updateFavoriteButton(false);
+        } else {
+          await fetch(`/api/agent/favorites/${currentPlayerData.user_id}`, { method: 'POST' });
+          updateFavoriteButton(true);
+        }
+      } catch (error) {
+        console.error('Error toggling favorite:', error);
+        alert('Failed to update favorite');
+      }
+    }
+    
+    // Lightbox functionality for images
+    function openLightbox(imageSrc) {
+      const lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.innerHTML = `
+        <div class="lightbox-content">
+          <span class="lightbox-close">&times;</span>
+          <img src="${imageSrc}" alt="Enlarged image">
+        </div>
+      `;
+      document.body.appendChild(lightbox);
+      
+      // Close on click
+      lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox || e.target.className === 'lightbox-close') {
+          document.body.removeChild(lightbox);
+        }
+      });
+      
+      // Close on escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.querySelector('.lightbox')) {
+          const lb = document.querySelector('.lightbox');
+          if (lb) document.body.removeChild(lb);
+        }
+      });
+    }
+    
+    // Add click handlers to images after they're loaded
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('profile-image')) {
+        openLightbox(e.target.src);
+      }
+    });
+    
+    // Start conversation with player
+    let currentPlayerData = null;
+    
+    async function startConversation() {
+      if (currentPlayerData && currentPlayerData.user_id) {
+        window.location.href = `messages.html?userId=${currentPlayerData.user_id}`;
+      }
+    }
+    
+    // Navigate to player card view
+    function viewPlayerCard() {
+      if (playerId) {
+        window.location.href = `player-card.html?id=${playerId}`;
+      }
+    }
+    
+    // Export player data to Excel
+    function exportPlayerData() {
+      if (!currentPlayerData) {
+        alert('No player data available to export');
+        return;
+      }
+      
+      const player = currentPlayerData;
+      
+      // Helper function to escape HTML/XML special characters
+      function escapeXml(str) {
+        if (!str) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      }
+      
+      // Build Excel XML format
+      let excel = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      excel += '<?mso-application progid="Excel.Sheet"?>\n';
+      excel += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+      excel += ' xmlns:o="urn:schemas-microsoft-com:office:office"\n';
+      excel += ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n';
+      excel += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n';
+      excel += ' xmlns:html="http://www.w3.org/TR/REC-html40">\n\n';
+      
+      // Styles
+      excel += ' <Styles>\n';
+      excel += '  <Style ss:ID="Header">\n';
+      excel += '   <Font ss:Bold="1" ss:Size="12" ss:Color="#FFFFFF"/>\n';
+      excel += '   <Interior ss:Color="#4a6fa5" ss:Pattern="Solid"/>\n';
+      excel += '   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>\n';
+      excel += '  </Style>\n';
+      excel += '  <Style ss:ID="SectionHeader">\n';
+      excel += '   <Font ss:Bold="1" ss:Size="14" ss:Color="#1e3c72"/>\n';
+      excel += '   <Interior ss:Color="#e9ecef" ss:Pattern="Solid"/>\n';
+      excel += '   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>\n';
+      excel += '  </Style>\n';
+      excel += '  <Style ss:ID="Label">\n';
+      excel += '   <Font ss:Bold="1" ss:Size="10"/>\n';
+      excel += '   <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>\n';
+      excel += '  </Style>\n';
+      excel += '  <Style ss:ID="Data">\n';
+      excel += '   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>\n';
+      excel += '  </Style>\n';
+      excel += ' </Styles>\n\n';
+      
+      excel += ' <Worksheet ss:Name="Player Profile">\n';
+      excel += '  <Table>\n';
+      excel += '   <Column ss:Width="200"/>\n';
+      excel += '   <Column ss:Width="300"/>\n\n';
+      
+      // Helper function to add a section header
+      function addSectionHeader(title) {
+        return `   <Row>\n    <Cell ss:StyleID="SectionHeader" ss:MergeAcross="1"><Data ss:Type="String">${escapeXml(title)}</Data></Cell>\n   </Row>\n`;
+      }
+      
+      // Helper function to add a data row
+      function addDataRow(label, value) {
+        if (value !== null && value !== undefined && value !== '') {
+          return `   <Row>\n    <Cell ss:StyleID="Label"><Data ss:Type="String">${escapeXml(label)}</Data></Cell>\n    <Cell ss:StyleID="Data"><Data ss:Type="String">${escapeXml(value)}</Data></Cell>\n   </Row>\n`;
+        }
+        return '';
+      }
+      
+      // Helper function to add empty row
+      function addEmptyRow() {
+        return '   <Row/>\n';
+      }
+      
+      // Title Row
+      excel += '   <Row>\n';
+      excel += '    <Cell ss:StyleID="Header" ss:MergeAcross="1"><Data ss:Type="String">PLAYER PROFILE REPORT</Data></Cell>\n';
+      excel += '   </Row>\n';
+      excel += addEmptyRow();
+      
+      // Basic Information
+      excel += addSectionHeader('BASIC INFORMATION');
+      excel += addDataRow('Full Name', player.full_name);
+      excel += addDataRow('Position', player.position);
+      excel += addDataRow('High School', player.high_school);
+      excel += addDataRow('Graduation Year', player.graduation_year);
+      excel += addDataRow('Email', player.email);
+      excel += addEmptyRow();
+      
+      // Physical Attributes
+      excel += addSectionHeader('PHYSICAL ATTRIBUTES');
+      excel += addDataRow('Height', player.height);
+      excel += addDataRow('Weight', player.weight ? `${player.weight} lbs` : null);
+      excel += addEmptyRow();
+      
+      // Academic Information
+      if (player.gpa) {
+        excel += addSectionHeader('ACADEMIC INFORMATION');
+        excel += addDataRow('GPA', player.gpa);
+        excel += addEmptyRow();
+      }
+      
+      // Athletic Metrics
+      const hasMetrics = player.forty_yard_dash || player.vertical_jump || player.bench_press || 
+                        player.squat || player.shuttle_5_10_5 || player.l_drill || 
+                        player.broad_jump || player.power_clean || player.single_leg_squat;
+      
+      if (hasMetrics) {
+        excel += addSectionHeader('ATHLETIC METRICS');
+        excel += addDataRow('40-Yard Dash', player.forty_yard_dash ? `${player.forty_yard_dash} seconds` : null);
+        excel += addDataRow('Vertical Jump', player.vertical_jump ? `${player.vertical_jump} inches` : null);
+        excel += addDataRow('Bench Press', player.bench_press ? `${player.bench_press} lbs` : null);
+        excel += addDataRow('Squat', player.squat ? `${player.squat} lbs` : null);
+        excel += addDataRow('5-10-5 Shuttle', player.shuttle_5_10_5 ? `${player.shuttle_5_10_5} seconds` : null);
+        excel += addDataRow('L-Drill', player.l_drill ? `${player.l_drill} seconds` : null);
+        excel += addDataRow('Broad Jump', player.broad_jump ? `${player.broad_jump} inches` : null);
+        excel += addDataRow('Power Clean', player.power_clean ? `${player.power_clean} lbs` : null);
+        excel += addDataRow('Single Leg Squat', player.single_leg_squat ? `${player.single_leg_squat} lbs` : null);
+        excel += addEmptyRow();
+      }
+      
+      // Biography
+      if (player.bio) {
+        excel += addSectionHeader('BIOGRAPHY');
+        excel += addDataRow('About', player.bio);
+        excel += addEmptyRow();
+      }
+      
+      // Social Media
+      const hasSocial = player.hudl_link || player.instagram_link || player.twitter_link;
+      if (hasSocial) {
+        excel += addSectionHeader('SOCIAL MEDIA');
+        if (player.hudl_link) {
+          excel += addDataRow('Hudl URL', player.hudl_link);
+          excel += addDataRow('Hudl Username', player.hudl_username);
+        }
+        if (player.instagram_link) {
+          excel += addDataRow('Instagram URL', player.instagram_link);
+          excel += addDataRow('Instagram Username', player.instagram_username);
+        }
+        if (player.twitter_link) {
+          excel += addDataRow('Twitter/X URL', player.twitter_link);
+          excel += addDataRow('Twitter/X Username', player.twitter_username);
+        }
+        excel += addEmptyRow();
+      }
+      
+      // Contact Information - Father
+      if (player.father_name || player.father_email || player.father_phone) {
+        excel += addSectionHeader('FATHER CONTACT');
+        excel += addDataRow('Name', player.father_name);
+        excel += addDataRow('Email', player.father_email);
+        excel += addDataRow('Phone', player.father_phone);
+        excel += addEmptyRow();
+      }
+      
+      // Contact Information - Mother
+      if (player.mother_name || player.mother_email || player.mother_phone) {
+        excel += addSectionHeader('MOTHER CONTACT');
+        excel += addDataRow('Name', player.mother_name);
+        excel += addDataRow('Email', player.mother_email);
+        excel += addDataRow('Phone', player.mother_phone);
+        excel += addEmptyRow();
+      }
+      
+      // Contact Information - Coach
+      if (player.coach_name || player.coach_email || player.coach_phone) {
+        excel += addSectionHeader('COACH CONTACT');
+        excel += addDataRow('Name', player.coach_name);
+        excel += addDataRow('Email', player.coach_email);
+        excel += addDataRow('Phone', player.coach_phone);
+        excel += addEmptyRow();
+      }
+      
+      // Media Files
+      if (player.profile_picture) {
+        excel += addSectionHeader('PROFILE PICTURE');
+        excel += addDataRow('Filename', player.profile_picture);
+        excel += addDataRow('URL', `${window.location.origin}/uploads/${player.profile_picture}`);
+        excel += addEmptyRow();
+      }
+      
+      if (player.highlight_videos) {
+        const videos = JSON.parse(player.highlight_videos);
+        if (videos.length > 0) {
+          excel += addSectionHeader('HIGHLIGHT VIDEOS');
+          videos.forEach((video, index) => {
+            excel += addDataRow(`Video ${index + 1}`, video);
+            excel += addDataRow(`Video ${index + 1} URL`, `${window.location.origin}/uploads/${video}`);
+          });
+          excel += addEmptyRow();
+        }
+      }
+      
+      if (player.additional_images) {
+        const images = JSON.parse(player.additional_images);
+        if (images.length > 0) {
+          excel += addSectionHeader('ADDITIONAL IMAGES');
+          images.forEach((img, index) => {
+            excel += addDataRow(`Image ${index + 1}`, img);
+            excel += addDataRow(`Image ${index + 1} URL`, `${window.location.origin}/uploads/${img}`);
+          });
+          excel += addEmptyRow();
+        }
+      }
+      
+      if (player.college_offers) {
+        const offers = JSON.parse(player.college_offers);
+        if (offers.length > 0) {
+          excel += addSectionHeader('COLLEGE OFFERS');
+          offers.forEach((offer, index) => {
+            excel += addDataRow(`Offer ${index + 1}`, offer);
+            excel += addDataRow(`Offer ${index + 1} URL`, `${window.location.origin}/uploads/${offer}`);
+          });
+          excel += addEmptyRow();
+        }
+      }
+      
+      excel += '  </Table>\n';
+      excel += ' </Worksheet>\n';
+      excel += '</Workbook>';
+      
+      // Create download
+      const blob = new Blob([excel], { type: 'application/vnd.ms-excel' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${player.full_name.replace(/\s+/g, '_')}_Profile.xls`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     }
   </script>
 </body>

@@ -1,0 +1,16 @@
+
+
+1.  Link to existing Wix page.
+2.  GitHub repository / branch/version control/backup (test from pulling down from another computer and testing)
+3.  Host page somewhere (paid or use Wix)
+4.  Make school contacts available by college logo links
+5.  Make an admin user account and ability to have multiple agents
+6.  Agents can select the players they follow or manage
+7.  when clicking college logo, if contacts exist, check membership level.  (not free)
+
+
+Notes:
+
+Data storage fees from hosting sites:  meaning pictures and videos
+
+Free profile should be limited on how many images and videos (if any) can be uploaded... or maybe just provide links to videos already posted somewhere

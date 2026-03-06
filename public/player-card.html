@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Card</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      background: #0a1628;
+      margin: 0;
+      padding: 20px;
+      font-family: 'Arial Black', Arial, sans-serif;
+    }
+    
+    .card-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #1a2942 0%, #0d1829 100%);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    
+    .card-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      padding: 30px 40px;
+      color: white;
+      position: relative;
+    }
+    
+    .card-header h1 {
+      margin: 0;
+      font-size: 48px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      color: white;
+    }
+    
+    .card-header .player-meta {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      opacity: 0.95;
+      color: white;
+    }
+    
+    .card-header .player-meta span {
+      margin-right: 20px;
+      color: white;
+    }
+    
+    .card-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 800px;
+    }
+    
+    .card-left {
+      padding: 40px;
+      background: #1a2942;
+    }
+    
+    .card-right {
+      padding: 0;
+      position: relative;
+      background: #0d1829;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 800px;
+    }
+    
+    .player-image-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a2942 0%, #0d1829 100%);
+    }
+    
+    .player-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    
+    /* Alternative: If you want to ensure no cropping and show full image */
+    .player-image.contain-mode {
+      object-fit: contain;
+      object-position: center;
+    }
+    
+    .section-title {
+      background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+      color: white;
+      padding: 12px 20px;
+      margin: 0 -40px 20px -40px;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .info-item {
+      background: rgba(255,255,255,0.05);
+      padding: 12px 15px;
+      border-radius: 8px;
+      border-left: 4px solid #4a6fa5;
+    }
+    
+    .info-label {
+      font-size: 11px;
+      color: #8899aa;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    
+    .info-value {
+      font-size: 18px;
+      color: white;
+      font-weight: 900;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .metric-item {
+      background: rgba(255,255,255,0.05);
+      padding: 10px 15px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 3px solid #4a6fa5;
+    }
+    
+    .metric-label {
+      font-size: 12px;
+      color: #8899aa;
+      font-weight: 700;
+    }
+    
+    .metric-value {
+      font-size: 16px;
+      color: white;
+      font-weight: 900;
+    }
+    
+    .college-offers {
+      margin-bottom: 30px;
+    }
+    
+    .offers-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .offer-logo {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .offer-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .additional-offers {
+      margin-top: 15px;
+      color: #8899aa;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    
+    .contact-section {
+      background: rgba(255,255,255,0.03);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+    }
+    
+    .contact-item {
+      color: white;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .contact-item strong {
+      color: #6b8cce;
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+    
+    .social-section {
+      background: rgba(255,255,255,0.03);
+      padding: 20px;
+      border-radius: 12px;
+    }
+    
+    .social-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    
+    .social-item {
+      color: white;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .social-item .icon {
+      font-size: 18px;
+    }
+    
+    .social-item .social-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+    
+    .social-item strong {
+      color: #6b8cce;
+      min-width: 80px;
+    }
+    
+    .gpa-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #ffa500;
+      color: #0a1628;
+      padding: 15px 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(255,165,0,0.4);
+    }
+    
+    .gpa-badge .label {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .gpa-badge .value {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      margin-top: 5px;
+    }
+    
+    .gpa-badge .honors {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-top: 5px;
+      letter-spacing: 0.5px;
+    }
+    
+    .back-button {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 12px 24px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+    
+    .back-button:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.5);
+    }
+    
+    .export-image-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+      z-index: 1000;
+    }
+    
+    .export-image-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    }
+    
+    .export-image-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .preview-image-button {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+      z-index: 1000;
+    }
+    
+    .preview-image-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(111, 66, 193, 0.4);
+    }
+    
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .preview-modal-content {
+      background: white;
+      border-radius: 12px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+    }
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .preview-header h3 {
+      margin: 0;
+      color: #333;
+    }
+    
+    .close-preview {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+    }
+    
+    .preview-body {
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .preview-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .preview-cancel-btn {
+      padding: 10px 20px;
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .preview-export-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    @media print {
+      body {
+        background: white;
+      }
+      .back-button,
+      .export-image-button,
+      .preview-image-button {
+        display: none;
+      }
+      .card-container {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button onclick="goBack()" class="back-button">← Back</button>
+  <button onclick="exportAsImage()" class="export-image-button" id="exportBtn">📸 Export as Image</button>
+  <button onclick="previewImage()" class="preview-image-button" id="previewBtn">👁️ Preview Export</button>
+  
+  <!-- Preview Modal -->
+  <div id="previewModal" class="preview-modal" style="display: none;">
+    <div class="preview-modal-content">
+      <div class="preview-header">
+        <h3>Export Preview</h3>
+        <button onclick="closePreview()" class="close-preview">✕</button>
+      </div>
+      <div class="preview-body">
+        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+      </div>
+      <div class="preview-footer">
+        <button onclick="closePreview()" class="preview-cancel-btn">Close</button>
+        <button onclick="exportFromPreview()" class="preview-export-btn">Export This Image</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card-container" id="playerCard">
+    <div class="card-header">
+      <h1 id="playerName">Loading...</h1>
+      <div class="player-meta">
+        <span id="playerYear"></span>
+        <span id="playerPosition"></span>
+        <span id="playerHeight"></span>
+        <span id="playerWeight"></span>
+        <span id="playerSchool"></span>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      <div class="card-left">
+        <div class="section-title">ELITE PROFILE</div>
+        <div class="info-grid" id="eliteProfile"></div>
+        
+        <div class="section-title">VERIFIED MEASURABLES</div>
+        <div class="metrics-grid" id="measurables"></div>
+        
+        <div class="college-offers" id="offersSection" style="display: none;">
+          <div class="section-title">POWER 5 OFFERS</div>
+          <div class="offers-grid" id="collegeOffers"></div>
+          <div class="additional-offers" id="additionalOffers"></div>
+        </div>
+        
+        <div class="contact-section">
+          <div class="section-title">CONTACT</div>
+          <div class="contact-grid" id="contactInfo"></div>
+        </div>
+        
+        <div class="social-section">
+          <div class="section-title">SOCIAL</div>
+          <div class="social-grid" id="socialInfo"></div>
+        </div>
+      </div>
+      
+      <div class="card-right">
+        <div class="player-image-container">
+          <img id="playerImage" src="" alt="Player" class="player-image">
+        </div>
+        <div class="gpa-badge" id="gpaBadge" style="display: none;">
+          <div class="label">GPA</div>
+          <div class="value" id="gpaValue"></div>
+          <div class="honors">HIGH HONORS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Check authentication - allow both agents and players
+    fetch('/api/user')
+      .then(res => {
+        if (!res.ok) {
+          window.location.href = '/';
+          throw new Error('Not authenticated');
+        }
+        return res.json();
+      })
+      .then(user => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const playerId = urlParams.get('id');
+        
+        // If no ID provided and user is an agent, redirect to dashboard
+        if (!playerId && user.role === 'agent') {
+          window.location.href = 'agent-dashboard.html';
+          return;
+        }
+        
+        // Load the card
+        loadPlayerCard(playerId);
+      })
+      .catch(() => {
+        // Authentication failed, redirect handled above
+      });
+    
+    function goBack() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const playerId = urlParams.get('id');
+      
+      if (playerId) {
+        window.location.href = `player-detail.html?id=${playerId}`;
+      } else {
+        window.location.href = 'player-profile.html';
+      }
+    }
+    
+    async function loadPlayerCard(playerId) {
+      // Fetch player data - use different endpoint based on whether viewing own card or another player's
+      let res;
+      if (playerId) {
+        // Agent viewing a specific player
+        res = await fetch(`/api/agent/player/${playerId}`);
+      } else {
+        // Player viewing their own card
+        res = await fetch('/api/player/profile');
+      }
+      
+      if (!res.ok) {
+        alert('Player not found');
+        goBack();
+        return;
+      }
+      
+      const player = await res.json();
+      
+      // Header
+      document.getElementById('playerName').textContent = player.full_name || 'Unknown Player';
+      document.getElementById('playerYear').textContent = player.graduation_year || '';
+      document.getElementById('playerPosition').textContent = player.position || '';
+      document.getElementById('playerHeight').textContent = player.height || '';
+      document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} LBS` : '';
+      document.getElementById('playerSchool').textContent = player.high_school || '';
+      
+      // Elite Profile
+      let profileHTML = '';
+      if (player.position) {
+        profileHTML += `<div class="info-item"><div class="info-label">Position:</div><div class="info-value">${player.position}</div></div>`;
+      }
+      if (player.graduation_year) {
+        profileHTML += `<div class="info-item"><div class="info-label">Class:</div><div class="info-value">${player.graduation_year}</div></div>`;
+      }
+      if (player.height && player.weight) {
+        profileHTML += `<div class="info-item"><div class="info-label">Height / Weight:</div><div class="info-value">${player.height} / ${player.weight} lbs</div></div>`;
+      }
+      if (player.high_school) {
+        profileHTML += `<div class="info-item"><div class="info-label">School:</div><div class="info-value">${player.high_school}</div></div>`;
+      }
+      document.getElementById('eliteProfile').innerHTML = profileHTML;
+      
+      // Verified Measurables
+      let metricsHTML = '';
+      if (player.forty_yard_dash) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">40-Yard Dash</span><span class="metric-value">${player.forty_yard_dash}</span></div>`;
+      }
+      if (player.shuttle_5_10_5) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">5-10-5 Shuttle</span><span class="metric-value">${player.shuttle_5_10_5}</span></div>`;
+      }
+      if (player.l_drill) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">L-Drill</span><span class="metric-value">${player.l_drill}</span></div>`;
+      }
+      if (player.broad_jump) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Broad Jump</span><span class="metric-value">${player.broad_jump}"</span></div>`;
+      }
+      if (player.vertical_jump) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Vertical</span><span class="metric-value">${player.vertical_jump}"</span></div>`;
+      }
+      if (player.bench_press) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Bench:</span><span class="metric-value">${player.bench_press} lbs</span></div>`;
+      }
+      if (player.squat) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Squat:</span><span class="metric-value">${player.squat} lbs</span></div>`;
+      }
+      if (player.power_clean) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Clean:</span><span class="metric-value">${player.power_clean} lbs</span></div>`;
+      }
+      if (player.single_leg_squat) {
+        metricsHTML += `<div class="metric-item"><span class="metric-label">Single Leg:</span><span class="metric-value">${player.single_leg_squat} lbs</span></div>`;
+      }
+      document.getElementById('measurables').innerHTML = metricsHTML;
+      
+      // College Offers
+      if (player.college_offers) {
+        const offers = JSON.parse(player.college_offers);
+        if (offers.length > 0) {
+          document.getElementById('offersSection').style.display = 'block';
+          let offersHTML = '';
+          const displayCount = Math.min(12, offers.length);
+          for (let i = 0; i < displayCount; i++) {
+            offersHTML += `<div class="offer-logo"><img src="/uploads/${offers[i]}" alt="College"></div>`;
+          }
+          document.getElementById('collegeOffers').innerHTML = offersHTML;
+          
+          if (offers.length > 12) {
+            document.getElementById('additionalOffers').innerHTML = `<strong>ADDITIONAL OFFERS:</strong> +${offers.length - 12} more`;
+          }
+        }
+      }
+      
+      // Contact Info
+      let contactHTML = '';
+      if (player.email) {
+        contactHTML += `<div class="contact-item"><strong>Athlete:</strong>${player.email}</div>`;
+      }
+      if (player.father_name) {
+        contactHTML += `<div class="contact-item"><strong>Father – ${player.father_name}</strong>`;
+        if (player.father_email) contactHTML += `${player.father_email}`;
+        if (player.father_phone) contactHTML += ` | ${player.father_phone}`;
+        contactHTML += `</div>`;
+      }
+      if (player.mother_name) {
+        contactHTML += `<div class="contact-item"><strong>Mother – ${player.mother_name}</strong>`;
+        if (player.mother_email) contactHTML += `${player.mother_email}`;
+        if (player.mother_phone) contactHTML += ` | ${player.mother_phone}`;
+        contactHTML += `</div>`;
+      }
+      if (player.coach_name) {
+        contactHTML += `<div class="contact-item"><strong>Head Coach – ${player.coach_name}</strong>`;
+        if (player.coach_email) contactHTML += `${player.coach_email}`;
+        if (player.coach_phone) contactHTML += ` | ${player.coach_phone}`;
+        contactHTML += `</div>`;
+      }
+      document.getElementById('contactInfo').innerHTML = contactHTML;
+      
+      // Social Media
+      let socialHTML = '';
+      if (player.hudl_username) {
+        socialHTML += `<div class="social-item"><img src="/logos/Hudl_logo.png" alt="Hudl" class="social-logo"><strong>Hudl:</strong> ${player.hudl_username}</div>`;
+      }
+      if (player.instagram_username) {
+        socialHTML += `<div class="social-item"><img src="/logos/Instagram_logo.png" alt="Instagram" class="social-logo"><strong>Instagram:</strong> ${player.instagram_username}</div>`;
+      }
+      if (player.twitter_username) {
+        socialHTML += `<div class="social-item"><img src="/logos/X_logo.png" alt="X" class="social-logo"><strong>Twitter:</strong> ${player.twitter_username}</div>`;
+      }
+      document.getElementById('socialInfo').innerHTML = socialHTML;
+      
+      // Player Image - use card_photo if available, otherwise fall back to profile_picture
+      const photoToUse = player.card_photo || player.profile_picture;
+      if (photoToUse) {
+        const img = document.getElementById('playerImage');
+        img.src = `/uploads/${photoToUse}`;
+        
+        // Detect image aspect ratio and adjust fit mode
+        img.onload = function() {
+          const aspectRatio = this.naturalWidth / this.naturalHeight;
+          
+          // If image is very wide (landscape) or very tall, use contain mode
+          // Otherwise use cover mode for better card appearance
+          if (aspectRatio > 1.5 || aspectRatio < 0.6) {
+            this.style.objectFit = 'contain';
+          } else {
+            this.style.objectFit = 'cover';
+            // For portrait images, focus on top portion (head/shoulders)
+            if (aspectRatio < 1) {
+              this.style.objectPosition = 'center top';
+            }
+          }
+        };
+      } else {
+        document.getElementById('playerImage').style.display = 'none';
+      }
+      
+      // GPA Badge
+      if (player.gpa) {
+        document.getElementById('gpaBadge').style.display = 'block';
+        document.getElementById('gpaValue').textContent = player.gpa;
+      }
+    }
+    
+    // Export player card as image
+    async function exportAsImage() {
+      const button = document.getElementById('exportBtn');
+      const originalText = button.textContent;
+      
+      try {
+        // Disable button and show loading state
+        button.disabled = true;
+        button.textContent = '⏳ Generating...';
+        
+        const cardElement = document.getElementById('playerCard');
+        
+        // Use html2canvas to capture the card
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: '#0a1628',
+          scale: 2, // Higher quality
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 0,
+          onclone: (clonedDoc) => {
+            // Ensure images are loaded in the cloned document
+            const clonedCard = clonedDoc.getElementById('playerCard');
+            if (clonedCard) {
+              clonedCard.style.margin = '0';
+              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            }
+          }
+        });
+        
+        // Convert canvas to blob
+        canvas.toBlob((blob) => {
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          
+          // Get player name for filename
+          const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
+          a.download = `${playerName}_Player_Card.png`;
+          
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          // Reset button
+          button.disabled = false;
+          button.textContent = originalText;
+        }, 'image/png');
+        
+      } catch (error) {
+        console.error('Error exporting image:', error);
+        alert('Failed to export image. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+    
+    // Preview the image before exporting
+    async function previewImage() {
+      const button = document.getElementById('previewBtn');
+      const originalText = button.textContent;
+      
+      try {
+        button.disabled = true;
+        button.textContent = '⏳ Generating Preview...';
+        
+        const cardElement = document.getElementById('playerCard');
+        
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: '#0a1628',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 0,
+          onclone: (clonedDoc) => {
+            const clonedCard = clonedDoc.getElementById('playerCard');
+            if (clonedCard) {
+              clonedCard.style.margin = '0';
+              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            }
+          }
+        });
+        
+        // Convert to data URL and show in modal
+        const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('previewImage').src = dataUrl;
+        document.getElementById('previewModal').style.display = 'flex';
+        
+        button.disabled = false;
+        button.textContent = originalText;
+        
+      } catch (error) {
+        console.error('Error generating preview:', error);
+        alert('Failed to generate preview. Please try again.');
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+    
+    function closePreview() {
+      document.getElementById('previewModal').style.display = 'none';
+    }
+    
+    function exportFromPreview() {
+      const img = document.getElementById('previewImage');
+      const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
+      
+      // Convert data URL to blob and download
+      fetch(img.src)
+        .then(res => res.blob())
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${playerName}_Player_Card.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          closePreview();
+        });
+    }
+  </script>
+</body>
+</html>

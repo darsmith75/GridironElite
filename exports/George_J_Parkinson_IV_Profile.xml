@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PlayerProfile>
+  <BasicInformation>
+    <FullName>George J Parkinson IV</FullName>
+    <Position>DL</Position>
+    <HighSchool>Malvern Prep</HighSchool>
+    <GraduationYear>2028</GraduationYear>
+  </BasicInformation>
+
+  <PhysicalAttributes>
+    <Height>6&apos;4&quot;</Height>
+    <Weight>235</Weight>
+  </PhysicalAttributes>
+
+  <AcademicInformation>
+    <GPA>3.99</GPA>
+  </AcademicInformation>
+
+  <AthleticMetrics>
+    <FortyYardDash>4.55</FortyYardDash>
+    <VerticalJump>34.5</VerticalJump>
+    <BenchPress>352</BenchPress>
+    <Squat>405</Squat>
+    <Shuttle5105>4.35</Shuttle5105>
+    <LDrill>7.03</LDrill>
+    <BroadJump>10</BroadJump>
+    <PowerClean>308</PowerClean>
+    <SingleLegSquat>400</SingleLegSquat>
+  </AthleticMetrics>
+
+  <Biography>
+    <![CDATA[High-motor Edge with a quick first step and a relentless pursuit to the ball.  Specializing in speed-to-power transitions and setting a hard edge in the run game.]]>
+  </Biography>
+
+  <SocialMedia>
+    <Hudl>
+      <URL>https://www.hudl.com/profile/22569485/George-Parkinson-IV</URL>
+      <Username>George Parkinson IV</Username>
+    </Hudl>
+    <Instagram>
+      <URL>https://www.instagram.com/gpark.4/?__d=11</URL>
+      <Username>@gpark_4</Username>
+    </Instagram>
+    <Twitter>
+      <URL>https://x.com/parkinsoniv?s=21</URL>
+      <Username>@ParkinsonIV</Username>
+    </Twitter>
+  </SocialMedia>
+
+  <ContactInformation>
+    <Father>
+      <Name>George Parkinson</Name>
+      <Email>gparkinson31@gmail.com</Email>
+      <Phone>484-507-9471</Phone>
+    </Father>
+    <Mother>
+      <Name>Nicole Parkinson</Name>
+      <Email>message4nicole@yahoo.com</Email>
+      <Phone>610-781-6649</Phone>
+    </Mother>
+    <Coach>
+      <Name>Dave Gueriera</Name>
+      <Email>dgueriera@malvernprep.org</Email>
+      <Phone>610-547-0776</Phone>
+    </Coach>
+  </ContactInformation>
+
+  <Media>
+    <ProfilePicture>
+      <Filename>1772316420507-7fbe7ce12__6__3084_Original.jpeg</Filename>
+      <URL>/uploads/1772316420507-7fbe7ce12__6__3084_Original.jpeg</URL>
+    </ProfilePicture>
+    <HighlightVideos>
+      <Video index="1">
+        <Filename>1772376112490-twitsave.com_tF0NKawhP0De_3nS.mp4</Filename>
+        <URL>/uploads/1772376112490-twitsave.com_tF0NKawhP0De_3nS.mp4</URL>
+      </Video>
+      <Video index="2">
+        <Filename>1772376185675-twitsave.com_nQpUx7JXO579bYhu.mp4</Filename>
+        <URL>/uploads/1772376185675-twitsave.com_nQpUx7JXO579bYhu.mp4</URL>
+      </Video>
+    </HighlightVideos>
+    <AdditionalImages>
+      <Image index="1">
+        <Filename>1772375289802-G1i0byKXYAQnWk1.jpg</Filename>
+        <URL>/uploads/1772375289802-G1i0byKXYAQnWk1.jpg</URL>
+      </Image>
+      <Image index="2">
+        <Filename>1772375289802-GB2IC6JW8AAtTh7.jpg</Filename>
+        <URL>/uploads/1772375289802-GB2IC6JW8AAtTh7.jpg</URL>
+      </Image>
+      <Image index="3">
+        <Filename>1772375289812-footballPLayer.jpg</Filename>
+        <URL>/uploads/1772375289812-footballPLayer.jpg</URL>
+      </Image>
+    </AdditionalImages>
+    <CollegeOffers>
+      <Offer index="1">
+        <Filename>1772376398413-Duke_Athletics_logo.svg.png</Filename>
+        <URL>/uploads/1772376398413-Duke_Athletics_logo.svg.png</URL>
+      </Offer>
+      <Offer index="2">
+        <Filename>1772376398414-LSU-favicon.png</Filename>
+        <URL>/uploads/1772376398414-LSU-favicon.png</URL>
+      </Offer>
+      <Offer index="3">
+        <Filename>1772376398414-Ohio-State-Buckeyes-Logo-1991.png</Filename>
+        <URL>/uploads/1772376398414-Ohio-State-Buckeyes-Logo-1991.png</URL>
+      </Offer>
+      <Offer index="4">
+        <Filename>1772376398416-Penn_State_Nittany_Lions_logo.svg.png</Filename>
+        <URL>/uploads/1772376398416-Penn_State_Nittany_Lions_logo.svg.png</URL>
+      </Offer>
+      <Offer index="5">
+        <Filename>1772376398417-Pitt_Panthers_wordmark.svg.png</Filename>
+        <URL>/uploads/1772376398417-Pitt_Panthers_wordmark.svg.png</URL>
+      </Offer>
+      <Offer index="6">
+        <Filename>1772376398418-Texas_A&amp;M_University_logo.svg.png</Filename>
+        <URL>/uploads/1772376398418-Texas_A&amp;M_University_logo.svg.png</URL>
+      </Offer>
+      <Offer index="7">
+        <Filename>1772376398419-Wake_Forest_University_Athletic_logo.svg.png</Filename>
+        <URL>/uploads/1772376398419-Wake_Forest_University_Athletic_logo.svg.png</URL>
+      </Offer>
+      <Offer index="8">
+        <Filename>1772378185640-b1ad46ec57029cbff79c5f9c56135db3.jpg</Filename>
+        <URL>/uploads/1772378185640-b1ad46ec57029cbff79c5f9c56135db3.jpg</URL>
+      </Offer>
+      <Offer index="9">
+        <Filename>1772378185642-Virginia-Tech-Hokies-logo.png</Filename>
+        <URL>/uploads/1772378185642-Virginia-Tech-Hokies-logo.png</URL>
+      </Offer>
+    </CollegeOffers>
+  </Media>
+
+</PlayerProfile>

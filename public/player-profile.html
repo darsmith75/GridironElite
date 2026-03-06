@@ -3,110 +3,212 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Player Profile</title>
+  <title>My Profile</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="profile-header">
-      <h1>🏈 My Player Profile</h1>
-      <button onclick="logout()" class="logout-btn">Logout</button>
-    </div>
-
-    <div id="currentProfile"></div>
-
-    <div class="form-container">
-      <form id="profileForm" enctype="multipart/form-data">
-      <div class="form-grid">
-        <div class="form-section">
-          <h3>📋 Personal Information</h3>
-          <label>Full Name:</label>
-          <input type="text" name="fullName" placeholder="Full Name" required>
-          <label>High School:</label>
-          <input type="text" name="highSchool" placeholder="High School">
-          <label>Graduation Year:</label>
-          <input type="number" name="graduationYear" placeholder="Graduation Year">
-          <label>Position:</label>
-          <select name="position">
-            <option value="">Select Position</option>
-            <option value="QB">Quarterback (QB)</option>
-            <option value="RB">Running Back (RB)</option>
-            <option value="WR">Wide Receiver (WR)</option>
-            <option value="TE">Tight End (TE)</option>
-            <option value="OL">Offensive Line (OL)</option>
-            <option value="DL">Defensive Line (DL)</option>
-            <option value="LB">Linebacker (LB)</option>
-            <option value="CB">Cornerback (CB)</option>
-            <option value="S">Safety (S)</option>
-            <option value="K">Kicker (K)</option>
-          </select>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
         </div>
+        <nav class="top-nav-menu">
+          <a href="player-profile.html" class="nav-link">Home</a>
+          <a href="messages.html" class="nav-link">Messages</a>
+          <a href="player-profile.html" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
 
-        <div class="form-section">
-          <h3>💪 Physical Metrics</h3>
-          <label>Height:</label>
-          <input type="text" name="height" placeholder="Height (e.g., 6'2&quot;)">
-          <label>Weight (lbs):</label>
-          <input type="number" name="weight" placeholder="Weight (lbs)">
-          <label>40-Yard Dash (seconds):</label>
-          <input type="number" step="0.01" name="fortyYardDash" placeholder="40-Yard Dash (seconds)">
-          <label>Bench Press (lbs):</label>
-          <input type="number" name="benchPress" placeholder="Bench Press (lbs)">
-          <label>Squat (lbs):</label>
-          <input type="number" name="squat" placeholder="Squat (lbs)">
-          <label>Vertical Jump (inches):</label>
-          <input type="number" step="0.1" name="verticalJump" placeholder="Vertical Jump (inches)">
-          <label>5-10-5 Shuttle (seconds):</label>
-          <input type="number" step="0.01" name="shuttle5105" placeholder="5-10-5 Shuttle (seconds)">
-          <label>L-Drill (seconds):</label>
-          <input type="number" step="0.01" name="lDrill" placeholder="L-Drill (seconds)">
-          <label>Broad Jump (inches):</label>
-          <input type="number" step="0.1" name="broadJump" placeholder="Broad Jump (inches)">
-          <label>Power Clean (lbs):</label>
-          <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
-          <label>Single Leg Squat (lbs):</label>
-          <input type="number" name="singleLegSquat" placeholder="Single Leg Squat (lbs)">
-        </div>
+    <div class="dashboard-container">
 
-        <div class="form-section">
-          <h3>🎓 Academic</h3>
-          <label>GPA:</label>
-          <input type="number" step="0.01" name="gpa" placeholder="GPA">
-        </div>
-
-        <div class="form-section">
-          <h3>📸 Media</h3>
-          <label>Profile Picture:</label>
-          <div class="file-input-wrapper">
-            <input type="file" name="profilePicture" accept="image/*">
-          </div>
-          
-          <label>Add Highlight Videos (you can select multiple):</label>
-          <div class="file-input-wrapper">
-            <input type="file" name="highlightVideos" accept="video/*" multiple>
-          </div>
-          
-          <label>Add Additional Images (you can select multiple):</label>
-          <div class="file-input-wrapper">
-            <input type="file" name="additionalImages" accept="image/*" multiple>
-          </div>
-          
-          <label>Add College Offer Logos (you can select multiple):</label>
-          <div class="file-input-wrapper">
-            <input type="file" name="collegeOffers" accept="image/*" multiple>
-          </div>
-          <p class="hint-text">Upload logos of colleges/universities that have offered you a scholarship or spot on their team</p>
-        </div>
-
-        <div class="form-section full-width">
-          <h3>📝 Bio</h3>
-          <label>About You:</label>
-          <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
-        </div>
+    <div class="profile-container">
+      <!-- Hero Section -->
+      <div class="profile-hero">
+        <div class="hero-gradient"></div>
+        <div class="profile-photo-wrapper" id="heroPhoto"></div>
       </div>
 
-      <button type="submit" class="submit-btn">💾 Save Profile</button>
-    </form>
+      <!-- Quick Actions -->
+      <div style="text-align: center; padding: 20px;">
+        <button onclick="window.location.href='player-card.html'" class="player-card-btn" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3); transition: all 0.3s;">
+          🏈 Player Card
+        </button>
+      </div>
+
+      <div id="currentProfile"></div>
+
+      <!-- Profile Form -->
+      <div class="profile-section">
+        <h2 class="section-title-small">UPDATE PROFILE</h2>
+        <form id="profileForm" enctype="multipart/form-data">
+          <div class="form-grid">
+            <div class="form-section">
+              <h3>Personal Information</h3>
+              <label>Full Name:</label>
+              <input type="text" name="fullName" placeholder="Full Name" required>
+              <label>High School:</label>
+              <input type="text" name="highSchool" placeholder="High School">
+              <label>Graduation Year:</label>
+              <input type="number" name="graduationYear" placeholder="Graduation Year">
+              <label>Position:</label>
+              <select name="position">
+                <option value="">Select Position</option>
+                <option value="QB">Quarterback (QB)</option>
+                <option value="RB">Running Back (RB)</option>
+                <option value="WR">Wide Receiver (WR)</option>
+                <option value="TE">Tight End (TE)</option>
+                <option value="OL">Offensive Line (OL)</option>
+                <option value="DL">Defensive Line (DL)</option>
+                <option value="LB">Linebacker (LB)</option>
+                <option value="CB">Cornerback (CB)</option>
+                <option value="S">Safety (S)</option>
+                <option value="K">Kicker (K)</option>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <h3>Physical Metrics</h3>
+              <label>Height:</label>
+              <input type="text" name="height" placeholder="Height (e.g., 6'2&quot;)">
+              <label>Weight (lbs):</label>
+              <input type="number" name="weight" placeholder="Weight (lbs)">
+              <label>40-Yard Dash (seconds):</label>
+              <input type="number" step="0.01" name="fortyYardDash" placeholder="40-Yard Dash (seconds)">
+              <label>Bench Press (lbs):</label>
+              <input type="number" name="benchPress" placeholder="Bench Press (lbs)">
+              <label>Squat (lbs):</label>
+              <input type="number" name="squat" placeholder="Squat (lbs)">
+              <label>Vertical Jump (inches):</label>
+              <input type="number" step="0.1" name="verticalJump" placeholder="Vertical Jump (inches)">
+              <label>5-10-5 Shuttle (seconds):</label>
+              <input type="number" step="0.01" name="shuttle5105" placeholder="5-10-5 Shuttle (seconds)">
+              <label>L-Drill (seconds):</label>
+              <input type="number" step="0.01" name="lDrill" placeholder="L-Drill (seconds)">
+              <label>Broad Jump (inches):</label>
+              <input type="number" step="0.1" name="broadJump" placeholder="Broad Jump (inches)">
+              <label>Power Clean (lbs):</label>
+              <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
+              <label>Single Leg Squat (lbs):</label>
+              <input type="number" name="singleLegSquat" placeholder="Single Leg Squat (lbs)">
+            </div>
+
+            <div class="form-section">
+              <h3>Academic</h3>
+              <label>GPA:</label>
+              <input type="number" step="0.01" name="gpa" placeholder="GPA">
+            </div>
+
+            <div class="form-section">
+              <h3>Social Media</h3>
+              
+              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 15px; margin-bottom: 10px;">
+                <img src="/logos/Hudl_logo.png" alt="Hudl" style="width: 24px; height: 24px;">
+                Hudl
+              </h4>
+              <label>Profile URL:</label>
+              <input type="url" name="hudlLink" placeholder="https://www.hudl.com/profile/...">
+              <label>Username:</label>
+              <input type="text" name="hudlUsername" placeholder="Your Hudl username">
+              
+              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
+                <img src="/logos/Instagram_logo.png" alt="Instagram" style="width: 24px; height: 24px;">
+                Instagram
+              </h4>
+              <label>Profile URL:</label>
+              <input type="url" name="instagramLink" placeholder="https://www.instagram.com/...">
+              <label>Username:</label>
+              <input type="text" name="instagramUsername" placeholder="@username">
+              
+              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
+                <img src="/logos/X_logo.png" alt="X" style="width: 24px; height: 24px;">
+                X (Twitter)
+              </h4>
+              <label>Profile URL:</label>
+              <input type="url" name="twitterLink" placeholder="https://twitter.com/...">
+              <label>Username:</label>
+              <input type="text" name="twitterUsername" placeholder="@username">
+            </div>
+
+            <div class="form-section full-width">
+              <h3>Contact Information</h3>
+              <div class="contact-grid">
+                <div class="contact-person">
+                  <h4>Father</h4>
+                  <label>Name:</label>
+                  <input type="text" name="fatherName" placeholder="Father's Name">
+                  <label>Email:</label>
+                  <input type="email" name="fatherEmail" placeholder="Father's Email">
+                  <label>Phone:</label>
+                  <input type="tel" name="fatherPhone" placeholder="Father's Phone">
+                </div>
+                
+                <div class="contact-person">
+                  <h4>Mother</h4>
+                  <label>Name:</label>
+                  <input type="text" name="motherName" placeholder="Mother's Name">
+                  <label>Email:</label>
+                  <input type="email" name="motherEmail" placeholder="Mother's Email">
+                  <label>Phone:</label>
+                  <input type="tel" name="motherPhone" placeholder="Mother's Phone">
+                </div>
+                
+                <div class="contact-person">
+                  <h4>Head Coach</h4>
+                  <label>Name:</label>
+                  <input type="text" name="coachName" placeholder="Coach's Name">
+                  <label>Email:</label>
+                  <input type="email" name="coachEmail" placeholder="Coach's Email">
+                  <label>Phone:</label>
+                  <input type="tel" name="coachPhone" placeholder="Coach's Phone">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Media</h3>
+              <label>Profile Picture:</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="profilePicture" accept="image/*">
+              </div>
+
+              <label>Player Card Photo:</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="cardPhoto" accept="image/*">
+              </div>
+              <p class="hint-text">Upload a high-quality action photo for your player card (recommended: portrait orientation)</p>
+
+              
+              <label>Add Highlight Videos (you can select multiple):</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="highlightVideos" accept="video/*" multiple>
+              </div>
+              
+              <label>Add Additional Images (you can select multiple):</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="additionalImages" accept="image/*" multiple>
+              </div>
+              
+              <label>Add College Offer Logos (you can select multiple):</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="collegeOffers" accept="image/*" multiple>
+              </div>
+              <p class="hint-text">Upload logos of colleges/universities that have offered you a scholarship or spot on their team</p>
+            </div>
+
+            <div class="form-section full-width">
+              <h3>Bio</h3>
+              <label>About You:</label>
+              <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn">Save Profile</button>
+        </form>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -119,18 +221,22 @@
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
       
+      // Display profile picture in hero section
+      if (profile.id && profile.profile_picture) {
+        document.getElementById('heroPhoto').innerHTML = `
+          <img src="/uploads/${profile.profile_picture}" alt="Profile" class="profile-photo-large">
+        `;
+      } else {
+        document.getElementById('heroPhoto').innerHTML = `
+          <div class="profile-photo-large no-photo">No Photo</div>
+        `;
+      }
+      
       // Display current profile media
       if (profile.id) {
-        let mediaHTML = '<div class="current-profile-section"><h2>📁 Current Profile</h2><div class="current-media">';
+        let mediaHTML = '<div class="profile-section"><h2 class="section-title-small">CURRENT MEDIA</h2>';
         
-        if (profile.profile_picture) {
-          mediaHTML += `
-            <div class="media-item">
-              <h3>Profile Picture</h3>
-              <img src="/uploads/${profile.profile_picture}" alt="Profile" class="current-profile-pic">
-            </div>
-          `;
-        }
+        mediaHTML += '<div class="current-media">';
         
         if (profile.highlight_videos) {
           const videos = JSON.parse(profile.highlight_videos);
@@ -188,6 +294,9 @@
         
         mediaHTML += '</div></div>';
         document.getElementById('currentProfile').innerHTML = mediaHTML;
+        
+        // Display card photo selection
+        
       }
       
       // Populate form fields
@@ -208,6 +317,21 @@
         document.querySelector('[name="powerClean"]').value = profile.power_clean || '';
         document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
         document.querySelector('[name="gpa"]').value = profile.gpa || '';
+        document.querySelector('[name="fatherName"]').value = profile.father_name || '';
+        document.querySelector('[name="fatherEmail"]').value = profile.father_email || '';
+        document.querySelector('[name="fatherPhone"]').value = profile.father_phone || '';
+        document.querySelector('[name="motherName"]').value = profile.mother_name || '';
+        document.querySelector('[name="motherEmail"]').value = profile.mother_email || '';
+        document.querySelector('[name="motherPhone"]').value = profile.mother_phone || '';
+        document.querySelector('[name="coachName"]').value = profile.coach_name || '';
+        document.querySelector('[name="coachEmail"]').value = profile.coach_email || '';
+        document.querySelector('[name="coachPhone"]').value = profile.coach_phone || '';
+        document.querySelector('[name="hudlLink"]').value = profile.hudl_link || '';
+        document.querySelector('[name="instagramLink"]').value = profile.instagram_link || '';
+        document.querySelector('[name="twitterLink"]').value = profile.twitter_link || '';
+        document.querySelector('[name="hudlUsername"]').value = profile.hudl_username || '';
+        document.querySelector('[name="instagramUsername"]').value = profile.instagram_username || '';
+        document.querySelector('[name="twitterUsername"]').value = profile.twitter_username || '';
         document.querySelector('[name="bio"]').value = profile.bio || '';
       }
     }
@@ -267,3 +391,11 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+

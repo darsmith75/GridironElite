@@ -10,7 +10,9 @@
   <div class="login-container">
     <div class="login-left">
       <div class="login-hero">
-        <h1>🏈 Football Agent Platform</h1>
+        <div class="login-logo-frame">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="The Trajectory" class="login-logo">
+        </div>
         <p class="tagline">Connecting High School Athletes with Opportunities</p>
         <div class="features">
           <div class="feature-item">
@@ -60,7 +62,6 @@
             <input type="password" id="loginPassword" placeholder="Enter your password" required onkeypress="handleLoginKeyPress(event)">
           </div>
           <button onclick="login()" class="primary-btn">Login</button>
-          <p class="demo-hint">Demo Agent: agent@example.com / password</p>
         </div>
 
         <div id="registerForm" class="auth-form" style="display:none;">
@@ -77,7 +78,6 @@
             <input type="password" id="regPassword" placeholder="Create a password" required onkeypress="handleRegisterKeyPress(event)">
           </div>
           <button onclick="register()" class="primary-btn">Create Account</button>
-          <p class="demo-hint">Register as a player to create your profile</p>
         </div>
       </div>
     </div>
