@@ -7,7 +7,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $siteName = "FootballPlatform"
-$projectPath = "C:\KiroProjects"
+$projectPath = "C:\GridironElite"
 
 # Check 1: Node.js
 Write-Host "1. Checking Node.js..." -ForegroundColor Yellow

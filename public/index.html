@@ -66,6 +66,13 @@
 
         <div id="registerForm" class="auth-form" style="display:none;">
           <div class="input-group">
+            <label>I am registering as</label>
+            <select id="regRole" onkeypress="handleRegisterKeyPress(event)">
+              <option value="player">Athlete</option>
+              <option value="agent">Agent</option>
+            </select>
+          </div>
+          <div class="input-group">
             <label>Full Name</label>
             <input type="text" id="regFullName" placeholder="Enter your full name" required onkeypress="handleRegisterKeyPress(event)">
           </div>

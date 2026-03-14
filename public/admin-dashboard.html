@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #e9ecef;
+      text-align: center;
+    }
+    .stat-card .stat-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1e3c72;
+    }
+    .stat-card .stat-label {
+      font-size: 14px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .admin-table-wrapper {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #e9ecef;
+    }
+    .admin-table-wrapper h2 {
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+    .admin-toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .admin-toolbar input, .admin-toolbar select {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .admin-toolbar input { flex: 1; min-width: 200px; }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .admin-table th, .admin-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .admin-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #333;
+      position: sticky;
+      top: 0;
+    }
+    .admin-table tr:hover { background: #f8f9fc; }
+    .role-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .role-badge.player { background: #e8f5e9; color: #2e7d32; }
+    .role-badge.agent { background: #e3f2fd; color: #1565c0; }
+    .role-badge.admin { background: #fce4ec; color: #c62828; }
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-right: 4px;
+    }
+    .action-btn.edit { background: #e3f2fd; color: #1565c0; }
+    .action-btn.edit:hover { background: #bbdefb; }
+    .action-btn.delete { background: #ffebee; color: #c62828; }
+    .action-btn.delete:hover { background: #ffcdd2; }
+    .action-btn.reset { background: #fff3e0; color: #e65100; }
+    .action-btn.reset:hover { background: #ffe0b2; }
+
+    /* Tab styles */
+    .admin-tabs {
+      display: flex;
+      border-bottom: 2px solid #e9ecef;
+      margin-bottom: 24px;
+      gap: 0;
+    }
+    .admin-tab {
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #666;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -2px;
+    }
+    .admin-tab:hover { color: #1e3c72; }
+    .admin-tab.active {
+      color: #1e3c72;
+      border-bottom-color: #1e3c72;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* College management */
+    .college-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 24px;
+    }
+    .college-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: box-shadow 0.2s;
+    }
+    .college-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .college-logo-thumb {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #f8f9fa;
+      flex-shrink: 0;
+    }
+    .college-logo-placeholder {
+      width: 64px;
+      height: 64px;
+      border-radius: 6px;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bbb;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .college-info { flex: 1; min-width: 0; }
+    .college-info h4 { margin: 0 0 4px; font-size: 15px; color: #333; }
+    .college-info a { font-size: 13px; color: #1e3c72; text-decoration: none; word-break: break-all; }
+    .college-info a:hover { text-decoration: underline; }
+    .college-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .add-college-btn {
+      padding: 10px 20px;
+      background: #1e3c72;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .add-college-btn:hover { background: #2a5298; }
+
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal h3 { margin-bottom: 20px; color: #1e3c72; }
+    .modal .input-group { margin-bottom: 14px; }
+    .modal .input-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 14px; color: #333; }
+    .modal .input-group input, .modal .input-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .modal-actions button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save { background: #1e3c72; color: white; }
+    .btn-save:hover { background: #2a5298; }
+    .btn-cancel { background: #eee; color: #333; }
+    .btn-cancel:hover { background: #ddd; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+           <a href="admin-dashboard.html" class="nav-link">Home</a>
+           <a href="messages.html" class="nav-link">Messages</a>
+           <a href="admin-profile.html" class="nav-link">My Profile</a>
+           <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <h1 style="margin-bottom: 24px; color: #1e3c72;">Site Administration</h1>
+
+      <!-- Stats -->
+      <div class="admin-stats" id="statsContainer"></div>
+
+      <!-- Tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchTab('users')">User Management</button>
+        <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
+      </div>
+
+      <!-- User Management Tab -->
+      <div class="tab-panel active" id="tab-users">
+      <div class="admin-table-wrapper">
+        <div class="admin-toolbar">
+          <input type="text" id="userSearch" placeholder="Search by name or email...">
+          <select id="roleFilter">
+            <option value="">All Roles</option>
+            <option value="player">Athletes</option>
+            <option value="agent">Agents</option>
+            <option value="admin">Admins</option>
+          </select>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Details</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+
+      <!-- College Management Tab -->
+      <div class="tab-panel" id="tab-colleges">
+        <div class="admin-table-wrapper">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="margin: 0;">Colleges &amp; Universities</h2>
+            <button class="add-college-btn" onclick="openCollegeModal()">+ Add College</button>
+          </div>
+          <div class="admin-toolbar">
+            <input type="text" id="collegeSearch" placeholder="Search colleges...">
+            <select id="conferenceFilter">
+              <option value="">All Conferences</option>
+              <option value="ACC">ACC</option>
+              <option value="American">American</option>
+              <option value="Big 12">Big 12</option>
+              <option value="Big Ten">Big Ten</option>
+              <option value="Conference USA">Conference USA</option>
+              <option value="FBS Independents">FBS Independents</option>
+              <option value="Mid-American">Mid-American</option>
+              <option value="Mountain West">Mountain West</option>
+              <option value="Pac-12">Pac-12</option>
+              <option value="SEC">SEC</option>
+              <option value="Sun Belt">Sun Belt</option>
+            </select>
+          </div>
+          <div class="college-grid" id="collegeGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3 id="editModalTitle">Edit User</h3>
+      <input type="hidden" id="editUserId">
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="editFullName">
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="editEmail">
+      </div>
+      <div class="input-group">
+        <label>Role</label>
+        <select id="editRole">
+          <option value="player">Athlete</option>
+          <option value="agent">Agent</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Phone</label>
+        <input type="text" id="editPhone">
+      </div>
+      <div class="input-group">
+        <label>Organization</label>
+        <input type="text" id="editOrganization">
+      </div>
+
+      <!-- Player-specific fields -->
+      <div id="playerFields" style="display:none;">
+        <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;">
+        <h4 style="margin-bottom: 12px; color: #2a5298;">Player Profile</h4>
+        <div class="input-group">
+          <label>High School</label>
+          <input type="text" id="editHighSchool">
+        </div>
+        <div class="input-group">
+          <label>Position</label>
+          <select id="editPosition">
+            <option value="">Select Position</option>
+            <option value="QB">Quarterback</option>
+            <option value="RB">Running Back</option>
+            <option value="WR">Wide Receiver</option>
+            <option value="TE">Tight End</option>
+            <option value="OL">Offensive Line</option>
+            <option value="DL">Defensive Line</option>
+            <option value="LB">Linebacker</option>
+            <option value="CB">Cornerback</option>
+            <option value="S">Safety</option>
+            <option value="K">Kicker</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Graduation Year</label>
+          <input type="number" id="editGradYear">
+        </div>
+        <div class="input-group">
+          <label>Height</label>
+          <input type="text" id="editHeight">
+        </div>
+        <div class="input-group">
+          <label>Weight</label>
+          <input type="number" id="editWeight">
+        </div>
+        <div class="input-group">
+          <label>GPA</label>
+          <input type="number" step="0.1" id="editGpa" min="0" max="4.0">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn-save" onclick="saveUser()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal">
+      <h3>Reset Password</h3>
+      <input type="hidden" id="resetUserId">
+      <p id="resetUserLabel" style="margin-bottom: 16px; color: #666;"></p>
+      <div class="input-group">
+        <label>New Password</label>
+        <input type="password" id="resetNewPassword" placeholder="Min 6 characters">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('resetModal')">Cancel</button>
+        <button class="btn-save" onclick="resetPassword()">Reset Password</button>
+      </div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- College Modal -->
+  <div class="modal-overlay" id="collegeModal">
+    <div class="modal">
+      <h3 id="collegeModalTitle">Add College</h3>
+      <form id="collegeForm" enctype="multipart/form-data">
+        <input type="hidden" id="collegeId">
+        <div class="input-group">
+          <label>College / University Name *</label>
+          <input type="text" id="collegeName" required>
+        </div>
+        <div class="input-group">
+          <label>Website URL</label>
+          <input type="url" id="collegeUrl" placeholder="https://...">
+        </div>
+        <div class="input-group">
+          <label>Conference</label>
+          <select id="collegeConference">
+            <option value="">-- Select Conference --</option>
+            <option value="ACC">ACC</option>
+            <option value="American">American</option>
+            <option value="Big 12">Big 12</option>
+            <option value="Big Ten">Big Ten</option>
+            <option value="Converence USA">Conference USA</option>
+            <option value="FBS Independents">FBS Independents</option>
+            <option value="Mid-American">Mid-American</option>
+            <option value="Mountain West">Mountain West</option>
+            <option value="Pac-12">Pac-12</option>
+            <option value="SEC">SEC</option>
+            <option value="Sun Belt">Sun Belt</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Team Name</label>
+          <input type="text" id="collegeTeam" placeholder="e.g. Crimson Tide, Bulldogs">
+        </div>
+        <div class="input-group">
+          <label>Logo Image</label>
+          <input type="file" id="collegeLogo" accept="image/*">
+        </div>
+        <div id="collegeCurrentLogo" style="margin-bottom: 14px;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" onclick="closeModal('collegeModal')">Cancel</button>
+          <button type="submit" class="btn-save">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth('admin');
+
+    let allUsers = [];
+
+    async function loadStats() {
+      const res = await fetch('/api/admin/stats');
+      if (!res.ok) return;
+      const stats = await res.json();
+      document.getElementById('statsContainer').innerHTML = `
+        <div class="stat-card"><div class="stat-number">${stats.totalUsers}</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.totalPlayers}</div><div class="stat-label">Athletes</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.totalAgents}</div><div class="stat-label">Agents</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.totalMessages}</div><div class="stat-label">Messages</div></div>
+      `;
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users');
+      if (!res.ok) return;
+      allUsers = await res.json();
+      renderUsers();
+    }
+
+    function renderUsers() {
+      const search = document.getElementById('userSearch').value.toLowerCase().trim();
+      const roleFilter = document.getElementById('roleFilter').value;
+
+      let filtered = allUsers;
+      if (roleFilter) filtered = filtered.filter(u => u.role === roleFilter);
+      if (search) {
+        filtered = filtered.filter(u => {
+          const text = [u.email, u.full_name, u.player_name].filter(Boolean).join(' ').toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      const tbody = document.getElementById('usersTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999; padding:30px;">No users found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => {
+        const name = u.player_name || u.full_name || '-';
+        const details = u.role === 'player'
+          ? [u.position, u.high_school, u.graduation_year ? 'Class of ' + u.graduation_year : '', u.gpa ? 'GPA: ' + u.gpa : ''].filter(Boolean).join(' &middot; ')
+          : (u.organization || '-');
+        const date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+        return `<tr>
+          <td>${u.id}</td>
+          <td>${escapeHtml(name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td><span class="role-badge ${u.role}">${u.role === 'player' ? 'Athlete' : u.role}</span></td>
+          <td>${details || '-'}</td>
+          <td>${date}</td>
+          <td>
+            <button class="action-btn edit" onclick="openEditModal(${u.id})">Edit</button>
+            <button class="action-btn reset" onclick="openResetModal(${u.id}, '${escapeHtml(name)}')">Password</button>
+            <button class="action-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(name)}')">Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Search and filter listeners
+    document.getElementById('userSearch').addEventListener('input', renderUsers);
+    document.getElementById('roleFilter').addEventListener('change', renderUsers);
+
+    // Edit Modal
+    async function openEditModal(userId) {
+      const res = await fetch('/api/admin/users/' + userId);
+      if (!res.ok) return alert('Failed to load user');
+      const data = await res.json();
+
+      document.getElementById('editUserId').value = data.user.id;
+      document.getElementById('editFullName').value = data.user.full_name || '';
+      document.getElementById('editEmail').value = data.user.email;
+      document.getElementById('editRole').value = data.user.role;
+      document.getElementById('editPhone').value = data.user.phone || '';
+      document.getElementById('editOrganization').value = data.user.organization || '';
+      document.getElementById('editModalTitle').textContent = 'Edit User: ' + (data.user.full_name || data.user.email);
+
+      const playerFields = document.getElementById('playerFields');
+      if (data.profile) {
+        playerFields.style.display = 'block';
+        document.getElementById('editHighSchool').value = data.profile.high_school || '';
+        document.getElementById('editPosition').value = data.profile.position || '';
+        document.getElementById('editGradYear').value = data.profile.graduation_year || '';
+        document.getElementById('editHeight').value = data.profile.height || '';
+        document.getElementById('editWeight').value = data.profile.weight || '';
+        document.getElementById('editGpa').value = data.profile.gpa || '';
+      } else {
+        playerFields.style.display = 'none';
+      }
+
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    async function saveUser() {
+      const userId = document.getElementById('editUserId').value;
+
+      // Save user details
+      const userRes = await fetch('/api/admin/users/' + userId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: document.getElementById('editFullName').value,
+          email: document.getElementById('editEmail').value,
+          role: document.getElementById('editRole').value,
+          phone: document.getElementById('editPhone').value,
+          organization: document.getElementById('editOrganization').value
+        })
+      });
+      if (!userRes.ok) {
+        const err = await userRes.json();
+        return alert(err.error || 'Failed to update user');
+      }
+
+      // Save player profile if visible
+      if (document.getElementById('playerFields').style.display !== 'none') {
+        const profileRes = await fetch('/api/admin/players/' + userId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: document.getElementById('editFullName').value,
+            high_school: document.getElementById('editHighSchool').value,
+            position: document.getElementById('editPosition').value,
+            graduation_year: document.getElementById('editGradYear').value,
+            height: document.getElementById('editHeight').value,
+            weight: document.getElementById('editWeight').value,
+            gpa: document.getElementById('editGpa').value
+          })
+        });
+        if (!profileRes.ok) {
+          const err = await profileRes.json();
+          return alert(err.error || 'Failed to update player profile');
+        }
+      }
+
+      closeModal('editModal');
+      loadUsers();
+      loadStats();
+    }
+
+    // Reset Password Modal
+    function openResetModal(userId, name) {
+      document.getElementById('resetUserId').value = userId;
+      document.getElementById('resetUserLabel').textContent = 'Reset password for: ' + name;
+      document.getElementById('resetNewPassword').value = '';
+      document.getElementById('resetModal').classList.add('active');
+    }
+
+    async function resetPassword() {
+      const userId = document.getElementById('resetUserId').value;
+      const newPassword = document.getElementById('resetNewPassword').value;
+      if (!newPassword || newPassword.length < 6) return alert('Password must be at least 6 characters');
+
+      const res = await fetch('/api/admin/users/' + userId + '/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
+      });
+      if (res.ok) {
+        alert('Password reset successfully');
+        closeModal('resetModal');
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to reset password');
+      }
+    }
+
+    // Delete User
+    async function deleteUser(userId, name) {
+      if (!confirm('Are you sure you want to delete user "' + name + '"? This will also delete all their messages and related data. This cannot be undone.')) return;
+
+      const res = await fetch('/api/admin/users/' + userId, { method: 'DELETE' });
+      if (res.ok) {
+        loadUsers();
+        loadStats();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete user');
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('active');
+      });
+    });
+
+    // Tab switching
+    function switchTab(tab) {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`.admin-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+      if (tab === 'colleges') loadColleges();
+    }
+
+    // College Management
+    let allColleges = [];
+
+    async function loadColleges() {
+      const res = await fetch('/api/admin/colleges');
+      if (!res.ok) return;
+      allColleges = await res.json();
+      renderColleges();
+    }
+
+    function renderColleges() {
+      const search = document.getElementById('collegeSearch').value.toLowerCase().trim();
+      const confFilter = document.getElementById('conferenceFilter').value;
+      let filtered = allColleges;
+      if (confFilter) {
+        filtered = filtered.filter(c => c.conference === confFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(search));
+      }
+
+      const grid = document.getElementById('collegeGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p style="color:#999; text-align:center; padding:30px; grid-column:1/-1;">No colleges found</p>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const logoHtml = c.logo
+          ? `<img src="/${c.logo}" class="college-logo-thumb" alt="${escapeHtml(c.name)}">`
+          : `<div class="college-logo-placeholder">🏫</div>`;
+        const urlHtml = c.website_url
+          ? `<a href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">${escapeHtml(c.website_url)}</a>`
+          : '<span style="color:#999; font-size:13px;">No website</span>';
+        const confHtml = c.conference
+          ? `<span style="font-size:12px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px;">${escapeHtml(c.conference)}</span>`
+          : '';
+        const teamHtml = c.team
+          ? `<span style="font-size:12px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-left:4px;">${escapeHtml(c.team)}</span>`
+          : '';
+        return `<div class="college-card">
+          ${logoHtml}
+          <div class="college-info">
+            <h4>${escapeHtml(c.name)}</h4>
+            ${urlHtml}
+            <div>${confHtml}${teamHtml}</div>
+          </div>
+          <div class="college-actions">
+            <button class="action-btn edit" onclick="openCollegeModal(${c.id})">Edit</button>
+            <button class="action-btn delete" onclick="deleteCollege(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')">Delete</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('collegeSearch').addEventListener('input', renderColleges);
+    document.getElementById('conferenceFilter').addEventListener('change', renderColleges);
+
+    function openCollegeModal(collegeId) {
+      document.getElementById('collegeForm').reset();
+      document.getElementById('collegeId').value = '';
+      document.getElementById('collegeCurrentLogo').innerHTML = '';
+
+      if (collegeId) {
+        const c = allColleges.find(col => col.id === collegeId);
+        if (c) {
+          document.getElementById('collegeModalTitle').textContent = 'Edit College';
+          document.getElementById('collegeId').value = c.id;
+          document.getElementById('collegeName').value = c.name;
+          document.getElementById('collegeUrl').value = c.website_url || '';
+          document.getElementById('collegeConference').value = c.conference || '';
+          document.getElementById('collegeTeam').value = c.team || '';
+          if (c.logo) {
+            document.getElementById('collegeCurrentLogo').innerHTML =
+              `<img src="/${c.logo}" style="max-height:60px; border-radius:4px;">`;
+          }
+        }
+      } else {
+        document.getElementById('collegeModalTitle').textContent = 'Add College';
+      }
+      document.getElementById('collegeModal').classList.add('active');
+    }
+
+    document.getElementById('collegeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('collegeId').value;
+      const formData = new FormData();
+      formData.append('name', document.getElementById('collegeName').value);
+      formData.append('website_url', document.getElementById('collegeUrl').value);
+      formData.append('conference', document.getElementById('collegeConference').value);
+      formData.append('team', document.getElementById('collegeTeam').value);
+      const logoFile = document.getElementById('collegeLogo').files[0];
+      if (logoFile) formData.append('logo', logoFile);
+
+      const url = id ? '/api/admin/colleges/' + id : '/api/admin/colleges';
+      const method = id ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, body: formData });
+      if (res.ok) {
+        closeModal('collegeModal');
+        loadColleges();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to save college');
+      }
+    });
+
+    async function deleteCollege(id, name) {
+      if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+      const res = await fetch('/api/admin/colleges/' + id, { method: 'DELETE' });
+      if (res.ok) {
+        loadColleges();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete college');
+      }
+    }
+
+    // Initialize
+    loadStats();
+    loadUsers();
+  </script>
+</body>
+</html>

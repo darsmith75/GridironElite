@@ -6,7 +6,7 @@ Write-Host "Setting up IIS website for Football Platform..." -ForegroundColor Gr
 Import-Module WebAdministration
 
 $siteName = "FootballPlatform"
-$projectPath = "C:\KiroProjects"
+$projectPath = "C:\GridironElite"
 $port = 8080
 
 # Check if site already exists

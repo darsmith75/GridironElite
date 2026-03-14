@@ -1,17 +1,17 @@
 {
-  "name": "football-agent-platform",
-  "version": "1.0.0",
-  "description": "High school football player profile platform for sports agents",
-  "main": "server.js",
+  "name": "gridiron-elite",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "seed": "node seed-data.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "better-sqlite3-multiple-ciphers": "^11.5.0",
     "bcrypt": "^5.1.1",
+    "better-sqlite3-multiple-ciphers": "^11.0.0",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
     "multer": "^1.4.5-lts.1",
-    "express-session": "^1.17.3"
+    "nodemailer": "^8.0.1"
   }
 }

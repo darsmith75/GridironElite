@@ -66,7 +66,10 @@
         currentUserId = user.id;
       
         // Set navigation links based on role
-        if (currentRole === 'agent') {
+        if (currentRole === 'admin') {
+          document.getElementById('homeLink').href = 'admin-dashboard.html';
+          document.getElementById('profileLink').href = 'admin-profile.html';
+        } else if (currentRole === 'agent') {
           document.getElementById('homeLink').href = 'agent-dashboard.html';
           document.getElementById('profileLink').href = 'agent-profile.html';
         } else {

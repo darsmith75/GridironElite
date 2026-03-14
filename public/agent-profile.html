@@ -52,6 +52,11 @@
                 <label>Years of Experience:</label>
                 <input type="number" name="experience" id="agentExperience" placeholder="Years">
               </div>
+                <div class="form-section" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 10px;">
+                  <h3>🖼️ Profile Photo</h3>
+                  <img id="agentProfilePicture" src="/uploads/default-profile.png" alt="Profile Picture" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #ccc; margin-bottom: 10px;">
+                  <input type="file" id="agentProfilePictureInput" accept="image/*">
+                </div>
 
               <div class="form-section full-width">
                 <h3>📝 Bio</h3>
@@ -98,7 +103,6 @@
         const res = await fetch('/api/agent/profile');
         if (res.ok) {
           const profile = await res.json();
-          
           if (profile.email) {
             document.getElementById('agentEmail').value = profile.email;
             document.getElementById('agentFullName').value = profile.full_name || '';
@@ -107,6 +111,8 @@
             document.getElementById('agentTitle').value = profile.title || '';
             document.getElementById('agentExperience').value = profile.experience || '';
             document.getElementById('agentBio').value = profile.bio || '';
+            // Set profile picture
+            document.getElementById('agentProfilePicture').src = profile.profile_picture ? '/uploads/' + profile.profile_picture : '/uploads/default-profile.png';
           }
         }
       } catch (error) {
@@ -117,27 +123,26 @@
     document.getElementById('agentProfileForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const formData = {
-        fullName: document.getElementById('agentFullName').value,
-        email: document.getElementById('agentEmail').value,
-        phone: document.getElementById('agentPhone').value,
-        organization: document.getElementById('agentOrganization').value,
-        title: document.getElementById('agentTitle').value,
-        experience: document.getElementById('agentExperience').value,
-        bio: document.getElementById('agentBio').value
-      };
-      
+      const formData = new FormData();
+      formData.append('fullName', document.getElementById('agentFullName').value);
+      formData.append('email', document.getElementById('agentEmail').value);
+      formData.append('phone', document.getElementById('agentPhone').value);
+      formData.append('organization', document.getElementById('agentOrganization').value);
+      formData.append('title', document.getElementById('agentTitle').value);
+      formData.append('experience', document.getElementById('agentExperience').value);
+      formData.append('bio', document.getElementById('agentBio').value);
+      const pictureInput = document.getElementById('agentProfilePictureInput');
+      if (pictureInput.files && pictureInput.files[0]) {
+        formData.append('profilePicture', pictureInput.files[0]);
+      }
       try {
         const res = await fetch('/api/agent/profile', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formData)
+          body: formData
         });
-        
         if (res.ok) {
           alert('Profile updated successfully!');
+          loadAgentProfile();
         } else {
           alert('Error updating profile');
         }

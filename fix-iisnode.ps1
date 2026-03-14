@@ -4,7 +4,7 @@
 Write-Host "Fixing iisnode configuration..." -ForegroundColor Yellow
 
 $siteName = "FootballPlatform"
-$projectPath = "C:\KiroProjects"
+$projectPath = "C:\GridironElite"
 
 # Check if iisnode is installed
 $iisnodePath = "${env:ProgramFiles}\iisnode\iisnode.dll"

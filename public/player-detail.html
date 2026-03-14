@@ -30,6 +30,7 @@
   <script src="app.js"></script>
   <script>
     checkAuth('agent');
+    let reportCardPreviewEl = null;
     
     const urlParams = new URLSearchParams(window.location.search);
     const playerId = urlParams.get('id');
@@ -39,7 +40,69 @@
     }
     
     loadPlayerDetail();
+
+    function showReportCardPreview(event, imageUrl) {
+      hideReportCardPreview();
+
+      reportCardPreviewEl = document.createElement('div');
+      reportCardPreviewEl.style.cssText = 'position:fixed; z-index:10001; background:#fff; border:1px solid #d9d9d9; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); padding:8px; pointer-events:none;';
+      reportCardPreviewEl.innerHTML = `
+        <img src="${imageUrl}" alt="Report Card Preview" style="display:block; width:320px; max-width:50vw; max-height:60vh; object-fit:contain; border-radius:6px;">
+      `;
+      document.body.appendChild(reportCardPreviewEl);
+
+      moveReportCardPreview(event);
+    }
+
+    function moveReportCardPreview(event) {
+      if (!reportCardPreviewEl) return;
+
+      const offset = 12;
+      const rect = reportCardPreviewEl.getBoundingClientRect();
+      let left = event.clientX + offset;
+      let top = event.clientY + offset;
+
+      if (left + rect.width > window.innerWidth - 10) {
+        left = event.clientX - rect.width - offset;
+      }
+      if (top + rect.height > window.innerHeight - 10) {
+        top = window.innerHeight - rect.height - 10;
+      }
+      if (top < 10) {
+        top = 10;
+      }
+
+      reportCardPreviewEl.style.left = left + 'px';
+      reportCardPreviewEl.style.top = top + 'px';
+    }
+
+    function hideReportCardPreview() {
+      if (reportCardPreviewEl) {
+        reportCardPreviewEl.remove();
+        reportCardPreviewEl = null;
+      }
+    }
     
+    function getEmbedUrl(url) {
+      try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtube.com') && u.searchParams.get('v')) {
+          return `https://www.youtube.com/embed/${u.searchParams.get('v')}`;
+        }
+        if (u.hostname === 'youtu.be') {
+          return `https://www.youtube.com/embed${u.pathname}`;
+        }
+        const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) {
+          return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+        }
+        if (u.hostname.includes('hudl.com') && url.includes('/video/')) {
+          return url.replace('/video/', '/embed/video/');
+        }
+        return null;
+      } catch { return null; }
+    }
+
     async function loadPlayerDetail() {
       const res = await fetch(`/api/agent/player/${playerId}`, {
         cache: 'no-store',
@@ -76,6 +139,9 @@
               ${player.position ? `<span class="meta-badge">${player.position}</span>` : ''}
               ${player.graduation_year ? `<span class="meta-badge">Class of ${player.graduation_year}</span>` : ''}
               ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
+              ${player.height ? `<span class="meta-badge">${player.height}</span>` : ''}
+              ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
+              ${player.gpa ? `<span class="meta-badge" ${player.report_card_image ? `style="cursor: zoom-in;" title="Hover to preview, click to view full size" onmouseenter="showReportCardPreview(event, '/uploads/${player.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openLightbox('/uploads/${player.report_card_image}')"` : ''}>GPA: ${player.gpa}</span>` : ''}
             </div>
             <div style="margin-top: 20px;">
               <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn" id="favoriteBtn">
@@ -87,56 +153,10 @@
             </div>
           </div>
           
-          <!-- Physical Stats Inline -->
-          <div class="profile-section">
-            <h2 class="section-title-small">PHYSICAL</h2>
-            <div class="physical-stats-inline">
-              ${player.height ? `<div class="stat-inline"><span class="stat-label-inline">Height</span><span class="stat-value-inline">${player.height}</span></div>` : ''}
-              ${player.weight ? `<div class="stat-inline"><span class="stat-label-inline">Weight</span><span class="stat-value-inline">${player.weight} lbs</span></div>` : ''}
-              ${player.gpa ? `<div class="stat-inline"><span class="stat-label-inline">GPA</span><span class="stat-value-inline">${player.gpa}</span></div>` : ''}
-            </div>
-          </div>
-          
           ${player.bio ? `
             <div class="profile-section">
               <h2 class="section-title-small">ABOUT</h2>
               <p class="bio-text">${player.bio}</p>
-            </div>
-          ` : ''}
-          
-          <!-- Social Media Links -->
-          ${(player.hudl_link || player.instagram_link || player.twitter_link) ? `
-            <div class="profile-section">
-              <h2 class="section-title-small">SOCIAL MEDIA</h2>
-              <div class="social-links">
-                ${player.hudl_link ? `
-                  <a href="${player.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
-                    <img src="/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">Hudl</span>
-                      ${player.hudl_username ? `<span class="social-username">${player.hudl_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-                ${player.instagram_link ? `
-                  <a href="${player.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
-                    <img src="/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">Instagram</span>
-                      ${player.instagram_username ? `<span class="social-username">${player.instagram_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-                ${player.twitter_link ? `
-                  <a href="${player.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
-                    <img src="/logos/X_logo.png" alt="X" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">X (Twitter)</span>
-                      ${player.twitter_username ? `<span class="social-username">${player.twitter_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-              </div>
             </div>
           ` : ''}
           
@@ -201,37 +221,83 @@
             </div>
           </div>
           
-          ${player.highlight_videos ? `
-            <div class="profile-section">
-              <h2 class="section-title-small">HIGHLIGHT VIDEOS</h2>
-              <div class="videos-list">
-                ${JSON.parse(player.highlight_videos).map(video => 
-                  `<video controls src="/uploads/${video}" class="profile-video"></video>`
-                ).join('')}
-              </div>
-            </div>
-          ` : ''}
+          ${(player.highlight_videos || player.video_links) ? (() => {
+            const hasUploaded = player.highlight_videos && JSON.parse(player.highlight_videos).length > 0;
+            const hasLinks = player.video_links && JSON.parse(player.video_links).length > 0;
+            if (!hasUploaded && !hasLinks) return '';
+            let videoHTML = `<div class="profile-section"><h2 class="section-title-small">HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
+            if (hasUploaded) {
+              videoHTML += JSON.parse(player.highlight_videos).map(video =>
+                `<video controls src="/uploads/${video}" class="profile-video"></video>`
+              ).join('');
+            }
+            if (hasLinks) {
+              videoHTML += JSON.parse(player.video_links).map(link => {
+                const embedUrl = getEmbedUrl(link.url);
+                if (embedUrl) {
+                  return `<iframe src="${embedUrl}" class="profile-video" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+                }
+                return `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="video-link-card">
+                  <span class="video-link-icon">&#9654;</span>
+                  <span class="video-link-title">${link.title || link.url}</span>
+                </a>`;
+              }).join('');
+            }
+            videoHTML += `</div></div>`;
+            return videoHTML;
+          })() : ''}
           
-          ${player.additional_images ? `
-            <div class="profile-section">
-              <h2 class="section-title-small">IMAGES</h2>
-              <div class="images-grid-profile">
-                ${JSON.parse(player.additional_images).map(img => 
-                  `<img src="/uploads/${img}" alt="Player image" class="profile-image">`
-                ).join('')}
-              </div>
-            </div>
-          ` : ''}
-          
-          ${player.college_offers ? `
+          ${player.college_offer_schools ? (() => {
+            const offers = JSON.parse(player.college_offer_schools);
+            return offers.length > 0 ? `
             <div class="profile-section">
               <h2 class="section-title-small">COLLEGE OFFERS</h2>
               <div class="college-offers-grid-profile">
-                ${JSON.parse(player.college_offers).map(offer => 
-                  `<div class="college-logo-card">
-                    <img src="/uploads/${offer}" alt="College Offer" class="college-logo-img">
+                ${offers.map(offer => 
+                  `<div class="college-logo-card" title="${offer.name || ''}">
+                    ${offer.logo
+                      ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img">`
+                      : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">\ud83c\udfeb</div>`
+                    }
                   </div>`
                 ).join('')}
+              </div>
+            </div>
+          ` : '';
+          })() : ''}
+          
+          <!-- Social Media Links -->
+          ${(player.hudl_link || player.instagram_link || player.twitter_link) ? `
+            <div class="profile-section">
+              <h2 class="section-title-small">SOCIAL MEDIA</h2>
+              <div class="social-links">
+                ${player.hudl_link ? `
+                  <a href="${player.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
+                    <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">Hudl</span>
+                      ${player.hudl_username ? `<span class="social-username">${player.hudl_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
+                ${player.instagram_link ? `
+                  <a href="${player.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
+                    <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">Instagram</span>
+                      ${player.instagram_username ? `<span class="social-username">${player.instagram_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
+                ${player.twitter_link ? `
+                  <a href="${player.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
+                    <img src="/images/logos/X_logo.png" alt="X" class="social-icon-img">
+                    <div class="social-info">
+                      <span class="social-name">X (Twitter)</span>
+                      ${player.twitter_username ? `<span class="social-username">${player.twitter_username}</span>` : ''}
+                    </div>
+                  </a>
+                ` : ''}
               </div>
             </div>
           ` : ''}
@@ -271,6 +337,17 @@
                     </div>
                   </div>
                 ` : ''}
+              </div>
+            </div>
+          ` : ''}
+
+          ${player.additional_images ? `
+            <div class="profile-section">
+              <h2 class="section-title-small">IMAGES</h2>
+              <div class="images-grid-profile">
+                ${JSON.parse(player.additional_images).map(img => 
+                  `<img src="/uploads/${img}" alt="Player image" class="profile-image">`
+                ).join('')}
               </div>
             </div>
           ` : ''}
@@ -568,6 +645,18 @@
           excel += addEmptyRow();
         }
       }
+
+      if (player.video_links) {
+        const links = JSON.parse(player.video_links);
+        if (links.length > 0) {
+          excel += addSectionHeader('LINKED HIGHLIGHT VIDEOS');
+          links.forEach((link, index) => {
+            excel += addDataRow(`Link ${index + 1}`, link.title || '');
+            excel += addDataRow(`Link ${index + 1} URL`, link.url);
+          });
+          excel += addEmptyRow();
+        }
+      }
       
       if (player.additional_images) {
         const images = JSON.parse(player.additional_images);
@@ -581,13 +670,13 @@
         }
       }
       
-      if (player.college_offers) {
-        const offers = JSON.parse(player.college_offers);
+      if (player.college_offer_schools) {
+        const offers = JSON.parse(player.college_offer_schools);
         if (offers.length > 0) {
           excel += addSectionHeader('COLLEGE OFFERS');
           offers.forEach((offer, index) => {
-            excel += addDataRow(`Offer ${index + 1}`, offer);
-            excel += addDataRow(`Offer ${index + 1} URL`, `${window.location.origin}/uploads/${offer}`);
+            excel += addDataRow(`Offer ${index + 1}`, offer.name || '');
+            if (offer.conference) excel += addDataRow(`Conference`, offer.conference);
           });
           excel += addEmptyRow();
         }

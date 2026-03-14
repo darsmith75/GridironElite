@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Player Card</title>
   <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body {
-      background: #0a1628;
+      background: #000000;
       margin: 0;
       padding: 20px;
       font-family: 'Arial Black', Arial, sans-serif;
@@ -17,14 +18,16 @@
     .card-container {
       max-width: 1200px;
       margin: 0 auto;
-      background: linear-gradient(135deg, #1a2942 0%, #0d1829 100%);
+      background: url('/images/PlayerCardBackground.png') no-repeat center center;
+      background-size: cover;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      position: relative;
     }
     
     .card-header {
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      background: rgba(26, 41, 66, 0.65);
       padding: 30px 40px;
       color: white;
       position: relative;
@@ -32,19 +35,25 @@
     
     .card-header h1 {
       margin: 0;
-      font-size: 48px;
+      font-family: 'Russo One', 'Arial Black', sans-serif;
+      font-size: 52px;
       font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 4px;
       color: white;
+      text-shadow: 0 0 20px rgba(42, 82, 152, 0.8), 0 0 40px rgba(42, 82, 152, 0.4), 2px 2px 4px rgba(0,0,0,0.5);
+      padding-bottom: 15px;
+      border-bottom: 3px solid rgba(255,255,255,0.2);
     }
     
     .card-header .player-meta {
-      margin-top: 10px;
-      font-size: 18px;
+      margin-top: 12px;
+      font-family: 'Oswald', 'Arial', sans-serif;
+      font-size: 16px;
       font-weight: 600;
-      opacity: 0.95;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.9;
       color: white;
     }
     
@@ -57,116 +66,87 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      min-height: 800px;
     }
     
     .card-left {
       padding: 40px;
-      background: #1a2942;
+      background: rgba(26, 41, 66, 0.65);
     }
     
     .card-right {
       padding: 0;
       position: relative;
-      background: #0d1829;
+      background: rgba(26, 41, 66, 0.65);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 800px;
+      flex-direction: column;
+    }
+    
+    .card-right-content {
+      padding: 40px;
     }
     
     .player-image-container {
       width: 100%;
-      height: 100%;
-      position: relative;
+      min-height: 500px;
       overflow: hidden;
-      background: linear-gradient(135deg, #1a2942 0%, #0d1829 100%);
-    }
-    
-    .player-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
-    }
-    
-    /* Alternative: If you want to ensure no cropping and show full image */
-    .player-image.contain-mode {
-      object-fit: contain;
-      object-position: center;
+      background-color: #0d1829;
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      border-radius: 10px;
     }
     
     .section-title {
       background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
       color: white;
       padding: 12px 20px;
-      margin: 0 -40px 20px -40px;
-      font-size: 16px;
+      margin: 0 0 15px 0;
+      font-size: 14px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-    }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    
-    .info-item {
-      background: rgba(255,255,255,0.05);
-      padding: 12px 15px;
       border-radius: 8px;
-      border-left: 4px solid #4a6fa5;
+    }
+    
+    .card-right .section-title {
+      margin: 0 0 15px 0;
+    }
+    
+    .info-list {
+      margin-bottom: 30px;
+      padding: 0 20px;
+    }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
     }
     
     .info-label {
-      font-size: 11px;
+      font-size: 13px;
       color: #8899aa;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 5px;
     }
     
     .info-value {
-      font-size: 18px;
-      color: white;
-      font-weight: 900;
-    }
-    
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-    
-    .metric-item {
-      background: rgba(255,255,255,0.05);
-      padding: 10px 15px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-left: 3px solid #4a6fa5;
-    }
-    
-    .metric-label {
-      font-size: 12px;
-      color: #8899aa;
-      font-weight: 700;
-    }
-    
-    .metric-value {
       font-size: 16px;
       color: white;
       font-weight: 900;
+      text-align: right;
     }
     
     .college-offers {
       margin-bottom: 30px;
+      padding: 0 20px;
     }
     
     .offers-grid {
@@ -200,22 +180,29 @@
     }
     
     .contact-section {
-      background: rgba(255,255,255,0.03);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+      padding: 0 20px 15px 20px;
+    }
+    
+    .card-right .contact-section {
+      padding: 0;
     }
     
     .contact-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 15px;
+      gap: 0;
     }
     
     .contact-item {
       color: white;
       font-size: 13px;
-      line-height: 1.6;
+      line-height: 1.5;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .contact-item:last-child {
+      border-bottom: none;
     }
     
     .contact-item strong {
@@ -228,15 +215,13 @@
     }
     
     .social-section {
-      background: rgba(255,255,255,0.03);
-      padding: 20px;
-      border-radius: 12px;
+      padding: 0 20px 20px 20px;
     }
     
     .social-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 10px;
+      gap: 0;
     }
     
     .social-item {
@@ -245,10 +230,12 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
     
-    .social-item .icon {
-      font-size: 18px;
+    .social-item:last-child {
+      border-bottom: none;
     }
     
     .social-item .social-logo {
@@ -264,15 +251,18 @@
     }
     
     .gpa-badge {
-      position: absolute;
-      top: 20px;
-      right: 20px;
       background: #ffa500;
       color: #0a1628;
-      padding: 15px 20px;
-      border-radius: 12px;
+      padding: 12px 25px;
       text-align: center;
+      margin: 15px auto;
+      display: inline-block;
+      border-radius: 10px;
       box-shadow: 0 4px 12px rgba(255,165,0,0.4);
+    }
+    
+    .gpa-badge-wrapper {
+      text-align: center;
     }
     
     .gpa-badge .label {
@@ -297,76 +287,94 @@
       letter-spacing: 0.5px;
     }
     
-    .back-button {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      padding: 12px 24px;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 700;
-      transition: all 0.3s;
-      backdrop-filter: blur(10px);
-      z-index: 1000;
-    }
-    
-    .back-button:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.5);
-    }
-    
-    .export-image-button {
+    .button-bar {
       position: fixed;
       top: 20px;
       right: 20px;
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 700;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+      display: flex;
+      gap: 10px;
       z-index: 1000;
     }
     
-    .export-image-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    .card-btn {
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-family: 'Oswald', 'Arial', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
-    .export-image-button:disabled {
-      opacity: 0.6;
+    .card-btn .btn-icon {
+      font-size: 16px;
+    }
+    
+    .btn-back {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      position: fixed;
+      top: 20px;
+      left: 20px;
+    }
+    
+    .btn-back:hover {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.5);
+      transform: translateX(-3px);
+    }
+    
+    .btn-export {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
+    }
+    
+    .btn-export:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 60, 114, 0.6);
+      background: linear-gradient(135deg, #2a5298 0%, #3a6cc8 100%);
+    }
+    
+    .btn-export:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-email {
+      background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+      box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+    }
+
+    .btn-email:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 110, 253, 0.6);
+      background: linear-gradient(135deg, #0d6efd 0%, #31d2f2 100%);
+    }
+
+    .btn-email:disabled {
+      opacity: 0.5;
       cursor: not-allowed;
       transform: none;
     }
     
-    .preview-image-button {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 700;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
-      z-index: 1000;
+    .btn-preview {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
     }
     
-    .preview-image-button:hover {
+    .btn-preview:hover {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.5);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(111, 66, 193, 0.4);
     }
     
     .preview-modal {
@@ -451,9 +459,8 @@
       body {
         background: white;
       }
-      .back-button,
-      .export-image-button,
-      .preview-image-button {
+      .btn-back,
+      .button-bar {
         display: none;
       }
       .card-container {
@@ -463,10 +470,42 @@
   </style>
 </head>
 <body>
-  <button onclick="goBack()" class="back-button">← Back</button>
-  <button onclick="exportAsImage()" class="export-image-button" id="exportBtn">📸 Export as Image</button>
-  <button onclick="previewImage()" class="preview-image-button" id="previewBtn">👁️ Preview Export</button>
+  <button onclick="goBack()" class="card-btn btn-back"><span class="btn-icon">←</span> Back</button>
+  <div class="button-bar">
+    <button onclick="previewImage()" class="card-btn btn-preview" id="previewBtn"><span class="btn-icon">👁</span> Preview</button>
+    <button onclick="exportAsImage()" class="card-btn btn-export" id="exportBtn"><span class="btn-icon">📸</span> Export</button>
+    <button onclick="openEmailModal()" class="card-btn btn-email" id="emailBtn"><span class="btn-icon">✉️</span> Email</button>
+  </div>
   
+  <!-- Email Modal -->
+  <div id="emailModal" class="preview-modal" style="display: none;">
+    <div class="preview-modal-content" style="max-width: 480px;">
+      <div class="preview-header">
+        <h3>Email Player Card</h3>
+        <button onclick="closeEmailModal()" class="close-preview">✕</button>
+      </div>
+      <div class="preview-body" style="padding: 20px;">
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; color: #ccc; margin-bottom: 5px; font-size: 14px;">Recipient Email *</label>
+          <input type="email" id="emailTo" placeholder="recipient@example.com" style="width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: white; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; color: #ccc; margin-bottom: 5px; font-size: 14px;">Subject</label>
+          <input type="text" id="emailSubject" placeholder="Player Card" style="width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: white; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; color: #ccc; margin-bottom: 5px; font-size: 14px;">Message</label>
+          <textarea id="emailMessage" rows="3" placeholder="Optional message..." style="width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: white; font-size: 14px; resize: vertical; box-sizing: border-box;"></textarea>
+        </div>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">The player card image will be attached to the email.</p>
+      </div>
+      <div class="preview-footer">
+        <button onclick="closeEmailModal()" class="preview-cancel-btn">Cancel</button>
+        <button onclick="sendPlayerCardEmail()" id="sendEmailBtn" class="preview-export-btn" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">Send Email</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Preview Modal -->
   <div id="previewModal" class="preview-modal" style="display: none;">
     <div class="preview-modal-content">
@@ -498,21 +537,13 @@
     
     <div class="card-body">
       <div class="card-left">
-        <div class="section-title">ELITE PROFILE</div>
-        <div class="info-grid" id="eliteProfile"></div>
-        
         <div class="section-title">VERIFIED MEASURABLES</div>
-        <div class="metrics-grid" id="measurables"></div>
+        <div class="info-list" id="measurables"></div>
         
         <div class="college-offers" id="offersSection" style="display: none;">
           <div class="section-title">POWER 5 OFFERS</div>
           <div class="offers-grid" id="collegeOffers"></div>
           <div class="additional-offers" id="additionalOffers"></div>
-        </div>
-        
-        <div class="contact-section">
-          <div class="section-title">CONTACT</div>
-          <div class="contact-grid" id="contactInfo"></div>
         </div>
         
         <div class="social-section">
@@ -522,13 +553,20 @@
       </div>
       
       <div class="card-right">
-        <div class="player-image-container">
-          <img id="playerImage" src="" alt="Player" class="player-image">
-        </div>
-        <div class="gpa-badge" id="gpaBadge" style="display: none;">
-          <div class="label">GPA</div>
-          <div class="value" id="gpaValue"></div>
-          <div class="honors">HIGH HONORS</div>
+        <div class="card-right-content">
+          <div class="player-image-container" id="playerImageContainer"></div>
+          <div class="gpa-badge-wrapper">
+            <div class="gpa-badge" id="gpaBadge" style="display: none;">
+              <div class="label">GPA</div>
+              <div class="value" id="gpaValue"></div>
+              <div class="honors">HIGH HONORS</div>
+            </div>
+          </div>
+        
+          <div class="contact-section">
+            <div class="section-title">CONTACT</div>
+            <div class="contact-grid" id="contactInfo"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -594,68 +632,42 @@
       
       // Header
       document.getElementById('playerName').textContent = player.full_name || 'Unknown Player';
-      document.getElementById('playerYear').textContent = player.graduation_year || '';
-      document.getElementById('playerPosition').textContent = player.position || '';
-      document.getElementById('playerHeight').textContent = player.height || '';
-      document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} LBS` : '';
-      document.getElementById('playerSchool').textContent = player.high_school || '';
+      document.getElementById('playerYear').textContent = player.graduation_year || '—';
+      document.getElementById('playerPosition').textContent = player.position || '—';
+      document.getElementById('playerHeight').textContent = player.height || '—';
+      document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} LBS` : '—';
+      document.getElementById('playerSchool').textContent = player.high_school || '—';
       
-      // Elite Profile
-      let profileHTML = '';
-      if (player.position) {
-        profileHTML += `<div class="info-item"><div class="info-label">Position:</div><div class="info-value">${player.position}</div></div>`;
-      }
-      if (player.graduation_year) {
-        profileHTML += `<div class="info-item"><div class="info-label">Class:</div><div class="info-value">${player.graduation_year}</div></div>`;
-      }
-      if (player.height && player.weight) {
-        profileHTML += `<div class="info-item"><div class="info-label">Height / Weight:</div><div class="info-value">${player.height} / ${player.weight} lbs</div></div>`;
-      }
-      if (player.high_school) {
-        profileHTML += `<div class="info-item"><div class="info-label">School:</div><div class="info-value">${player.high_school}</div></div>`;
-      }
-      document.getElementById('eliteProfile').innerHTML = profileHTML;
-      
-      // Verified Measurables
+      // Verified Measurables - always show all fields
+      const measurableFields = [
+        { label: '40-Yard Dash', value: player.forty_yard_dash || '—' },
+        { label: '5-10-5 Shuttle', value: player.shuttle_5_10_5 || '—' },
+        { label: 'L-Drill', value: player.l_drill || '—' },
+        { label: 'Broad Jump', value: player.broad_jump ? `${player.broad_jump}"` : '—' },
+        { label: 'Vertical', value: player.vertical_jump ? `${player.vertical_jump}"` : '—' },
+        { label: 'Bench Press', value: player.bench_press ? `${player.bench_press} lbs` : '—' },
+        { label: 'Squat', value: player.squat ? `${player.squat} lbs` : '—' },
+        { label: 'Power Clean', value: player.power_clean ? `${player.power_clean} lbs` : '—' },
+        { label: 'Single Leg Squat', value: player.single_leg_squat ? `${player.single_leg_squat} lbs` : '—' }
+      ];
       let metricsHTML = '';
-      if (player.forty_yard_dash) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">40-Yard Dash</span><span class="metric-value">${player.forty_yard_dash}</span></div>`;
-      }
-      if (player.shuttle_5_10_5) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">5-10-5 Shuttle</span><span class="metric-value">${player.shuttle_5_10_5}</span></div>`;
-      }
-      if (player.l_drill) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">L-Drill</span><span class="metric-value">${player.l_drill}</span></div>`;
-      }
-      if (player.broad_jump) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Broad Jump</span><span class="metric-value">${player.broad_jump}"</span></div>`;
-      }
-      if (player.vertical_jump) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Vertical</span><span class="metric-value">${player.vertical_jump}"</span></div>`;
-      }
-      if (player.bench_press) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Bench:</span><span class="metric-value">${player.bench_press} lbs</span></div>`;
-      }
-      if (player.squat) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Squat:</span><span class="metric-value">${player.squat} lbs</span></div>`;
-      }
-      if (player.power_clean) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Clean:</span><span class="metric-value">${player.power_clean} lbs</span></div>`;
-      }
-      if (player.single_leg_squat) {
-        metricsHTML += `<div class="metric-item"><span class="metric-label">Single Leg:</span><span class="metric-value">${player.single_leg_squat} lbs</span></div>`;
-      }
+      measurableFields.forEach(f => {
+        metricsHTML += `<div class="info-row"><span class="info-label">${f.label}</span><span class="info-value">${f.value}</span></div>`;
+      });
       document.getElementById('measurables').innerHTML = metricsHTML;
       
-      // College Offers
-      if (player.college_offers) {
-        const offers = JSON.parse(player.college_offers);
+      // College Offers (from school interests)
+      if (player.college_offer_schools) {
+        const offers = JSON.parse(player.college_offer_schools);
         if (offers.length > 0) {
           document.getElementById('offersSection').style.display = 'block';
           let offersHTML = '';
           const displayCount = Math.min(12, offers.length);
           for (let i = 0; i < displayCount; i++) {
-            offersHTML += `<div class="offer-logo"><img src="/uploads/${offers[i]}" alt="College"></div>`;
+            const logoSrc = offers[i].logo ? '/' + offers[i].logo : '';
+            if (logoSrc) {
+              offersHTML += `<div class="offer-logo"><img src="${logoSrc}" alt="${offers[i].name || 'College'}"></div>`;
+            }
           }
           document.getElementById('collegeOffers').innerHTML = offersHTML;
           
@@ -665,74 +677,73 @@
         }
       }
       
-      // Contact Info
+      // Contact Info - always show all fields
       let contactHTML = '';
-      if (player.email) {
-        contactHTML += `<div class="contact-item"><strong>Athlete:</strong>${player.email}</div>`;
-      }
-      if (player.father_name) {
-        contactHTML += `<div class="contact-item"><strong>Father – ${player.father_name}</strong>`;
-        if (player.father_email) contactHTML += `${player.father_email}`;
-        if (player.father_phone) contactHTML += ` | ${player.father_phone}`;
-        contactHTML += `</div>`;
-      }
-      if (player.mother_name) {
-        contactHTML += `<div class="contact-item"><strong>Mother – ${player.mother_name}</strong>`;
-        if (player.mother_email) contactHTML += `${player.mother_email}`;
-        if (player.mother_phone) contactHTML += ` | ${player.mother_phone}`;
-        contactHTML += `</div>`;
-      }
-      if (player.coach_name) {
-        contactHTML += `<div class="contact-item"><strong>Head Coach – ${player.coach_name}</strong>`;
-        if (player.coach_email) contactHTML += `${player.coach_email}`;
-        if (player.coach_phone) contactHTML += ` | ${player.coach_phone}`;
-        contactHTML += `</div>`;
-      }
+      const athleteDetails = [];
+      if (player.email) athleteDetails.push(player.email);
+      if (player.phone) athleteDetails.push(player.phone);
+      contactHTML += `<div class="contact-item"><strong>Athlete</strong>${athleteDetails.length ? athleteDetails.join(' | ') : '—'}</div>`;
+      
+      const fatherName = player.father_name || '—';
+      const fatherDetails = [];
+      if (player.father_email) fatherDetails.push(player.father_email);
+      if (player.father_phone) fatherDetails.push(player.father_phone);
+      contactHTML += `<div class="contact-item"><strong>Father – ${fatherName}</strong>${fatherDetails.length ? fatherDetails.join(' | ') : '—'}</div>`;
+      
+      const motherName = player.mother_name || '—';
+      const motherDetails = [];
+      if (player.mother_email) motherDetails.push(player.mother_email);
+      if (player.mother_phone) motherDetails.push(player.mother_phone);
+      contactHTML += `<div class="contact-item"><strong>Mother – ${motherName}</strong>${motherDetails.length ? motherDetails.join(' | ') : '—'}</div>`;
+      
+      const coachName = player.coach_name || '—';
+      const coachDetails = [];
+      if (player.coach_email) coachDetails.push(player.coach_email);
+      if (player.coach_phone) coachDetails.push(player.coach_phone);
+      contactHTML += `<div class="contact-item"><strong>Head Coach – ${coachName}</strong>${coachDetails.length ? coachDetails.join(' | ') : '—'}</div>`;
       document.getElementById('contactInfo').innerHTML = contactHTML;
       
-      // Social Media
+      // Social Media - always show all fields
       let socialHTML = '';
-      if (player.hudl_username) {
-        socialHTML += `<div class="social-item"><img src="/logos/Hudl_logo.png" alt="Hudl" class="social-logo"><strong>Hudl:</strong> ${player.hudl_username}</div>`;
-      }
-      if (player.instagram_username) {
-        socialHTML += `<div class="social-item"><img src="/logos/Instagram_logo.png" alt="Instagram" class="social-logo"><strong>Instagram:</strong> ${player.instagram_username}</div>`;
-      }
-      if (player.twitter_username) {
-        socialHTML += `<div class="social-item"><img src="/logos/X_logo.png" alt="X" class="social-logo"><strong>Twitter:</strong> ${player.twitter_username}</div>`;
-      }
+      socialHTML += `<div class="social-item"><img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-logo"><strong>Hudl:</strong> ${player.hudl_username || '—'}</div>`;
+      socialHTML += `<div class="social-item"><img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-logo"><strong>Instagram:</strong> ${player.instagram_username || '—'}</div>`;
+      socialHTML += `<div class="social-item"><img src="/images/logos/X_logo.png" alt="X" class="social-logo"><strong>Twitter:</strong> ${player.twitter_username || '—'}</div>`;
       document.getElementById('socialInfo').innerHTML = socialHTML;
       
       // Player Image - use card_photo if available, otherwise fall back to profile_picture
       const photoToUse = player.card_photo || player.profile_picture;
       if (photoToUse) {
-        const img = document.getElementById('playerImage');
-        img.src = `/uploads/${photoToUse}`;
+        const container = document.getElementById('playerImageContainer');
+        const imgUrl = `/uploads/${photoToUse}`;
+        container.style.backgroundImage = `url('${imgUrl}')`;
         
-        // Detect image aspect ratio and adjust fit mode
-        img.onload = function() {
+        // Detect aspect ratio to choose sizing mode
+        const testImg = new Image();
+        testImg.onload = function() {
           const aspectRatio = this.naturalWidth / this.naturalHeight;
-          
-          // If image is very wide (landscape) or very tall, use contain mode
-          // Otherwise use cover mode for better card appearance
           if (aspectRatio > 1.5 || aspectRatio < 0.6) {
-            this.style.objectFit = 'contain';
-          } else {
-            this.style.objectFit = 'cover';
-            // For portrait images, focus on top portion (head/shoulders)
-            if (aspectRatio < 1) {
-              this.style.objectPosition = 'center top';
-            }
+            container.style.backgroundSize = 'contain';
+            container.style.backgroundPosition = 'center';
           }
         };
-      } else {
-        document.getElementById('playerImage').style.display = 'none';
+        testImg.src = imgUrl;
       }
       
-      // GPA Badge
+      // GPA Badge - always show
+      document.getElementById('gpaBadge').style.display = 'block';
       if (player.gpa) {
-        document.getElementById('gpaBadge').style.display = 'block';
         document.getElementById('gpaValue').textContent = player.gpa;
+        const gpa = parseFloat(player.gpa);
+        if (gpa >= 3.5) {
+          document.querySelector('.gpa-badge .honors').textContent = 'HIGH HONORS';
+        } else if (gpa >= 3.0) {
+          document.querySelector('.gpa-badge .honors').textContent = 'HONORS';
+        } else {
+          document.querySelector('.gpa-badge .honors').textContent = '';
+        }
+      } else {
+        document.getElementById('gpaValue').textContent = '—';
+        document.querySelector('.gpa-badge .honors').textContent = '';
       }
     }
     
@@ -842,6 +853,77 @@
       document.getElementById('previewModal').style.display = 'none';
     }
     
+    function openEmailModal() {
+      const playerName = document.getElementById('playerName').textContent;
+      document.getElementById('emailSubject').value = `${playerName} - Player Card`;
+      document.getElementById('emailMessage').value = `Please see the attached player card for ${playerName}.`;
+      document.getElementById('emailTo').value = '';
+      document.getElementById('emailModal').style.display = 'flex';
+      document.getElementById('emailTo').focus();
+    }
+
+    function closeEmailModal() {
+      document.getElementById('emailModal').style.display = 'none';
+    }
+
+    async function sendPlayerCardEmail() {
+      const recipientEmail = document.getElementById('emailTo').value.trim();
+      const subject = document.getElementById('emailSubject').value.trim();
+      const message = document.getElementById('emailMessage').value.trim();
+      const btn = document.getElementById('sendEmailBtn');
+
+      if (!recipientEmail) {
+        alert('Please enter a recipient email address.');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.textContent = '⏳ Sending...';
+
+        // Generate the card image
+        const cardElement = document.getElementById('playerCard');
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: '#0a1628',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 0,
+          onclone: (clonedDoc) => {
+            const clonedCard = clonedDoc.getElementById('playerCard');
+            if (clonedCard) {
+              clonedCard.style.margin = '0';
+              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+            }
+          }
+        });
+
+        const imageData = canvas.toDataURL('image/png');
+        const playerName = document.getElementById('playerName').textContent;
+
+        const res = await fetch('/api/send-player-card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientEmail, subject, message, imageData, playerName })
+        });
+
+        if (res.ok) {
+          alert('Player card sent successfully!');
+          closeEmailModal();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to send email.');
+        }
+      } catch (error) {
+        console.error('Error sending email:', error);
+        alert('Failed to send email. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Email';
+      }
+    }
+
     function exportFromPreview() {
       const img = document.getElementById('previewImage');
       const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');

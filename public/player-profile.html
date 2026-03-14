@@ -24,7 +24,23 @@
 
     <div class="dashboard-container">
 
-    <div class="profile-container">
+    <!-- ============ VIEW MODE ============ -->
+    <div id="profileViewMode" class="profile-container">
+      <!-- Hero Section -->
+      <div class="profile-hero">
+        <div class="hero-gradient"></div>
+        <div class="profile-photo-wrapper" id="viewHeroPhoto"></div>
+      </div>
+
+      <!-- Player Header Info -->
+      <div class="profile-header-info" id="viewHeaderInfo"></div>
+
+      <!-- Profile Content Sections -->
+      <div id="viewProfileContent"></div>
+    </div>
+
+    <!-- ============ EDIT MODE ============ -->
+    <div id="profileEditMode" class="profile-container" style="display: none;">
       <!-- Hero Section -->
       <div class="profile-hero">
         <div class="hero-gradient"></div>
@@ -33,12 +49,13 @@
 
       <!-- Quick Actions -->
       <div style="text-align: center; padding: 20px;">
-        <button onclick="window.location.href='player-card.html'" class="player-card-btn" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3); transition: all 0.3s;">
+        <button onclick="showViewMode()" class="message-btn">
+          ← Back to Profile
+        </button>
+        <button onclick="window.location.href='player-card.html'" class="player-card-btn" style="margin-left: 10px;">
           🏈 Player Card
         </button>
       </div>
-
-      <div id="currentProfile"></div>
 
       <!-- Profile Form -->
       <div class="profile-section">
@@ -47,6 +64,10 @@
           <div class="form-grid">
             <div class="form-section">
               <h3>Personal Information</h3>
+              <label>Email:</label>
+              <input type="email" name="email" id="playerEmail" disabled style="background: #f0f0f0; cursor: not-allowed;">
+              <label>Phone:</label>
+              <input type="tel" name="phone" placeholder="Your phone number">
               <label>Full Name:</label>
               <input type="text" name="fullName" placeholder="Full Name" required>
               <label>High School:</label>
@@ -105,7 +126,7 @@
               <h3>Social Media</h3>
               
               <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 15px; margin-bottom: 10px;">
-                <img src="/logos/Hudl_logo.png" alt="Hudl" style="width: 24px; height: 24px;">
+                <img src="/images/logos/Hudl_logo.png" alt="Hudl" style="width: 24px; height: 24px;">
                 Hudl
               </h4>
               <label>Profile URL:</label>
@@ -114,7 +135,7 @@
               <input type="text" name="hudlUsername" placeholder="Your Hudl username">
               
               <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
-                <img src="/logos/Instagram_logo.png" alt="Instagram" style="width: 24px; height: 24px;">
+                 <img src="/images/logos/Instagram_logo.png" alt="Instagram" style="width: 24px; height: 24px;">
                 Instagram
               </h4>
               <label>Profile URL:</label>
@@ -123,7 +144,7 @@
               <input type="text" name="instagramUsername" placeholder="@username">
               
               <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
-                <img src="/logos/X_logo.png" alt="X" style="width: 24px; height: 24px;">
+                 <img src="/images/logos/X_logo.png" alt="X" style="width: 24px; height: 24px;">
                 X (Twitter)
               </h4>
               <label>Profile URL:</label>
@@ -167,6 +188,12 @@
               </div>
             </div>
 
+            <div class="form-section full-width">
+              <h3>Bio</h3>
+              <label>About You:</label>
+              <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+            </div>
+
             <div class="form-section">
               <h3>Media</h3>
               <label>Profile Picture:</label>
@@ -180,48 +207,553 @@
               </div>
               <p class="hint-text">Upload a high-quality action photo for your player card (recommended: portrait orientation)</p>
 
+              <label>Report Card Image:</label>
+              <div class="file-input-wrapper">
+                <input type="file" name="reportCardImage" accept="image/*">
+              </div>
+
               
               <label>Add Highlight Videos (you can select multiple):</label>
               <div class="file-input-wrapper">
                 <input type="file" name="highlightVideos" accept="video/*" multiple>
               </div>
+
+              <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
+              <div id="videoLinkInputs">
+                <div class="video-link-input-row" style="display:flex;gap:8px;margin-bottom:8px;">
+                  <input type="text" id="videoLinkTitle" placeholder="Title (optional)" style="flex:1;">
+                  <input type="url" id="videoLinkUrl" placeholder="https://..." style="flex:2;">
+                  <button type="button" onclick="addVideoLink()" class="btn-small" style="white-space:nowrap;">+ Add Link</button>
+                </div>
+              </div>
+              <div id="existingVideoLinks"></div>
               
               <label>Add Additional Images (you can select multiple):</label>
               <div class="file-input-wrapper">
                 <input type="file" name="additionalImages" accept="image/*" multiple>
               </div>
-              
-              <label>Add College Offer Logos (you can select multiple):</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="collegeOffers" accept="image/*" multiple>
-              </div>
-              <p class="hint-text">Upload logos of colleges/universities that have offered you a scholarship or spot on their team</p>
-            </div>
-
-            <div class="form-section full-width">
-              <h3>Bio</h3>
-              <label>About You:</label>
-              <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
             </div>
           </div>
 
           <button type="submit" class="submit-btn">Save Profile</button>
         </form>
       </div>
+
+      <div id="currentProfile"></div>
     </div>
+    <!-- end #profileEditMode -->
+
+    </div>
+  </div>
+
+  <!-- Schools Modal -->
+  <div id="schoolsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; overflow-y:auto;">
+    <div style="max-width:960px; margin:30px auto; background:#fff; border-radius:12px; overflow:hidden; position:relative;">
+      <!-- Modal Header -->
+      <div style="background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:#fff; padding:24px 30px; display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0; font-size:22px; color:#fff;">🏫 Browse Schools</h2>
+        <button onclick="closeSchoolsModal()" style="background:none; border:none; color:#fff; font-size:28px; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+      <!-- Filters -->
+      <div style="padding:16px 30px; background:#f8f9fa; border-bottom:1px solid #e0e0e0; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="schoolSearch" placeholder="Search schools..." oninput="renderSchools()" style="flex:1; min-width:200px; padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        <select id="schoolConferenceFilter" onchange="renderSchools()" style="padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; min-width:160px;">
+          <option value="">All Conferences</option>
+          <option value="ACC">ACC</option>
+          <option value="American">American</option>
+          <option value="Big 12">Big 12</option>
+          <option value="Big Ten">Big Ten</option>
+          <option value="Conference USA">Conference USA</option>
+          <option value="FBS Independents">FBS Independents</option>
+          <option value="Mid-American">Mid-American</option>
+          <option value="Mountain West">Mountain West</option>
+          <option value="Pac-12">Pac-12</option>
+          <option value="SEC">SEC</option>
+          <option value="Sun Belt">Sun Belt</option>
+        </select>
+        <select id="schoolStatusFilter" onchange="renderSchools()" style="padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; min-width:140px;">
+          <option value="">All Schools</option>
+          <option value="favorites">⭐ Favorites</option>
+          <option value="offers">📩 Offers</option>
+        </select>
+      </div>
+      <!-- Schools Grid -->
+      <div id="schoolsGrid" style="padding:20px 30px; display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:16px; max-height:65vh; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- School Notes/Contacts Detail Modal -->
+  <div id="schoolDetailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; overflow-y:auto;">
+    <div style="max-width:800px; margin:30px auto; background:#fff; border-radius:12px; overflow:hidden; position:relative;">
+      <!-- Detail Header -->
+      <div id="schoolDetailHeader" style="background:url('/images/bluebackground.png') center/cover no-repeat; color:#fff; padding:24px 30px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div id="schoolDetailLogo"></div>
+          <div>
+            <h2 id="schoolDetailName" style="margin:0; font-size:22px; color:#fff;"></h2>
+            <span id="schoolDetailConf" style="font-size:13px; color:rgba(255,255,255,0.85);"></span>
+          </div>
+        </div>
+        <button onclick="closeSchoolDetail()" style="background:none; border:none; color:#fff; font-size:28px; cursor:pointer; line-height:1;">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex; border-bottom:2px solid #e0e0e0; background:#f8f9fa;">
+        <button id="tabContacts" onclick="switchDetailTab('contacts')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">👥 Contacts</button>
+        <button id="tabNotes" onclick="switchDetailTab('notes')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">📝 Notes</button>
+      </div>
+
+      <!-- Contacts Panel -->
+      <div id="panelContacts" style="padding:24px 30px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0; color:#333; font-size:16px;">School Contacts</h3>
+          <button onclick="showAddContactForm()" style="padding:8px 16px; background:#1e3c72; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">+ Add Contact</button>
+        </div>
+        <!-- Add Contact Form (hidden by default) -->
+        <div id="addContactForm" style="display:none; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <h4 style="margin:0 0 12px; color:#333; font-size:14px;" id="contactFormTitle">Add New Contact</h4>
+          <input type="hidden" id="editContactId">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+              <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Name *</label>
+              <input type="text" id="contactName" placeholder="Contact name" style="width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Title / Position</label>
+              <input type="text" id="contactTitle" placeholder="e.g. Head Coach, Recruiting Coordinator" style="width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Email</label>
+              <input type="email" id="contactEmail" placeholder="email@school.edu" style="width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Phone</label>
+              <input type="tel" id="contactPhone" placeholder="(555) 123-4567" style="width:100%; padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="cancelContactForm()" style="padding:8px 16px; background:#f0f0f0; color:#333; border:1px solid #ddd; border-radius:6px; cursor:pointer; font-size:13px;">Cancel</button>
+            <button onclick="saveContact()" style="padding:8px 16px; background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">Save Contact</button>
+          </div>
+        </div>
+        <div id="contactsList"></div>
+      </div>
+
+      <!-- Notes Panel -->
+      <div id="panelNotes" style="padding:24px 30px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="margin:0; color:#333; font-size:16px;">Notes &amp; Visit Log</h3>
+          <button onclick="showAddNoteForm()" style="padding:8px 16px; background:#1e3c72; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">+ Add Note</button>
+        </div>
+        <div style="margin-bottom:16px;">
+          <input type="text" id="noteSearchFilter" placeholder="Search notes..." oninput="filterNotes()" style="width:100%; padding:8px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; box-sizing:border-box;">
+        </div>
+        <!-- Add Note Form (hidden by default) -->
+        <div id="addNoteForm" style="display:none; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:16px; margin-bottom:16px;">
+          <h4 style="margin:0 0 12px; color:#333; font-size:14px;" id="noteFormTitle">Add New Note</h4>
+          <input type="hidden" id="editNoteId">
+          <div style="margin-bottom:10px;">
+            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Visit Date (optional — leave blank for general notes)</label>
+            <input type="date" id="noteVisitDate" style="padding:8px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Note *</label>
+            <textarea id="noteText" rows="4" placeholder="Write your notes about this school..." style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; resize:vertical; box-sizing:border-box;"></textarea>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="cancelNoteForm()" style="padding:8px 16px; background:#f0f0f0; color:#333; border:1px solid #ddd; border-radius:6px; cursor:pointer; font-size:13px;">Cancel</button>
+            <button onclick="saveNote()" style="padding:8px 16px; background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">Save Note</button>
+          </div>
+        </div>
+        <div id="notesList"></div>
+      </div>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
     checkAuth('player');
+    let playerProfileData = null;
+    let reportCardPreviewEl = null;
+    let currentLightboxEl = null;
+
     loadPlayerProfile();
+
+    function showEditMode() {
+      document.getElementById('profileViewMode').style.display = 'none';
+      document.getElementById('profileEditMode').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    function showViewMode() {
+      document.getElementById('profileEditMode').style.display = 'none';
+      document.getElementById('profileViewMode').style.display = 'block';
+      window.scrollTo(0, 0);
+    }
+
+    function showReportCardPreview(event, imageUrl) {
+      hideReportCardPreview();
+
+      reportCardPreviewEl = document.createElement('div');
+      reportCardPreviewEl.style.cssText = 'position:fixed; z-index:10001; background:#fff; border:1px solid #d9d9d9; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.18); padding:8px; pointer-events:none;';
+      reportCardPreviewEl.innerHTML = `
+        <img src="${imageUrl}" alt="Report Card Preview" style="display:block; width:320px; max-width:50vw; max-height:60vh; object-fit:contain; border-radius:6px;">
+      `;
+      document.body.appendChild(reportCardPreviewEl);
+
+      moveReportCardPreview(event);
+    }
+
+    function moveReportCardPreview(event) {
+      if (!reportCardPreviewEl) return;
+
+      const offset = 12;
+      const rect = reportCardPreviewEl.getBoundingClientRect();
+      let left = event.clientX + offset;
+      let top = event.clientY + offset;
+
+      if (left + rect.width > window.innerWidth - 10) {
+        left = event.clientX - rect.width - offset;
+      }
+      if (top + rect.height > window.innerHeight - 10) {
+        top = window.innerHeight - rect.height - 10;
+      }
+      if (top < 10) {
+        top = 10;
+      }
+
+      reportCardPreviewEl.style.left = left + 'px';
+      reportCardPreviewEl.style.top = top + 'px';
+    }
+
+    function hideReportCardPreview() {
+      if (reportCardPreviewEl) {
+        reportCardPreviewEl.remove();
+        reportCardPreviewEl = null;
+      }
+    }
+
+    function openImageLightbox(imageSrc, altText) {
+      closeCurrentLightbox();
+
+      const lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.innerHTML = `
+        <div class="lightbox-content">
+          <span class="lightbox-close">&times;</span>
+          <img src="${imageSrc}" alt="${altText || 'Enlarged image'}">
+        </div>
+      `;
+      currentLightboxEl = lightbox;
+      document.body.appendChild(lightbox);
+      lightbox.addEventListener('click', function(ev) {
+        if (ev.target === lightbox || ev.target.className === 'lightbox-close') {
+          closeCurrentLightbox();
+        }
+      });
+    }
+
+    function closeCurrentLightbox() {
+      if (currentLightboxEl && currentLightboxEl.parentNode) {
+        currentLightboxEl.parentNode.removeChild(currentLightboxEl);
+      }
+      currentLightboxEl = null;
+    }
+
+    function renderViewMode(profile) {
+      // Hero photo
+      if (profile.profile_picture) {
+        document.getElementById('viewHeroPhoto').innerHTML = `
+          <img src="/uploads/${profile.profile_picture}" alt="Profile" class="profile-photo-large">
+        `;
+      } else {
+        document.getElementById('viewHeroPhoto').innerHTML = `
+          <div class="profile-photo-large no-photo">No Photo</div>
+        `;
+      }
+
+      // Header info with name, badges, and action buttons
+      document.getElementById('viewHeaderInfo').innerHTML = `
+        <h1 class="player-name-large">${profile.full_name || 'Your Name'}</h1>
+        <div class="meta-badges">
+          ${profile.position ? `<span class="meta-badge">${profile.position}</span>` : ''}
+          ${profile.graduation_year ? `<span class="meta-badge">Class of ${profile.graduation_year}</span>` : ''}
+          ${profile.high_school ? `<span class="meta-badge">${profile.high_school}</span>` : ''}
+          ${profile.height ? `<span class="meta-badge">${profile.height}</span>` : ''}
+          ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
+          ${profile.gpa ? `<span class="meta-badge" ${profile.report_card_image ? `style="cursor: zoom-in;" title="Hover to preview, click to view full size" onmouseenter="showReportCardPreview(event, '/uploads/${profile.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')"` : ''}>GPA: ${profile.gpa}</span>` : ''}
+        </div>
+        <div style="margin-top: 20px;">
+          <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>
+          <button onclick="window.location.href='player-card.html'" class="player-card-btn" style="margin-left: 10px;">🏈 Player Card</button>
+          <button onclick="openSchoolsModal()" class="player-card-btn" style="margin-left: 10px;">🏫 Schools</button>
+        </div>
+      `;
+
+      // Build content sections
+      let html = '';
+
+      // Bio
+      if (profile.bio) {
+        html += `
+          <div class="profile-section">
+            <h2 class="section-title-small">ABOUT</h2>
+            <p class="bio-text">${profile.bio}</p>
+          </div>
+        `;
+      }
+
+      // Athletic Metrics
+      const metrics = [
+        { label: '40-Yard Dash', value: profile.forty_yard_dash, suffix: 's' },
+        { label: 'Vertical Jump', value: profile.vertical_jump, suffix: '"' },
+        { label: 'Bench Press', value: profile.bench_press, suffix: ' lbs' },
+        { label: 'Squat', value: profile.squat, suffix: ' lbs' },
+        { label: '5-10-5 Shuttle', value: profile.shuttle_5_10_5, suffix: 's' },
+        { label: 'L-Drill', value: profile.l_drill, suffix: 's' },
+        { label: 'Broad Jump', value: profile.broad_jump, suffix: '"' },
+        { label: 'Power Clean', value: profile.power_clean, suffix: ' lbs' },
+        { label: 'Single Leg Squat', value: profile.single_leg_squat, suffix: ' lbs' }
+      ];
+      const hasMetrics = metrics.some(m => m.value);
+      if (hasMetrics) {
+        html += `
+          <div class="profile-section">
+            <h2 class="section-title-small">ATHLETIC METRICS</h2>
+            <div class="metrics-grid">
+              ${metrics.filter(m => m.value).map(m => `
+                <div class="metric-item">
+                  <div class="metric-label">${m.label}</div>
+                  <div class="metric-value">${m.value}${m.suffix}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      // Highlight Videos
+      const hasUploadedVideos = profile.highlight_videos && JSON.parse(profile.highlight_videos).length > 0;
+      const hasVideoLinks = profile.video_links && JSON.parse(profile.video_links).length > 0;
+      if (hasUploadedVideos || hasVideoLinks) {
+        html += `<div class="profile-section"><h2 class="section-title-small">HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
+        if (hasUploadedVideos) {
+          const videos = JSON.parse(profile.highlight_videos);
+          html += videos.map(video => `<video controls src="/uploads/${video}" class="profile-video"></video>`).join('');
+        }
+        if (hasVideoLinks) {
+          const links = JSON.parse(profile.video_links);
+          html += links.map(link => {
+            const embedUrl = getEmbedUrl(link.url);
+            if (embedUrl) {
+              return `<iframe src="${embedUrl}" class="profile-video" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+            }
+            return `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="video-link-card">
+              <span class="video-link-icon">&#9654;</span>
+              <span class="video-link-title">${link.title || link.url}</span>
+            </a>`;
+          }).join('');
+        }
+        html += `</div></div>`;
+      }
+
+      // College Offers (from school interests)
+      if (profile.college_offer_schools) {
+        const offers = JSON.parse(profile.college_offer_schools);
+        if (offers.length > 0) {
+          html += `
+            <div class="profile-section">
+              <h2 class="section-title-small">COLLEGE OFFERS</h2>
+              <div class="college-offers-grid-profile">
+                ${offers.map(offer => `
+                  <div class="college-logo-card" style="position:relative; cursor:pointer;"
+                       data-college-id="${offer.id}"
+                       onmouseenter="showOfferTooltip(event, ${offer.id})"
+                       onmouseleave="hideOfferTooltip()"
+                       onclick="openSchoolDetailFromOffer(${offer.id})">
+                    ${offer.logo
+                      ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img">`
+                      : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
+                    }
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // College Favorites (excluding schools already in offers)
+      if (profile.college_favorite_schools) {
+        const favorites = JSON.parse(profile.college_favorite_schools);
+        if (favorites.length > 0) {
+          html += `
+            <div class="profile-section">
+              <h2 class="section-title-small">COLLEGE FAVORITES</h2>
+              <div class="college-offers-grid-profile">
+                ${favorites.map(fav => `
+                  <div class="college-logo-card" style="position:relative; cursor:pointer;"
+                       data-college-id="${fav.id}"
+                       onmouseenter="showOfferTooltip(event, ${fav.id})"
+                       onmouseleave="hideOfferTooltip()"
+                       onclick="openSchoolDetailFromOffer(${fav.id})">
+                    ${fav.logo
+                      ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img">`
+                      : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
+                    }
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // Social Media
+      if (profile.hudl_link || profile.instagram_link || profile.twitter_link) {
+        html += `
+          <div class="profile-section">
+            <h2 class="section-title-small">SOCIAL MEDIA</h2>
+            <div class="social-links">
+              ${profile.hudl_link ? `
+                <a href="${profile.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
+                  <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
+                  <div class="social-info">
+                    <span class="social-name">Hudl</span>
+                    ${profile.hudl_username ? `<span class="social-username">${profile.hudl_username}</span>` : ''}
+                  </div>
+                </a>
+              ` : ''}
+              ${profile.instagram_link ? `
+                <a href="${profile.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
+                  <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
+                  <div class="social-info">
+                    <span class="social-name">Instagram</span>
+                    ${profile.instagram_username ? `<span class="social-username">${profile.instagram_username}</span>` : ''}
+                  </div>
+                </a>
+              ` : ''}
+              ${profile.twitter_link ? `
+                <a href="${profile.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
+                  <img src="/images/logos/X_logo.png" alt="X" class="social-icon-img">
+                  <div class="social-info">
+                    <span class="social-name">X (Twitter)</span>
+                    ${profile.twitter_username ? `<span class="social-username">${profile.twitter_username}</span>` : ''}
+                  </div>
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Report Card
+      if (profile.report_card_image) {
+        html += `
+          <div class="profile-section">
+            <h2 class="section-title-small">REPORT CARD</h2>
+            <div class="images-grid-profile">
+              <img src="/uploads/${profile.report_card_image}" alt="Report card" class="profile-image">
+            </div>
+          </div>
+        `;
+      }
+
+      // Contact Information
+      if (profile.father_name || profile.mother_name || profile.coach_name) {
+        html += `
+          <div class="profile-section">
+            <h2 class="section-title-small">CONTACT INFORMATION</h2>
+            <div class="contact-info-grid">
+              ${profile.father_name ? `
+                <div class="contact-card">
+                  <h4>Father</h4>
+                  <div class="contact-details">
+                    <p><strong>Name:</strong> ${profile.father_name}</p>
+                    ${profile.father_email ? `<p><strong>Email:</strong> <a href="mailto:${profile.father_email}">${profile.father_email}</a></p>` : ''}
+                    ${profile.father_phone ? `<p><strong>Phone:</strong> <a href="tel:${profile.father_phone}">${profile.father_phone}</a></p>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+              ${profile.mother_name ? `
+                <div class="contact-card">
+                  <h4>Mother</h4>
+                  <div class="contact-details">
+                    <p><strong>Name:</strong> ${profile.mother_name}</p>
+                    ${profile.mother_email ? `<p><strong>Email:</strong> <a href="mailto:${profile.mother_email}">${profile.mother_email}</a></p>` : ''}
+                    ${profile.mother_phone ? `<p><strong>Phone:</strong> <a href="tel:${profile.mother_phone}">${profile.mother_phone}</a></p>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+              ${profile.coach_name ? `
+                <div class="contact-card">
+                  <h4>Head Coach</h4>
+                  <div class="contact-details">
+                    <p><strong>Name:</strong> ${profile.coach_name}</p>
+                    ${profile.coach_email ? `<p><strong>Email:</strong> <a href="mailto:${profile.coach_email}">${profile.coach_email}</a></p>` : ''}
+                    ${profile.coach_phone ? `<p><strong>Phone:</strong> <a href="tel:${profile.coach_phone}">${profile.coach_phone}</a></p>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Additional Images
+      if (profile.additional_images) {
+        const images = JSON.parse(profile.additional_images);
+        if (images.length > 0) {
+          html += `
+            <div class="profile-section">
+              <h2 class="section-title-small">IMAGES</h2>
+              <div class="images-grid-profile">
+                ${images.map(img => `<img src="/uploads/${img}" alt="Player image" class="profile-image">`).join('')}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      document.getElementById('viewProfileContent').innerHTML = html;
+    }
+
+    function getEmbedUrl(url) {
+      try {
+        const u = new URL(url);
+        // YouTube
+        if (u.hostname.includes('youtube.com') && u.searchParams.get('v')) {
+          return `https://www.youtube.com/embed/${u.searchParams.get('v')}`;
+        }
+        if (u.hostname === 'youtu.be') {
+          return `https://www.youtube.com/embed${u.pathname}`;
+        }
+        // Vimeo
+        const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) {
+          return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+        }
+        // Hudl
+        if (u.hostname.includes('hudl.com') && url.includes('/video/')) {
+          return url.replace('/video/', '/embed/video/');
+        }
+        return null;
+      } catch { return null; }
+    }
 
     async function loadPlayerProfile() {
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
+      playerProfileData = profile;
+
+      // Render view mode
+      if (profile.id) {
+        renderViewMode(profile);
+      }
       
-      // Display profile picture in hero section
+      // Display profile picture in edit mode hero section
       if (profile.id && profile.profile_picture) {
         document.getElementById('heroPhoto').innerHTML = `
           <img src="/uploads/${profile.profile_picture}" alt="Profile" class="profile-photo-large">
@@ -272,19 +804,35 @@
             mediaHTML += `</div></div>`;
           }
         }
-        
-        if (profile.college_offers) {
-          const offers = JSON.parse(profile.college_offers);
-          if (offers.length > 0) {
-            mediaHTML += `
-              <div class="media-item full-width">
-                <h3>🎓 College Offers (${offers.length})</h3>
-                <div class="college-offers-grid">`;
-            offers.forEach(offer => {
+
+        if (profile.report_card_image) {
+          mediaHTML += `
+            <div class="media-item full-width">
+              <h3>Report Card</h3>
+              <div class="media-item-wrapper">
+                <img src="/uploads/${profile.report_card_image}" alt="Report Card" class="current-additional-img">
+                <button onclick="deleteReportCardImage()" class="delete-media-btn">🗑️ Delete</button>
+              </div>
+            </div>
+          `;
+        }
+
+        if (profile.video_links) {
+          const links = JSON.parse(profile.video_links);
+          if (links.length > 0) {
+            mediaHTML += `<div class="media-item full-width"><h3>Linked Videos (${links.length})</h3><div class="media-grid">`;
+            links.forEach(link => {
+              const embedUrl = getEmbedUrl(link.url);
               mediaHTML += `
-                <div class="media-item-wrapper college-offer-item">
-                  <img src="/uploads/${offer}" alt="College Offer" class="college-offer-logo">
-                  <button onclick="deleteOffer('${offer}')" class="delete-media-btn">🗑️ Delete</button>
+                <div class="media-item-wrapper">
+                  ${embedUrl
+                    ? `<iframe src="${embedUrl}" class="current-video" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`
+                    : `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="video-link-card-edit">
+                        <span class="video-link-icon">&#9654;</span>
+                        <span>${link.title || link.url}</span>
+                      </a>`
+                  }
+                  <button onclick="deleteVideoLink(${link.id})" class="delete-media-btn">🗑️ Delete</button>
                 </div>
               `;
             });
@@ -302,6 +850,8 @@
       // Populate form fields
       if (profile.id) {
         document.querySelector('[name="fullName"]').value = profile.full_name || '';
+        document.getElementById('playerEmail').value = profile.email || '';
+        document.querySelector('[name="phone"]').value = profile.phone || '';
         document.querySelector('[name="highSchool"]').value = profile.high_school || '';
         document.querySelector('[name="graduationYear"]').value = profile.graduation_year || '';
         document.querySelector('[name="position"]').value = profile.position || '';
@@ -338,37 +888,82 @@
 
     async function deleteVideo(filename) {
       if (!confirm('Are you sure you want to delete this video?')) return;
-      
-      const res = await fetch(`/api/player/video/${filename}`, { method: 'DELETE' });
+
+      const res = await fetch('/api/player/video/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename })
+      });
       if (res.ok) {
         alert('Video deleted successfully');
         loadPlayerProfile();
       } else {
-        alert('Failed to delete video');
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete video');
       }
     }
 
     async function deleteImage(filename) {
       if (!confirm('Are you sure you want to delete this image?')) return;
-      
-      const res = await fetch(`/api/player/image/${filename}`, { method: 'DELETE' });
+
+      const res = await fetch('/api/player/image/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename })
+      });
       if (res.ok) {
         alert('Image deleted successfully');
         loadPlayerProfile();
       } else {
-        alert('Failed to delete image');
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete image');
       }
     }
 
-    async function deleteOffer(filename) {
-      if (!confirm('Are you sure you want to delete this college offer?')) return;
-      
-      const res = await fetch(`/api/player/offer/${filename}`, { method: 'DELETE' });
+    async function deleteReportCardImage() {
+      if (!confirm('Are you sure you want to delete this report card image?')) return;
+
+      const res = await fetch('/api/player/report-card/delete', {
+        method: 'POST'
+      });
+
       if (res.ok) {
-        alert('College offer deleted successfully');
+        alert('Report card image deleted successfully');
         loadPlayerProfile();
       } else {
-        alert('Failed to delete college offer');
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete report card image');
+      }
+    }
+
+    async function addVideoLink() {
+      const urlInput = document.getElementById('videoLinkUrl');
+      const titleInput = document.getElementById('videoLinkTitle');
+      const url = urlInput.value.trim();
+      const title = titleInput.value.trim();
+      if (!url) { alert('Please enter a URL'); return; }
+      try { new URL(url); } catch { alert('Please enter a valid URL'); return; }
+      const res = await fetch('/api/player/video-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title })
+      });
+      if (res.ok) {
+        urlInput.value = '';
+        titleInput.value = '';
+        loadPlayerProfile();
+      } else {
+        alert('Failed to add video link');
+      }
+    }
+
+    async function deleteVideoLink(id) {
+      if (!confirm('Are you sure you want to delete this video link?')) return;
+      const res = await fetch(`/api/player/video-link/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadPlayerProfile();
+      } else {
+        alert('Failed to delete video link');
       }
     }
 
@@ -383,10 +978,524 @@
       
       if (res.ok) {
         alert('Profile saved successfully!');
-        loadPlayerProfile();
+        await loadPlayerProfile();
+        showViewMode();
       } else {
         alert('Error saving profile');
       }
+    });
+
+    // Lightbox for images in view mode
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('profile-image')) {
+        openImageLightbox(e.target.src, 'Enlarged image');
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeCurrentLightbox();
+      }
+    });
+
+    // ============ COLLEGE OFFER HOVER TOOLTIP ============
+    let offerTooltipEl = null;
+    let offerTooltipTimer = null;
+    const offerContactsCache = {};
+
+    function escapeHtmlTooltip(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    async function showOfferTooltip(event, collegeId) {
+      clearTimeout(offerTooltipTimer);
+      hideOfferTooltipNow();
+
+      const card = event.currentTarget;
+      const rect = card.getBoundingClientRect();
+
+      // Create tooltip
+      offerTooltipEl = document.createElement('div');
+      offerTooltipEl.id = 'offerTooltip';
+      offerTooltipEl.style.cssText = 'position:fixed; z-index:9998; background:#fff; border:1px solid #e0e0e0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.15); padding:14px 16px; min-width:220px; max-width:320px; pointer-events:none;';
+
+      // Position: prefer above, fall back to below
+      const top = rect.top - 10;
+      const left = rect.left + rect.width / 2;
+      offerTooltipEl.style.left = left + 'px';
+      offerTooltipEl.style.transform = 'translateX(-50%)';
+
+      // Show loading state
+      const school = allSchools.find(s => s.id === collegeId);
+      const schoolName = school ? escapeHtmlTooltip(school.name) : 'School';
+      offerTooltipEl.innerHTML = `<div style="font-weight:600; font-size:13px; color:#1e3c72; margin-bottom:6px;">${schoolName}</div><div style="color:#999; font-size:12px;">Loading contacts...</div>`;
+      document.body.appendChild(offerTooltipEl);
+
+      // Position vertically after adding to DOM
+      const ttRect = offerTooltipEl.getBoundingClientRect();
+      if (top - ttRect.height > 10) {
+        offerTooltipEl.style.top = (top - ttRect.height) + 'px';
+      } else {
+        offerTooltipEl.style.top = (rect.bottom + 10) + 'px';
+      }
+
+      // Fetch contacts (with cache)
+      try {
+        let contacts;
+        if (offerContactsCache[collegeId]) {
+          contacts = offerContactsCache[collegeId];
+        } else {
+          const res = await fetch(`/api/player/colleges/${collegeId}/contacts`);
+          if (!res.ok) throw new Error('Failed');
+          contacts = await res.json();
+          offerContactsCache[collegeId] = contacts;
+        }
+
+        if (!offerTooltipEl) return; // tooltip was hidden while loading
+
+        let html = `<div style="font-weight:600; font-size:13px; color:#1e3c72; margin-bottom:8px;">👥 ${schoolName} Contacts</div>`;
+        if (contacts.length === 0) {
+          html += `<div style="color:#999; font-size:12px; font-style:italic;">No contacts added yet</div>`;
+        } else {
+          html += contacts.map(c => `
+            <div style="display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #f0f0f0;">
+              <div style="width:28px; height:28px; background:#1e3c72; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:11px; flex-shrink:0;">${escapeHtmlTooltip(c.name.charAt(0).toUpperCase())}</div>
+              <div style="min-width:0;">
+                <div style="font-size:13px; font-weight:500; color:#333;">${escapeHtmlTooltip(c.name)}</div>
+                ${c.title ? `<div style="font-size:11px; color:#1e3c72; font-weight:500;">${escapeHtmlTooltip(c.title)}</div>` : ''}
+                ${c.email ? `<div style="font-size:11px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📧 ${escapeHtmlTooltip(c.email)}</div>` : ''}
+                ${c.phone ? `<div style="font-size:11px; color:#666;">📞 ${escapeHtmlTooltip(c.phone)}</div>` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+        html += `<div style="margin-top:8px; font-size:11px; color:#999; text-align:center;">Click logo to view details</div>`;
+        offerTooltipEl.innerHTML = html;
+
+        // Re-position after content change
+        const newRect = offerTooltipEl.getBoundingClientRect();
+        if (top - newRect.height > 10) {
+          offerTooltipEl.style.top = (top - newRect.height) + 'px';
+        } else {
+          offerTooltipEl.style.top = (rect.bottom + 10) + 'px';
+        }
+      } catch (err) {
+        if (offerTooltipEl) {
+          offerTooltipEl.innerHTML = `<div style="font-weight:600; font-size:13px; color:#1e3c72; margin-bottom:6px;">${schoolName}</div><div style="color:#999; font-size:12px;">Could not load contacts</div>`;
+        }
+      }
+    }
+
+    function hideOfferTooltipNow() {
+      clearTimeout(offerTooltipTimer);
+      if (offerTooltipEl) {
+        offerTooltipEl.remove();
+        offerTooltipEl = null;
+      }
+    }
+
+    function hideOfferTooltip() {
+      hideOfferTooltipNow();
+    }
+
+    async function openSchoolDetailFromOffer(collegeId) {
+      hideOfferTooltip();
+      // Make sure schools data is loaded so the detail modal can find the school
+      if (allSchools.length === 0) {
+        try {
+          const res = await fetch('/api/player/colleges');
+          if (res.ok) allSchools = await res.json();
+        } catch (err) { console.error('Failed to load schools:', err); }
+      }
+      openSchoolDetail(collegeId);
+    }
+
+    // ============ SCHOOLS FEATURE ============
+    let allSchools = [];
+
+    async function openSchoolsModal() {
+      document.getElementById('schoolsModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      document.getElementById('schoolSearch').value = '';
+      document.getElementById('schoolConferenceFilter').value = '';
+      document.getElementById('schoolStatusFilter').value = '';
+      await loadSchools();
+    }
+
+    function closeSchoolsModal() {
+      document.getElementById('schoolsModal').style.display = 'none';
+      document.body.style.overflow = '';
+      loadPlayerProfile();
+    }
+
+    async function loadSchools() {
+      try {
+        const res = await fetch('/api/player/colleges');
+        if (!res.ok) return;
+        allSchools = await res.json();
+        renderSchools();
+      } catch (err) {
+        console.error('Failed to load schools:', err);
+      }
+    }
+
+    function escapeHtmlSchools(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function renderSchools() {
+      const search = document.getElementById('schoolSearch').value.toLowerCase().trim();
+      const confFilter = document.getElementById('schoolConferenceFilter').value;
+      const statusFilter = document.getElementById('schoolStatusFilter').value;
+
+      let filtered = allSchools;
+      if (confFilter) {
+        filtered = filtered.filter(c => c.conference === confFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.team && c.team.toLowerCase().includes(search)));
+      }
+      if (statusFilter === 'favorites') {
+        filtered = filtered.filter(c => c.is_favorite);
+      } else if (statusFilter === 'offers') {
+        filtered = filtered.filter(c => c.has_offer);
+      }
+
+      const grid = document.getElementById('schoolsGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p style="color:#999; text-align:center; padding:30px; grid-column:1/-1;">No schools found</p>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const logoHtml = c.logo
+          ? `<img src="/${escapeHtmlSchools(c.logo)}" alt="${escapeHtmlSchools(c.name)}" style="width:56px; height:56px; object-fit:contain; border-radius:8px; flex-shrink:0;">`
+          : `<div style="width:56px; height:56px; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;">🏫</div>`;
+        const urlHtml = c.website_url
+          ? `<a href="${escapeHtmlSchools(c.website_url)}" target="_blank" rel="noopener" style="font-size:13px; color:#1e3c72; text-decoration:none; word-break:break-all;">🔗 ${escapeHtmlSchools(c.website_url)}</a>`
+          : '<span style="color:#999; font-size:13px;">No website</span>';
+        const confBadge = c.conference
+          ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block;">${escapeHtmlSchools(c.conference)}</span>`
+          : '';
+        const teamBadge = c.team
+          ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-left:4px;">${escapeHtmlSchools(c.team)}</span>`
+          : '';
+
+        const favActive = c.is_favorite ? 'background:#fff3cd; border-color:#ffc107; color:#856404;' : '';
+        const offerActive = c.has_offer ? 'background:#d4edda; border-color:#28a745; color:#155724;' : '';
+
+        return `<div style="display:flex; align-items:flex-start; gap:14px; padding:16px; border:1px solid #e8e8e8; border-radius:10px; background:#fff; transition:box-shadow 0.2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+          ${logoHtml}
+          <div style="flex:1; min-width:0;">
+            <h4 style="margin:0 0 4px; font-size:15px; color:#333;">${escapeHtmlSchools(c.name)}</h4>
+            ${urlHtml}
+            <div style="margin-top:6px;">${confBadge}${teamBadge}</div>
+            <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button onclick="toggleFavorite(${c.id})" style="padding:6px 14px; border:1px solid #ddd; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${favActive}">${c.is_favorite ? '⭐ Favorited' : '☆ Favorite'}</button>
+              <button onclick="toggleOffer(${c.id})" style="padding:6px 14px; border:1px solid #ddd; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${offerActive}">${c.has_offer ? '📩 Offer Received' : '📨 Mark Offer'}</button>
+              <button onclick="openSchoolDetail(${c.id})" style="padding:6px 14px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; background:#e8edf5; color:#1e3c72;">📝 Notes</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function toggleFavorite(collegeId) {
+      try {
+        const res = await fetch(`/api/player/colleges/${collegeId}/favorite`, { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const school = allSchools.find(s => s.id === collegeId);
+        if (school) school.is_favorite = data.is_favorite;
+        renderSchools();
+      } catch (err) {
+        console.error('Failed to toggle favorite:', err);
+      }
+    }
+
+    async function toggleOffer(collegeId) {
+      try {
+        const res = await fetch(`/api/player/colleges/${collegeId}/offer`, { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const school = allSchools.find(s => s.id === collegeId);
+        if (school) school.has_offer = data.has_offer;
+        renderSchools();
+      } catch (err) {
+        console.error('Failed to toggle offer:', err);
+      }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('schoolsModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSchoolsModal();
+    });
+
+    // ============ SCHOOL DETAIL (Notes & Contacts) ============
+    let currentSchoolId = null;
+    let currentSchoolData = null;
+
+    function escapeHtmlDetail(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function openSchoolDetail(collegeId) {
+      currentSchoolId = collegeId;
+      currentSchoolData = allSchools.find(s => s.id === collegeId);
+      if (!currentSchoolData) return;
+
+      // Set header
+      const logoEl = document.getElementById('schoolDetailLogo');
+      if (currentSchoolData.logo) {
+        logoEl.innerHTML = `<img src="/${escapeHtmlDetail(currentSchoolData.logo)}" style="width:48px; height:48px; object-fit:contain; border-radius:8px; background:#fff; padding:4px;">`;
+      } else {
+        logoEl.innerHTML = `<div style="width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px;">🏫</div>`;
+      }
+      document.getElementById('schoolDetailName').textContent = currentSchoolData.name;
+      document.getElementById('schoolDetailConf').textContent = [currentSchoolData.conference, currentSchoolData.team].filter(Boolean).join(' · ');
+
+      document.getElementById('schoolDetailModal').style.display = 'block';
+      switchDetailTab('contacts');
+    }
+
+    function closeSchoolDetail() {
+      document.getElementById('schoolDetailModal').style.display = 'none';
+      currentSchoolId = null;
+      currentSchoolData = null;
+    }
+
+    function switchDetailTab(tab) {
+      const tabContacts = document.getElementById('tabContacts');
+      const tabNotes = document.getElementById('tabNotes');
+      const panelContacts = document.getElementById('panelContacts');
+      const panelNotes = document.getElementById('panelNotes');
+
+      tabContacts.style.color = tab === 'contacts' ? '#1e3c72' : '#666';
+      tabContacts.style.borderBottomColor = tab === 'contacts' ? '#1e3c72' : 'transparent';
+      tabNotes.style.color = tab === 'notes' ? '#1e3c72' : '#666';
+      tabNotes.style.borderBottomColor = tab === 'notes' ? '#1e3c72' : 'transparent';
+
+      panelContacts.style.display = tab === 'contacts' ? 'block' : 'none';
+      panelNotes.style.display = tab === 'notes' ? 'block' : 'none';
+
+      if (tab === 'contacts') loadContacts();
+      else loadNotes();
+    }
+
+    // ---- CONTACTS ----
+    async function loadContacts() {
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/contacts`);
+        if (!res.ok) return;
+        const contacts = await res.json();
+        renderContacts(contacts);
+      } catch (err) { console.error('Failed to load contacts:', err); }
+    }
+
+    function renderContacts(contacts) {
+      const el = document.getElementById('contactsList');
+      if (contacts.length === 0) {
+        el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No contacts added yet. Click "+ Add Contact" to get started.</p>';
+        return;
+      }
+      el.innerHTML = contacts.map(c => {
+        const cData = encodeURIComponent(JSON.stringify({id:c.id, name:c.name, title:c.title||'', email:c.email||'', phone:c.phone||''}));
+        return `
+        <div style="display:flex; align-items:flex-start; gap:14px; padding:14px; border:1px solid #e8e8e8; border-radius:8px; margin-bottom:10px; background:#fafafa;">
+          <div style="width:40px; height:40px; background:#1e3c72; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:16px; flex-shrink:0;">${escapeHtmlDetail(c.name.charAt(0).toUpperCase())}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:600; color:#333; font-size:14px;">${escapeHtmlDetail(c.name)}</div>
+            ${c.title ? `<div style="font-size:12px; color:#1e3c72; margin-top:1px; font-weight:500;">${escapeHtmlDetail(c.title)}</div>` : ''}
+            ${c.email ? `<div style="font-size:13px; color:#666; margin-top:2px;">📧 <a href="mailto:${escapeHtmlDetail(c.email)}" style="color:#1e3c72; text-decoration:none;">${escapeHtmlDetail(c.email)}</a></div>` : ''}
+            ${c.phone ? `<div style="font-size:13px; color:#666; margin-top:2px;">📞 <a href="tel:${escapeHtmlDetail(c.phone)}" style="color:#1e3c72; text-decoration:none;">${escapeHtmlDetail(c.phone)}</a></div>` : ''}
+          </div>
+          <div style="display:flex; gap:4px; flex-shrink:0;">
+            <button onclick="editContact(JSON.parse(decodeURIComponent('${cData}')))" style="padding:4px 10px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:12px;" title="Edit">✏️</button>
+            <button onclick="deleteContact(${c.id})" style="padding:4px 10px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:12px;" title="Delete">🗑️</button>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function showAddContactForm() {
+      document.getElementById('editContactId').value = '';
+      document.getElementById('contactName').value = '';
+      document.getElementById('contactTitle').value = '';
+      document.getElementById('contactEmail').value = '';
+      document.getElementById('contactPhone').value = '';
+      document.getElementById('contactFormTitle').textContent = 'Add New Contact';
+      document.getElementById('addContactForm').style.display = 'block';
+      document.getElementById('contactName').focus();
+    }
+
+    function editContact(contactData) {
+      document.getElementById('editContactId').value = contactData.id;
+      document.getElementById('contactName').value = contactData.name;
+      document.getElementById('contactTitle').value = contactData.title || '';
+      document.getElementById('contactEmail').value = contactData.email || '';
+      document.getElementById('contactPhone').value = contactData.phone || '';
+      document.getElementById('contactFormTitle').textContent = 'Edit Contact';
+      document.getElementById('addContactForm').style.display = 'block';
+      document.getElementById('contactName').focus();
+    }
+
+    function cancelContactForm() {
+      document.getElementById('addContactForm').style.display = 'none';
+    }
+
+    async function saveContact() {
+      const name = document.getElementById('contactName').value.trim();
+      const title = document.getElementById('contactTitle').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const phone = document.getElementById('contactPhone').value.trim();
+      const editId = document.getElementById('editContactId').value;
+
+      if (!name) { alert('Contact name is required'); return; }
+
+      try {
+        const url = editId
+          ? `/api/player/colleges/${currentSchoolId}/contacts/${editId}`
+          : `/api/player/colleges/${currentSchoolId}/contacts`;
+        const method = editId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, title, email, phone })
+        });
+        if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save contact'); return; }
+        cancelContactForm();
+        loadContacts();
+      } catch (err) { console.error('Save contact error:', err); alert('Failed to save contact'); }
+    }
+
+    async function deleteContact(contactId) {
+      if (!confirm('Delete this contact?')) return;
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/contacts/${contactId}`, { method: 'DELETE' });
+        if (res.ok) loadContacts();
+        else alert('Failed to delete contact');
+      } catch (err) { console.error('Delete contact error:', err); }
+    }
+
+    // ---- NOTES ----
+    let currentSchoolNotes = [];
+
+    async function loadNotes() {
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/notes`);
+        if (!res.ok) return;
+        currentSchoolNotes = await res.json();
+        document.getElementById('noteSearchFilter').value = '';
+        renderNotes(currentSchoolNotes);
+      } catch (err) { console.error('Failed to load notes:', err); }
+    }
+
+    function filterNotes() {
+      const query = document.getElementById('noteSearchFilter').value.toLowerCase().trim();
+      if (!query) {
+        renderNotes(currentSchoolNotes);
+        return;
+      }
+      const filtered = currentSchoolNotes.filter(n =>
+        n.note.toLowerCase().includes(query) ||
+        (n.visit_date && n.visit_date.toLowerCase().includes(query))
+      );
+      renderNotes(filtered);
+    }
+
+    function renderNotes(notes) {
+      const el = document.getElementById('notesList');
+      if (notes.length === 0) {
+        el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No notes yet. Click "+ Add Note" to record your thoughts about this school.</p>';
+        return;
+      }
+      el.innerHTML = notes.map(n => {
+        const dateLabel = n.visit_date
+          ? `<span style="display:inline-block; background:#e8edf5; color:#1e3c72; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:600;">📅 Visit: ${escapeHtmlDetail(n.visit_date)}</span>`
+          : `<span style="display:inline-block; background:#f0f0f0; color:#666; padding:2px 10px; border-radius:4px; font-size:12px;">💬 General Note</span>`;
+        const createdDate = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return `
+          <div style="padding:14px; border:1px solid #e8e8e8; border-radius:8px; margin-bottom:10px; background:#fafafa;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div>${dateLabel}</div>
+              <div style="display:flex; gap:4px; align-items:center;">
+                <span style="font-size:11px; color:#999;">${createdDate}</span>
+                <button onclick="editNote(${n.id}, '${escapeHtmlDetail(n.visit_date || '')}', \`${escapeHtmlDetail(n.note).replace(/`/g, '\\`')}\`)" style="padding:4px 10px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:12px;" title="Edit">✏️</button>
+                <button onclick="deleteNote(${n.id})" style="padding:4px 10px; background:none; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:12px;" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <p style="margin:0; font-size:14px; color:#444; line-height:1.6; white-space:pre-wrap;">${escapeHtmlDetail(n.note)}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showAddNoteForm() {
+      document.getElementById('editNoteId').value = '';
+      document.getElementById('noteVisitDate').value = '';
+      document.getElementById('noteText').value = '';
+      document.getElementById('noteFormTitle').textContent = 'Add New Note';
+      document.getElementById('addNoteForm').style.display = 'block';
+      document.getElementById('noteText').focus();
+    }
+
+    function editNote(id, visitDate, note) {
+      document.getElementById('editNoteId').value = id;
+      document.getElementById('noteVisitDate').value = visitDate;
+      document.getElementById('noteText').value = note;
+      document.getElementById('noteFormTitle').textContent = 'Edit Note';
+      document.getElementById('addNoteForm').style.display = 'block';
+      document.getElementById('noteText').focus();
+    }
+
+    function cancelNoteForm() {
+      document.getElementById('addNoteForm').style.display = 'none';
+    }
+
+    async function saveNote() {
+      const note = document.getElementById('noteText').value.trim();
+      const visitDate = document.getElementById('noteVisitDate').value;
+      const editId = document.getElementById('editNoteId').value;
+
+      if (!note) { alert('Note text is required'); return; }
+
+      try {
+        const url = editId
+          ? `/api/player/colleges/${currentSchoolId}/notes/${editId}`
+          : `/api/player/colleges/${currentSchoolId}/notes`;
+        const method = editId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, visitDate })
+        });
+        if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save note'); return; }
+        cancelNoteForm();
+        loadNotes();
+      } catch (err) { console.error('Save note error:', err); alert('Failed to save note'); }
+    }
+
+    async function deleteNote(noteId) {
+      if (!confirm('Delete this note?')) return;
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/notes/${noteId}`, { method: 'DELETE' });
+        if (res.ok) loadNotes();
+        else alert('Failed to delete note');
+      } catch (err) { console.error('Delete note error:', err); }
+    }
+
+    // Close detail modal on backdrop click
+    document.getElementById('schoolDetailModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSchoolDetail();
     });
   </script>
 </body>

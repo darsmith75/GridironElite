@@ -39,6 +39,8 @@ async function login() {
   if (res.ok) {
     if (data.role === 'player') {
       window.location.href = 'player-profile.html';
+    } else if (data.role === 'admin') {
+      window.location.href = 'admin-dashboard.html';
     } else {
       window.location.href = 'agent-dashboard.html';
     }
@@ -52,11 +54,12 @@ async function register() {
   const email = document.getElementById('regEmail').value;
   const password = document.getElementById('regPassword').value;
   const fullName = document.getElementById('regFullName').value;
+  const role = document.getElementById('regRole').value;
   
   const res = await fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, role: 'player', fullName })
+    body: JSON.stringify({ email, password, role, fullName })
   });
   
   const data = await res.json();
@@ -86,6 +89,9 @@ async function checkAuth(requiredRole) {
   
   const user = await res.json();
   if (requiredRole && user.role !== requiredRole) {
-    window.location.href = '/';
+    // Admin can access any page
+    if (user.role !== 'admin') {
+      window.location.href = '/';
+    }
   }
 }

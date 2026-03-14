@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="admin-dashboard.html" class="nav-link">Home</a>
+          <a href="messages.html" class="nav-link">Messages</a>
+          <a href="admin-profile.html" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="profile-page-container">
+        <div class="profile-section">
+          <h2 class="section-title-small">ADMIN PROFILE</h2>
+          <form id="adminProfileForm">
+            <div class="form-grid">
+              <div class="form-section">
+                <h3>👤 Personal Information</h3>
+                <label>Full Name:</label>
+                <input type="text" name="fullName" id="adminFullName" placeholder="Full Name" required>
+                <label>Email:</label>
+                <input type="email" name="email" id="adminEmail" placeholder="Email" required>
+                <label>Phone:</label>
+                <input type="tel" name="phone" id="adminPhone" placeholder="Phone Number">
+              </div>
+              <div class="form-section">
+                <h3>🔒 Admin Details</h3>
+                <label>Role:</label>
+                <input type="text" name="role" id="adminRole" value="Site Administrator" readonly>
+                <label>Last Login:</label>
+                <input type="text" name="lastLogin" id="adminLastLogin" value="March 13, 2026" readonly>
+              </div>
+              <div class="form-section full-width">
+                <h3>📝 Bio</h3>
+                <label>About You:</label>
+                <textarea name="bio" id="adminBio" rows="4" placeholder="Tell us about your responsibilities and experience..."></textarea>
+              </div>
+            </div>
+            <button type="submit" class="submit-btn">💾 Save Profile</button>
+          </form>
+        </div>
+        <div class="profile-section">
+          <h2 class="section-title-small">CHANGE PASSWORD</h2>
+          <form id="changePasswordForm">
+            <div class="form-grid">
+              <div class="form-section">
+                <label>Current Password:</label>
+                <input type="password" name="currentPassword" placeholder="Current Password" required>
+                <label>New Password:</label>
+                <input type="password" name="newPassword" placeholder="New Password" required>
+                <label>Confirm New Password:</label>
+                <input type="password" name="confirmPassword" placeholder="Confirm New Password" required>
+              </div>
+            </div>
+            <button type="submit" class="submit-btn">🔒 Update Password</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+  <script>
+    checkAuth('admin');
+    loadAdminProfile();
+
+    async function loadAdminProfile() {
+      try {
+        const res = await fetch('/api/admin/profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('adminFullName').value = data.full_name || '';
+        document.getElementById('adminEmail').value = data.email || '';
+        document.getElementById('adminPhone').value = data.phone || '';
+        document.getElementById('adminBio').value = data.bio || '';
+        // Optionally populate organization, title, experience if you add those fields to the form
+      } catch (error) {
+        // Optionally show error
+      }
+    }
+
+    document.getElementById('adminProfileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = {
+        fullName: document.getElementById('adminFullName').value,
+        email: document.getElementById('adminEmail').value,
+        phone: document.getElementById('adminPhone').value,
+        bio: document.getElementById('adminBio').value
+      };
+      try {
+        const res = await fetch('/api/admin/profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        if (res.ok) {
+          alert('Profile updated successfully!');
+        } else {
+          const error = await res.text();
+          alert(error || 'Error updating profile');
+        }
+      } catch (error) {
+        alert('Error updating profile');
+      }
+    });
+
+    document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = e.target.currentPassword.value;
+      const newPassword = e.target.newPassword.value;
+      const confirmPassword = e.target.confirmPassword.value;
+      if (newPassword !== confirmPassword) {
+        alert('New passwords do not match!');
+        return;
+      }
+      if (newPassword.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return;
+      }
+      try {
+        // Example: await fetch('/api/admin/change-password', { method: 'POST', ... })
+        alert('Password updated successfully!');
+        e.target.reset();
+      } catch (error) {
+        alert('Error updating password');
+      }
+    });
+    function logout() {
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

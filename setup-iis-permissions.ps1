@@ -3,7 +3,7 @@
 
 Write-Host "Setting up IIS permissions for Football Platform..." -ForegroundColor Green
 
-$projectPath = "C:\KiroProjects"
+$projectPath = "C:\GridironElite"
 
 # Add IIS_IUSRS permissions
 Write-Host "Adding IIS_IUSRS permissions..." -ForegroundColor Yellow
