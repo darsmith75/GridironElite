@@ -263,6 +263,9 @@ const requireAuth = (req, res, next) => {
 function enrichPlayerProfile(profile) {
   if (!profile) return profile;
 
+  // Keep API compatibility: expose player id as the account/user id.
+  profile.id = profile.user_id;
+
   const playerId = profile.user_id;
 
   const videos = db.prepare('SELECT filename FROM player_videos WHERE player_id = ? ORDER BY id').all(playerId);
@@ -582,7 +585,7 @@ app.get('/api/agent/player/:id', requireAuth, (req, res) => {
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   
-  const player = db.prepare('SELECT pp.*, u.email FROM player_profiles pp JOIN users u ON pp.user_id = u.id WHERE pp.id = ?').get(req.params.id);
+  const player = db.prepare('SELECT pp.*, u.email FROM player_profiles pp JOIN users u ON pp.user_id = u.id WHERE pp.user_id = ?').get(req.params.id);
   
   if (!player) {
     return res.status(404).json({ error: 'Player not found' });

@@ -20,8 +20,7 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS player_profiles (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER UNIQUE NOT NULL,
+    user_id INTEGER PRIMARY KEY NOT NULL,
     full_name TEXT NOT NULL,
     high_school TEXT,
     graduation_year INTEGER,
@@ -382,6 +381,73 @@ try {
   }
 } catch (error) {
   console.error('Legacy column cleanup error:', error.message);
+}
+
+// Normalize player_profiles identity to use user_id as the only primary key.
+try {
+  const profileColumns = db.prepare("PRAGMA table_info(player_profiles)").all();
+  const hasLegacyIdColumn = profileColumns.some(c => c.name === 'id');
+
+  if (hasLegacyIdColumn) {
+    console.log('Migrating player_profiles to user_id primary key...');
+    db.pragma('foreign_keys = OFF');
+    db.exec('DROP TABLE IF EXISTS player_profiles_new');
+    db.exec(`
+      CREATE TABLE player_profiles_new (
+        user_id INTEGER PRIMARY KEY NOT NULL,
+        full_name TEXT NOT NULL,
+        high_school TEXT,
+        graduation_year INTEGER,
+        position TEXT,
+        height TEXT,
+        weight INTEGER,
+        forty_yard_dash REAL,
+        bench_press INTEGER,
+        squat INTEGER,
+        vertical_jump REAL,
+        shuttle_5_10_5 REAL,
+        l_drill REAL,
+        broad_jump REAL,
+        power_clean INTEGER,
+        single_leg_squat INTEGER,
+        gpa REAL,
+        profile_picture TEXT,
+        card_photo TEXT,
+        report_card_image TEXT,
+        phone TEXT,
+        bio TEXT,
+        hudl_link TEXT,
+        instagram_link TEXT,
+        twitter_link TEXT,
+        hudl_username TEXT,
+        instagram_username TEXT,
+        twitter_username TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      INSERT INTO player_profiles_new (
+        user_id, full_name, high_school, graduation_year, position, height, weight,
+        forty_yard_dash, bench_press, squat, vertical_jump, shuttle_5_10_5, l_drill,
+        broad_jump, power_clean, single_leg_squat, gpa, profile_picture, card_photo,
+        report_card_image, phone, bio, hudl_link, instagram_link, twitter_link,
+        hudl_username, instagram_username, twitter_username
+      )
+      SELECT
+        user_id, full_name, high_school, graduation_year, position, height, weight,
+        forty_yard_dash, bench_press, squat, vertical_jump, shuttle_5_10_5, l_drill,
+        broad_jump, power_clean, single_leg_squat, gpa, profile_picture, card_photo,
+        report_card_image, phone, bio, hudl_link, instagram_link, twitter_link,
+        hudl_username, instagram_username, twitter_username
+      FROM player_profiles;
+
+      DROP TABLE player_profiles;
+      ALTER TABLE player_profiles_new RENAME TO player_profiles;
+    `);
+    db.pragma('foreign_keys = ON');
+    console.log('player_profiles migration complete');
+  }
+} catch (error) {
+  console.error('player_profiles identity migration error:', error.message);
 }
 
 // Create default agent account if none exists
