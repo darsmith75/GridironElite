@@ -42,9 +42,6 @@ db.exec(`
     card_photo TEXT,
     report_card_image TEXT,
     phone TEXT,
-    highlight_videos TEXT,
-    additional_images TEXT,
-    college_offers TEXT,
     bio TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
@@ -129,69 +126,6 @@ try {
   }
 } catch (error) {
   console.error('Error adding columns to users table:', error);
-}
-
-// Migrate old highlight_video column to highlight_videos if needed
-try {
-  const columns = db.prepare("PRAGMA table_info(player_profiles)").all();
-  const hasOldColumn = columns.some(col => col.name === 'highlight_video');
-  
-  if (hasOldColumn) {
-    console.log('Migrating highlight_video to highlight_videos...');
-    // Get all profiles with old video
-    const profiles = db.prepare('SELECT id, highlight_video FROM player_profiles WHERE highlight_video IS NOT NULL').all();
-    
-    // Add new column if it doesn't exist
-    const hasNewColumn = columns.some(col => col.name === 'highlight_videos');
-    if (!hasNewColumn) {
-      db.exec('ALTER TABLE player_profiles ADD COLUMN highlight_videos TEXT');
-    }
-    
-    // Migrate data
-    profiles.forEach(profile => {
-      const videos = JSON.stringify([profile.highlight_video]);
-      db.prepare('UPDATE player_profiles SET highlight_videos = ? WHERE id = ?').run(videos, profile.id);
-    });
-    
-    console.log('Migration complete');
-  }
-} catch (error) {
-  console.log('Migration check:', error.message);
-}
-
-// Add college_offers column if it doesn't exist
-try {
-  const columns = db.prepare("PRAGMA table_info(player_profiles)").all();
-  const hasOffersColumn = columns.some(col => col.name === 'college_offers');
-  
-  if (!hasOffersColumn) {
-    console.log('Adding college_offers column...');
-    db.exec('ALTER TABLE player_profiles ADD COLUMN college_offers TEXT');
-    console.log('College offers column added');
-  }
-} catch (error) {
-  console.log('College offers column check:', error.message);
-}
-
-// Add contact information columns if they don't exist
-try {
-  const columns = db.prepare("PRAGMA table_info(player_profiles)").all();
-  const columnNames = columns.map(col => col.name);
-  
-  const contactColumns = [
-    'father_name', 'father_email', 'father_phone',
-    'mother_name', 'mother_email', 'mother_phone',
-    'coach_name', 'coach_email', 'coach_phone'
-  ];
-  
-  contactColumns.forEach(colName => {
-    if (!columnNames.includes(colName)) {
-      db.exec(`ALTER TABLE player_profiles ADD COLUMN ${colName} TEXT`);
-      console.log(`Added ${colName} column to player_profiles table`);
-    }
-  });
-} catch (error) {
-  console.error('Error adding contact columns:', error);
 }
 
 // Add new physical metrics columns if they don't exist
@@ -345,21 +279,29 @@ try {
 // Migrate JSON columns to normalized tables
 try {
   const videoCount = db.prepare('SELECT COUNT(*) as count FROM player_videos').get().count;
-  if (videoCount === 0) {
-    const profiles = db.prepare('SELECT user_id, highlight_videos, additional_images FROM player_profiles').all();
+  const imageCount = db.prepare('SELECT COUNT(*) as count FROM player_images').get().count;
+  const profileColumns = db.prepare("PRAGMA table_info(player_profiles)").all().map(c => c.name);
+  const hasLegacyHighlightVideos = profileColumns.includes('highlight_videos');
+  const hasLegacyAdditionalImages = profileColumns.includes('additional_images');
+
+  if ((videoCount === 0 || imageCount === 0) && (hasLegacyHighlightVideos || hasLegacyAdditionalImages)) {
+    const selectParts = ['user_id'];
+    if (hasLegacyHighlightVideos) selectParts.push('highlight_videos');
+    if (hasLegacyAdditionalImages) selectParts.push('additional_images');
+    const profiles = db.prepare(`SELECT ${selectParts.join(', ')} FROM player_profiles`).all();
 
     const insertVideo = db.prepare('INSERT INTO player_videos (player_id, filename) VALUES (?, ?)');
     const insertImage = db.prepare('INSERT INTO player_images (player_id, filename) VALUES (?, ?)');
 
     const migrateMedia = db.transaction(() => {
       for (const profile of profiles) {
-        if (profile.highlight_videos) {
+        if (videoCount === 0 && hasLegacyHighlightVideos && profile.highlight_videos) {
           try {
             const videos = JSON.parse(profile.highlight_videos);
             videos.forEach(v => insertVideo.run(profile.user_id, v));
           } catch (e) { /* skip invalid JSON */ }
         }
-        if (profile.additional_images) {
+        if (imageCount === 0 && hasLegacyAdditionalImages && profile.additional_images) {
           try {
             const images = JSON.parse(profile.additional_images);
             images.forEach(i => insertImage.run(profile.user_id, i));
@@ -377,7 +319,15 @@ try {
 // Migrate contact columns to player_contacts table
 try {
   const contactCount = db.prepare('SELECT COUNT(*) as count FROM player_contacts').get().count;
-  if (contactCount === 0) {
+  const profileColumns = db.prepare("PRAGMA table_info(player_profiles)").all().map(c => c.name);
+  const legacyContactColumns = [
+    'father_name', 'father_email', 'father_phone',
+    'mother_name', 'mother_email', 'mother_phone',
+    'coach_name', 'coach_email', 'coach_phone'
+  ];
+  const hasLegacyContactColumns = legacyContactColumns.every(col => profileColumns.includes(col));
+
+  if (contactCount === 0 && hasLegacyContactColumns) {
     const profiles = db.prepare(`SELECT user_id,
       father_name, father_email, father_phone,
       mother_name, mother_email, mother_phone,
@@ -404,6 +354,34 @@ try {
   }
 } catch (error) {
   console.error('Contact migration error:', error.message);
+}
+
+// Drop legacy columns no longer used by application code
+try {
+  const profileColumns = db.prepare("PRAGMA table_info(player_profiles)").all().map(c => c.name);
+  const legacyProfileColumns = [
+    'highlight_videos',
+    'additional_images',
+    'college_offers',
+    'father_name', 'father_email', 'father_phone',
+    'mother_name', 'mother_email', 'mother_phone',
+    'coach_name', 'coach_email', 'coach_phone'
+  ];
+
+  legacyProfileColumns.forEach(col => {
+    if (profileColumns.includes(col)) {
+      db.exec(`ALTER TABLE player_profiles DROP COLUMN ${col}`);
+      console.log(`Dropped legacy column player_profiles.${col}`);
+    }
+  });
+
+  const psiColumns = db.prepare("PRAGMA table_info(player_school_interests)").all().map(c => c.name);
+  if (psiColumns.includes('committed_school')) {
+    db.exec('ALTER TABLE player_school_interests DROP COLUMN committed_school');
+    console.log('Dropped legacy column player_school_interests.committed_school');
+  }
+} catch (error) {
+  console.error('Legacy column cleanup error:', error.message);
 }
 
 // Create default agent account if none exists

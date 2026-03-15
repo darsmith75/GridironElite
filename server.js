@@ -1,3 +1,5 @@
+try { require('dotenv').config(); } catch (_) {}
+
 const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
@@ -6,6 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 const db = require('./database');
+const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url } = require('./backblaze');
 
 const app = express();
 const PORT = 3000;
@@ -77,18 +80,9 @@ const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
 // Multer configuration for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const userDir = path.join('uploads', String(req.session.userId));
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-    cb(null, userDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
-    cb(null, safeName);
-  }
-});
+// Use memory storage – files are streamed to Backblaze B2 (or written to disk if B2
+// is not configured) by processUploadedFiles() inside each route handler.
+const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   if (ALLOWED_TYPES.includes(file.mimetype)) {
     cb(null, true);
@@ -97,6 +91,25 @@ const fileFilter = (req, file, cb) => {
   }
 };
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 }, fileFilter });
+
+// Process uploaded files: assign a safe filename, then upload to B2 or save to local disk.
+// Must be awaited at the start of any route handler that receives user file uploads.
+async function processUploadedFiles(userId, reqFiles) {
+  if (!reqFiles) return;
+  const allFiles = Object.values(reqFiles).flat();
+  for (const file of allFiles) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+    file.filename = safeName; // keep existing field-name references working
+    if (b2Enabled) {
+      await uploadToB2('uploads/' + userId + '/' + safeName, file.buffer, file.mimetype);
+    } else {
+      const userDir = path.join('uploads', String(userId));
+      if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+      fs.writeFileSync(path.join(userDir, safeName), file.buffer);
+    }
+  }
+}
 
 // Multer configuration for college logos
 const collegeLogoStorage = multer.diskStorage({
@@ -121,62 +134,116 @@ function safeUploadPath(filename) {
   return resolved;
 }
 
-function deleteUploadFile(filename) {
-  if (!filename) return false;
-
-  const safePath = safeUploadPath(filename);
-  if (!safePath || !fs.existsSync(safePath)) {
-    return false;
-  }
-
-  fs.unlinkSync(safePath);
-  return true;
+function normalizeUploadFilename(filename) {
+  if (!filename) return '';
+  const decoded = decodeURIComponent(String(filename));
+  const trimmed = decoded.replace(/^\/+/, '');
+  const withoutUploadsPrefix = trimmed.startsWith('uploads/') ? trimmed.slice('uploads/'.length) : trimmed;
+  return withoutUploadsPrefix;
 }
 
-function replacePlayerProfileFile(userId, columnName, newFilename) {
+async function deleteUploadFile(filename) {
+  if (!filename) return false;
+  const normalizedFilename = normalizeUploadFilename(filename);
+
+  let deletedInB2 = false;
+  // Delete from Backblaze B2 using normalized and legacy key shapes.
+  if (b2Enabled) {
+    deletedInB2 = await deleteFromB2('uploads/' + normalizedFilename);
+    if (!deletedInB2 && normalizedFilename.startsWith('uploads/')) {
+      deletedInB2 = await deleteFromB2(normalizedFilename);
+    }
+  }
+
+  // Also remove local copy for legacy files that pre-date B2 migration
+  const safePath = safeUploadPath(normalizedFilename);
+  if (safePath && fs.existsSync(safePath)) {
+    try { fs.unlinkSync(safePath); } catch (_) {}
+    return true;
+  }
+
+  // If B2 is enabled and no key existed/deleted, signal failure so route can inform UI.
+  if (b2Enabled) return deletedInB2;
+  return false;
+}
+
+async function replacePlayerProfileFile(userId, columnName, newFilename) {
   const current = db.prepare(`SELECT ${columnName} AS filename FROM player_profiles WHERE user_id = ?`).get(userId);
 
   if (current?.filename && current.filename !== newFilename) {
-    deleteUploadFile(current.filename);
+    await deleteUploadFile(current.filename);
   }
 
   db.prepare(`UPDATE player_profiles SET ${columnName} = ? WHERE user_id = ?`).run(newFilename, userId);
 }
 
-function clearPlayerProfileFile(userId, columnName) {
+async function clearPlayerProfileFile(userId, columnName) {
   const current = db.prepare(`SELECT ${columnName} AS filename FROM player_profiles WHERE user_id = ?`).get(userId);
 
   if (current?.filename) {
-    deleteUploadFile(current.filename);
+    await deleteUploadFile(current.filename);
     db.prepare(`UPDATE player_profiles SET ${columnName} = NULL WHERE user_id = ?`).run(userId);
   }
 }
 
-function replaceUserFile(userId, columnName, newFilename) {
+async function replaceUserFile(userId, columnName, newFilename) {
   const current = db.prepare(`SELECT ${columnName} AS filename FROM users WHERE id = ?`).get(userId);
 
   if (current?.filename && current.filename !== newFilename) {
-    deleteUploadFile(current.filename);
+    await deleteUploadFile(current.filename);
   }
 
   db.prepare(`UPDATE users SET ${columnName} = ? WHERE id = ?`).run(newFilename, userId);
 }
 
-function deleteOwnedPlayerMedia(tableName, playerId, filename) {
-  const media = db.prepare(`SELECT id, filename FROM ${tableName} WHERE player_id = ? AND filename = ?`).get(playerId, filename);
+async function deleteOwnedPlayerMedia(tableName, playerId, filename) {
+  const normalizedFilename = normalizeUploadFilename(filename);
+  const media = db.prepare(`SELECT id, filename FROM ${tableName} WHERE player_id = ? AND (filename = ? OR filename = ? OR filename = ?)`)
+    .get(playerId, filename, normalizedFilename, normalizedFilename.replace(/^uploads\//, ''));
   if (!media) {
     return false;
   }
 
+  const fileDeleted = await deleteUploadFile(media.filename);
+  if (b2Enabled && !fileDeleted) {
+    return false;
+  }
+
   db.prepare(`DELETE FROM ${tableName} WHERE id = ?`).run(media.id);
-  deleteUploadFile(media.filename);
   return true;
+}
+
+// Guard against accidental double-submit of the same profile upload payload.
+const recentProfileUploadSignatures = new Map();
+function buildProfileUploadSignature(userId, reqBody, reqFiles) {
+  const fileEntries = Object.entries(reqFiles || {})
+    .flatMap(([field, files]) => (files || []).map(f => `${field}:${f.originalname}:${f.size}:${f.mimetype}`))
+    .sort();
+
+  const bodyFields = [
+    reqBody.fullName || '',
+    reqBody.highSchool || '',
+    reqBody.position || '',
+    reqBody.graduationYear || '',
+    reqBody.gpa || ''
+  ].join('|');
+
+  return `${userId}|${bodyFields}|${fileEntries.join('|')}`;
 }
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+// User uploads: redirect to Backblaze B2 when enabled; otherwise serve from local disk.
+if (b2Enabled) {
+  app.use('/uploads', (req, res) => {
+    // req.path is e.g. "/5/abc.jpg" – prepend "uploads" to form the B2 object key
+    const key = 'uploads' + req.path;
+    res.redirect(302, getB2Url(key));
+  });
+} else {
+  app.use('/uploads', express.static('uploads'));
+}
 app.use('/images', express.static('images'));
 app.use('/logos', express.static('logos'));
 app.use(session({
@@ -291,7 +358,7 @@ app.post('/api/player/profile', requireAuth, upload.fields([
   { name: 'reportCardImage', maxCount: 1 },
   { name: 'highlightVideos', maxCount: 5 },
   { name: 'additionalImages', maxCount: 10 }
-]), (req, res) => {
+]), async (req, res) => {
   const data = req.body;
   const files = req.files;
   
@@ -299,6 +366,25 @@ app.post('/api/player/profile', requireAuth, upload.fields([
   console.log('Data received:', data);
   
   try {
+    const hasIncomingMedia = Object.values(files || {}).some(arr => Array.isArray(arr) && arr.length > 0);
+    if (hasIncomingMedia) {
+      const now = Date.now();
+      const signature = buildProfileUploadSignature(req.session.userId, data, files);
+      const previousAt = recentProfileUploadSignatures.get(signature);
+      if (previousAt && now - previousAt < 15000) {
+        return res.json({ success: true, deduped: true });
+      }
+      recentProfileUploadSignatures.set(signature, now);
+      if (recentProfileUploadSignatures.size > 200) {
+        const cutoff = now - 60000;
+        for (const [sig, ts] of recentProfileUploadSignatures.entries()) {
+          if (ts < cutoff) recentProfileUploadSignatures.delete(sig);
+        }
+      }
+    }
+
+    // Upload any incoming files to B2 (or local disk if B2 not configured)
+    await processUploadedFiles(req.session.userId, files);
     // Update basic profile info
     const result = db.prepare(`
       UPDATE player_profiles SET
@@ -357,17 +443,17 @@ app.post('/api/player/profile', requireAuth, upload.fields([
     
     // Update profile picture if provided
     if (files?.profilePicture) {
-      replacePlayerProfileFile(req.session.userId, 'profile_picture', userPrefix + files.profilePicture[0].filename);
+      await replacePlayerProfileFile(req.session.userId, 'profile_picture', userPrefix + files.profilePicture[0].filename);
     }
     
     // Update card photo if provided
     if (files?.cardPhoto) {
-      replacePlayerProfileFile(req.session.userId, 'card_photo', userPrefix + files.cardPhoto[0].filename);
+      await replacePlayerProfileFile(req.session.userId, 'card_photo', userPrefix + files.cardPhoto[0].filename);
     }
 
     // Update report card image if provided
     if (files?.reportCardImage) {
-      replacePlayerProfileFile(req.session.userId, 'report_card_image', userPrefix + files.reportCardImage[0].filename);
+      await replacePlayerProfileFile(req.session.userId, 'report_card_image', userPrefix + files.reportCardImage[0].filename);
     }
     
     // Add new videos to normalized table
@@ -394,9 +480,9 @@ app.post('/api/player/profile', requireAuth, upload.fields([
 });
 
 // Delete card photo
-app.delete('/api/player/card-photo', requireAuth, (req, res) => {
+app.delete('/api/player/card-photo', requireAuth, async (req, res) => {
   try {
-    clearPlayerProfileFile(req.session.userId, 'card_photo');
+    await clearPlayerProfileFile(req.session.userId, 'card_photo');
     
     res.json({ success: true });
   } catch (error) {
@@ -405,10 +491,22 @@ app.delete('/api/player/card-photo', requireAuth, (req, res) => {
   }
 });
 
-// Delete report card image
-app.delete('/api/player/report-card', requireAuth, (req, res) => {
+// Delete profile picture
+app.delete('/api/player/profile-picture', requireAuth, async (req, res) => {
   try {
-    clearPlayerProfileFile(req.session.userId, 'report_card_image');
+    await clearPlayerProfileFile(req.session.userId, 'profile_picture');
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete profile picture error:', error);
+    res.status(500).json({ error: 'Failed to delete profile picture' });
+  }
+});
+
+// Delete report card image
+app.delete('/api/player/report-card', requireAuth, async (req, res) => {
+  try {
+    await clearPlayerProfileFile(req.session.userId, 'report_card_image');
 
     res.json({ success: true });
   } catch (error) {
@@ -418,9 +516,9 @@ app.delete('/api/player/report-card', requireAuth, (req, res) => {
 });
 
 // Delete report card image via POST (for environments that block DELETE)
-app.post('/api/player/report-card/delete', requireAuth, (req, res) => {
+app.post('/api/player/report-card/delete', requireAuth, async (req, res) => {
   try {
-    clearPlayerProfileFile(req.session.userId, 'report_card_image');
+    await clearPlayerProfileFile(req.session.userId, 'report_card_image');
 
     res.json({ success: true });
   } catch (error) {
@@ -519,20 +617,18 @@ app.get('/api/agent/profile', requireAuth, (req, res) => {
 // Agent: Update agent profile
 app.post('/api/agent/profile', requireAuth, upload.fields([
   { name: 'profilePicture', maxCount: 1 }
-]), (req, res) => {
+]), async (req, res) => {
   if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
   const data = req.body;
   const files = req.files;
   try {
+    // Upload any incoming files to B2 (or local disk if B2 not configured)
+    await processUploadedFiles(req.session.userId, files);
     const existingAgent = db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
     let profilePicFilename = existingAgent?.profile_picture || null;
     if (files && files.profilePicture && files.profilePicture[0]) {
       profilePicFilename = req.session.userId + '/' + files.profilePicture[0].filename;
-      console.log('Profile picture file info:', files.profilePicture[0]);
       console.log('Profile picture saved as:', profilePicFilename);
-      // Check if file exists
-      const filePath = path.join('uploads', String(req.session.userId), files.profilePicture[0].filename);
-      console.log('File exists:', fs.existsSync(filePath), 'at', filePath);
     } else {
       console.log('No profile picture uploaded.');
     }
@@ -559,7 +655,7 @@ app.post('/api/agent/profile', requireAuth, upload.fields([
       req.session.userId
     );
     if (files && files.profilePicture && files.profilePicture[0]) {
-      replaceUserFile(req.session.userId, 'profile_picture', profilePicFilename);
+      await replaceUserFile(req.session.userId, 'profile_picture', profilePicFilename);
     }
     console.log('DB update result:', result);
     res.json({ success: true });
@@ -770,12 +866,13 @@ app.get('/api/messages/unread/count', requireAuth, (req, res) => {
 });
 
 // Delete video from player profile (query param variant)
-app.delete('/api/player/video', requireAuth, (req, res) => {
+app.delete('/api/player/video', requireAuth, async (req, res) => {
   try {
     const filename = req.query.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -785,12 +882,13 @@ app.delete('/api/player/video', requireAuth, (req, res) => {
 });
 
 // Delete video from player profile via POST (for environments that block DELETE)
-app.post('/api/player/video/delete', requireAuth, (req, res) => {
+app.post('/api/player/video/delete', requireAuth, async (req, res) => {
   try {
     const filename = req.body?.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -800,12 +898,13 @@ app.post('/api/player/video/delete', requireAuth, (req, res) => {
 });
 
 // Delete video from player profile
-app.delete('/api/player/video/:filename', requireAuth, (req, res) => {
+app.delete('/api/player/video/:filename', requireAuth, async (req, res) => {
   try {
     const filename = req.query.filename || req.params.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
     
     res.json({ success: true });
   } catch (error) {
@@ -815,13 +914,14 @@ app.delete('/api/player/video/:filename', requireAuth, (req, res) => {
 });
 
 // Support prefixed filenames that include slashes (e.g. "123/file.mp4")
-app.delete('/api/player/video/*', requireAuth, (req, res) => {
+app.delete('/api/player/video/*', requireAuth, async (req, res) => {
   try {
     const wildcardFilename = req.params[0];
     const filename = req.query.filename || wildcardFilename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -861,12 +961,13 @@ app.delete('/api/player/video-link/:id', requireAuth, (req, res) => {
 });
 
 // Delete image from player profile (query param variant)
-app.delete('/api/player/image', requireAuth, (req, res) => {
+app.delete('/api/player/image', requireAuth, async (req, res) => {
   try {
     const filename = req.query.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -876,12 +977,13 @@ app.delete('/api/player/image', requireAuth, (req, res) => {
 });
 
 // Delete image from player profile via POST (for environments that block DELETE)
-app.post('/api/player/image/delete', requireAuth, (req, res) => {
+app.post('/api/player/image/delete', requireAuth, async (req, res) => {
   try {
     const filename = req.body?.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -891,12 +993,13 @@ app.post('/api/player/image/delete', requireAuth, (req, res) => {
 });
 
 // Delete image from player profile
-app.delete('/api/player/image/:filename', requireAuth, (req, res) => {
+app.delete('/api/player/image/:filename', requireAuth, async (req, res) => {
   try {
     const filename = req.query.filename || req.params.filename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
     
     res.json({ success: true });
   } catch (error) {
@@ -906,13 +1009,14 @@ app.delete('/api/player/image/:filename', requireAuth, (req, res) => {
 });
 
 // Support prefixed filenames that include slashes (e.g. "123/file.png")
-app.delete('/api/player/image/*', requireAuth, (req, res) => {
+app.delete('/api/player/image/*', requireAuth, async (req, res) => {
   try {
     const wildcardFilename = req.params[0];
     const filename = req.query.filename || wildcardFilename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
-    deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
+    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
 
     res.json({ success: true });
   } catch (error) {
@@ -1019,7 +1123,7 @@ app.put('/api/admin/players/:id', requireAdmin, (req, res) => {
 });
 
 // Admin: Delete user
-app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   try {
     const user = db.prepare('SELECT id, role FROM users WHERE id = ?').get(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -1041,7 +1145,11 @@ app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
       db.prepare('DELETE FROM school_notes WHERE player_id = ?').run(user.id);
       db.prepare('DELETE FROM school_contacts WHERE player_id = ?').run(user.id);
       db.prepare('DELETE FROM player_profiles WHERE user_id = ?').run(user.id);
-      // Remove user's upload folder
+      // Remove user's uploads from Backblaze B2
+      if (b2Enabled) {
+        await deleteFromB2Prefix('uploads/' + user.id + '/');
+      }
+      // Remove local upload folder (legacy / non-B2 fallback)
       const userUploadDir = path.join('uploads', String(user.id));
       if (fs.existsSync(userUploadDir)) {
         fs.rmSync(userUploadDir, { recursive: true, force: true });
@@ -1427,6 +1535,22 @@ app.delete('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, (
     console.error('Delete school contact error:', error);
     res.status(500).json({ error: 'Failed to delete contact' });
   }
+});
+
+// Centralized upload error handling so clients see actionable errors.
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'A file is too large. Max size is 50MB per file.' });
+    }
+    return res.status(400).json({ error: err.message || 'Upload failed' });
+  }
+
+  if (err?.message === 'Invalid file type. Only images and videos are allowed.') {
+    return res.status(400).json({ error: err.message });
+  }
+
+  return next(err);
 });
 
 // Use named pipe for iisnode, or PORT for standalone

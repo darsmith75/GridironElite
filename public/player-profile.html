@@ -194,43 +194,50 @@
               <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
             </div>
 
-            <div class="form-section">
+            <div class="form-section full-width">
               <h3>Media</h3>
-              <label>Profile Picture:</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="profilePicture" accept="image/*">
-              </div>
+              <div class="media-upload-grid">
 
-              <label>Player Card Photo:</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="cardPhoto" accept="image/*">
-              </div>
-              <p class="hint-text">Upload a high-quality action photo for your player card (recommended: portrait orientation)</p>
+                <div class="media-upload-col">
+                  <label>Profile Picture:</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="profilePicture" accept="image/*">
+                  </div>
 
-              <label>Report Card Image:</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="reportCardImage" accept="image/*">
-              </div>
+                  <label>Player Card Photo:</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="cardPhoto" accept="image/*">
+                  </div>
+                  <p class="hint-text">Upload a high-quality action photo for your player card (recommended: portrait orientation)</p>
 
-              
-              <label>Add Highlight Videos (you can select multiple):</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="highlightVideos" accept="video/*" multiple>
-              </div>
-
-              <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
-              <div id="videoLinkInputs">
-                <div class="video-link-input-row" style="display:flex;gap:8px;margin-bottom:8px;">
-                  <input type="text" id="videoLinkTitle" placeholder="Title (optional)" style="flex:1;">
-                  <input type="url" id="videoLinkUrl" placeholder="https://..." style="flex:2;">
-                  <button type="button" onclick="addVideoLink()" class="btn-small" style="white-space:nowrap;">+ Add Link</button>
+                  <label>Report Card Image:</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="reportCardImage" accept="image/*">
+                  </div>
                 </div>
-              </div>
-              <div id="existingVideoLinks"></div>
-              
-              <label>Add Additional Images (you can select multiple):</label>
-              <div class="file-input-wrapper">
-                <input type="file" name="additionalImages" accept="image/*" multiple>
+
+                <div class="media-upload-col">
+                  <label>Add Highlight Videos (you can select multiple):</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="highlightVideos" accept="video/*" multiple>
+                  </div>
+
+                  <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
+                  <div id="videoLinkInputs">
+                    <div class="video-link-input-row">
+                      <input type="text" id="videoLinkTitle" placeholder="Title (optional)" class="vl-title">
+                      <input type="url" id="videoLinkUrl" placeholder="https://..." class="vl-url">
+                      <button type="button" onclick="addVideoLink()" class="btn-add-link">+ Add Link</button>
+                    </div>
+                  </div>
+                  <div id="existingVideoLinks"></div>
+
+                  <label>Add Additional Images (you can select multiple):</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="additionalImages" accept="image/*" multiple>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -743,6 +750,14 @@
       } catch { return null; }
     }
 
+    function clearMediaUploadInputs() {
+      const mediaInputNames = ['profilePicture', 'cardPhoto', 'reportCardImage', 'highlightVideos', 'additionalImages'];
+      mediaInputNames.forEach(name => {
+        const input = document.querySelector(`input[type="file"][name="${name}"]`);
+        if (input) input.value = '';
+      });
+    }
+
     async function loadPlayerProfile() {
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
@@ -769,6 +784,47 @@
         let mediaHTML = '<div class="profile-section"><h2 class="section-title-small">CURRENT MEDIA</h2>';
         
         mediaHTML += '<div class="current-media">';
+
+        // Group single-image sections side by side
+        {
+          let singlePhotosHTML = '';
+          if (profile.profile_picture) {
+            singlePhotosHTML += `
+              <div class="single-image-col">
+                <h3>Profile Picture</h3>
+                <div class="media-item-wrapper">
+                  <img src="/uploads/${profile.profile_picture}" alt="Profile Picture" class="current-additional-img">
+                  <button onclick="deleteProfilePicture()" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              </div>
+            `;
+          }
+          if (profile.card_photo) {
+            singlePhotosHTML += `
+              <div class="single-image-col">
+                <h3>Player Card Photo</h3>
+                <div class="media-item-wrapper">
+                  <img src="/uploads/${profile.card_photo}" alt="Player Card Photo" class="current-additional-img">
+                  <button onclick="deleteCardPhoto()" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              </div>
+            `;
+          }
+          if (profile.report_card_image) {
+            singlePhotosHTML += `
+              <div class="single-image-col">
+                <h3>Report Card</h3>
+                <div class="media-item-wrapper">
+                  <img src="/uploads/${profile.report_card_image}" alt="Report Card" class="current-additional-img">
+                  <button onclick="deleteReportCardImage()" class="delete-media-btn">🗑️ Delete</button>
+                </div>
+              </div>
+            `;
+          }
+          if (singlePhotosHTML) {
+            mediaHTML += `<div class="media-item full-width"><div class="single-images-row">${singlePhotosHTML}</div></div>`;
+          }
+        }
         
         if (profile.highlight_videos) {
           const videos = JSON.parse(profile.highlight_videos);
@@ -805,17 +861,7 @@
           }
         }
 
-        if (profile.report_card_image) {
-          mediaHTML += `
-            <div class="media-item full-width">
-              <h3>Report Card</h3>
-              <div class="media-item-wrapper">
-                <img src="/uploads/${profile.report_card_image}" alt="Report Card" class="current-additional-img">
-                <button onclick="deleteReportCardImage()" class="delete-media-btn">🗑️ Delete</button>
-              </div>
-            </div>
-          `;
-        }
+
 
         if (profile.video_links) {
           const links = JSON.parse(profile.video_links);
@@ -884,6 +930,9 @@
         document.querySelector('[name="twitterUsername"]').value = profile.twitter_username || '';
         document.querySelector('[name="bio"]').value = profile.bio || '';
       }
+
+      // Clear file inputs so previously selected files are not re-submitted on later saves.
+      clearMediaUploadInputs();
     }
 
     async function deleteVideo(filename) {
@@ -936,6 +985,42 @@
       }
     }
 
+    async function deleteProfilePicture() {
+      if (!confirm('Are you sure you want to delete this profile picture?')) return;
+
+      const res = await fetch('/api/player/profile-picture', {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        const profilePicInput = document.querySelector('input[type="file"][name="profilePicture"]');
+        if (profilePicInput) profilePicInput.value = '';
+        alert('Profile picture deleted successfully');
+        loadPlayerProfile();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete profile picture');
+      }
+    }
+
+    async function deleteCardPhoto() {
+      if (!confirm('Are you sure you want to delete this player card photo?')) return;
+
+      const res = await fetch('/api/player/card-photo', {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        const cardPhotoInput = document.querySelector('input[type="file"][name="cardPhoto"]');
+        if (cardPhotoInput) cardPhotoInput.value = '';
+        alert('Player card photo deleted successfully');
+        loadPlayerProfile();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete player card photo');
+      }
+    }
+
     async function addVideoLink() {
       const urlInput = document.getElementById('videoLinkUrl');
       const titleInput = document.getElementById('videoLinkTitle');
@@ -967,21 +1052,40 @@
       }
     }
 
+    let isSavingProfile = false;
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      
-      const res = await fetch('/api/player/profile', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (res.ok) {
-        alert('Profile saved successfully!');
-        await loadPlayerProfile();
-        showViewMode();
-      } else {
-        alert('Error saving profile');
+      if (isSavingProfile) return;
+
+      isSavingProfile = true;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const formData = new FormData(e.target);
+        const res = await fetch('/api/player/profile', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          alert('Profile saved successfully!');
+          await loadPlayerProfile();
+          showViewMode();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || 'Error saving profile');
+        }
+      } finally {
+        isSavingProfile = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText || 'Save Profile';
+        }
       }
     });
 

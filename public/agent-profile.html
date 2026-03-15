@@ -98,6 +98,16 @@
     checkAuth('agent');
     loadAgentProfile();
 
+    document.getElementById('agentProfilePictureInput').addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('agentProfilePicture').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
     async function loadAgentProfile() {
       try {
         const res = await fetch('/api/agent/profile');

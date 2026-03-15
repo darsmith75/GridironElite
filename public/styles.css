@@ -1067,6 +1067,27 @@ label {
   border: 2px solid #e9ecef;
 }
 
+.single-images-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.single-image-col {
+  flex: 1;
+  min-width: 150px;
+  max-width: 220px;
+}
+
+.single-image-col h3 {
+  color: #2a5298;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .delete-media-btn {
   width: 100%;
   margin-top: 10px;
@@ -1505,6 +1526,27 @@ textarea {
   transition: all 0.3s;
 }
 
+.single-images-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.single-image-col {
+  flex: 1;
+  min-width: 150px;
+  max-width: 220px;
+}
+
+.single-image-col h3 {
+  color: #2a5298;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .media-item-wrapper:hover {
   border-color: #1e3c72;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -1619,6 +1661,59 @@ textarea {
   color: #6c757d;
   font-style: italic;
   margin-top: -8px;
+}
+
+.media-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.media-upload-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.video-link-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.video-link-input-row .vl-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.video-link-input-row .vl-url {
+  flex: 2;
+  min-width: 0;
+}
+
+.btn-add-link {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 9px 14px;
+  background: #1e3c72;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn-add-link:hover {
+  background: #2a5298;
+}
+
+@media (max-width: 768px) {
+  .media-upload-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Modern Login Page Styles */
