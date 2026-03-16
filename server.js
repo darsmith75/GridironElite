@@ -39,33 +39,33 @@ if (!fs.existsSync(path.join('images', 'collegelogos'))) fs.mkdirSync(path.join(
       });
     });
     // Migrate player_videos
-    const videos = db.prepare('SELECT id, player_id, filename FROM player_videos').all();
+    const videos = db.prepare('SELECT id, user_id, filename FROM player_videos').all();
     videos.forEach(v => {
       if (!v.filename.includes('/')) {
         const src = path.join('uploads', v.filename);
-        const userDir = path.join('uploads', String(v.player_id));
+        const userDir = path.join('uploads', String(v.user_id));
         const dest = path.join(userDir, v.filename);
         if (fs.existsSync(src)) {
           if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
           fs.renameSync(src, dest);
         }
         db.prepare('UPDATE player_videos SET filename = ? WHERE id = ?')
-          .run(v.player_id + '/' + v.filename, v.id);
+          .run(v.user_id + '/' + v.filename, v.id);
       }
     });
     // Migrate player_images
-    const images = db.prepare('SELECT id, player_id, filename FROM player_images').all();
+    const images = db.prepare('SELECT id, user_id, filename FROM player_images').all();
     images.forEach(i => {
       if (!i.filename.includes('/')) {
         const src = path.join('uploads', i.filename);
-        const userDir = path.join('uploads', String(i.player_id));
+        const userDir = path.join('uploads', String(i.user_id));
         const dest = path.join(userDir, i.filename);
         if (fs.existsSync(src)) {
           if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
           fs.renameSync(src, dest);
         }
         db.prepare('UPDATE player_images SET filename = ? WHERE id = ?')
-          .run(i.player_id + '/' + i.filename, i.id);
+          .run(i.user_id + '/' + i.filename, i.id);
       }
     });
     console.log('Upload migration check complete');
@@ -198,7 +198,7 @@ async function replaceUserFile(userId, columnName, newFilename) {
 
 async function deleteOwnedPlayerMedia(tableName, playerId, filename) {
   const normalizedFilename = normalizeUploadFilename(filename);
-  const media = db.prepare(`SELECT id, filename FROM ${tableName} WHERE player_id = ? AND (filename = ? OR filename = ? OR filename = ?)`)
+  const media = db.prepare(`SELECT id, filename FROM ${tableName} WHERE user_id = ? AND (filename = ? OR filename = ? OR filename = ?)`)
     .get(playerId, filename, normalizedFilename, normalizedFilename.replace(/^uploads\//, ''));
   if (!media) {
     return false;
@@ -268,22 +268,22 @@ function enrichPlayerProfile(profile) {
 
   const playerId = profile.user_id;
 
-  const videos = db.prepare('SELECT filename FROM player_videos WHERE player_id = ? ORDER BY id').all(playerId);
+  const videos = db.prepare('SELECT filename FROM player_videos WHERE user_id = ? ORDER BY id').all(playerId);
   profile.highlight_videos = videos.length > 0 ? JSON.stringify(videos.map(v => v.filename)) : null;
 
-  const videoLinks = db.prepare('SELECT id, url, title FROM player_video_links WHERE player_id = ? ORDER BY id').all(playerId);
+  const videoLinks = db.prepare('SELECT id, url, title FROM player_video_links WHERE user_id = ? ORDER BY id').all(playerId);
   profile.video_links = videoLinks.length > 0 ? JSON.stringify(videoLinks) : null;
 
-  const images = db.prepare('SELECT filename FROM player_images WHERE player_id = ? ORDER BY id').all(playerId);
+  const images = db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId);
   profile.additional_images = images.length > 0 ? JSON.stringify(images.map(i => i.filename)) : null;
 
-  const offerSchools = db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.player_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
+  const offerSchools = db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
   profile.college_offer_schools = offerSchools.length > 0 ? JSON.stringify(offerSchools) : null;
 
-  const favoriteSchools = db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.player_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
+  const favoriteSchools = db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
   profile.college_favorite_schools = favoriteSchools.length > 0 ? JSON.stringify(favoriteSchools) : null;
 
-  const contacts = db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE player_id = ?').all(playerId);
+  const contacts = db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE user_id = ?').all(playerId);
   contacts.forEach(c => {
     profile[c.role + '_name'] = c.name;
     profile[c.role + '_email'] = c.email;
@@ -428,8 +428,8 @@ app.post('/api/player/profile', requireAuth, upload.fields([
     );
 
     // Update contacts in normalized table
-    db.prepare('DELETE FROM player_contacts WHERE player_id = ?').run(req.session.userId);
-    const insertContact = db.prepare('INSERT INTO player_contacts (player_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
+    db.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(req.session.userId);
+    const insertContact = db.prepare('INSERT INTO player_contacts (user_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
     if (data.fatherName || data.fatherEmail || data.fatherPhone) {
       insertContact.run(req.session.userId, 'father', data.fatherName || null, data.fatherEmail || null, data.fatherPhone || null);
     }
@@ -461,13 +461,13 @@ app.post('/api/player/profile', requireAuth, upload.fields([
     
     // Add new videos to normalized table
     if (files?.highlightVideos) {
-      const insertVideo = db.prepare('INSERT INTO player_videos (player_id, filename) VALUES (?, ?)');
+      const insertVideo = db.prepare('INSERT INTO player_videos (user_id, filename) VALUES (?, ?)');
       files.highlightVideos.forEach(f => insertVideo.run(req.session.userId, userPrefix + f.filename));
     }
     
     // Add new images to normalized table
     if (files?.additionalImages) {
-      const insertImage = db.prepare('INSERT INTO player_images (player_id, filename) VALUES (?, ?)');
+      const insertImage = db.prepare('INSERT INTO player_images (user_id, filename) VALUES (?, ?)');
       files.additionalImages.forEach(f => insertImage.run(req.session.userId, userPrefix + f.filename));
     }
     
@@ -545,7 +545,7 @@ app.get('/api/agent/players', requireAuth, (req, res) => {
   // Filter by favorites only
   if (req.query.favoritesOnly === 'true') {
     query = `SELECT pp.* FROM player_profiles pp 
-             INNER JOIN agent_favorites af ON pp.user_id = af.player_id 
+             INNER JOIN agent_favorites af ON pp.user_id = af.user_id 
              WHERE af.agent_id = ?`;
     params.push(req.session.userId);
   }
@@ -695,7 +695,7 @@ app.post('/api/agent/favorites/:playerId', requireAuth, (req, res) => {
   if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
   
   try {
-    db.prepare('INSERT OR IGNORE INTO agent_favorites (agent_id, player_id) VALUES (?, ?)').run(req.session.userId, req.params.playerId);
+    db.prepare('INSERT OR IGNORE INTO agent_favorites (agent_id, user_id) VALUES (?, ?)').run(req.session.userId, req.params.playerId);
     res.json({ success: true });
   } catch (error) {
     console.error('Error adding favorite:', error);
@@ -708,7 +708,7 @@ app.delete('/api/agent/favorites/:playerId', requireAuth, (req, res) => {
   if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
   
   try {
-    db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? AND player_id = ?').run(req.session.userId, req.params.playerId);
+    db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? AND user_id = ?').run(req.session.userId, req.params.playerId);
     res.json({ success: true });
   } catch (error) {
     console.error('Error removing favorite:', error);
@@ -721,8 +721,8 @@ app.get('/api/agent/favorites', requireAuth, (req, res) => {
   if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
   
   try {
-    const favorites = db.prepare('SELECT player_id FROM agent_favorites WHERE agent_id = ?').all(req.session.userId);
-    res.json(favorites.map(f => f.player_id));
+    const favorites = db.prepare('SELECT user_id FROM agent_favorites WHERE agent_id = ?').all(req.session.userId);
+    res.json(favorites.map(f => f.user_id));
   } catch (error) {
     console.error('Error getting favorites:', error);
     res.status(500).json({ error: 'Failed to get favorites' });
@@ -734,7 +734,7 @@ app.get('/api/agent/favorites/:playerId', requireAuth, (req, res) => {
   if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
   
   try {
-    const favorite = db.prepare('SELECT id FROM agent_favorites WHERE agent_id = ? AND player_id = ?').get(req.session.userId, req.params.playerId);
+    const favorite = db.prepare('SELECT id FROM agent_favorites WHERE agent_id = ? AND user_id = ?').get(req.session.userId, req.params.playerId);
     res.json({ isFavorite: !!favorite });
   } catch (error) {
     console.error('Error checking favorite:', error);
@@ -940,7 +940,7 @@ app.post('/api/player/video-link', requireAuth, (req, res) => {
     if (!url) return res.status(400).json({ error: 'URL is required' });
     // Basic URL validation
     try { new URL(url); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
-    const result = db.prepare('INSERT INTO player_video_links (player_id, url, title) VALUES (?, ?, ?)')
+    const result = db.prepare('INSERT INTO player_video_links (user_id, url, title) VALUES (?, ?, ?)')
       .run(req.session.userId, url, title || null);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
@@ -954,7 +954,7 @@ app.delete('/api/player/video-link/:id', requireAuth, (req, res) => {
   try {
     const linkId = parseInt(req.params.id, 10);
     if (isNaN(linkId)) return res.status(400).json({ error: 'Invalid ID' });
-    db.prepare('DELETE FROM player_video_links WHERE id = ? AND player_id = ?')
+    db.prepare('DELETE FROM player_video_links WHERE id = ? AND user_id = ?')
       .run(linkId, req.session.userId);
     res.json({ success: true });
   } catch (error) {
@@ -1138,15 +1138,15 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
 
     // Delete related data
     db.prepare('DELETE FROM messages WHERE sender_id = ? OR recipient_id = ?').run(user.id, user.id);
-    db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? OR player_id = ?').run(user.id, user.id);
+    db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? OR user_id = ?').run(user.id, user.id);
     if (user.role === 'player') {
-      db.prepare('DELETE FROM player_videos WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM player_images WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM player_video_links WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM player_school_interests WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM player_contacts WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM school_notes WHERE player_id = ?').run(user.id);
-      db.prepare('DELETE FROM school_contacts WHERE player_id = ?').run(user.id);
+      db.prepare('DELETE FROM player_videos WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM player_images WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM player_video_links WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM player_school_interests WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM school_notes WHERE user_id = ?').run(user.id);
+      db.prepare('DELETE FROM school_contacts WHERE user_id = ?').run(user.id);
       db.prepare('DELETE FROM player_profiles WHERE user_id = ?').run(user.id);
       // Remove user's uploads from Backblaze B2
       if (b2Enabled) {
@@ -1332,7 +1332,7 @@ app.get('/api/player/colleges', requireAuth, (req, res) => {
   try {
     const colleges = db.prepare('SELECT * FROM colleges ORDER BY name ASC').all();
     // Get this player's interests
-    const interests = db.prepare('SELECT college_id, is_favorite, has_offer FROM player_school_interests WHERE player_id = ?').all(req.session.userId);
+    const interests = db.prepare('SELECT college_id, is_favorite, has_offer FROM player_school_interests WHERE user_id = ?').all(req.session.userId);
     const interestMap = {};
     interests.forEach(i => { interestMap[i.college_id] = { is_favorite: i.is_favorite, has_offer: i.has_offer }; });
     const result = colleges.map(c => ({
@@ -1355,13 +1355,13 @@ app.post('/api/player/colleges/:collegeId/favorite', requireAuth, (req, res) => 
     const college = db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
 
-    const existing = db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE player_id = ? AND college_id = ?').get(req.session.userId, collegeId);
+    const existing = db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
     if (existing) {
       const newVal = existing.is_favorite ? 0 : 1;
       db.prepare('UPDATE player_school_interests SET is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newVal, existing.id);
       res.json({ is_favorite: newVal });
     } else {
-      db.prepare('INSERT INTO player_school_interests (player_id, college_id, is_favorite) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
+      db.prepare('INSERT INTO player_school_interests (user_id, college_id, is_favorite) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
       res.json({ is_favorite: 1 });
     }
   } catch (error) {
@@ -1378,13 +1378,13 @@ app.post('/api/player/colleges/:collegeId/offer', requireAuth, (req, res) => {
     const college = db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
 
-    const existing = db.prepare('SELECT id, has_offer FROM player_school_interests WHERE player_id = ? AND college_id = ?').get(req.session.userId, collegeId);
+    const existing = db.prepare('SELECT id, has_offer FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
     if (existing) {
       const newVal = existing.has_offer ? 0 : 1;
       db.prepare('UPDATE player_school_interests SET has_offer = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newVal, existing.id);
       res.json({ has_offer: newVal });
     } else {
-      db.prepare('INSERT INTO player_school_interests (player_id, college_id, has_offer) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
+      db.prepare('INSERT INTO player_school_interests (user_id, college_id, has_offer) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
       res.json({ has_offer: 1 });
     }
   } catch (error) {
@@ -1401,7 +1401,7 @@ app.get('/api/player/colleges/:collegeId/notes', requireAuth, (req, res) => {
     const collegeId = parseInt(req.params.collegeId, 10);
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const notes = db.prepare(
-      'SELECT * FROM school_notes WHERE player_id = ? AND college_id = ? ORDER BY COALESCE(visit_date, created_at) DESC'
+      'SELECT * FROM school_notes WHERE user_id = ? AND college_id = ? ORDER BY COALESCE(visit_date, created_at) DESC'
     ).all(req.session.userId, collegeId);
     res.json(notes);
   } catch (error) {
@@ -1422,7 +1422,7 @@ app.post('/api/player/colleges/:collegeId/notes', requireAuth, (req, res) => {
     if (!college) return res.status(404).json({ error: 'College not found' });
 
     const result = db.prepare(
-      'INSERT INTO school_notes (player_id, college_id, note, visit_date) VALUES (?, ?, ?, ?)'
+      'INSERT INTO school_notes (user_id, college_id, note, visit_date) VALUES (?, ?, ?, ?)'
     ).run(req.session.userId, collegeId, note.trim(), visitDate || null);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
@@ -1439,7 +1439,7 @@ app.put('/api/player/colleges/:collegeId/notes/:noteId', requireAuth, (req, res)
     const { note, visitDate } = req.body;
     if (!note || !note.trim()) return res.status(400).json({ error: 'Note text is required' });
 
-    const existing = db.prepare('SELECT id FROM school_notes WHERE id = ? AND player_id = ?').get(noteId, req.session.userId);
+    const existing = db.prepare('SELECT id FROM school_notes WHERE id = ? AND user_id = ?').get(noteId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Note not found' });
 
     db.prepare('UPDATE school_notes SET note = ?, visit_date = ? WHERE id = ?').run(note.trim(), visitDate || null, noteId);
@@ -1456,7 +1456,7 @@ app.delete('/api/player/colleges/:collegeId/notes/:noteId', requireAuth, (req, r
     const noteId = parseInt(req.params.noteId, 10);
     if (isNaN(noteId)) return res.status(400).json({ error: 'Invalid note ID' });
 
-    const existing = db.prepare('SELECT id FROM school_notes WHERE id = ? AND player_id = ?').get(noteId, req.session.userId);
+    const existing = db.prepare('SELECT id FROM school_notes WHERE id = ? AND user_id = ?').get(noteId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Note not found' });
 
     db.prepare('DELETE FROM school_notes WHERE id = ?').run(noteId);
@@ -1473,7 +1473,7 @@ app.get('/api/player/colleges/:collegeId/contacts', requireAuth, (req, res) => {
     const collegeId = parseInt(req.params.collegeId, 10);
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const contacts = db.prepare(
-      'SELECT * FROM school_contacts WHERE player_id = ? AND college_id = ? ORDER BY name ASC'
+      'SELECT * FROM school_contacts WHERE user_id = ? AND college_id = ? ORDER BY name ASC'
     ).all(req.session.userId, collegeId);
     res.json(contacts);
   } catch (error) {
@@ -1494,7 +1494,7 @@ app.post('/api/player/colleges/:collegeId/contacts', requireAuth, (req, res) => 
     if (!college) return res.status(404).json({ error: 'College not found' });
 
     const result = db.prepare(
-      'INSERT INTO school_contacts (player_id, college_id, name, title, email, phone) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO school_contacts (user_id, college_id, name, title, email, phone) VALUES (?, ?, ?, ?, ?, ?)'
     ).run(req.session.userId, collegeId, name.trim(), title?.trim() || null, email?.trim() || null, phone?.trim() || null);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
@@ -1511,7 +1511,7 @@ app.put('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, (req
     const { name, title, email, phone } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Contact name is required' });
 
-    const existing = db.prepare('SELECT id FROM school_contacts WHERE id = ? AND player_id = ?').get(contactId, req.session.userId);
+    const existing = db.prepare('SELECT id FROM school_contacts WHERE id = ? AND user_id = ?').get(contactId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Contact not found' });
 
     db.prepare('UPDATE school_contacts SET name = ?, title = ?, email = ?, phone = ? WHERE id = ?')
@@ -1529,7 +1529,7 @@ app.delete('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, (
     const contactId = parseInt(req.params.contactId, 10);
     if (isNaN(contactId)) return res.status(400).json({ error: 'Invalid contact ID' });
 
-    const existing = db.prepare('SELECT id FROM school_contacts WHERE id = ? AND player_id = ?').get(contactId, req.session.userId);
+    const existing = db.prepare('SELECT id FROM school_contacts WHERE id = ? AND user_id = ?').get(contactId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Contact not found' });
 
     db.prepare('DELETE FROM school_contacts WHERE id = ?').run(contactId);

@@ -59,11 +59,11 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS agent_favorites (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL,
-    player_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(agent_id, player_id),
+    UNIQUE(agent_id, user_id),
     FOREIGN KEY (agent_id) REFERENCES users(id),
-    FOREIGN KEY (player_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS colleges (
@@ -167,39 +167,127 @@ try {
 db.exec(`
   CREATE TABLE IF NOT EXISTS player_videos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     filename TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS player_images (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     filename TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS player_contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     role TEXT NOT NULL,
     name TEXT,
     email TEXT,
     phone TEXT,
-    FOREIGN KEY (player_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
   CREATE TABLE IF NOT EXISTS player_video_links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     url TEXT NOT NULL,
     title TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
   );
 `);
+
+// Create player_school_interests table for tracking favorites and offers
+db.exec(`
+  CREATE TABLE IF NOT EXISTS player_school_interests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    college_id INTEGER NOT NULL,
+    is_favorite INTEGER DEFAULT 0,
+    has_offer INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, college_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_school_interests_user ON player_school_interests(user_id);
+  CREATE INDEX IF NOT EXISTS idx_school_interests_college ON player_school_interests(college_id);
+`);
+
+// Create school notes and contacts tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS school_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    college_id INTEGER NOT NULL,
+    note TEXT NOT NULL,
+    visit_date TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_school_notes_user ON school_notes(user_id);
+  CREATE INDEX IF NOT EXISTS idx_school_notes_college ON school_notes(college_id);
+
+  CREATE TABLE IF NOT EXISTS school_contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    college_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    title TEXT,
+    email TEXT,
+    phone TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_school_contacts_user ON school_contacts(user_id);
+  CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
+`);
+
+// Rename legacy player_id foreign key columns to user_id for consistency.
+try {
+  const renameUserForeignKeyColumn = (tableName) => {
+    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all().map(c => c.name);
+    if (columns.includes('player_id') && !columns.includes('user_id')) {
+      db.exec(`ALTER TABLE ${tableName} RENAME COLUMN player_id TO user_id`);
+      console.log(`Renamed ${tableName}.player_id to user_id`);
+    }
+  };
+
+  [
+    'agent_favorites',
+    'player_videos',
+    'player_images',
+    'player_contacts',
+    'player_video_links',
+    'player_school_interests',
+    'school_notes',
+    'school_contacts'
+  ].forEach(renameUserForeignKeyColumn);
+} catch (error) {
+  console.error('user_id rename migration error:', error.message);
+}
+
+// Drop legacy index names that still reference the old player_id naming.
+try {
+  [
+    'idx_player_videos_player',
+    'idx_player_images_player',
+    'idx_player_contacts_player',
+    'idx_player_video_links_player',
+    'idx_school_interests_player',
+    'idx_school_notes_player',
+    'idx_school_contacts_player'
+  ].forEach(indexName => db.exec(`DROP INDEX IF EXISTS ${indexName}`));
+} catch (error) {
+  console.error('Legacy index cleanup error:', error.message);
+}
 
 // Add indexes for performance
 db.exec(`
@@ -209,59 +297,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_favorites_agent ON agent_favorites(agent_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_user ON player_profiles(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-  CREATE INDEX IF NOT EXISTS idx_player_videos_player ON player_videos(player_id);
-  CREATE INDEX IF NOT EXISTS idx_player_images_player ON player_images(player_id);
-  CREATE INDEX IF NOT EXISTS idx_player_contacts_player ON player_contacts(player_id);
-  CREATE INDEX IF NOT EXISTS idx_player_video_links_player ON player_video_links(player_id);
-`);
-
-// Create player_school_interests table for tracking favorites and offers
-db.exec(`
-  CREATE TABLE IF NOT EXISTS player_school_interests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
-    college_id INTEGER NOT NULL,
-    is_favorite INTEGER DEFAULT 0,
-    has_offer INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(player_id, college_id),
-    FOREIGN KEY (player_id) REFERENCES users(id),
-    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_school_interests_player ON player_school_interests(player_id);
-  CREATE INDEX IF NOT EXISTS idx_school_interests_college ON player_school_interests(college_id);
-`);
-
-// Create school notes and contacts tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS school_notes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
-    college_id INTEGER NOT NULL,
-    note TEXT NOT NULL,
-    visit_date TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES users(id),
-    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_school_notes_player ON school_notes(player_id);
-  CREATE INDEX IF NOT EXISTS idx_school_notes_college ON school_notes(college_id);
-
-  CREATE TABLE IF NOT EXISTS school_contacts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
-    college_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    title TEXT,
-    email TEXT,
-    phone TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (player_id) REFERENCES users(id),
-    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
-  );
-  CREATE INDEX IF NOT EXISTS idx_school_contacts_player ON school_contacts(player_id);
-  CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
+  CREATE INDEX IF NOT EXISTS idx_player_videos_user ON player_videos(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_images_user ON player_images(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_contacts_user ON player_contacts(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
 `);
 
 // Add title column to school_contacts if it doesn't exist
@@ -289,8 +328,8 @@ try {
     if (hasLegacyAdditionalImages) selectParts.push('additional_images');
     const profiles = db.prepare(`SELECT ${selectParts.join(', ')} FROM player_profiles`).all();
 
-    const insertVideo = db.prepare('INSERT INTO player_videos (player_id, filename) VALUES (?, ?)');
-    const insertImage = db.prepare('INSERT INTO player_images (player_id, filename) VALUES (?, ?)');
+    const insertVideo = db.prepare('INSERT INTO player_videos (user_id, filename) VALUES (?, ?)');
+    const insertImage = db.prepare('INSERT INTO player_images (user_id, filename) VALUES (?, ?)');
 
     const migrateMedia = db.transaction(() => {
       for (const profile of profiles) {
@@ -333,7 +372,7 @@ try {
       coach_name, coach_email, coach_phone
       FROM player_profiles`).all();
 
-    const insertContact = db.prepare('INSERT INTO player_contacts (player_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
+    const insertContact = db.prepare('INSERT INTO player_contacts (user_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
 
     const migrateContacts = db.transaction(() => {
       for (const p of profiles) {
