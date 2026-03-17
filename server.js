@@ -6,7 +6,11 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const { spawn } = require('child_process');
 const nodemailer = require('nodemailer');
+const sharp = require('sharp');
+const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
 const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url } = require('./backblaze');
 
@@ -79,6 +83,120 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 
+const IMAGE_PRESETS = {
+  reportCardImage: { maxWidth: 2200, quality: 88 },
+  cardPhoto: { maxWidth: 1800, quality: 82 },
+  profilePicture: { maxWidth: 1600, quality: 80 },
+  additionalImages: { maxWidth: 1800, quality: 78 }
+};
+
+const VIDEO_PRESETS = {
+  highlightVideos: { maxWidth: 1280, crf: 27, preset: 'veryfast', audioBitrate: '128k' }
+};
+
+function getImagePreset(fieldName) {
+  return IMAGE_PRESETS[fieldName] || { maxWidth: 1600, quality: 80 };
+}
+
+function getVideoPreset(fieldName) {
+  return VIDEO_PRESETS[fieldName] || { maxWidth: 1280, crf: 27, preset: 'veryfast', audioBitrate: '128k' };
+}
+
+function runFfmpeg(args) {
+  return new Promise((resolve, reject) => {
+    if (!ffmpegPath) {
+      return reject(new Error('ffmpeg binary not found'));
+    }
+
+    const proc = spawn(ffmpegPath, args, { windowsHide: true });
+    let stderr = '';
+
+    proc.stderr.on('data', chunk => {
+      stderr += String(chunk || '');
+    });
+
+    proc.on('error', reject);
+    proc.on('close', code => {
+      if (code === 0) return resolve();
+      reject(new Error('ffmpeg exited with code ' + code + (stderr ? `: ${stderr.slice(-500)}` : '')));
+    });
+  });
+}
+
+async function optimizeImageFile(file) {
+  if (!file?.buffer || file.mimetype === 'image/gif') {
+    return {
+      buffer: file.buffer,
+      extension: path.extname(file.originalname).toLowerCase() || '.bin',
+      mimeType: file.mimetype
+    };
+  }
+
+  const preset = getImagePreset(file.fieldname);
+  const optimizedBuffer = await sharp(file.buffer)
+    .rotate()
+    .resize({ width: preset.maxWidth, withoutEnlargement: true })
+    .webp({ quality: preset.quality })
+    .toBuffer();
+
+  return {
+    buffer: optimizedBuffer,
+    extension: '.webp',
+    mimeType: 'image/webp'
+  };
+}
+
+async function optimizeVideoFile(file) {
+  if (!file?.buffer) {
+    return {
+      buffer: file.buffer,
+      extension: path.extname(file.originalname).toLowerCase() || '.bin',
+      mimeType: file.mimetype
+    };
+  }
+
+  const preset = getVideoPreset(file.fieldname);
+  const tempDir = path.join(os.tmpdir(), 'gridiron-elite-media-opt');
+  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+  const sourceExt = path.extname(file.originalname).toLowerCase() || '.mp4';
+  const tempBase = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+  const inputPath = path.join(tempDir, `${tempBase}${sourceExt}`);
+  const outputPath = path.join(tempDir, `${tempBase}-optimized.mp4`);
+
+  try {
+    fs.writeFileSync(inputPath, file.buffer);
+
+    await runFfmpeg([
+      '-y',
+      '-i', inputPath,
+      '-vf', `scale=min(${preset.maxWidth}\\,iw):-2:force_original_aspect_ratio=decrease`,
+      '-c:v', 'libx264',
+      '-preset', String(preset.preset),
+      '-crf', String(preset.crf),
+      '-pix_fmt', 'yuv420p',
+      '-movflags', '+faststart',
+      '-c:a', 'aac',
+      '-b:a', String(preset.audioBitrate),
+      outputPath
+    ]);
+
+    const optimizedBuffer = fs.readFileSync(outputPath);
+    return {
+      buffer: optimizedBuffer,
+      extension: '.mp4',
+      mimeType: 'video/mp4'
+    };
+  } finally {
+    if (fs.existsSync(inputPath)) {
+      try { fs.unlinkSync(inputPath); } catch (_) {}
+    }
+    if (fs.existsSync(outputPath)) {
+      try { fs.unlinkSync(outputPath); } catch (_) {}
+    }
+  }
+}
+
 // Multer configuration for file uploads
 // Use memory storage – files are streamed to Backblaze B2 (or written to disk if B2
 // is not configured) by processUploadedFiles() inside each route handler.
@@ -98,15 +216,31 @@ async function processUploadedFiles(userId, reqFiles) {
   if (!reqFiles) return;
   const allFiles = Object.values(reqFiles).flat();
   for (const file of allFiles) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + ext;
+    let processed = {
+      buffer: file.buffer,
+      extension: path.extname(file.originalname).toLowerCase() || '.bin',
+      mimeType: file.mimetype
+    };
+
+    try {
+      if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+        processed = await optimizeImageFile(file);
+      } else if (ALLOWED_VIDEO_TYPES.includes(file.mimetype)) {
+        processed = await optimizeVideoFile(file);
+      }
+    } catch (error) {
+      console.warn('Media optimization failed, using original upload:', error.message);
+    }
+
+    const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + processed.extension;
     file.filename = safeName; // keep existing field-name references working
+    file.mimetype = processed.mimeType;
     if (b2Enabled) {
-      await uploadToB2('uploads/' + userId + '/' + safeName, file.buffer, file.mimetype);
+      await uploadToB2('uploads/' + userId + '/' + safeName, processed.buffer, processed.mimeType);
     } else {
       const userDir = path.join('uploads', String(userId));
       if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-      fs.writeFileSync(path.join(userDir, safeName), file.buffer);
+      fs.writeFileSync(path.join(userDir, safeName), processed.buffer);
     }
   }
 }
@@ -258,6 +392,42 @@ const requireAuth = (req, res, next) => {
   if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
   next();
 };
+
+app.get('/api/upload-proxy', async (req, res) => {
+  try {
+    const requestedPath = normalizeUploadFilename(req.query.path || '');
+    if (!requestedPath) {
+      return res.status(400).send('Missing upload path');
+    }
+
+    if (b2Enabled) {
+      const objectKey = 'uploads/' + requestedPath;
+      const upstream = await fetch(getB2Url(objectKey));
+      if (!upstream.ok) {
+        return res.status(upstream.status).send('File not found');
+      }
+
+      const contentType = upstream.headers.get('content-type');
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+
+      const arrayBuffer = await upstream.arrayBuffer();
+      return res.send(Buffer.from(arrayBuffer));
+    }
+
+    const safePath = safeUploadPath(requestedPath);
+    if (!safePath || !fs.existsSync(safePath)) {
+      return res.status(404).send('File not found');
+    }
+
+    return res.sendFile(safePath);
+  } catch (error) {
+    console.error('Upload proxy error:', error);
+    return res.status(500).send('Failed to load file');
+  }
+});
 
 // Helper: Enrich a player profile with data from normalized tables
 function enrichPlayerProfile(profile) {

@@ -141,7 +141,7 @@
               ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
               ${player.height ? `<span class="meta-badge">${player.height}</span>` : ''}
               ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
-              ${player.gpa ? `<span class="meta-badge" ${player.report_card_image ? `style="cursor: zoom-in;" title="Hover to preview, click to view full size" onmouseenter="showReportCardPreview(event, '/uploads/${player.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openLightbox('/uploads/${player.report_card_image}')"` : ''}>GPA: ${player.gpa}</span>` : ''}
+              ${player.gpa ? `<span class="meta-badge ${player.report_card_image ? 'clickable-gpa' : ''}" ${player.report_card_image ? `role="button" tabindex="0" title="Hover to preview, click to view full size" aria-label="View report card image" onmouseenter="showReportCardPreview(event, '/uploads/${player.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openLightbox('/uploads/${player.report_card_image}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openLightbox('/uploads/${player.report_card_image}');}"` : ''}>GPA: ${player.gpa}${player.report_card_image ? ' (View)' : ''}</span>` : ''}
             </div>
             <div style="margin-top: 20px;">
               <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn" id="favoriteBtn">

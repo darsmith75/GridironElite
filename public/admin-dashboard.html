@@ -85,14 +85,25 @@
     .role-badge.agent { background: #e3f2fd; color: #1565c0; }
     .role-badge.admin { background: #fce4ec; color: #c62828; }
     .action-btn {
-      padding: 6px 12px;
+      padding: 7px 10px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
       transition: all 0.2s;
-      margin-right: 4px;
+      min-width: 78px;
+      text-align: center;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    .actions-cell { white-space: nowrap; }
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      min-width: 246px;
     }
     .action-btn.edit { background: #e3f2fd; color: #1565c0; }
     .action-btn.edit:hover { background: #bbdefb; }
@@ -527,10 +538,12 @@
           <td><span class="role-badge ${u.role}">${u.role === 'player' ? 'Athlete' : u.role}</span></td>
           <td>${details || '-'}</td>
           <td>${date}</td>
-          <td>
-            <button class="action-btn edit" onclick="openEditModal(${u.id})">Edit</button>
-            <button class="action-btn reset" onclick="openResetModal(${u.id}, '${escapeHtml(name)}')">Password</button>
-            <button class="action-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(name)}')">Delete</button>
+          <td class="actions-cell">
+            <div class="user-actions">
+              <button class="action-btn edit" onclick="openEditModal(${u.id})">Edit</button>
+              <button class="action-btn reset" onclick="openResetModal(${u.id}, '${escapeHtml(name)}')">Password</button>
+              <button class="action-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(name)}')">Delete</button>
+            </div>
           </td>
         </tr>`;
       }).join('');

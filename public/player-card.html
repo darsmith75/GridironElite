@@ -575,6 +575,8 @@
   <script src="app.js"></script>
   <script>
     // Check authentication - allow both agents and players
+    let previewObjectUrl = null;
+
     fetch('/api/user')
       .then(res => {
         if (!res.ok) {
@@ -714,7 +716,7 @@
       const photoToUse = player.card_photo || player.profile_picture;
       if (photoToUse) {
         const container = document.getElementById('playerImageContainer');
-        const imgUrl = `/uploads/${photoToUse}`;
+        const imgUrl = `/api/upload-proxy?path=${encodeURIComponent(photoToUse)}`;
         container.style.backgroundImage = `url('${imgUrl}')`;
         
         // Detect aspect ratio to choose sizing mode
@@ -747,6 +749,74 @@
       }
     }
     
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Unable to create image blob from canvas'));
+          }
+        }, 'image/png');
+      });
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Unable to read image data'));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function renderPlayerCardCanvas() {
+      const cardElement = document.getElementById('playerCard');
+
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (_) {}
+      }
+
+      const createOptions = (scale, removePlayerImage) => ({
+        backgroundColor: '#0a1628',
+        scale,
+        logging: false,
+        useCORS: true,
+        allowTaint: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const clonedCard = clonedDoc.getElementById('playerCard');
+          if (clonedCard) {
+            clonedCard.style.margin = '0';
+            clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+          }
+
+          const clonedImageContainer = clonedDoc.getElementById('playerImageContainer');
+          if (removePlayerImage && clonedImageContainer) {
+            clonedImageContainer.style.backgroundImage = 'none';
+          }
+        }
+      });
+
+      const attempts = [
+        { scale: 2, removePlayerImage: false },
+        { scale: 1.5, removePlayerImage: true },
+        { scale: 1, removePlayerImage: true }
+      ];
+
+      let lastError = null;
+      for (const attempt of attempts) {
+        try {
+          return await html2canvas(cardElement, createOptions(attempt.scale, attempt.removePlayerImage));
+        } catch (error) {
+          lastError = error;
+          console.warn(`Player card render failed at scale ${attempt.scale} (removePlayerImage=${attempt.removePlayerImage})`, error);
+        }
+      }
+
+      throw lastError || new Error('Unable to render player card');
+    }
+
     // Export player card as image
     async function exportAsImage() {
       const button = document.getElementById('exportBtn');
@@ -756,47 +826,24 @@
         // Disable button and show loading state
         button.disabled = true;
         button.textContent = '⏳ Generating...';
+        const canvas = await renderPlayerCardCanvas();
+        const blob = await canvasToBlob(canvas);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
         
-        const cardElement = document.getElementById('playerCard');
+        // Get player name for filename
+        const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
+        a.download = `${playerName}_Player_Card.png`;
         
-        // Use html2canvas to capture the card
-        const canvas = await html2canvas(cardElement, {
-          backgroundColor: '#0a1628',
-          scale: 2, // Higher quality
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 0,
-          onclone: (clonedDoc) => {
-            // Ensure images are loaded in the cloned document
-            const clonedCard = clonedDoc.getElementById('playerCard');
-            if (clonedCard) {
-              clonedCard.style.margin = '0';
-              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
-            }
-          }
-        });
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         
-        // Convert canvas to blob
-        canvas.toBlob((blob) => {
-          // Create download link
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          
-          // Get player name for filename
-          const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
-          a.download = `${playerName}_Player_Card.png`;
-          
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          
-          // Reset button
-          button.disabled = false;
-          button.textContent = originalText;
-        }, 'image/png');
+        // Reset button
+        button.disabled = false;
+        button.textContent = originalText;
         
       } catch (error) {
         console.error('Error exporting image:', error);
@@ -814,28 +861,14 @@
       try {
         button.disabled = true;
         button.textContent = '⏳ Generating Preview...';
-        
-        const cardElement = document.getElementById('playerCard');
-        
-        const canvas = await html2canvas(cardElement, {
-          backgroundColor: '#0a1628',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 0,
-          onclone: (clonedDoc) => {
-            const clonedCard = clonedDoc.getElementById('playerCard');
-            if (clonedCard) {
-              clonedCard.style.margin = '0';
-              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
-            }
-          }
-        });
-        
-        // Convert to data URL and show in modal
-        const dataUrl = canvas.toDataURL('image/png');
-        document.getElementById('previewImage').src = dataUrl;
+        const canvas = await renderPlayerCardCanvas();
+
+        const blob = await canvasToBlob(canvas);
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+        }
+        previewObjectUrl = URL.createObjectURL(blob);
+        document.getElementById('previewImage').src = previewObjectUrl;
         document.getElementById('previewModal').style.display = 'flex';
         
         button.disabled = false;
@@ -851,6 +884,11 @@
     
     function closePreview() {
       document.getElementById('previewModal').style.display = 'none';
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+      document.getElementById('previewImage').src = '';
     }
     
     function openEmailModal() {
@@ -882,24 +920,9 @@
         btn.textContent = '⏳ Sending...';
 
         // Generate the card image
-        const cardElement = document.getElementById('playerCard');
-        const canvas = await html2canvas(cardElement, {
-          backgroundColor: '#0a1628',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-          allowTaint: true,
-          imageTimeout: 0,
-          onclone: (clonedDoc) => {
-            const clonedCard = clonedDoc.getElementById('playerCard');
-            if (clonedCard) {
-              clonedCard.style.margin = '0';
-              clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
-            }
-          }
-        });
-
-        const imageData = canvas.toDataURL('image/png');
+        const canvas = await renderPlayerCardCanvas();
+        const imageBlob = await canvasToBlob(canvas);
+        const imageData = await blobToDataUrl(imageBlob);
         const playerName = document.getElementById('playerName').textContent;
 
         const res = await fetch('/api/send-player-card', {

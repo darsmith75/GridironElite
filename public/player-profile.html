@@ -490,7 +490,7 @@
           ${profile.high_school ? `<span class="meta-badge">${profile.high_school}</span>` : ''}
           ${profile.height ? `<span class="meta-badge">${profile.height}</span>` : ''}
           ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
-          ${profile.gpa ? `<span class="meta-badge" ${profile.report_card_image ? `style="cursor: zoom-in;" title="Hover to preview, click to view full size" onmouseenter="showReportCardPreview(event, '/uploads/${profile.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')"` : ''}>GPA: ${profile.gpa}</span>` : ''}
+          ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Hover to preview, click to view full size" aria-label="View report card image" onmouseenter="showReportCardPreview(event, '/uploads/${profile.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
         </div>
         <div style="margin-top: 20px;">
           <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>
