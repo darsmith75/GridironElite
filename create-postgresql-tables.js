@@ -4,28 +4,14 @@ const { Pool } = require('pg');
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
+  port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'GridironElite',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || ''
 });
 
-const insertPrimaryKeys = {
-  users: 'id',
-  player_profiles: 'user_id',
-  messages: 'id',
-  agent_favorites: 'id',
-  colleges: 'id',
-  player_videos: 'id',
-  player_images: 'id',
-  player_contacts: 'id',
-  player_video_links: 'id',
-  player_school_interests: 'id',
-  school_notes: 'id',
-  school_contacts: 'id'
-};
-
 const createTablesSQL = `
+  -- Users table
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -41,6 +27,7 @@ const createTablesSQL = `
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Player profiles table
   CREATE TABLE IF NOT EXISTS player_profiles (
     user_id INTEGER PRIMARY KEY NOT NULL,
     full_name VARCHAR(255) NOT NULL,
@@ -58,21 +45,16 @@ const createTablesSQL = `
     broad_jump DECIMAL(5,2),
     power_clean INTEGER,
     single_leg_squat INTEGER,
-    gpa DECIMAL(4,2),
+    gpa DECIMAL(3,2),
     profile_picture TEXT,
     card_photo TEXT,
     report_card_image TEXT,
     phone VARCHAR(20),
     bio TEXT,
-    hudl_link TEXT,
-    instagram_link TEXT,
-    twitter_link TEXT,
-    hudl_username TEXT,
-    instagram_username TEXT,
-    twitter_username TEXT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Messages table
   CREATE TABLE IF NOT EXISTS messages (
     id SERIAL PRIMARY KEY,
     sender_id INTEGER NOT NULL,
@@ -84,6 +66,7 @@ const createTablesSQL = `
     FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Agent favorites table
   CREATE TABLE IF NOT EXISTS agent_favorites (
     id SERIAL PRIMARY KEY,
     agent_id INTEGER NOT NULL,
@@ -94,6 +77,7 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Colleges table
   CREATE TABLE IF NOT EXISTS colleges (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -104,6 +88,7 @@ const createTablesSQL = `
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Player videos table
   CREATE TABLE IF NOT EXISTS player_videos (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -112,6 +97,7 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Player images table
   CREATE TABLE IF NOT EXISTS player_images (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -120,6 +106,7 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Player contacts table
   CREATE TABLE IF NOT EXISTS player_contacts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -130,6 +117,7 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Player video links table
   CREATE TABLE IF NOT EXISTS player_video_links (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -139,6 +127,7 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  -- Player school interests table
   CREATE TABLE IF NOT EXISTS player_school_interests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -152,6 +141,7 @@ const createTablesSQL = `
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
   );
 
+  -- School notes table
   CREATE TABLE IF NOT EXISTS school_notes (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -163,6 +153,7 @@ const createTablesSQL = `
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
   );
 
+  -- School contacts table
   CREATE TABLE IF NOT EXISTS school_contacts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -175,15 +166,6 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
   );
-`;
-
-const alterTablesSQL = `
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS hudl_link TEXT;
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_link TEXT;
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_link TEXT;
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS hudl_username TEXT;
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_username TEXT;
-  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_username TEXT;
 `;
 
 const createIndexesSQL = `
@@ -205,107 +187,53 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
 `;
 
-function splitStatements(sql) {
-  return sql
-    .split(';')
-    .map(statement => statement.trim())
-    .filter(Boolean);
-}
-
-function convertPlaceholders(sql) {
-  let index = 0;
-  return sql.replace(/\?/g, () => `$${++index}`);
-}
-
-function convertInsertOrIgnore(sql) {
-  if (!/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i.test(sql)) {
-    return sql;
-  }
-
-  return sql.replace(/^\s*INSERT\s+OR\s+IGNORE\s+INTO\s+/i, 'INSERT INTO ') + ' ON CONFLICT DO NOTHING';
-}
-
-function getInsertTableName(sql) {
-  const match = sql.match(/^\s*INSERT(?:\s+OR\s+IGNORE)?\s+INTO\s+([a-z_][a-z0-9_]*)/i);
-  return match ? match[1].toLowerCase() : null;
-}
-
-function addReturningClause(sql) {
-  if (!/^\s*INSERT/i.test(sql) || /\bRETURNING\b/i.test(sql)) {
-    return sql;
-  }
-
-  const tableName = getInsertTableName(sql);
-  const primaryKey = insertPrimaryKeys[tableName];
-  if (!primaryKey) {
-    return sql;
-  }
-
-  return `${sql} RETURNING ${primaryKey} AS inserted_id`;
-}
-
-function normalizeSql(sql) {
-  const trimmed = sql.trim().replace(/;+$/, '');
-  const convertedInsert = convertInsertOrIgnore(trimmed);
-  const convertedReturning = addReturningClause(convertedInsert);
-  return convertPlaceholders(convertedReturning);
-}
-
-async function query(sql, params = []) {
-  return pool.query(normalizeSql(sql), params);
-}
-
-async function exec(sql) {
+async function createTables() {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    for (const statement of splitStatements(sql)) {
-      await client.query(statement);
+    console.log('Connecting to PostgreSQL database...');
+    console.log(`Host: ${process.env.DB_HOST}`);
+    console.log(`Database: ${process.env.DB_NAME}`);
+    console.log(`User: ${process.env.DB_USER}`);
+
+    // Create tables
+    console.log('\nCreating tables...');
+    const statements = createTablesSQL.split(';').filter(s => s.trim());
+    for (const statement of statements) {
+      if (statement.trim()) {
+        await client.query(statement);
+      }
     }
-    await client.query('COMMIT');
+    console.log('✓ Tables created successfully');
+
+    // Create indexes
+    console.log('\nCreating indexes...');
+    const indexStatements = createIndexesSQL.split(';').filter(s => s.trim());
+    for (const statement of indexStatements) {
+      if (statement.trim()) {
+        await client.query(statement);
+      }
+    }
+    console.log('✓ Indexes created successfully');
+
+    // List all tables
+    console.log('\nVerifying tables...');
+    const result = await client.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      ORDER BY table_name
+    `);
+    console.log('Tables in database:');
+    result.rows.forEach(row => console.log('  -', row.table_name));
+
+    console.log('\n✓ PostgreSQL schema created successfully!');
   } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
+    console.error('Error creating tables:', error.message);
+    process.exit(1);
   } finally {
-    client.release();
+    await client.end();
+    await pool.end();
   }
 }
 
-async function initialize() {
-  await exec(createTablesSQL);
-  await exec(alterTablesSQL);
-  await exec(createIndexesSQL);
-}
-
-function prepare(sql) {
-  return {
-    async get(...params) {
-      const result = await query(sql, params);
-      return result.rows[0];
-    },
-    async all(...params) {
-      const result = await query(sql, params);
-      return result.rows;
-    },
-    async run(...params) {
-      const result = await query(sql, params);
-      return {
-        changes: result.rowCount,
-        lastInsertRowid: result.rows[0]?.inserted_id
-      };
-    }
-  };
-}
-
-async function close() {
-  await pool.end();
-}
-
-module.exports = {
-  prepare,
-  query,
-  exec,
-  initialize,
-  close,
-  pool
-};
+createTables();
