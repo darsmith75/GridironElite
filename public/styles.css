@@ -2218,9 +2218,10 @@ textarea {
 
 /* Social Media Links */
 .social-links {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 15px;
-  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .social-link {
@@ -2237,6 +2238,7 @@ textarea {
   transition: all 0.3s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #e0e0e0;
+  min-height: 84px;
 }
 
 .social-link:hover {
@@ -2285,6 +2287,43 @@ textarea {
   font-size: 12px;
   opacity: 0.9;
   font-weight: 400;
+}
+
+.social-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.social-edit-card {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.social-edit-title {
+  margin: 0 0 8px 0;
+  color: #1e3c72;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.social-edit-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 /* Athletic Metrics Grid - Smaller Squares */

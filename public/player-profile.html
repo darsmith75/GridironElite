@@ -134,35 +134,42 @@
               <input type="number" step="0.01" name="gpa" placeholder="GPA">
             </div>
 
-            <div class="form-section">
+            <div class="form-section full-width">
               <h3>Social Media</h3>
-              
-              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 15px; margin-bottom: 10px;">
-                <img src="/images/logos/Hudl_logo.png" alt="Hudl" style="width: 24px; height: 24px;">
-                Hudl
-              </h4>
-              <label>Profile URL:</label>
-              <input type="url" name="hudlLink" placeholder="https://www.hudl.com/profile/...">
-              <label>Username:</label>
-              <input type="text" name="hudlUsername" placeholder="Your Hudl username">
-              
-              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
-                 <img src="/images/logos/Instagram_logo.png" alt="Instagram" style="width: 24px; height: 24px;">
-                Instagram
-              </h4>
-              <label>Profile URL:</label>
-              <input type="url" name="instagramLink" placeholder="https://www.instagram.com/...">
-              <label>Username:</label>
-              <input type="text" name="instagramUsername" placeholder="@username">
-              
-              <h4 style="display: flex; align-items: center; gap: 8px; margin-top: 20px; margin-bottom: 10px;">
-                 <img src="/images/logos/X_logo.png" alt="X" style="width: 24px; height: 24px;">
-                X (Twitter)
-              </h4>
-              <label>Profile URL:</label>
-              <input type="url" name="twitterLink" placeholder="https://twitter.com/...">
-              <label>Username:</label>
-              <input type="text" name="twitterUsername" placeholder="@username">
+              <div class="social-edit-grid">
+                <div class="social-edit-card">
+                  <h4 class="social-edit-title">
+                    <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-edit-icon">
+                    Hudl
+                  </h4>
+                  <label>Profile URL:</label>
+                  <input type="url" name="hudlLink" placeholder="https://www.hudl.com/profile/...">
+                  <label>Username:</label>
+                  <input type="text" name="hudlUsername" placeholder="Your Hudl username">
+                </div>
+
+                <div class="social-edit-card">
+                  <h4 class="social-edit-title">
+                    <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-edit-icon">
+                    Instagram
+                  </h4>
+                  <label>Profile URL:</label>
+                  <input type="url" name="instagramLink" placeholder="https://www.instagram.com/...">
+                  <label>Username:</label>
+                  <input type="text" name="instagramUsername" placeholder="@username">
+                </div>
+
+                <div class="social-edit-card">
+                  <h4 class="social-edit-title">
+                    <img src="/images/logos/X_logo.png" alt="X" class="social-edit-icon">
+                    X (Twitter)
+                  </h4>
+                  <label>Profile URL:</label>
+                  <input type="url" name="twitterLink" placeholder="https://twitter.com/...">
+                  <label>Username:</label>
+                  <input type="text" name="twitterUsername" placeholder="@username">
+                </div>
+              </div>
             </div>
 
             <div class="form-section full-width">
@@ -635,7 +642,7 @@
         html += `
           <div class="profile-section">
             <h2 class="section-title-small">SOCIAL MEDIA</h2>
-            <div class="social-links">
+            <div class="social-links social-links-grid">
               ${profile.hudl_link ? `
                 <a href="${profile.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
                   <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
