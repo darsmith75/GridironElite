@@ -10,6 +10,7 @@ body {
   min-height: 100vh;
   padding: 0;
   margin: 0;
+  overflow-y: scroll;
 }
 
 /* Dashboard Wrapper */
@@ -50,7 +51,8 @@ body {
   height: 120px;
   width: auto;
   object-fit: contain;
-  margin: -18px 0;
+  margin: -18px 0 -22px 0;
+  display: block;
 }
 
 .logo {
@@ -171,7 +173,7 @@ h3 {
   padding: 18px 24px;
   border-radius: 12px;
   margin-bottom: 25px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #c7d0da;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   transition: all 0.3s;
 }
@@ -320,7 +322,7 @@ button:hover {
   padding: 20px 25px;
   border-radius: 16px;
   margin-bottom: 30px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #c7d0da;
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
   transition: all 0.3s;
 }
@@ -531,7 +533,7 @@ button:hover {
   }
 
   .header-logo {
-    margin: -10px 0;
+    margin: -10px 0 -14px 0;
   }
   
   .header-left {
@@ -654,7 +656,7 @@ label {
   background: white;
   border-radius: 16px;
   padding: 0;
-  border: 1px solid #e9ecef;
+  border: 1px solid #c7d0da;
   transition: all 0.3s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   overflow: hidden;
@@ -2537,23 +2539,27 @@ textarea {
 /* Top Navigation Menu */
 .top-nav-menu {
   display: flex;
-  gap: 20px;
+  gap: 8px;
   align-items: center;
-  align-self: flex-end;
+  align-self: center;
   flex: 0 0 auto;
   margin-left: auto;
-  padding-bottom: 2px;
 }
 
 .nav-link {
-  color: #333333;
+  color: #555555;
   text-decoration: none;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
-  transition: all 0.3s;
+  transition: all 0.2s;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  line-height: 1.2;
 }
 
 .nav-link:hover {
@@ -2575,6 +2581,64 @@ textarea {
     font-size: 14px;
     padding: 6px 12px;
   }
+}
+
+/* Pagination */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  padding: 7px 13px;
+  border: 1px solid #c7d0da;
+  border-radius: 7px;
+  background: white;
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f0f4f8;
+  border-color: #1e3c72;
+  color: #1e3c72;
+}
+
+.page-btn.active {
+  background: #1e3c72;
+  color: white;
+  border-color: #1e3c72;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+  color: #6c757d;
+  font-size: 14px;
 }
 
 /* Agent Profile Page */
@@ -3097,4 +3161,28 @@ textarea {
 
 .favorite-detail-btn.favorited:hover {
   background: #ebebeb;
+}
+
+/* Cross-page border consistency for dashboard screens */
+.last-update,
+.stat-item,
+.media-item,
+.form-section,
+.current-profile-section,
+.metric-item,
+.profile-image,
+.college-logo-card,
+.gallery-image-detail,
+.contact-person,
+.contact-person h4,
+.contact-card,
+.detail-section h3,
+.stats-grid-detail .stat-card,
+.conversations-panel h2,
+.conversation-item,
+.messages-header,
+.message.received,
+.message-input-container,
+.message-input-container textarea {
+  border-color: #c7d0da;
 }
