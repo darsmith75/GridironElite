@@ -82,6 +82,8 @@ async function migrateUploads() {
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
+const MAX_HIGHLIGHT_VIDEO_MB = parseInt(process.env.MAX_HIGHLIGHT_VIDEO_MB || '35', 10);
+const MAX_HIGHLIGHT_VIDEO_BYTES = MAX_HIGHLIGHT_VIDEO_MB * 1024 * 1024;
 
 const IMAGE_PRESETS = {
   reportCardImage: { maxWidth: 2200, quality: 88 },
@@ -140,8 +142,9 @@ function runFfmpeg(args) {
 }
 
 async function optimizeImageFile(file) {
-  if (!file?.buffer || file.mimetype === 'image/gif') {
+  if ((!file?.buffer && !file?.path) || file.mimetype === 'image/gif') {
     return {
+      filePath: file.path,
       buffer: file.buffer,
       extension: path.extname(file.originalname).toLowerCase() || '.bin',
       mimeType: file.mimetype
@@ -149,13 +152,20 @@ async function optimizeImageFile(file) {
   }
 
   const preset = getImagePreset(file.fieldname);
-  const optimizedBuffer = await sharp(file.buffer)
+  const source = file.path || file.buffer;
+  const optimizedBuffer = await sharp(source)
     .rotate()
     .resize({ width: preset.maxWidth, withoutEnlargement: true })
     .webp({ quality: preset.quality })
     .toBuffer();
 
+  const tempDir = path.join(os.tmpdir(), 'gridiron-elite-media-opt');
+  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+  const tempPath = path.join(tempDir, `${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`);
+  fs.writeFileSync(tempPath, optimizedBuffer);
+
   return {
+    filePath: tempPath,
     buffer: optimizedBuffer,
     extension: '.webp',
     mimeType: 'image/webp'
@@ -163,8 +173,9 @@ async function optimizeImageFile(file) {
 }
 
 async function optimizeVideoFile(file) {
-  if (!file?.buffer) {
+  if ((!file?.buffer && !file?.path)) {
     return {
+      filePath: file.path,
       buffer: file.buffer,
       extension: path.extname(file.originalname).toLowerCase() || '.bin',
       mimeType: file.mimetype
@@ -177,11 +188,14 @@ async function optimizeVideoFile(file) {
 
   const sourceExt = path.extname(file.originalname).toLowerCase() || '.mp4';
   const tempBase = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-  const inputPath = path.join(tempDir, `${tempBase}${sourceExt}`);
+  const inputPath = file.path || path.join(tempDir, `${tempBase}${sourceExt}`);
   const outputPath = path.join(tempDir, `${tempBase}-optimized.mp4`);
+  const createdInputTemp = !file.path;
 
   try {
-    fs.writeFileSync(inputPath, file.buffer);
+    if (createdInputTemp) {
+      fs.writeFileSync(inputPath, file.buffer);
+    }
 
     await runFfmpeg([
       '-y',
@@ -197,26 +211,29 @@ async function optimizeVideoFile(file) {
       outputPath
     ]);
 
-    const optimizedBuffer = fs.readFileSync(outputPath);
     return {
-      buffer: optimizedBuffer,
+      filePath: outputPath,
       extension: '.mp4',
       mimeType: 'video/mp4'
     };
   } finally {
-    if (fs.existsSync(inputPath)) {
+    if (createdInputTemp && fs.existsSync(inputPath)) {
       try { fs.unlinkSync(inputPath); } catch (_) {}
-    }
-    if (fs.existsSync(outputPath)) {
-      try { fs.unlinkSync(outputPath); } catch (_) {}
     }
   }
 }
 
 // Multer configuration for file uploads
-// Use memory storage – files are streamed to Backblaze B2 (or written to disk if B2
-// is not configured) by processUploadedFiles() inside each route handler.
-const storage = multer.memoryStorage();
+// Use temp disk storage to avoid high RAM usage for larger media uploads.
+const incomingUploadDir = path.join(os.tmpdir(), 'gridiron-elite-incoming');
+if (!fs.existsSync(incomingUploadDir)) fs.mkdirSync(incomingUploadDir, { recursive: true });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, incomingUploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.bin';
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  }
+});
 const fileFilter = (req, file, cb) => {
   if (ALLOWED_TYPES.includes(file.mimetype)) {
     cb(null, true);
@@ -232,7 +249,9 @@ async function processUploadedFiles(userId, reqFiles) {
   if (!reqFiles) return;
   const allFiles = Object.values(reqFiles).flat();
   for (const file of allFiles) {
+    const originalTempPath = file.path;
     let processed = {
+      filePath: file.path,
       buffer: file.buffer,
       extension: path.extname(file.originalname).toLowerCase() || '.bin',
       mimeType: file.mimetype
@@ -252,11 +271,26 @@ async function processUploadedFiles(userId, reqFiles) {
     file.filename = safeName; // keep existing field-name references working
     file.mimetype = processed.mimeType;
     if (b2Enabled) {
-      await uploadToB2('uploads/' + userId + '/' + safeName, processed.buffer, processed.mimeType);
+      const uploadBody = processed.filePath
+        ? fs.createReadStream(processed.filePath)
+        : processed.buffer;
+      await uploadToB2('uploads/' + userId + '/' + safeName, uploadBody, processed.mimeType);
     } else {
       const userDir = path.join('uploads', String(userId));
       if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-      fs.writeFileSync(path.join(userDir, safeName), processed.buffer);
+      const destination = path.join(userDir, safeName);
+      if (processed.filePath) {
+        fs.copyFileSync(processed.filePath, destination);
+      } else {
+        fs.writeFileSync(destination, processed.buffer);
+      }
+    }
+
+    if (processed.filePath && processed.filePath !== originalTempPath && fs.existsSync(processed.filePath)) {
+      try { fs.unlinkSync(processed.filePath); } catch (_) {}
+    }
+    if (originalTempPath && fs.existsSync(originalTempPath)) {
+      try { fs.unlinkSync(originalTempPath); } catch (_) {}
     }
   }
 }
@@ -576,6 +610,12 @@ app.post('/api/player/profile', requireAuth, upload.fields([
     if (files?.highlightVideos && files.highlightVideos.length > 1) {
       return res.status(400).json({
         error: 'Please upload only one highlight video at a time.'
+      });
+    }
+
+    if (files?.highlightVideos?.[0] && files.highlightVideos[0].size > MAX_HIGHLIGHT_VIDEO_BYTES) {
+      return res.status(400).json({
+        error: `Highlight video is too large. Maximum allowed is ${MAX_HIGHLIGHT_VIDEO_MB}MB.`
       });
     }
 

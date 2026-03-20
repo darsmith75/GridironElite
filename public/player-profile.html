@@ -240,7 +240,7 @@
                   <div class="file-input-wrapper">
                     <input type="file" name="highlightVideos" id="highlightVideosInput" accept="video/*" onchange="enforceSingleHighlightVideo(this)">
                   </div>
-                  <p class="hint-text">Upload one highlight video per save to improve reliability.</p>
+                    <p class="hint-text">Upload one highlight video per save. Max 35MB.</p>
                   <p id="videoSizeHint" class="hint-text"></p>
 
                   <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
@@ -788,6 +788,7 @@
 
     function enforceSingleHighlightVideo(input) {
       if (!input || !input.files) return;
+      const MAX_HIGHLIGHT_VIDEO_MB = 35;
       if (input.files.length > 1) {
         alert('Please select only one highlight video.');
         input.value = '';
@@ -810,6 +811,13 @@
       const file = input.files[0];
       const sizeMb = file.size / (1024 * 1024);
       hint.textContent = `Selected: ${file.name} (${sizeMb.toFixed(1)} MB)`;
+      if (sizeMb > MAX_HIGHLIGHT_VIDEO_MB) {
+        hint.textContent += ` - Exceeds ${MAX_HIGHLIGHT_VIDEO_MB}MB limit.`;
+        hint.classList.add('warning');
+        alert(`This video is ${sizeMb.toFixed(1)} MB. Max allowed is ${MAX_HIGHLIGHT_VIDEO_MB} MB.`);
+        input.value = '';
+        return;
+      }
       if (sizeMb > 30) {
         hint.textContent += ' - Large file: upload may take longer.';
         hint.classList.add('warning');
@@ -1118,7 +1126,7 @@
       if (isSavingProfile) return;
 
       const LARGE_VIDEO_WARNING_MB = 30;
-      const VERY_LARGE_VIDEO_CONFIRM_MB = 45;
+      const MAX_HIGHLIGHT_VIDEO_MB = 35;
 
       const highlightInput = e.target.querySelector('input[name="highlightVideos"]');
       if (highlightInput && highlightInput.files && highlightInput.files.length > 1) {
@@ -1129,12 +1137,11 @@
       const selectedVideo = highlightInput?.files?.[0];
       if (selectedVideo) {
         const sizeMb = selectedVideo.size / (1024 * 1024);
-        if (sizeMb >= VERY_LARGE_VIDEO_CONFIRM_MB) {
-          const proceed = confirm(
-            `This video is ${sizeMb.toFixed(1)} MB. Uploads this large may timeout. Continue anyway?`
-          );
-          if (!proceed) return;
-        } else if (sizeMb >= LARGE_VIDEO_WARNING_MB) {
+        if (sizeMb > MAX_HIGHLIGHT_VIDEO_MB) {
+          alert(`This video is ${sizeMb.toFixed(1)} MB. Maximum allowed is ${MAX_HIGHLIGHT_VIDEO_MB} MB.`);
+          return;
+        }
+        if (sizeMb >= LARGE_VIDEO_WARNING_MB) {
           alert(
             `Heads up: this video is ${sizeMb.toFixed(1)} MB. Upload may take a while while it is optimized.`
           );
