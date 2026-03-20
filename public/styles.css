@@ -1485,6 +1485,31 @@ textarea {
   display: flex;
 }
 
+.profile-result-banner {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-result-banner.active {
+  display: block;
+}
+
+.profile-result-banner.success {
+  background: #e8f7ee;
+  border: 1px solid #a3d9b7;
+  color: #1f6b3b;
+}
+
+.profile-result-banner.error {
+  background: #fdecee;
+  border: 1px solid #f2b5bc;
+  color: #8a1f2d;
+}
+
 .upload-status.active::before {
   content: '';
   width: 12px;

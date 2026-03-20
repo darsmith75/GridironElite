@@ -1,5 +1,4 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
 console.log('Adding sample social media links to player profiles...');
 
@@ -37,26 +36,34 @@ const sampleLinks = [
   }
 ];
 
-let updateCount = 0;
+async function main() {
+  let updateCount = 0;
 
-sampleLinks.forEach(link => {
-  // Get user ID from email
-  const user = db.prepare('SELECT id FROM users WHERE email = ?').get(link.email);
-  
-  if (user) {
-    db.prepare(`
-      UPDATE player_profiles 
-      SET hudl_link = ?, instagram_link = ?, twitter_link = ?
-      WHERE user_id = ?
-    `).run(link.hudl, link.instagram, link.twitter, user.id);
-    
-    console.log(`Updated social links for ${link.email}`);
-    updateCount++;
-  } else {
-    console.log(`User not found: ${link.email}`);
+  for (const link of sampleLinks) {
+    const user = await db.prepare('SELECT id FROM users WHERE email = ?').get(link.email);
+
+    if (user) {
+      await db.prepare(`
+        UPDATE player_profiles
+        SET hudl_link = ?, instagram_link = ?, twitter_link = ?
+        WHERE user_id = ?
+      `).run(link.hudl, link.instagram, link.twitter, user.id);
+
+      console.log(`Updated social links for ${link.email}`);
+      updateCount++;
+    } else {
+      console.log(`User not found: ${link.email}`);
+    }
   }
-});
 
-console.log(`\nSuccessfully updated ${updateCount} player profiles with social media links!`);
+  console.log(`\nSuccessfully updated ${updateCount} player profiles with social media links!`);
+}
 
-db.close();
+main()
+  .catch(error => {
+    console.error('Error updating social links:', error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await db.close();
+  });

@@ -265,6 +265,7 @@
 
           <button type="submit" class="submit-btn">Save Profile</button>
           <div id="profileSaveStatus" class="upload-status" aria-live="polite"></div>
+          <div id="profileResultBanner" class="profile-result-banner" aria-live="polite"></div>
         </form>
       </div>
 
@@ -826,6 +827,15 @@
       }
     }
 
+    function showProfileResult(message, type) {
+      const banner = document.getElementById('profileResultBanner');
+      if (!banner) return;
+      banner.classList.remove('success', 'error', 'active');
+      banner.textContent = message || '';
+      if (!message) return;
+      banner.classList.add(type === 'error' ? 'error' : 'success', 'active');
+    }
+
     async function loadPlayerProfile() {
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
@@ -1152,6 +1162,7 @@
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const statusEl = document.getElementById('profileSaveStatus');
       const hasVideoUpload = !!(highlightInput && highlightInput.files && highlightInput.files.length === 1);
+      showProfileResult('', 'success');
       const originalBtnText = submitBtn ? submitBtn.textContent : '';
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -1178,19 +1189,19 @@
         clearTimeout(timeoutId);
 
         if (res.ok) {
-          alert('Profile saved successfully!');
+          showProfileResult('Profile saved successfully.', 'success');
           await loadPlayerProfile();
           showViewMode();
         } else {
           const err = await res.json().catch(() => ({}));
-          alert(err.error || 'Error saving profile');
+          showProfileResult(err.error || 'Error saving profile', 'error');
         }
       } catch (error) {
         if (timeoutId) clearTimeout(timeoutId);
         if (error && error.name === 'AbortError') {
-          alert('Upload timed out. Try a smaller/shorter video and upload one highlight video at a time.');
+          showProfileResult('Upload timed out. Try a smaller/shorter video and upload one highlight video at a time.', 'error');
         } else {
-          alert('Error saving profile. Please try again.');
+          showProfileResult('Error saving profile. Please try again.', 'error');
         }
       } finally {
         isSavingProfile = false;

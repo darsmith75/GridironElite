@@ -1,35 +1,21 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
 console.log('Adding social media columns to player_profiles table...');
 
-try {
-  // Add social media columns
-  db.prepare(`
-    ALTER TABLE player_profiles 
-    ADD COLUMN hudl_link TEXT
-  `).run();
-  console.log('Added hudl_link column');
-
-  db.prepare(`
-    ALTER TABLE player_profiles 
-    ADD COLUMN instagram_link TEXT
-  `).run();
-  console.log('Added instagram_link column');
-
-  db.prepare(`
-    ALTER TABLE player_profiles 
-    ADD COLUMN twitter_link TEXT
-  `).run();
-  console.log('Added twitter_link column');
-
-  console.log('\nSuccessfully added all social media columns!');
-} catch (error) {
-  if (error.message.includes('duplicate column name')) {
-    console.log('Columns already exist, skipping...');
-  } else {
+async function main() {
+  try {
+    await db.exec(`
+      ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS hudl_link TEXT;
+      ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_link TEXT;
+      ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_link TEXT;
+    `);
+    console.log('Social media columns are present.');
+  } catch (error) {
     console.error('Error:', error.message);
+    process.exitCode = 1;
+  } finally {
+    await db.close();
   }
 }
 
-db.close();
+main();

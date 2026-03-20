@@ -1,23 +1,19 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
 console.log('Adding sample messages...');
 
-// Get the agent user ID
-const agent = db.prepare('SELECT id FROM users WHERE email = ?').get('agent@example.com');
-if (!agent) {
-  console.error('Agent user not found!');
-  process.exit(1);
-}
+async function main() {
+  const agent = await db.prepare('SELECT id FROM users WHERE email = ?').get('agent@example.com');
+  if (!agent) {
+    throw new Error('Agent user not found!');
+  }
 
-// Get all player users
-const players = db.prepare('SELECT id, email FROM users WHERE role = ?').all('player');
-console.log(`Found ${players.length} players`);
+  const players = await db.prepare('SELECT id, email FROM users WHERE role = ?').all('player');
+  console.log(`Found ${players.length} players`);
 
-if (players.length === 0) {
-  console.error('No players found!');
-  process.exit(1);
-}
+  if (players.length === 0) {
+    throw new Error('No players found!');
+  }
 
 // Sample message templates
 const messageTemplates = [
@@ -53,54 +49,58 @@ const messageTemplates = [
   }
 ];
 
-// Clear existing messages
-db.prepare('DELETE FROM messages').run();
-console.log('Cleared existing messages');
+  await db.prepare('DELETE FROM messages').run();
+  console.log('Cleared existing messages');
 
 // Add messages for each player
 let messageCount = 0;
 const now = new Date();
 
-players.forEach((player, index) => {
-  // Create a conversation with varied message counts (2-5 messages per conversation)
-  const numMessages = Math.floor(Math.random() * 4) + 2;
-  
-  for (let i = 0; i < numMessages; i++) {
-    let senderId, receiverId, messageText;
-    
-    // Alternate between agent and player messages
-    if (i % 2 === 0) {
-      // Agent sends first
-      senderId = agent.id;
-      receiverId = player.id;
-      if (i === 0) {
-        messageText = messageTemplates[0].messages[index % messageTemplates[0].messages.length];
+  for (const [index, player] of players.entries()) {
+    const numMessages = Math.floor(Math.random() * 4) + 2;
+
+    for (let i = 0; i < numMessages; i++) {
+      let senderId;
+      let receiverId;
+      let messageText;
+
+      if (i % 2 === 0) {
+        senderId = agent.id;
+        receiverId = player.id;
+        if (i === 0) {
+          messageText = messageTemplates[0].messages[index % messageTemplates[0].messages.length];
+        } else {
+          messageText = messageTemplates[2].followUp[Math.floor(Math.random() * messageTemplates[2].followUp.length)];
+        }
       } else {
-        messageText = messageTemplates[2].followUp[Math.floor(Math.random() * messageTemplates[2].followUp.length)];
+        senderId = player.id;
+        receiverId = agent.id;
+        messageText = messageTemplates[1].messages[Math.floor(Math.random() * messageTemplates[1].messages.length)];
       }
-    } else {
-      // Player responds
-      senderId = player.id;
-      receiverId = agent.id;
-      messageText = messageTemplates[1].messages[Math.floor(Math.random() * messageTemplates[1].messages.length)];
+
+      const hoursAgo = (index * 24) + (i * 2);
+      const timestamp = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));
+
+      await db.prepare(`
+        INSERT INTO messages (sender_id, recipient_id, message, created_at)
+        VALUES (?, ?, ?, ?)
+      `).run(senderId, receiverId, messageText, timestamp.toISOString());
+
+      messageCount++;
     }
-    
-    // Create timestamps that are progressively older for each conversation
-    const hoursAgo = (index * 24) + (i * 2); // Space out conversations by days, messages by hours
-    const timestamp = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));
-    
-    db.prepare(`
-      INSERT INTO messages (sender_id, recipient_id, message, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(senderId, receiverId, messageText, timestamp.toISOString());
-    
-    messageCount++;
+
+    console.log(`Added ${numMessages} messages for conversation with ${player.email}`);
   }
-  
-  console.log(`Added ${numMessages} messages for conversation with ${player.email}`);
-});
 
-console.log(`\nSuccessfully added ${messageCount} sample messages!`);
-console.log(`Created conversations between agent@example.com and ${players.length} players`);
+  console.log(`\nSuccessfully added ${messageCount} sample messages!`);
+  console.log(`Created conversations between agent@example.com and ${players.length} players`);
+}
 
-db.close();
+main()
+  .catch(error => {
+    console.error('Error adding sample messages:', error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await db.close();
+  });

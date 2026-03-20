@@ -1,8 +1,22 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
-const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-console.log('Tables in database:');
-tables.forEach(t => console.log('- ' + t.name));
+async function main() {
+	const tables = await db.query(`
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+		ORDER BY table_name
+	`);
 
-db.close();
+	console.log('Tables in database:');
+	tables.rows.forEach(t => console.log(`- ${t.table_name}`));
+}
+
+main()
+	.catch(error => {
+		console.error('Error:', error.message);
+		process.exitCode = 1;
+	})
+	.finally(async () => {
+		await db.close();
+	});

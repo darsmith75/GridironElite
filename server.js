@@ -1,8 +1,21 @@
+// Some transitive dependencies emit DEP0005 on newer Node runtimes.
+// Filter only that code so real warnings still surface in logs.
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = function patchedEmitWarning(warning, ...args) {
+  const codeFromWarning = warning && typeof warning === 'object' ? warning.code : undefined;
+  const codeFromArgs = typeof args[1] === 'string' ? args[1] : undefined;
+  if (codeFromWarning === 'DEP0005' || codeFromArgs === 'DEP0005') {
+    return;
+  }
+  return originalEmitWarning.call(process, warning, ...args);
+};
+
 try { require('dotenv').config(); } catch (_) {}
 
 const express = require('express');
 const session = require('express-session');
-const bcrypt = require('bcrypt');
+const PgSession = require('connect-pg-simple')(session);
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -12,10 +25,13 @@ const nodemailer = require('nodemailer');
 const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
-const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url } = require('./backblaze');
+const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, checkB2Health } = require('./backblaze');
 
 const app = express();
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
+
+// Needed for correct secure-cookie handling behind IIS/reverse proxies.
+app.set('trust proxy', 1);
 
 // Create uploads directory
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
@@ -93,8 +109,27 @@ const IMAGE_PRESETS = {
 };
 
 const VIDEO_PRESETS = {
-  highlightVideos: { maxWidth: 1280, crf: 27, preset: 'veryfast', audioBitrate: '128k' }
+  highlightVideos: { maxWidth: 960, crf: 27, preset: 'veryfast', audioBitrate: '128k' }
 };
+
+function formatMb(bytes) {
+  return `${(bytes / (1024 * 1024)).toFixed(2)}MB`;
+}
+
+function logUploadEvent(level, message, meta = {}) {
+  const payload = {
+    at: new Date().toISOString(),
+    ...meta
+  };
+  const line = `[upload] ${message} ${JSON.stringify(payload)}`;
+  if (level === 'error') {
+    console.error(line);
+  } else if (level === 'warn') {
+    console.warn(line);
+  } else {
+    console.log(line);
+  }
+}
 
 function getImagePreset(fieldName) {
   return IMAGE_PRESETS[fieldName] || { maxWidth: 1600, quality: 80 };
@@ -200,7 +235,7 @@ async function optimizeVideoFile(file) {
     await runFfmpeg([
       '-y',
       '-i', inputPath,
-      '-vf', `scale=min(${preset.maxWidth}\\,iw):-2:force_original_aspect_ratio=decrease`,
+      '-vf', `scale=min(${preset.maxWidth}\\,iw):-2:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2`,
       '-c:v', 'libx264',
       '-preset', String(preset.preset),
       '-crf', String(preset.crf),
@@ -249,6 +284,7 @@ async function processUploadedFiles(userId, reqFiles) {
   if (!reqFiles) return;
   const allFiles = Object.values(reqFiles).flat();
   for (const file of allFiles) {
+    const startedAt = Date.now();
     const originalTempPath = file.path;
     let processed = {
       filePath: file.path,
@@ -257,40 +293,69 @@ async function processUploadedFiles(userId, reqFiles) {
       mimeType: file.mimetype
     };
 
+    logUploadEvent('info', 'start', {
+      userId,
+      field: file.fieldname,
+      originalName: file.originalname,
+      sizeBytes: file.size,
+      sizeMb: formatMb(file.size),
+      mimeType: file.mimetype
+    });
+
     try {
-      if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
-        processed = await optimizeImageFile(file);
-      } else if (ALLOWED_VIDEO_TYPES.includes(file.mimetype)) {
-        processed = await optimizeVideoFile(file);
+      try {
+        if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+          processed = await optimizeImageFile(file);
+        } else if (ALLOWED_VIDEO_TYPES.includes(file.mimetype)) {
+          processed = await optimizeVideoFile(file);
+        }
+      } catch (error) {
+        console.warn('Media optimization failed, using original upload:', error.message);
       }
-    } catch (error) {
-      console.warn('Media optimization failed, using original upload:', error.message);
-    }
 
-    const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + processed.extension;
-    file.filename = safeName; // keep existing field-name references working
-    file.mimetype = processed.mimeType;
-    if (b2Enabled) {
-      const uploadBody = processed.filePath
-        ? fs.createReadStream(processed.filePath)
-        : processed.buffer;
-      await uploadToB2('uploads/' + userId + '/' + safeName, uploadBody, processed.mimeType);
-    } else {
-      const userDir = path.join('uploads', String(userId));
-      if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-      const destination = path.join(userDir, safeName);
-      if (processed.filePath) {
-        fs.copyFileSync(processed.filePath, destination);
+      const safeName = Date.now() + '-' + Math.round(Math.random() * 1e9) + processed.extension;
+      file.filename = safeName; // keep existing field-name references working
+      file.mimetype = processed.mimeType;
+      if (b2Enabled) {
+        const uploadBody = processed.filePath
+          ? fs.createReadStream(processed.filePath)
+          : processed.buffer;
+        await uploadToB2('uploads/' + userId + '/' + safeName, uploadBody, processed.mimeType);
       } else {
-        fs.writeFileSync(destination, processed.buffer);
+        const userDir = path.join('uploads', String(userId));
+        if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+        const destination = path.join(userDir, safeName);
+        if (processed.filePath) {
+          fs.copyFileSync(processed.filePath, destination);
+        } else {
+          fs.writeFileSync(destination, processed.buffer);
+        }
       }
-    }
 
-    if (processed.filePath && processed.filePath !== originalTempPath && fs.existsSync(processed.filePath)) {
-      try { fs.unlinkSync(processed.filePath); } catch (_) {}
-    }
-    if (originalTempPath && fs.existsSync(originalTempPath)) {
-      try { fs.unlinkSync(originalTempPath); } catch (_) {}
+      logUploadEvent('info', 'complete', {
+        userId,
+        field: file.fieldname,
+        originalName: file.originalname,
+        storedName: file.filename,
+        outputType: file.mimetype,
+        durationMs: Date.now() - startedAt
+      });
+    } catch (error) {
+      logUploadEvent('error', 'failed', {
+        userId,
+        field: file.fieldname,
+        originalName: file.originalname,
+        durationMs: Date.now() - startedAt,
+        error: error.message
+      });
+      throw error;
+    } finally {
+      if (processed.filePath && processed.filePath !== originalTempPath && fs.existsSync(processed.filePath)) {
+        try { fs.unlinkSync(processed.filePath); } catch (_) {}
+      }
+      if (originalTempPath && fs.existsSync(originalTempPath)) {
+        try { fs.unlinkSync(originalTempPath); } catch (_) {}
+      }
     }
   }
 }
@@ -448,11 +513,41 @@ if (b2Enabled) {
 }
 app.use('/images', express.static('images'));
 app.use('/logos', express.static('logos'));
+
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'gridiron-elite', uptimeSec: Math.round(process.uptime()) });
+});
+
+app.get('/ready', async (req, res) => {
+  try {
+    await db.query('SELECT 1');
+
+    const b2 = await checkB2Health();
+    if (b2Enabled && !b2.ok) {
+      return res.status(503).json({ ok: false, db: 'ok', b2: 'error', reason: b2.reason || 'b2-not-ready' });
+    }
+
+    res.json({ ok: true, db: 'ok', b2: b2Enabled ? 'ok' : 'disabled' });
+  } catch (error) {
+    res.status(503).json({ ok: false, db: 'error', reason: error.message || 'db-not-ready' });
+  }
+});
+
 app.use(session({
-  secret: 'football-agent-secret-key',
+  store: new PgSession({
+    pool: db.pool,
+    tableName: 'user_sessions',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET || 'football-agent-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }
+  proxy: true,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: process.env.SESSION_COOKIE_SECURE === 'true' ? true : 'auto',
+    sameSite: 'lax'
+  }
 }));
 
 // Auth middleware

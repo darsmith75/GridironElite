@@ -1,5 +1,4 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
 console.log('Adding sample social media usernames to player profiles...');
 
@@ -37,26 +36,34 @@ const sampleUsernames = [
   }
 ];
 
-let updateCount = 0;
+async function main() {
+  let updateCount = 0;
 
-sampleUsernames.forEach(user => {
-  // Get user ID from email
-  const dbUser = db.prepare('SELECT id FROM users WHERE email = ?').get(user.email);
-  
-  if (dbUser) {
-    db.prepare(`
-      UPDATE player_profiles 
-      SET hudl_username = ?, instagram_username = ?, twitter_username = ?
-      WHERE user_id = ?
-    `).run(user.hudl, user.instagram, user.twitter, dbUser.id);
-    
-    console.log(`Updated usernames for ${user.email}`);
-    updateCount++;
-  } else {
-    console.log(`User not found: ${user.email}`);
+  for (const user of sampleUsernames) {
+    const dbUser = await db.prepare('SELECT id FROM users WHERE email = ?').get(user.email);
+
+    if (dbUser) {
+      await db.prepare(`
+        UPDATE player_profiles
+        SET hudl_username = ?, instagram_username = ?, twitter_username = ?
+        WHERE user_id = ?
+      `).run(user.hudl, user.instagram, user.twitter, dbUser.id);
+
+      console.log(`Updated usernames for ${user.email}`);
+      updateCount++;
+    } else {
+      console.log(`User not found: ${user.email}`);
+    }
   }
-});
 
-console.log(`\nSuccessfully updated ${updateCount} player profiles with social media usernames!`);
+  console.log(`\nSuccessfully updated ${updateCount} player profiles with social media usernames!`);
+}
 
-db.close();
+main()
+  .catch(error => {
+    console.error('Error updating sample usernames:', error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await db.close();
+  });

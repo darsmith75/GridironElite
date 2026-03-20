@@ -1,6 +1,5 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const bcrypt = require('bcrypt');
-const db = new Database('football_platform.db');
+const bcrypt = require('bcryptjs');
+const db = require('./database');
 
 async function createAgent2() {
   const email = 'agent2@example.com';
@@ -8,7 +7,7 @@ async function createAgent2() {
   const fullName = 'Sarah Mitchell';
   
   // Check if agent already exists
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email);
   if (existing) {
     console.log('Agent2 already exists!');
     console.log(`Email: ${email}`);
@@ -22,8 +21,8 @@ async function createAgent2() {
       INSERT INTO users (email, password, role, full_name) 
       VALUES (?, ?, 'agent', ?)
     `);
-    
-    const result = insertUser.run(email, hashedPassword, fullName);
+
+    const result = await insertUser.run(email, hashedPassword, fullName);
     const userId = result.lastInsertRowid;
     
     console.log(`Created agent user with ID: ${userId}`);
@@ -39,10 +38,12 @@ async function createAgent2() {
 
 createAgent2()
   .then(() => {
-    db.close();
     console.log('\nDone!');
   })
   .catch(err => {
     console.error('Error:', err);
-    db.close();
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await db.close();
   });

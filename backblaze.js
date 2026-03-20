@@ -91,9 +91,26 @@ async function deleteFromB2Prefix(prefix) {
   }
 }
 
+/** Basic health check to verify B2 API credentials and bucket access. */
+async function checkB2Health() {
+  if (!b2Enabled || !s3Client) {
+    return { ok: false, reason: 'not-configured' };
+  }
+
+  try {
+    await s3Client.send(new ListObjectsV2Command({
+      Bucket: BUCKET,
+      MaxKeys: 1
+    }));
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: error.message || 'b2-check-failed' };
+  }
+}
+
 /** Return the public URL for a B2 object key. */
 function getB2Url(key) {
   return `${PUBLIC_URL}/${key}`;
 }
 
-module.exports = { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url };
+module.exports = { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, checkB2Health };

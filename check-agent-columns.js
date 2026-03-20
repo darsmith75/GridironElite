@@ -1,12 +1,26 @@
-const Database = require('better-sqlite3-multiple-ciphers');
-const db = new Database('football_platform.db');
+const db = require('./database');
 
-const columns = db.prepare('PRAGMA table_info(users)').all();
-console.log('Users table columns:');
-columns.forEach(col => console.log(`- ${col.name} (${col.type})`));
+async function main() {
+	const columns = await db.query(`
+		SELECT column_name AS name, data_type AS type
+		FROM information_schema.columns
+		WHERE table_schema = 'public' AND table_name = 'users'
+		ORDER BY ordinal_position
+	`);
 
-const agent = db.prepare('SELECT * FROM users WHERE email = ?').get('agent2@example.com');
-console.log('\nCurrent agent2 data:');
-console.log(JSON.stringify(agent, null, 2));
+	console.log('Users table columns:');
+	columns.rows.forEach(col => console.log(`- ${col.name} (${col.type})`));
 
-db.close();
+	const agent = await db.prepare('SELECT * FROM users WHERE email = ?').get('agent2@example.com');
+	console.log('\nCurrent agent2 data:');
+	console.log(JSON.stringify(agent || null, null, 2));
+}
+
+main()
+	.catch(error => {
+		console.error('Error:', error.message);
+		process.exitCode = 1;
+	})
+	.finally(async () => {
+		await db.close();
+	});
