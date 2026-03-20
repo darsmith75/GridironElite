@@ -110,13 +110,29 @@ function runFfmpeg(args) {
 
     const proc = spawn(ffmpegPath, args, { windowsHide: true });
     let stderr = '';
+    let settled = false;
+    const timeoutMs = parseInt(process.env.FFMPEG_TIMEOUT_MS || '180000', 10);
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      try { proc.kill('SIGKILL'); } catch (_) {}
+      reject(new Error('ffmpeg timed out during video optimization'));
+    }, timeoutMs);
 
     proc.stderr.on('data', chunk => {
       stderr += String(chunk || '');
     });
 
-    proc.on('error', reject);
+    proc.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(err);
+    });
     proc.on('close', code => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       if (code === 0) return resolve();
       reject(new Error('ffmpeg exited with code ' + code + (stderr ? `: ${stderr.slice(-500)}` : '')));
     });
@@ -557,6 +573,12 @@ app.post('/api/player/profile', requireAuth, upload.fields([
   console.log('Data received:', data);
   
   try {
+    if (files?.highlightVideos && files.highlightVideos.length > 1) {
+      return res.status(400).json({
+        error: 'Please upload only one highlight video at a time.'
+      });
+    }
+
     const hasIncomingMedia = Object.values(files || {}).some(arr => Array.isArray(arr) && arr.length > 0);
     if (hasIncomingMedia) {
       const now = Date.now();
@@ -1749,6 +1771,9 @@ app.delete('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, a
 // Centralized upload error handling so clients see actionable errors.
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_UNEXPECTED_FILE' && err.field === 'highlightVideos') {
+      return res.status(400).json({ error: 'Please upload only one highlight video at a time.' });
+    }
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'A file is too large. Max size is 50MB per file.' });
     }

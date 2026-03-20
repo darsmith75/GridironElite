@@ -2,13 +2,28 @@ try { require('dotenv').config(); } catch (_) {}
 
 const { Pool } = require('pg');
 
-const pool = new Pool({
+const dbHost = process.env.DB_HOST || 'localhost';
+const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(dbHost).toLowerCase());
+const shouldUseSsl =
+  process.env.DB_SSL === 'true' ||
+  process.env.DB_SSLMODE === 'require' ||
+  (!isLocalHost && process.env.DB_SSL !== 'false');
+
+const poolConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
   database: process.env.DB_NAME || 'GridironElite',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || ''
-});
+};
+
+if (shouldUseSsl) {
+  poolConfig.ssl = {
+    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true'
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 const insertPrimaryKeys = {
   users: 'id',

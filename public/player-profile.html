@@ -236,10 +236,12 @@
                 </div>
 
                 <div class="media-upload-col">
-                  <label>Add Highlight Videos (you can select multiple):</label>
+                  <label>Add Highlight Video (one at a time):</label>
                   <div class="file-input-wrapper">
-                    <input type="file" name="highlightVideos" accept="video/*" multiple>
+                    <input type="file" name="highlightVideos" id="highlightVideosInput" accept="video/*" onchange="enforceSingleHighlightVideo(this)">
                   </div>
+                  <p class="hint-text">Upload one highlight video per save to improve reliability.</p>
+                  <p id="videoSizeHint" class="hint-text"></p>
 
                   <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
                   <div id="videoLinkInputs">
@@ -251,7 +253,7 @@
                   </div>
                   <div id="existingVideoLinks"></div>
 
-                  <label>Add Additional Images (you can select multiple):</label>
+                  <label>Add Additional Images:</label>
                   <div class="file-input-wrapper">
                     <input type="file" name="additionalImages" accept="image/*" multiple>
                   </div>
@@ -262,6 +264,7 @@
           </div>
 
           <button type="submit" class="submit-btn">Save Profile</button>
+          <div id="profileSaveStatus" class="upload-status" aria-live="polite"></div>
         </form>
       </div>
 
@@ -775,6 +778,44 @@
         const input = document.querySelector(`input[type="file"][name="${name}"]`);
         if (input) input.value = '';
       });
+
+      const hint = document.getElementById('videoSizeHint');
+      if (hint) {
+        hint.textContent = '';
+        hint.classList.remove('warning');
+      }
+    }
+
+    function enforceSingleHighlightVideo(input) {
+      if (!input || !input.files) return;
+      if (input.files.length > 1) {
+        alert('Please select only one highlight video.');
+        input.value = '';
+        const hint = document.getElementById('videoSizeHint');
+        if (hint) {
+          hint.textContent = '';
+          hint.classList.remove('warning');
+        }
+        return;
+      }
+
+      const hint = document.getElementById('videoSizeHint');
+      if (!hint) return;
+      if (input.files.length === 0) {
+        hint.textContent = '';
+        hint.classList.remove('warning');
+        return;
+      }
+
+      const file = input.files[0];
+      const sizeMb = file.size / (1024 * 1024);
+      hint.textContent = `Selected: ${file.name} (${sizeMb.toFixed(1)} MB)`;
+      if (sizeMb > 30) {
+        hint.textContent += ' - Large file: upload may take longer.';
+        hint.classList.add('warning');
+      } else {
+        hint.classList.remove('warning');
+      }
     }
 
     async function loadPlayerProfile() {
@@ -1076,20 +1117,58 @@
       e.preventDefault();
       if (isSavingProfile) return;
 
+      const LARGE_VIDEO_WARNING_MB = 30;
+      const VERY_LARGE_VIDEO_CONFIRM_MB = 45;
+
+      const highlightInput = e.target.querySelector('input[name="highlightVideos"]');
+      if (highlightInput && highlightInput.files && highlightInput.files.length > 1) {
+        alert('Please upload only one highlight video at a time.');
+        return;
+      }
+
+      const selectedVideo = highlightInput?.files?.[0];
+      if (selectedVideo) {
+        const sizeMb = selectedVideo.size / (1024 * 1024);
+        if (sizeMb >= VERY_LARGE_VIDEO_CONFIRM_MB) {
+          const proceed = confirm(
+            `This video is ${sizeMb.toFixed(1)} MB. Uploads this large may timeout. Continue anyway?`
+          );
+          if (!proceed) return;
+        } else if (sizeMb >= LARGE_VIDEO_WARNING_MB) {
+          alert(
+            `Heads up: this video is ${sizeMb.toFixed(1)} MB. Upload may take a while while it is optimized.`
+          );
+        }
+      }
+
       isSavingProfile = true;
       const submitBtn = e.target.querySelector('button[type="submit"]');
+      const statusEl = document.getElementById('profileSaveStatus');
+      const hasVideoUpload = !!(highlightInput && highlightInput.files && highlightInput.files.length === 1);
       const originalBtnText = submitBtn ? submitBtn.textContent : '';
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
+        submitBtn.classList.add('is-loading');
+        submitBtn.textContent = hasVideoUpload ? 'Uploading Video' : 'Saving Profile';
+      }
+      if (statusEl) {
+        statusEl.classList.add('active');
+        statusEl.textContent = hasVideoUpload
+          ? 'Uploading and optimizing video. This can take up to a few minutes.'
+          : 'Saving profile changes...';
       }
 
+      let timeoutId;
       try {
         const formData = new FormData(e.target);
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), 300000);
         const res = await fetch('/api/player/profile', {
           method: 'POST',
-          body: formData
+          body: formData,
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
           alert('Profile saved successfully!');
@@ -1099,11 +1178,23 @@
           const err = await res.json().catch(() => ({}));
           alert(err.error || 'Error saving profile');
         }
+      } catch (error) {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (error && error.name === 'AbortError') {
+          alert('Upload timed out. Try a smaller/shorter video and upload one highlight video at a time.');
+        } else {
+          alert('Error saving profile. Please try again.');
+        }
       } finally {
         isSavingProfile = false;
         if (submitBtn) {
           submitBtn.disabled = false;
+          submitBtn.classList.remove('is-loading');
           submitBtn.textContent = originalBtnText || 'Save Profile';
+        }
+        if (statusEl) {
+          statusEl.classList.remove('active');
+          statusEl.textContent = '';
         }
       }
     });
