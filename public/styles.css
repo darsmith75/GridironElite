@@ -2042,8 +2042,10 @@ textarea {
   background: transparent;
   color: #2a5298;
   text-decoration: underline;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+  line-height: 1.2;
 }
 
 .auth-modal {
