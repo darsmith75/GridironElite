@@ -447,21 +447,22 @@
                   <div class="stat-label">GPA</div>
                   <div class="stat-value">${p.gpa || 'N/A'}</div>
                 </div>
-                ${hasVerifiedBadge ? `
-                <div class="stat-item" title="This athlete has at least one third-party verified athletic metric">
+                <div class="stat-item" title="${hasVerifiedBadge ? 'This athlete has at least one third-party verified athletic metric' : 'No third-party verified athletic metrics yet'}">
                   <div class="stat-label">Verified</div>
-                  <div class="stat-value verified-athlete-tile">
-                    <img src="/images/logos/verified-athlete.svg" alt="Verified Athlete" class="verified-athlete-image">
+                  <div class="stat-value verified-athlete-tile ${hasVerifiedBadge ? '' : 'verified-athlete-tile-empty'}">
+                    ${hasVerifiedBadge
+                      ? '<img src="/images/logos/verified-athlete.svg" alt="Verified Athlete" class="verified-athlete-image">'
+                      : 'Not Yet'}
                   </div>
                 </div>
-                ` : ''}
               </div>
             </div>
           </div>
           <button class="favorite-star-bottom ${isFavorite ? 'favorited' : ''}" 
                   onclick="event.stopPropagation(); toggleFavorite(${p.user_id}, this)"
                   title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
-            ${isFavorite ? '⭐' : '☆'} ${isFavorite ? 'Favorited' : 'Add to Favorites'}
+            <span class="favorite-button-icon" aria-hidden="true">${isFavorite ? '⭐' : '☆'}</span>
+            <span class="favorite-button-label">${isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
           </button>
         </div>
       `;
@@ -517,12 +518,12 @@
         if (isFavorite) {
           await fetch(`/api/agent/favorites/${playerId}`, { method: 'DELETE' });
           button.classList.remove('favorited');
-          button.innerHTML = '☆ Add to Favorites';
+          button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">☆</span><span class="favorite-button-label">Add to Favorites</span>';
           button.title = 'Add to favorites';
         } else {
           await fetch(`/api/agent/favorites/${playerId}`, { method: 'POST' });
           button.classList.add('favorited');
-          button.innerHTML = '⭐ Favorited';
+          button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">⭐</span><span class="favorite-button-label">Favorited</span>';
           button.title = 'Remove from favorites';
         }
         
