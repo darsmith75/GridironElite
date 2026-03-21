@@ -43,6 +43,19 @@ const METRIC_VIDEO_CONFIG = [
   { key: 'single_leg_squat', fieldName: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat' }
 ];
 
+const METRIC_TIP_CONFIG = [
+  { key: 'forty_yard_dash', label: '40-Yard Dash' },
+  { key: 'vertical_jump', label: 'Vertical Jump' },
+  { key: 'bench_press', label: 'Bench Press' },
+  { key: 'squat', label: 'Squat' },
+  { key: 'shuttle_5_10_5', label: '5-10-5 Shuttle' },
+  { key: 'l_drill', label: 'L-Drill' },
+  { key: 'broad_jump', label: 'Broad Jump' },
+  { key: 'power_clean', label: 'Power Clean' },
+  { key: 'single_leg_squat', label: 'Single Leg Squat' }
+];
+const METRIC_TIP_KEYS = new Set(METRIC_TIP_CONFIG.map(item => item.key));
+
 const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
   profilePicture: 1,
   cardPhoto: 1,
@@ -51,6 +64,20 @@ const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
   additionalImages: 10,
   ...Object.fromEntries(METRIC_VIDEO_CONFIG.map(config => [config.fieldName, 1]))
 };
+
+async function getMetricTipsMap() {
+  const rows = await db.prepare('SELECT metric_key, tip_text FROM metric_pro_tips').all();
+  const map = {};
+  for (const item of METRIC_TIP_CONFIG) {
+    map[item.key] = '';
+  }
+  rows.forEach(row => {
+    if (row.metric_key in map) {
+      map[row.metric_key] = row.tip_text || '';
+    }
+  });
+  return map;
+}
 
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
@@ -901,6 +928,17 @@ app.get('/api/player/profile', requireAuth, async (req, res) => {
   const user = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
   await enrichPlayerProfile(profile);
   res.json({ ...(profile || {}), email: user?.email || '' });
+});
+
+// Player: Get pro tips for athletic metrics
+app.get('/api/player/metric-pro-tips', requireAuth, async (req, res) => {
+  try {
+    const tips = await getMetricTipsMap();
+    res.json({ tips, metrics: METRIC_TIP_CONFIG });
+  } catch (error) {
+    console.error('Player get metric pro tips error:', error);
+    res.status(500).json({ error: 'Failed to load metric tips' });
+  }
 });
 
 // Update player profile
@@ -1825,6 +1863,47 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin stats error:', error);
     res.status(500).json({ error: 'Failed to get stats' });
+  }
+});
+
+// Admin: Get all metric pro tips
+app.get('/api/admin/metric-pro-tips', requireAdmin, async (req, res) => {
+  try {
+    const tips = await getMetricTipsMap();
+    res.json({ tips, metrics: METRIC_TIP_CONFIG });
+  } catch (error) {
+    console.error('Admin get metric pro tips error:', error);
+    res.status(500).json({ error: 'Failed to get metric tips' });
+  }
+});
+
+// Admin: Save metric pro tips
+app.put('/api/admin/metric-pro-tips', requireAdmin, async (req, res) => {
+  try {
+    const incomingTips = req.body?.tips;
+    if (!incomingTips || typeof incomingTips !== 'object') {
+      return res.status(400).json({ error: 'Invalid tips payload' });
+    }
+
+    for (const [metricKey, tipValue] of Object.entries(incomingTips)) {
+      if (!METRIC_TIP_KEYS.has(metricKey)) continue;
+      const tipText = (tipValue || '').toString().trim();
+      await db.prepare(`
+        INSERT INTO metric_pro_tips (metric_key, tip_text, updated_by_user_id, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (metric_key)
+        DO UPDATE SET
+          tip_text = EXCLUDED.tip_text,
+          updated_by_user_id = EXCLUDED.updated_by_user_id,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(metricKey, tipText, req.session.userId);
+    }
+
+    const tips = await getMetricTipsMap();
+    res.json({ success: true, tips });
+  } catch (error) {
+    console.error('Admin save metric pro tips error:', error);
+    res.status(500).json({ error: 'Failed to save metric tips' });
   }
 });
 

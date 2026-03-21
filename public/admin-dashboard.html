@@ -243,6 +243,39 @@
     .btn-save:hover { background: #2a5298; }
     .btn-cancel { background: #eee; color: #333; }
     .btn-cancel:hover { background: #ddd; }
+    .pro-tip-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+    }
+    .pro-tip-card {
+      background: #f8fbff;
+      border: 1px solid #c7d0da;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .pro-tip-card h4 {
+      margin: 0 0 8px;
+      color: #1e3c72;
+      font-size: 14px;
+    }
+    .pro-tip-card textarea {
+      width: 100%;
+      min-height: 86px;
+      resize: vertical;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .pro-tip-status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3c72;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
@@ -283,6 +316,7 @@
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchTab('users')">User Management</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
+        <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
       </div>
 
       <!-- User Management Tab -->
@@ -341,6 +375,19 @@
             </select>
           </div>
           <div class="college-grid" id="collegeGrid"></div>
+        </div>
+      </div>
+
+      <!-- Metric Pro Tips Tab -->
+      <div class="tab-panel" id="tab-protips">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Athletic Metric Pro Tips</h2>
+            <button class="btn-save" onclick="saveMetricTips()">Save Tips</button>
+          </div>
+          <p style="margin:0 0 16px; color:#666; font-size:14px;">These tips appear when athletes click the info icon beside each metric on their profile form.</p>
+          <div id="proTipGrid" class="pro-tip-grid"></div>
+          <div id="proTipStatus" class="pro-tip-status"></div>
         </div>
       </div>
     </div>
@@ -498,6 +545,8 @@
     checkAuth('admin');
 
     let allUsers = [];
+    let metricTipConfig = [];
+    let metricTips = {};
 
     async function loadStats() {
       const res = await fetch('/api/admin/stats');
@@ -707,6 +756,64 @@
       document.querySelector(`.admin-tab[onclick="switchTab('${tab}')"]`).classList.add('active');
       document.getElementById('tab-' + tab).classList.add('active');
       if (tab === 'colleges') loadColleges();
+      if (tab === 'protips') loadMetricTips();
+    }
+
+    function renderMetricTips() {
+      const grid = document.getElementById('proTipGrid');
+      if (!grid) return;
+      grid.innerHTML = metricTipConfig.map(metric => `
+        <div class="pro-tip-card">
+          <h4>${escapeHtml(metric.label)}</h4>
+          <textarea data-metric-key="${metric.key}" placeholder="Enter a pro tip for ${escapeHtml(metric.label)}...">${escapeHtml(metricTips[metric.key] || '')}</textarea>
+        </div>
+      `).join('');
+    }
+
+    async function loadMetricTips() {
+      const status = document.getElementById('proTipStatus');
+      if (status) status.textContent = 'Loading pro tips...';
+      try {
+        const res = await fetch('/api/admin/metric-pro-tips');
+        if (!res.ok) {
+          if (status) status.textContent = 'Failed to load pro tips.';
+          return;
+        }
+        const data = await res.json();
+        metricTipConfig = data.metrics || [];
+        metricTips = data.tips || {};
+        renderMetricTips();
+        if (status) status.textContent = '';
+      } catch (error) {
+        if (status) status.textContent = 'Failed to load pro tips.';
+      }
+    }
+
+    async function saveMetricTips() {
+      const status = document.getElementById('proTipStatus');
+      const payload = { tips: {} };
+      document.querySelectorAll('#proTipGrid textarea[data-metric-key]').forEach(textarea => {
+        payload.tips[textarea.dataset.metricKey] = textarea.value || '';
+      });
+
+      if (status) status.textContent = 'Saving...';
+      try {
+        const res = await fetch('/api/admin/metric-pro-tips', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (status) status.textContent = err.error || 'Failed to save pro tips.';
+          return;
+        }
+        const data = await res.json();
+        metricTips = data.tips || payload.tips;
+        if (status) status.textContent = 'Saved successfully.';
+      } catch (error) {
+        if (status) status.textContent = 'Failed to save pro tips.';
+      }
     }
 
     // College Management
@@ -829,6 +936,7 @@
     // Initialize
     loadStats();
     loadUsers();
+    loadMetricTips();
   </script>
 </body>
 </html>

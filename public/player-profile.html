@@ -108,23 +108,23 @@
               <input type="text" name="height" placeholder="Height (e.g., 6'2&quot;)">
               <label>Weight (lbs):</label>
               <input type="number" name="weight" placeholder="Weight (lbs)">
-              <label>40-Yard Dash (seconds):</label>
+              <label class="metric-label-with-tip">40-Yard Dash (seconds): <span class="metric-tip-icon" data-tip-key="forty_yard_dash" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.01" name="fortyYardDash" placeholder="40-Yard Dash (seconds)">
-              <label>Bench Press (lbs):</label>
+              <label class="metric-label-with-tip">Bench Press (lbs): <span class="metric-tip-icon" data-tip-key="bench_press" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="benchPress" placeholder="Bench Press (lbs)">
-              <label>Squat (lbs):</label>
+              <label class="metric-label-with-tip">Squat (lbs): <span class="metric-tip-icon" data-tip-key="squat" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="squat" placeholder="Squat (lbs)">
-              <label>Vertical Jump (inches):</label>
+              <label class="metric-label-with-tip">Vertical Jump (inches): <span class="metric-tip-icon" data-tip-key="vertical_jump" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.1" name="verticalJump" placeholder="Vertical Jump (inches)">
-              <label>5-10-5 Shuttle (seconds):</label>
+              <label class="metric-label-with-tip">5-10-5 Shuttle (seconds): <span class="metric-tip-icon" data-tip-key="shuttle_5_10_5" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.01" name="shuttle5105" placeholder="5-10-5 Shuttle (seconds)">
-              <label>L-Drill (seconds):</label>
+              <label class="metric-label-with-tip">L-Drill (seconds): <span class="metric-tip-icon" data-tip-key="l_drill" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.01" name="lDrill" placeholder="L-Drill (seconds)">
-              <label>Broad Jump (inches):</label>
+              <label class="metric-label-with-tip">Broad Jump (inches): <span class="metric-tip-icon" data-tip-key="broad_jump" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.1" name="broadJump" placeholder="Broad Jump (inches)">
-              <label>Power Clean (lbs):</label>
+              <label class="metric-label-with-tip">Power Clean (lbs): <span class="metric-tip-icon" data-tip-key="power_clean" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
-              <label>Single Leg Squat (lbs):</label>
+              <label class="metric-label-with-tip">Single Leg Squat (lbs): <span class="metric-tip-icon" data-tip-key="single_leg_squat" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="singleLegSquat" placeholder="Single Leg Squat (lbs)">
             </div>
 
@@ -469,6 +469,8 @@
     let playerProfileData = null;
     let reportCardPreviewEl = null;
     let currentLightboxEl = null;
+    let metricTipsMap = {};
+    let metricTipTooltipEl = null;
     const METRIC_DEFINITIONS = [
       { key: 'forty_yard_dash', fieldName: 'fortyYardDash', label: '40-Yard Dash', suffix: 's', videoField: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash' },
       { key: 'vertical_jump', fieldName: 'verticalJump', label: 'Vertical Jump', suffix: '"', videoField: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump' },
@@ -482,6 +484,80 @@
     ];
 
     loadPlayerProfile();
+    loadMetricTipsForForm();
+
+    async function loadMetricTipsForForm() {
+      try {
+        const res = await fetch('/api/player/metric-pro-tips');
+        if (!res.ok) return;
+        const data = await res.json();
+        metricTipsMap = data.tips || {};
+        applyMetricTipsToIcons();
+      } catch (_) {}
+    }
+
+    function hideMetricTipTooltip() {
+      if (metricTipTooltipEl) {
+        metricTipTooltipEl.remove();
+        metricTipTooltipEl = null;
+      }
+    }
+
+    function positionMetricTipTooltip(target) {
+      if (!metricTipTooltipEl || !target) return;
+
+      const targetRect = target.getBoundingClientRect();
+      const tooltipRect = metricTipTooltipEl.getBoundingClientRect();
+      let left = targetRect.right + 12;
+      let top = targetRect.top + (targetRect.height / 2) - (tooltipRect.height / 2);
+
+      if (left + tooltipRect.width > window.innerWidth - 12) {
+        left = targetRect.left - tooltipRect.width - 12;
+      }
+      if (left < 12) {
+        left = 12;
+      }
+      if (top < 12) {
+        top = 12;
+      }
+      if (top + tooltipRect.height > window.innerHeight - 12) {
+        top = window.innerHeight - tooltipRect.height - 12;
+      }
+
+      metricTipTooltipEl.style.left = left + 'px';
+      metricTipTooltipEl.style.top = top + 'px';
+    }
+
+    function showMetricTipTooltip(target) {
+      const tipText = target?.dataset?.tipText;
+      if (!tipText) return;
+
+      hideMetricTipTooltip();
+      metricTipTooltipEl = document.createElement('div');
+      metricTipTooltipEl.className = 'metric-tip-tooltip';
+      metricTipTooltipEl.textContent = tipText;
+      document.body.appendChild(metricTipTooltipEl);
+      positionMetricTipTooltip(target);
+    }
+
+    function applyMetricTipsToIcons() {
+      document.querySelectorAll('.metric-tip-icon[data-tip-key]').forEach(icon => {
+        const key = icon.dataset.tipKey;
+        const tip = (metricTipsMap[key] || '').trim();
+        const fallback = 'No pro tip has been added yet.';
+        icon.dataset.tipText = tip || fallback;
+        icon.onmouseenter = () => showMetricTipTooltip(icon);
+        icon.onmouseleave = () => hideMetricTipTooltip();
+        icon.onfocus = () => showMetricTipTooltip(icon);
+        icon.onblur = () => hideMetricTipTooltip();
+        icon.onkeydown = (event) => {
+          if (event.key === 'Escape') {
+            hideMetricTipTooltip();
+            icon.blur();
+          }
+        };
+      });
+    }
 
     function showEditMode() {
       document.getElementById('profileViewMode').style.display = 'none';

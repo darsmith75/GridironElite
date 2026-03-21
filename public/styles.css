@@ -2009,6 +2009,47 @@ textarea {
   font-size: 14px;
 }
 
+.metric-label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid #8ea6c9;
+  background: #eef3fb;
+  color: #1e3c72;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  line-height: 1;
+}
+
+.metric-tip-tooltip {
+  position: fixed;
+  z-index: 10020;
+  width: 260px;
+  max-width: min(320px, 70vw);
+  background: #1f2937;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: normal;
+  pointer-events: none;
+}
+
 .input-group input {
   padding: 14px 16px;
   border: 2px solid #e0e0e0;
