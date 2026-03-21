@@ -1004,7 +1004,7 @@ app.post('/api/player/profile', requireAuth, playerProfileUploadMiddleware, asyn
         full_name = ?, high_school = ?, graduation_year = ?, position = ?,
         height = ?, weight = ?, forty_yard_dash = ?, bench_press = ?,
         squat = ?, vertical_jump = ?, shuttle_5_10_5 = ?, l_drill = ?,
-        broad_jump = ?, power_clean = ?, single_leg_squat = ?, gpa = ?, bio = ?,
+        broad_jump = ?, power_clean = ?, single_leg_squat = ?, gpa = ?, achievement = ?, bio = ?,
         phone = ?,
         hudl_link = ?, instagram_link = ?, twitter_link = ?,
         hudl_username = ?, instagram_username = ?, twitter_username = ?
@@ -1026,6 +1026,7 @@ app.post('/api/player/profile', requireAuth, playerProfileUploadMiddleware, asyn
       data.powerClean || null,
       data.singleLegSquat || null,
       data.gpa || null, 
+      data.achievement || null,
       data.bio || null,
       data.phone || null,
       data.hudlLink || null,

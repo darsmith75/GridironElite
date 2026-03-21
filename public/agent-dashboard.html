@@ -175,6 +175,15 @@
   <script>
     checkAuth('agent');
     loadPlayers();
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
     
     // Toggle advanced filters
     function toggleAdvancedFilters() {
@@ -434,7 +443,7 @@
                   <div class="stat-label">Weight</div>
                   <div class="stat-value">${p.weight ? p.weight + ' lbs' : 'N/A'}</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item ${p.achievement ? 'stat-item-has-tooltip' : ''}" ${p.achievement ? `title="${escapeHtml(p.achievement)}"` : ''}>
                   <div class="stat-label">GPA</div>
                   <div class="stat-value">${p.gpa || 'N/A'}</div>
                 </div>

@@ -76,6 +76,7 @@ const createTablesSQL = `
     power_clean INTEGER,
     single_leg_squat INTEGER,
     gpa DECIMAL(4,2),
+    achievement TEXT,
     profile_picture TEXT,
     card_photo TEXT,
     report_card_image TEXT,
@@ -223,6 +224,7 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS hudl_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_username TEXT;
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS achievement TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
