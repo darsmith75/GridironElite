@@ -31,6 +31,27 @@ const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, check
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+const METRIC_VIDEO_CONFIG = [
+  { key: 'forty_yard_dash', fieldName: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash' },
+  { key: 'vertical_jump', fieldName: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump' },
+  { key: 'bench_press', fieldName: 'metricVideoBenchPress', verifiedField: 'metricVerifiedBenchPress', verifiedByField: 'metricVerifiedByBenchPress' },
+  { key: 'squat', fieldName: 'metricVideoSquat', verifiedField: 'metricVerifiedSquat', verifiedByField: 'metricVerifiedBySquat' },
+  { key: 'shuttle_5_10_5', fieldName: 'metricVideoShuttle5105', verifiedField: 'metricVerifiedShuttle5105', verifiedByField: 'metricVerifiedByShuttle5105' },
+  { key: 'l_drill', fieldName: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill' },
+  { key: 'broad_jump', fieldName: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump' },
+  { key: 'power_clean', fieldName: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean' },
+  { key: 'single_leg_squat', fieldName: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat' }
+];
+
+const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
+  profilePicture: 1,
+  cardPhoto: 1,
+  reportCardImage: 1,
+  highlightVideos: 5,
+  additionalImages: 10,
+  ...Object.fromEntries(METRIC_VIDEO_CONFIG.map(config => [config.fieldName, 1]))
+};
+
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
 
@@ -87,6 +108,21 @@ async function migrateUploads() {
         }
         await db.prepare('UPDATE player_images SET filename = ? WHERE id = ?')
           .run(i.user_id + '/' + i.filename, i.id);
+      }
+    }
+    // Migrate player_metric_videos
+    const metricVideos = await db.prepare('SELECT id, user_id, video_filename FROM player_metric_videos').all();
+    for (const mv of metricVideos) {
+      if (mv.video_filename && !mv.video_filename.includes('/')) {
+        const src = path.join('uploads', mv.video_filename);
+        const userDir = path.join('uploads', String(mv.user_id));
+        const dest = path.join(userDir, mv.video_filename);
+        if (fs.existsSync(src)) {
+          if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+          fs.renameSync(src, dest);
+        }
+        await db.prepare('UPDATE player_metric_videos SET video_filename = ? WHERE id = ?')
+          .run(mv.user_id + '/' + mv.video_filename, mv.id);
       }
     }
     console.log('Upload migration check complete');
@@ -278,6 +314,21 @@ const fileFilter = (req, file, cb) => {
   }
 };
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 }, fileFilter });
+
+function playerProfileUploadMiddleware(req, res, next) {
+  upload.any()(req, res, (err) => {
+    if (!err) return next();
+
+    if (err instanceof multer.MulterError && err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        error: `Unexpected upload field: ${err.field || 'unknown'}`,
+        expectedFields: Object.keys(PROFILE_UPLOAD_FIELD_MAX_COUNTS)
+      });
+    }
+
+    return next(err);
+  });
+}
 
 // Process uploaded files: assign a safe filename, then upload to B2 or save to local disk.
 // Must be awaited at the start of any route handler that receives user file uploads.
@@ -611,6 +662,11 @@ async function enrichPlayerProfile(profile) {
   const images = await db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId);
   profile.additional_images = images.length > 0 ? JSON.stringify(images.map(i => i.filename)) : null;
 
+  const metricVideos = await db.prepare(
+    'SELECT metric_key, video_filename, is_verified, verified_by FROM player_metric_videos WHERE user_id = ? ORDER BY id'
+  ).all(playerId);
+  profile.metric_videos = metricVideos.length > 0 ? JSON.stringify(metricVideos) : null;
+
   const offerSchools = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
   profile.college_offer_schools = offerSchools.length > 0 ? JSON.stringify(offerSchools) : null;
 
@@ -757,7 +813,7 @@ app.post('/api/forgot-password', async (req, res) => {
     if (user) {
       const token = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + (60 * 60 * 1000));
-      await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(token, expiresAt, user.id);
+      await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(token, expiresAt.toISOString(), user.id);
       try {
         await sendPasswordResetEmail(user.email, token);
       } catch (emailErr) {
@@ -773,7 +829,7 @@ app.post('/api/forgot-password', async (req, res) => {
 
 // Reset password with token
 app.post('/api/reset-password', async (req, res) => {
-  const token = (req.body?.token || '').trim();
+  const token = (req.body?.token || '').trim().toLowerCase();
   const newPassword = req.body?.newPassword || '';
 
   if (!token || !/^[0-9a-f]{64}$/.test(token)) {
@@ -785,10 +841,15 @@ app.post('/api/reset-password', async (req, res) => {
 
   try {
     const user = await db.prepare(
-      'SELECT id FROM users WHERE password_reset_token = ? AND password_reset_expires IS NOT NULL AND password_reset_expires > CURRENT_TIMESTAMP'
+      'SELECT id, password_reset_expires FROM users WHERE password_reset_token = ?'
     ).get(token);
 
     if (!user) {
+      return res.status(400).json({ error: 'Reset link is invalid or expired' });
+    }
+
+    const expiresAtMs = user.password_reset_expires ? new Date(user.password_reset_expires).getTime() : NaN;
+    if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
       return res.status(400).json({ error: 'Reset link is invalid or expired' });
     }
 
@@ -843,17 +904,28 @@ app.get('/api/player/profile', requireAuth, async (req, res) => {
 });
 
 // Update player profile
-app.post('/api/player/profile', requireAuth, upload.fields([
-  { name: 'profilePicture', maxCount: 1 },
-  { name: 'cardPhoto', maxCount: 1 },
-  { name: 'reportCardImage', maxCount: 1 },
-  { name: 'highlightVideos', maxCount: 5 },
-  { name: 'additionalImages', maxCount: 10 }
-]), async (req, res) => {
+app.post('/api/player/profile', requireAuth, playerProfileUploadMiddleware, async (req, res) => {
   const data = req.body;
-  const files = req.files;
+  const files = {};
+
+  for (const file of (req.files || [])) {
+    const fieldName = file.fieldname;
+    const allowedMaxCount = PROFILE_UPLOAD_FIELD_MAX_COUNTS[fieldName];
+
+    if (!allowedMaxCount) {
+      return res.status(400).json({ error: `Unsupported upload field: ${fieldName}` });
+    }
+
+    if (!files[fieldName]) files[fieldName] = [];
+    files[fieldName].push(file);
+
+    if (files[fieldName].length > allowedMaxCount) {
+      return res.status(400).json({ error: `Too many files uploaded for ${fieldName}` });
+    }
+  }
   
   console.log('Update request for user:', req.session.userId);
+  console.log('Upload fields received:', (req.files || []).map(f => `${f.fieldname}:${f.originalname}`));
   console.log('Data received:', data);
   
   try {
@@ -974,6 +1046,40 @@ app.post('/api/player/profile', requireAuth, upload.fields([
         await insertImage.run(req.session.userId, userPrefix + f.filename);
       }
     }
+
+    // Upsert per-metric proof videos and verification metadata.
+    for (const config of METRIC_VIDEO_CONFIG) {
+      const uploadedMetricVideo = files?.[config.fieldName]?.[0];
+      const existingMetricVideo = await db.prepare(
+        'SELECT video_filename FROM player_metric_videos WHERE user_id = ? AND metric_key = ?'
+      ).get(req.session.userId, config.key);
+
+      let resolvedFilename = existingMetricVideo?.video_filename || null;
+      if (uploadedMetricVideo) {
+        resolvedFilename = userPrefix + uploadedMetricVideo.filename;
+        if (existingMetricVideo?.video_filename && existingMetricVideo.video_filename !== resolvedFilename) {
+          await deleteUploadFile(existingMetricVideo.video_filename);
+        }
+      }
+
+      if (!resolvedFilename) {
+        continue;
+      }
+
+      const isVerified = !!data[config.verifiedField];
+      const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
+
+      await db.prepare(`
+        INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, updated_at)
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, metric_key)
+        DO UPDATE SET
+          video_filename = EXCLUDED.video_filename,
+          is_verified = EXCLUDED.is_verified,
+          verified_by = EXCLUDED.verified_by,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy);
+    }
     
     // Verify the update
     const updated = await db.prepare('SELECT gpa, vertical_jump FROM player_profiles WHERE user_id = ?').get(req.session.userId);
@@ -982,7 +1088,14 @@ app.post('/api/player/profile', requireAuth, upload.fields([
     res.json({ success: true });
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    const details = error && typeof error === 'object'
+      ? {
+          message: error.message || null,
+          code: error.code || null,
+          field: error.field || null
+        }
+      : null;
+    res.status(500).json({ error: 'Failed to update profile', details });
   }
 });
 
@@ -2063,6 +2176,9 @@ app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_UNEXPECTED_FILE' && err.field === 'highlightVideos') {
       return res.status(400).json({ error: 'Please upload only one highlight video at a time.' });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ error: `Unexpected upload field: ${err.field || 'unknown'}` });
     }
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'A file is too large. Max size is 50MB per file.' });

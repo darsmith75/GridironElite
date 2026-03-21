@@ -2082,14 +2082,39 @@ textarea {
   justify-content: flex-end;
 }
 
+.auth-modal-actions .primary-btn,
+.auth-modal-actions .auth-secondary-btn {
+  margin-top: 0;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.auth-modal-actions .primary-btn {
+  background: #2a5298;
+  box-shadow: none;
+}
+
+.auth-modal-actions .primary-btn:hover {
+  transform: none;
+  box-shadow: none;
+  background: #1f3f78;
+}
+
 .auth-secondary-btn {
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #111827;
+  border: 1px solid #9fb6dc;
+  background: #edf3ff;
+  color: #1f3f78;
   border-radius: 8px;
   padding: 10px 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.auth-secondary-btn:hover {
+  background: #dfeafe;
 }
 
 .auth-message {
@@ -2527,6 +2552,99 @@ textarea {
   font-size: 18px;
   color: #1e3c72;
   font-weight: 800;
+}
+
+.metric-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.metric-item-clickable {
+  cursor: pointer;
+  border-color: #9db2d6;
+}
+
+.metric-item-clickable:hover {
+  border-color: #1e3c72;
+}
+
+.metric-video-hint {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #2a5298;
+  font-weight: 600;
+}
+
+.metric-verified-star {
+  color: #f59e0b;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.metric-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.metric-proof-item {
+  border: 1px solid #d9e1ef;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 12px;
+}
+
+.metric-proof-item input[type="file"],
+.metric-proof-item input[type="text"] {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.metric-proof-verify {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.metric-proof-preview {
+  background: #f8fbff;
+  border-radius: 10px;
+  border: 1px solid #d9e1ef;
+}
+
+.metric-proof-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: #1e3c72;
+  margin-bottom: 8px;
+}
+
+.metric-proof-verified {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a16207;
+}
+
+.metric-video-lightbox {
+  max-width: 860px;
+  width: min(92vw, 860px);
+}
+
+.metric-video-lightbox h3 {
+  margin: 0 0 12px;
+  color: #1e3c72;
+}
+
+.metric-proof-video {
+  width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
 }
 
 /* Videos List */

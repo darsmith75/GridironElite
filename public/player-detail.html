@@ -43,6 +43,17 @@
   <script>
     checkAuth('agent');
     let reportCardPreviewEl = null;
+    const DETAIL_METRICS = [
+      { key: 'forty_yard_dash', label: '40-Yard Dash', suffix: 's' },
+      { key: 'vertical_jump', label: 'Vertical Jump', suffix: '"' },
+      { key: 'bench_press', label: 'Bench Press', suffix: ' lbs' },
+      { key: 'squat', label: 'Squat', suffix: ' lbs' },
+      { key: 'shuttle_5_10_5', label: '5-10-5 Shuttle', suffix: 's' },
+      { key: 'l_drill', label: 'L-Drill', suffix: 's' },
+      { key: 'broad_jump', label: 'Broad Jump', suffix: '"' },
+      { key: 'power_clean', label: 'Power Clean', suffix: ' lbs' },
+      { key: 'single_leg_squat', label: 'Single Leg Squat', suffix: ' lbs' }
+    ];
     
     const urlParams = new URLSearchParams(window.location.search);
     const playerId = urlParams.get('id');
@@ -94,6 +105,42 @@
         reportCardPreviewEl = null;
       }
     }
+
+    function getMetricVideoMap(player) {
+      const map = {};
+      if (!player || !player.metric_videos) return map;
+      try {
+        const list = JSON.parse(player.metric_videos);
+        list.forEach(item => {
+          if (item && item.metric_key) {
+            map[item.metric_key] = item;
+          }
+        });
+      } catch (_) {}
+      return map;
+    }
+
+    function buildDetailMetricCard(player, metric, metricVideoMap) {
+      const value = player[metric.key];
+      if (!value) return '';
+      const media = metricVideoMap[metric.key] || null;
+      const hasVideo = !!(media && media.video_filename);
+      const isVerified = !!(media && media.is_verified);
+      const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
+      const cardAttrs = hasVideo
+        ? ` role="button" tabindex="0" title="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
+        : '';
+      return `
+        <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
+          <div class="metric-label-row">
+            <div class="metric-label">${metric.label}</div>
+            ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
+          </div>
+          <div class="metric-value">${value}${metric.suffix}</div>
+          ${hasVideo ? '<div class="metric-video-hint">View Video</div>' : ''}
+        </div>
+      `;
+    }
     
     function getEmbedUrl(url) {
       try {
@@ -131,6 +178,7 @@
       
       const player = await res.json();
       currentPlayerData = player; // Store for messaging
+      const metricVideoMap = getMetricVideoMap(player);
       
       document.getElementById('playerDetail').innerHTML = `
         <div class="profile-container">
@@ -176,60 +224,7 @@
           <div class="profile-section">
             <h2 class="section-title-small">ATHLETIC METRICS</h2>
             <div class="metrics-grid">
-              ${player.forty_yard_dash ? `
-                <div class="metric-item">
-                  <div class="metric-label">40-Yard Dash</div>
-                  <div class="metric-value">${player.forty_yard_dash}s</div>
-                </div>
-              ` : ''}
-              ${player.vertical_jump ? `
-                <div class="metric-item">
-                  <div class="metric-label">Vertical Jump</div>
-                  <div class="metric-value">${player.vertical_jump}"</div>
-                </div>
-              ` : ''}
-              ${player.bench_press ? `
-                <div class="metric-item">
-                  <div class="metric-label">Bench Press</div>
-                  <div class="metric-value">${player.bench_press} lbs</div>
-                </div>
-              ` : ''}
-              ${player.squat ? `
-                <div class="metric-item">
-                  <div class="metric-label">Squat</div>
-                  <div class="metric-value">${player.squat} lbs</div>
-                </div>
-              ` : ''}
-              ${player.shuttle_5_10_5 ? `
-                <div class="metric-item">
-                  <div class="metric-label">5-10-5 Shuttle</div>
-                  <div class="metric-value">${player.shuttle_5_10_5}s</div>
-                </div>
-              ` : ''}
-              ${player.l_drill ? `
-                <div class="metric-item">
-                  <div class="metric-label">L-Drill</div>
-                  <div class="metric-value">${player.l_drill}s</div>
-                </div>
-              ` : ''}
-              ${player.broad_jump ? `
-                <div class="metric-item">
-                  <div class="metric-label">Broad Jump</div>
-                  <div class="metric-value">${player.broad_jump}"</div>
-                </div>
-              ` : ''}
-              ${player.power_clean ? `
-                <div class="metric-item">
-                  <div class="metric-label">Power Clean</div>
-                  <div class="metric-value">${player.power_clean} lbs</div>
-                </div>
-              ` : ''}
-              ${player.single_leg_squat ? `
-                <div class="metric-item">
-                  <div class="metric-label">Single Leg Squat</div>
-                  <div class="metric-value">${player.single_leg_squat} lbs</div>
-                </div>
-              ` : ''}
+              ${DETAIL_METRICS.map(metric => buildDetailMetricCard(player, metric, metricVideoMap)).join('')}
             </div>
           </div>
           
@@ -434,6 +429,32 @@
       });
       
       // Close on escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.querySelector('.lightbox')) {
+          const lb = document.querySelector('.lightbox');
+          if (lb) document.body.removeChild(lb);
+        }
+      });
+    }
+
+    function openMetricVideoLightbox(videoSrc, titleText) {
+      const lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.innerHTML = `
+        <div class="lightbox-content metric-video-lightbox">
+          <span class="lightbox-close">&times;</span>
+          <h3>${titleText || 'Metric Video'}</h3>
+          <video src="${videoSrc}" controls autoplay playsinline class="metric-proof-video"></video>
+        </div>
+      `;
+      document.body.appendChild(lightbox);
+
+      lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox || e.target.className === 'lightbox-close') {
+          document.body.removeChild(lightbox);
+        }
+      });
+
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && document.querySelector('.lightbox')) {
           const lb = document.querySelector('.lightbox');

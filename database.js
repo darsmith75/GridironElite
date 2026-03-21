@@ -35,6 +35,7 @@ const insertPrimaryKeys = {
   player_images: 'id',
   player_contacts: 'id',
   player_video_links: 'id',
+  player_metric_videos: 'id',
   player_school_interests: 'id',
   school_notes: 'id',
   school_contacts: 'id'
@@ -154,6 +155,19 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS player_metric_videos (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    metric_key VARCHAR(64) NOT NULL,
+    video_filename TEXT NOT NULL,
+    is_verified BOOLEAN DEFAULT FALSE,
+    verified_by VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, metric_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS player_school_interests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -222,6 +236,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_images_user ON player_images(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_contacts_user ON player_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
 `;
 
 function splitStatements(sql) {

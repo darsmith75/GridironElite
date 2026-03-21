@@ -135,6 +135,67 @@
             </div>
 
             <div class="form-section full-width">
+              <h3>Metric Videos & Verification</h3>
+              <p class="hint-text">Attach proof videos for each metric. If verified by a trainer/coach, check the box and include who verified it.</p>
+              <div class="metric-proof-grid">
+                <div class="metric-proof-item">
+                  <label>40-Yard Dash Video:</label>
+                  <input type="file" name="metricVideoFortyYardDash" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedFortyYardDash"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByFortyYardDash" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Vertical Jump Video:</label>
+                  <input type="file" name="metricVideoVerticalJump" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedVerticalJump"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByVerticalJump" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Bench Press Video:</label>
+                  <input type="file" name="metricVideoBenchPress" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedBenchPress"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByBenchPress" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Squat Video:</label>
+                  <input type="file" name="metricVideoSquat" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedSquat"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedBySquat" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>5-10-5 Shuttle Video:</label>
+                  <input type="file" name="metricVideoShuttle5105" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedShuttle5105"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByShuttle5105" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>L-Drill Video:</label>
+                  <input type="file" name="metricVideoLDrill" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedLDrill"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByLDrill" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Broad Jump Video:</label>
+                  <input type="file" name="metricVideoBroadJump" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedBroadJump"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByBroadJump" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Power Clean Video:</label>
+                  <input type="file" name="metricVideoPowerClean" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedPowerClean"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByPowerClean" placeholder="Verified by (name/organization)">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Single Leg Squat Video:</label>
+                  <input type="file" name="metricVideoSingleLegSquat" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedSingleLegSquat"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedBySingleLegSquat" placeholder="Verified by (name/organization)">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section full-width">
               <h3>Social Media</h3>
               <div class="social-edit-grid">
                 <div class="social-edit-card">
@@ -408,6 +469,17 @@
     let playerProfileData = null;
     let reportCardPreviewEl = null;
     let currentLightboxEl = null;
+    const METRIC_DEFINITIONS = [
+      { key: 'forty_yard_dash', fieldName: 'fortyYardDash', label: '40-Yard Dash', suffix: 's', videoField: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash' },
+      { key: 'vertical_jump', fieldName: 'verticalJump', label: 'Vertical Jump', suffix: '"', videoField: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump' },
+      { key: 'bench_press', fieldName: 'benchPress', label: 'Bench Press', suffix: ' lbs', videoField: 'metricVideoBenchPress', verifiedField: 'metricVerifiedBenchPress', verifiedByField: 'metricVerifiedByBenchPress' },
+      { key: 'squat', fieldName: 'squat', label: 'Squat', suffix: ' lbs', videoField: 'metricVideoSquat', verifiedField: 'metricVerifiedSquat', verifiedByField: 'metricVerifiedBySquat' },
+      { key: 'shuttle_5_10_5', fieldName: 'shuttle5105', label: '5-10-5 Shuttle', suffix: 's', videoField: 'metricVideoShuttle5105', verifiedField: 'metricVerifiedShuttle5105', verifiedByField: 'metricVerifiedByShuttle5105' },
+      { key: 'l_drill', fieldName: 'lDrill', label: 'L-Drill', suffix: 's', videoField: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill' },
+      { key: 'broad_jump', fieldName: 'broadJump', label: 'Broad Jump', suffix: '"', videoField: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump' },
+      { key: 'power_clean', fieldName: 'powerClean', label: 'Power Clean', suffix: ' lbs', videoField: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean' },
+      { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat' }
+    ];
 
     loadPlayerProfile();
 
@@ -492,6 +564,63 @@
       currentLightboxEl = null;
     }
 
+    function getMetricVideoMap(profile) {
+      const map = {};
+      if (!profile || !profile.metric_videos) return map;
+      try {
+        const list = JSON.parse(profile.metric_videos);
+        list.forEach(item => {
+          if (item && item.metric_key) {
+            map[item.metric_key] = item;
+          }
+        });
+      } catch (_) {}
+      return map;
+    }
+
+    function openMetricVideoLightbox(videoSrc, titleText) {
+      closeCurrentLightbox();
+      const safeTitle = titleText || 'Metric Video';
+      const lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      lightbox.innerHTML = `
+        <div class="lightbox-content metric-video-lightbox">
+          <span class="lightbox-close">&times;</span>
+          <h3>${safeTitle}</h3>
+          <video src="${videoSrc}" controls autoplay playsinline class="metric-proof-video"></video>
+        </div>
+      `;
+      currentLightboxEl = lightbox;
+      document.body.appendChild(lightbox);
+      lightbox.addEventListener('click', function(ev) {
+        if (ev.target === lightbox || ev.target.className === 'lightbox-close') {
+          closeCurrentLightbox();
+        }
+      });
+    }
+
+    function buildMetricCard(metric, metricVideoMap, profile) {
+      const value = profile ? profile[metric.key] : null;
+      if (!value) return '';
+      const media = metricVideoMap[metric.key] || null;
+      const hasVideo = !!(media && media.video_filename);
+      const isVerified = !!(media && media.is_verified);
+      const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
+      const cardAttrs = hasVideo
+        ? ` role="button" tabindex="0" title="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
+        : '';
+      return `
+        <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
+          <div class="metric-label-row">
+            <div class="metric-label">${metric.label}</div>
+            ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
+          </div>
+          <div class="metric-value">${value}${metric.suffix}</div>
+          ${hasVideo ? '<div class="metric-video-hint">View Video</div>' : ''}
+        </div>
+      `;
+    }
+
     function renderViewMode(profile) {
       // Hero photo
       if (profile.profile_picture) {
@@ -536,29 +665,14 @@
       }
 
       // Athletic Metrics
-      const metrics = [
-        { label: '40-Yard Dash', value: profile.forty_yard_dash, suffix: 's' },
-        { label: 'Vertical Jump', value: profile.vertical_jump, suffix: '"' },
-        { label: 'Bench Press', value: profile.bench_press, suffix: ' lbs' },
-        { label: 'Squat', value: profile.squat, suffix: ' lbs' },
-        { label: '5-10-5 Shuttle', value: profile.shuttle_5_10_5, suffix: 's' },
-        { label: 'L-Drill', value: profile.l_drill, suffix: 's' },
-        { label: 'Broad Jump', value: profile.broad_jump, suffix: '"' },
-        { label: 'Power Clean', value: profile.power_clean, suffix: ' lbs' },
-        { label: 'Single Leg Squat', value: profile.single_leg_squat, suffix: ' lbs' }
-      ];
-      const hasMetrics = metrics.some(m => m.value);
+      const metricVideoMap = getMetricVideoMap(profile);
+      const hasMetrics = METRIC_DEFINITIONS.some(metric => profile[metric.key]);
       if (hasMetrics) {
         html += `
           <div class="profile-section">
             <h2 class="section-title-small">ATHLETIC METRICS</h2>
             <div class="metrics-grid">
-              ${metrics.filter(m => m.value).map(m => `
-                <div class="metric-item">
-                  <div class="metric-label">${m.label}</div>
-                  <div class="metric-value">${m.value}${m.suffix}</div>
-                </div>
-              `).join('')}
+              ${METRIC_DEFINITIONS.map(metric => buildMetricCard(metric, metricVideoMap, profile)).join('')}
             </div>
           </div>
         `;
@@ -775,6 +889,7 @@
 
     function clearMediaUploadInputs() {
       const mediaInputNames = ['profilePicture', 'cardPhoto', 'reportCardImage', 'highlightVideos', 'additionalImages'];
+      METRIC_DEFINITIONS.forEach(metric => mediaInputNames.push(metric.videoField));
       mediaInputNames.forEach(name => {
         const input = document.querySelector(`input[type="file"][name="${name}"]`);
         if (input) input.value = '';
@@ -963,6 +1078,23 @@
             mediaHTML += `</div></div>`;
           }
         }
+
+        const metricVideoMap = getMetricVideoMap(profile);
+        const metricsWithProof = METRIC_DEFINITIONS.filter(metric => metricVideoMap[metric.key]?.video_filename);
+        if (metricsWithProof.length > 0) {
+          mediaHTML += `<div class="media-item full-width"><h3>Metric Proof Videos (${metricsWithProof.length})</h3><div class="media-grid">`;
+          metricsWithProof.forEach(metric => {
+            const media = metricVideoMap[metric.key];
+            mediaHTML += `
+              <div class="media-item-wrapper metric-proof-preview">
+                <div class="metric-proof-title">${metric.label}</div>
+                <video controls src="/uploads/${media.video_filename}" class="current-video"></video>
+                ${media.is_verified ? `<div class="metric-proof-verified">★ Verified${media.verified_by ? ` by ${media.verified_by}` : ''}</div>` : ''}
+              </div>
+            `;
+          });
+          mediaHTML += `</div></div>`;
+        }
         
         mediaHTML += '</div></div>';
         document.getElementById('currentProfile').innerHTML = mediaHTML;
@@ -1007,6 +1139,19 @@
         document.querySelector('[name="instagramUsername"]').value = profile.instagram_username || '';
         document.querySelector('[name="twitterUsername"]').value = profile.twitter_username || '';
         document.querySelector('[name="bio"]').value = profile.bio || '';
+
+        const metricVideoMapForFields = getMetricVideoMap(profile);
+        METRIC_DEFINITIONS.forEach(metric => {
+          const media = metricVideoMapForFields[metric.key] || null;
+          const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
+          const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+          if (verifiedInput) {
+            verifiedInput.checked = !!(media && media.is_verified);
+          }
+          if (verifiedByInput) {
+            verifiedByInput.value = media?.verified_by || '';
+          }
+        });
       }
 
       // Clear file inputs so previously selected files are not re-submitted on later saves.
@@ -1193,8 +1338,17 @@
           await loadPlayerProfile();
           showViewMode();
         } else {
-          const err = await res.json().catch(() => ({}));
-          showProfileResult(err.error || 'Error saving profile', 'error');
+          const raw = await res.text();
+          let err = {};
+          try {
+            err = raw ? JSON.parse(raw) : {};
+          } catch (_) {
+            err = { error: raw || '' };
+          }
+          const detail = err.details?.field
+            ? ` (field: ${err.details.field})`
+            : (err.details?.message ? ` (${err.details.message})` : '');
+          showProfileResult((err.error || `Error saving profile (${res.status})`) + detail, 'error');
         }
       } catch (error) {
         if (timeoutId) clearTimeout(timeoutId);
