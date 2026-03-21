@@ -899,6 +899,18 @@ label {
   font-weight: 700;
 }
 
+.verified-athlete-tile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.verified-athlete-image {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
 /* Player detail page styles */
 .player-detail-card {
   background: #e4eaf4;
