@@ -27,7 +27,7 @@ const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
 const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, checkB2Health } = require('./backblaze');
-const { PROMPT_VERSION, normalizeAudience, buildSourceHash, generateScoutingSummary } = require('./ai-provider');
+const { PROMPT_VERSION, normalizeAudience, buildSourceHash, generateScoutingSummary, generateBioAssistance } = require('./ai-provider');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -1149,6 +1149,62 @@ app.get('/api/player/metric-pro-tips', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Player get metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to load metric tips' });
+  }
+});
+
+// Player: AI-assisted bio writing/improvement
+app.post('/api/player/bio-assist', requireAuth, async (req, res) => {
+  try {
+    if (req.session.role !== 'player') {
+      return res.status(403).json({ error: 'Only players can use bio assistance' });
+    }
+
+    if (!isAiGenerationEnabled()) {
+      return res.status(503).json({ error: 'AI assistance is currently disabled' });
+    }
+
+    const mode = req.body?.mode === 'improve' ? 'improve' : 'write';
+    const currentBio = String(req.body?.currentBio || '').trim().slice(0, 2400);
+    const context = req.body?.context && typeof req.body.context === 'object' ? req.body.context : {};
+
+    const profileContext = {
+      full_name: context.fullName ? String(context.fullName).trim().slice(0, 120) : null,
+      high_school: context.highSchool ? String(context.highSchool).trim().slice(0, 120) : null,
+      graduation_year: context.graduationYear ? String(context.graduationYear).trim().slice(0, 10) : null,
+      position: context.position ? String(context.position).trim().slice(0, 30) : null,
+      height: context.height ? String(context.height).trim().slice(0, 24) : null,
+      weight: context.weight ? String(context.weight).trim().slice(0, 24) : null,
+      gpa: context.gpa ? String(context.gpa).trim().slice(0, 10) : null,
+      achievement: context.achievement ? String(context.achievement).trim().slice(0, 240) : null
+    };
+
+    const generated = await generateBioAssistance({
+      mode,
+      currentBio,
+      profileContext
+    });
+
+    await logAiEvent({
+      eventType: mode === 'improve' ? 'bio_assist_improve' : 'bio_assist_write',
+      actorUserId: req.session.userId,
+      playerUserId: req.session.userId,
+      metadata: {
+        modelName: generated.modelName,
+        promptVersion: generated.promptVersion
+      }
+    });
+
+    res.json({
+      success: true,
+      mode,
+      bioText: generated.bioText,
+      suggestions: generated.suggestions,
+      modelName: generated.modelName,
+      promptVersion: generated.promptVersion
+    });
+  } catch (error) {
+    console.error('Player bio assist error:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate bio assistance' });
   }
 });
 

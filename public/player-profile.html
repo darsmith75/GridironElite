@@ -273,7 +273,13 @@
             <div class="form-section full-width">
               <h3>Bio</h3>
               <label>About You:</label>
-              <textarea name="bio" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+                <textarea name="bio" id="playerBioInput" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+                <div class="bio-ai-actions">
+                  <button type="button" id="bioAiWriteBtn" class="bio-ai-btn" onclick="assistBio('write')">Write with AI</button>
+                  <button type="button" id="bioAiImproveBtn" class="bio-ai-btn secondary" onclick="assistBio('improve')">Improve with AI</button>
+                </div>
+                <div id="bioAiStatus" class="bio-ai-status" aria-live="polite"></div>
+                <div id="bioAiSuggestions" class="bio-ai-suggestions"></div>
             </div>
 
             <div class="form-section full-width">
@@ -1029,11 +1035,95 @@
       banner.classList.add(type === 'error' ? 'error' : 'success', 'active');
     }
 
+    function setBioAiStatus(message, type = '') {
+      const statusEl = document.getElementById('bioAiStatus');
+      if (!statusEl) return;
+      statusEl.classList.remove('error', 'success');
+      if (type) statusEl.classList.add(type);
+      statusEl.textContent = message || '';
+    }
+
+    function renderBioAiSuggestions(items) {
+      const wrap = document.getElementById('bioAiSuggestions');
+      if (!wrap) return;
+      if (!Array.isArray(items) || items.length === 0) {
+        wrap.innerHTML = '';
+        return;
+      }
+      wrap.innerHTML = `
+        <div class="bio-ai-suggestions-title">AI suggestions:</div>
+        <ul>${items.map(item => `<li>${item}</li>`).join('')}</ul>
+      `;
+    }
+
+    function collectBioAssistContext() {
+      return {
+        fullName: document.querySelector('[name="fullName"]')?.value || '',
+        highSchool: document.querySelector('[name="highSchool"]')?.value || '',
+        graduationYear: document.querySelector('[name="graduationYear"]')?.value || '',
+        position: document.querySelector('[name="position"]')?.value || '',
+        height: document.querySelector('[name="height"]')?.value || '',
+        weight: document.querySelector('[name="weight"]')?.value || '',
+        gpa: document.querySelector('[name="gpa"]')?.value || '',
+        achievement: document.querySelector('[name="achievement"]')?.value || ''
+      };
+    }
+
+    async function assistBio(mode) {
+      const bioInput = document.getElementById('playerBioInput');
+      const writeBtn = document.getElementById('bioAiWriteBtn');
+      const improveBtn = document.getElementById('bioAiImproveBtn');
+      if (!bioInput || !writeBtn || !improveBtn) return;
+
+      if (mode === 'improve' && !bioInput.value.trim()) {
+        setBioAiStatus('Add a few lines first, then use Improve with AI.', 'error');
+        return;
+      }
+
+      const isImprove = mode === 'improve';
+      const originalWriteLabel = writeBtn.textContent;
+      const originalImproveLabel = improveBtn.textContent;
+      writeBtn.disabled = true;
+      improveBtn.disabled = true;
+      writeBtn.textContent = isImprove ? originalWriteLabel : 'Writing...';
+      improveBtn.textContent = isImprove ? 'Improving...' : originalImproveLabel;
+      setBioAiStatus(isImprove ? 'Improving your bio...' : 'Generating your bio...');
+      renderBioAiSuggestions([]);
+
+      try {
+        const response = await fetch('/api/player/bio-assist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mode,
+            currentBio: bioInput.value || '',
+            context: collectBioAssistContext()
+          })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setBioAiStatus(payload.error || 'Bio assistance failed. Please try again.', 'error');
+          return;
+        }
+
+        bioInput.value = payload.bioText || bioInput.value;
+        setBioAiStatus('AI bio ready. You can edit it before saving.', 'success');
+        renderBioAiSuggestions(payload.suggestions || []);
+      } catch (error) {
+        setBioAiStatus('Bio assistance failed. Please try again.', 'error');
+      } finally {
+        writeBtn.disabled = false;
+        improveBtn.disabled = false;
+        writeBtn.textContent = originalWriteLabel;
+        improveBtn.textContent = originalImproveLabel;
+      }
+    }
+
     async function loadPlayerProfile() {
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
       playerProfileData = profile;
-
       // Render view mode
       if (profile.id) {
         renderViewMode(profile);

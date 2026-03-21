@@ -1815,6 +1815,65 @@ textarea {
   font-weight: 700;
 }
 
+.bio-ai-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bio-ai-btn {
+  border: none;
+  border-radius: 8px;
+  background: #1f4b8f;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bio-ai-btn.secondary {
+  background: #5d769e;
+}
+
+.bio-ai-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.bio-ai-status {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #4e5f77;
+}
+
+.bio-ai-status.success {
+  color: #166534;
+}
+
+.bio-ai-status.error {
+  color: #b91c1c;
+}
+
+.bio-ai-suggestions {
+  margin-top: 8px;
+}
+
+.bio-ai-suggestions-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f4b8f;
+  margin-bottom: 4px;
+}
+
+.bio-ai-suggestions ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #44546a;
+  font-size: 13px;
+}
+
 .media-upload-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

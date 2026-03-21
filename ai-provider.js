@@ -251,9 +251,77 @@ async function generateScoutingSummary({ player, audience }) {
   };
 }
 
+function buildBioPrompt({ mode, currentBio, profileContext }) {
+  const normalizedMode = mode === 'improve' ? 'improve' : 'write';
+  const system = [
+    'You are a recruiting profile writing assistant for high school football players.',
+    'Write in first person from the player perspective.',
+    'Keep tone confident, authentic, and concise.',
+    'Do not invent offers, rankings, awards, injuries, or unverifiable claims.',
+    'Return strict JSON only with keys: bio_text, suggestions.'
+  ].join(' ');
+
+  const user = [
+    `Task mode: ${normalizedMode}.`,
+    'Constraints:',
+    '- bio_text should be 90-180 words',
+    '- suggestions should be 2-4 short actionable bullets',
+    '- keep language family-friendly and professional',
+    normalizedMode === 'improve'
+      ? 'Improve the current bio while preserving the player voice and facts.'
+      : 'Write a new bio from the provided player context.',
+    'Current bio (may be empty):',
+    currentBio || '',
+    'Player context JSON:',
+    JSON.stringify(profileContext || {})
+  ].join('\n');
+
+  return { system, user };
+}
+
+async function generateBioAssistance({ mode, currentBio, profileContext }) {
+  const provider = String(process.env.AI_PROVIDER || 'openai').toLowerCase();
+  const defaultModelName = provider === 'gemini' || provider === 'google'
+    ? 'gemini-2.5-flash'
+    : 'gpt-4.1-mini';
+  const modelName = process.env.AI_MODEL_SUMMARY || defaultModelName;
+  const timeoutMs = parseInt(process.env.AI_TIMEOUT_MS || '10000', 10);
+  const maxTokens = parseInt(process.env.AI_MAX_TOKENS_SUMMARY || '450', 10);
+  const temperature = Number(process.env.AI_TEMPERATURE_SUMMARY || '0.4');
+
+  const prompt = buildBioPrompt({ mode, currentBio, profileContext });
+  const raw = await callOpenAiLikeApi({
+    system: prompt.system,
+    user: prompt.user,
+    modelName,
+    timeoutMs,
+    maxTokens,
+    temperature
+  });
+
+  const rawJson = extractJsonObject(raw);
+  if (!rawJson) {
+    throw new Error('Model did not return a JSON object');
+  }
+
+  const parsed = JSON.parse(rawJson);
+  const bioText = String(parsed.bio_text || '').trim();
+  if (!bioText) {
+    throw new Error('Model returned empty bio_text');
+  }
+
+  return {
+    modelName,
+    promptVersion: PROMPT_VERSION,
+    bioText,
+    suggestions: sanitizeArray(parsed.suggestions, 4)
+  };
+}
+
 module.exports = {
   PROMPT_VERSION,
   normalizeAudience,
   buildSourceHash,
-  generateScoutingSummary
+  generateScoutingSummary,
+  generateBioAssistance
 };
