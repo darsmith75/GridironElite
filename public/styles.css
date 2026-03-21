@@ -1874,6 +1874,12 @@ textarea {
   font-size: 13px;
 }
 
+.broad-jump-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .media-upload-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

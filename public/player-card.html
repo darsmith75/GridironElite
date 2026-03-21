@@ -612,6 +612,48 @@
         window.location.href = 'player-profile.html';
       }
     }
+
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        const feet = Math.floor(numeric / 12);
+        const inches = Number((numeric - (feet * 12)).toFixed(1));
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+        return `${feet}'${inchesText}"`;
+      }
+
+      return raw;
+    }
+
+    function formatInchesAsFeetAndInches(totalInchesValue) {
+      const total = Number(totalInchesValue);
+      if (!Number.isFinite(total) || total <= 0) return '';
+      const feet = Math.floor(total / 12);
+      const inches = Number((total - (feet * 12)).toFixed(1));
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+      return `${feet}'${inchesText}"`;
+    }
     
     async function loadPlayerCard(playerId) {
       // Fetch player data - use different endpoint based on whether viewing own card or another player's
@@ -636,7 +678,7 @@
       document.getElementById('playerName').textContent = player.full_name || 'Unknown Player';
       document.getElementById('playerYear').textContent = player.graduation_year || '—';
       document.getElementById('playerPosition').textContent = player.position || '—';
-      document.getElementById('playerHeight').textContent = player.height || '—';
+      document.getElementById('playerHeight').textContent = formatHeightDisplay(player.height) || '—';
       document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} LBS` : '—';
       document.getElementById('playerSchool').textContent = player.high_school || '—';
       
@@ -645,7 +687,7 @@
         { label: '40-Yard Dash', value: player.forty_yard_dash || '—' },
         { label: '5-10-5 Shuttle', value: player.shuttle_5_10_5 || '—' },
         { label: 'L-Drill', value: player.l_drill || '—' },
-        { label: 'Broad Jump', value: player.broad_jump ? `${player.broad_jump}"` : '—' },
+        { label: 'Broad Jump', value: formatInchesAsFeetAndInches(player.broad_jump) || '—' },
         { label: 'Vertical', value: player.vertical_jump ? `${player.vertical_jump}"` : '—' },
         { label: 'Bench Press', value: player.bench_press ? `${player.bench_press} lbs` : '—' },
         { label: 'Squat', value: player.squat ? `${player.squat} lbs` : '—' },

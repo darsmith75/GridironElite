@@ -85,7 +85,9 @@
               <label>High School:</label>
               <input type="text" name="highSchool" placeholder="High School">
               <label>Graduation Year:</label>
-              <input type="number" name="graduationYear" placeholder="Graduation Year">
+              <select name="graduationYear" id="graduationYearPicker">
+                <option value="">Select Graduation Year</option>
+              </select>
               <label>Position:</label>
               <select name="position">
                 <option value="">Select Position</option>
@@ -104,8 +106,12 @@
 
             <div class="form-section">
               <h3>Physical Metrics</h3>
-              <label>Height:</label>
-              <input type="text" name="height" placeholder="Height (e.g., 6'2&quot;)">
+              <label>Height (ft/in):</label>
+              <div class="broad-jump-input-row">
+                <input type="number" id="heightFeet" min="0" step="1" placeholder="Feet">
+                <input type="number" id="heightInches" min="0" max="11.9" step="0.1" placeholder="Inches">
+              </div>
+              <input type="hidden" name="height" id="heightCombined" value="">
               <label>Weight (lbs):</label>
               <input type="number" name="weight" placeholder="Weight (lbs)">
               <label class="metric-label-with-tip">40-Yard Dash (seconds): <span class="metric-tip-icon" data-tip-key="forty_yard_dash" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
@@ -120,8 +126,12 @@
               <input type="number" step="0.01" name="shuttle5105" placeholder="5-10-5 Shuttle (seconds)">
               <label class="metric-label-with-tip">L-Drill (seconds): <span class="metric-tip-icon" data-tip-key="l_drill" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.01" name="lDrill" placeholder="L-Drill (seconds)">
-              <label class="metric-label-with-tip">Broad Jump (inches): <span class="metric-tip-icon" data-tip-key="broad_jump" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
-              <input type="number" step="0.1" name="broadJump" placeholder="Broad Jump (inches)">
+              <label class="metric-label-with-tip">Broad Jump (ft/in): <span class="metric-tip-icon" data-tip-key="broad_jump" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
+              <div class="broad-jump-input-row">
+                <input type="number" id="broadJumpFeet" min="0" step="1" placeholder="Feet">
+                <input type="number" id="broadJumpInches" min="0" max="11.9" step="0.1" placeholder="Inches">
+              </div>
+              <input type="hidden" name="broadJump" id="broadJumpTotalInches">
               <label class="metric-label-with-tip">Power Clean (lbs): <span class="metric-tip-icon" data-tip-key="power_clean" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
               <label class="metric-label-with-tip">Single Leg Squat (lbs): <span class="metric-tip-icon" data-tip-key="single_leg_squat" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
@@ -134,6 +144,18 @@
               <input type="number" step="0.01" name="gpa" placeholder="GPA">
               <label>Achievement:</label>
               <input type="text" name="achievement" placeholder="e.g. Honor Roll, State Champion, Team Captain">
+            </div>
+
+            <div class="form-section full-width">
+              <h3>Bio</h3>
+              <label>About You:</label>
+                <textarea name="bio" id="playerBioInput" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
+                <div class="bio-ai-actions">
+                  <button type="button" id="bioAiWriteBtn" class="bio-ai-btn" onclick="assistBio('write')">Write with AI</button>
+                  <button type="button" id="bioAiImproveBtn" class="bio-ai-btn secondary" onclick="assistBio('improve')">Improve with AI</button>
+                </div>
+                <div id="bioAiStatus" class="bio-ai-status" aria-live="polite"></div>
+                <div id="bioAiSuggestions" class="bio-ai-suggestions"></div>
             </div>
 
             <div class="form-section full-width">
@@ -268,18 +290,6 @@
                   <input type="tel" name="coachPhone" placeholder="Coach's Phone">
                 </div>
               </div>
-            </div>
-
-            <div class="form-section full-width">
-              <h3>Bio</h3>
-              <label>About You:</label>
-                <textarea name="bio" id="playerBioInput" rows="4" placeholder="Tell us about yourself, your achievements, and goals..."></textarea>
-                <div class="bio-ai-actions">
-                  <button type="button" id="bioAiWriteBtn" class="bio-ai-btn" onclick="assistBio('write')">Write with AI</button>
-                  <button type="button" id="bioAiImproveBtn" class="bio-ai-btn secondary" onclick="assistBio('improve')">Improve with AI</button>
-                </div>
-                <div id="bioAiStatus" class="bio-ai-status" aria-live="polite"></div>
-                <div id="bioAiSuggestions" class="bio-ai-suggestions"></div>
             </div>
 
             <div class="form-section full-width">
@@ -491,6 +501,9 @@
       { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat' }
     ];
 
+    initGraduationYearPicker();
+    initHeightInputs();
+    initBroadJumpInputs();
     loadPlayerProfile();
     loadMetricTipsForForm();
 
@@ -648,6 +661,39 @@
       currentLightboxEl = null;
     }
 
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        const feet = Math.floor(numeric / 12);
+        const inches = Number((numeric - (feet * 12)).toFixed(1));
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+        return `${feet}'${inchesText}"`;
+      }
+
+      return raw;
+    }
+
     function getMetricVideoMap(profile) {
       const map = {};
       if (!profile || !profile.metric_videos) return map;
@@ -683,6 +729,15 @@
       });
     }
 
+    function formatBroadJumpFeetInches(totalInchesValue) {
+      const total = Number(totalInchesValue);
+      if (!Number.isFinite(total) || total <= 0) return '';
+      const feet = Math.floor(total / 12);
+      const inches = Number((total - (feet * 12)).toFixed(1));
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+      return `${feet}' ${inchesText}"`;
+    }
+
     function buildMetricCard(metric, metricVideoMap, profile) {
       const value = profile ? profile[metric.key] : null;
       if (!value) return '';
@@ -693,13 +748,16 @@
       const cardAttrs = hasVideo
         ? ` role="button" tabindex="0" title="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
+      const displayValue = metric.key === 'broad_jump'
+        ? formatBroadJumpFeetInches(value)
+        : `${value}${metric.suffix}`;
       return `
         <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
           <div class="metric-label-row">
             <div class="metric-label">${metric.label}</div>
             ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
           </div>
-          <div class="metric-value">${value}${metric.suffix}</div>
+          <div class="metric-value">${displayValue}</div>
           ${hasVideo ? '<div class="metric-video-hint">View Video</div>' : ''}
         </div>
       `;
@@ -724,7 +782,7 @@
           ${profile.position ? `<span class="meta-badge">${profile.position}</span>` : ''}
           ${profile.graduation_year ? `<span class="meta-badge">Class of ${profile.graduation_year}</span>` : ''}
           ${profile.high_school ? `<span class="meta-badge">${profile.high_school}</span>` : ''}
-          ${profile.height ? `<span class="meta-badge">${profile.height}</span>` : ''}
+          ${profile.height ? `<span class="meta-badge">${formatHeightDisplay(profile.height)}</span>` : ''}
           ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
           ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Hover to preview, click to view full size" aria-label="View report card image" onmouseenter="showReportCardPreview(event, '/uploads/${profile.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
         </div>
@@ -1035,6 +1093,203 @@
       banner.classList.add(type === 'error' ? 'error' : 'success', 'active');
     }
 
+    function ensureGraduationYearOption(yearValue) {
+      const picker = document.getElementById('graduationYearPicker');
+      if (!picker) return;
+      const normalized = String(yearValue || '').trim();
+      if (!normalized) return;
+      if (picker.querySelector(`option[value="${normalized}"]`)) return;
+
+      const option = document.createElement('option');
+      option.value = normalized;
+      option.textContent = normalized;
+      picker.appendChild(option);
+    }
+
+    function initGraduationYearPicker() {
+      const picker = document.getElementById('graduationYearPicker');
+      if (!picker) return;
+
+      const currentYear = new Date().getFullYear();
+      const startYear = currentYear - 2;
+      const endYear = currentYear + 10;
+
+      for (let year = startYear; year <= endYear; year += 1) {
+        const option = document.createElement('option');
+        option.value = String(year);
+        option.textContent = String(year);
+        picker.appendChild(option);
+      }
+    }
+
+    function syncHeightCombined() {
+      const feetInput = document.getElementById('heightFeet');
+      const inchesInput = document.getElementById('heightInches');
+      const combinedInput = document.getElementById('heightCombined');
+      if (!feetInput || !inchesInput || !combinedInput) return;
+
+      const feetRaw = feetInput.value.trim();
+      const inchesRaw = inchesInput.value.trim();
+      if (!feetRaw && !inchesRaw) {
+        combinedInput.value = '';
+        return;
+      }
+
+      let feet = Number(feetRaw || '0');
+      let inches = Number(inchesRaw || '0');
+      if (!Number.isFinite(feet) || feet < 0) feet = 0;
+      if (!Number.isFinite(inches) || inches < 0) inches = 0;
+
+      if (inches >= 12) {
+        feet += Math.floor(inches / 12);
+        inches = inches % 12;
+      }
+
+      feet = Math.floor(feet);
+      feetInput.value = String(feet);
+      inchesInput.value = inches ? String(Number(inches.toFixed(1))) : '';
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+      combinedInput.value = `${feet}'${inchesText}"`;
+    }
+
+    function populateHeightFeetInches(heightValue) {
+      const feetInput = document.getElementById('heightFeet');
+      const inchesInput = document.getElementById('heightInches');
+      const combinedInput = document.getElementById('heightCombined');
+      if (!feetInput || !inchesInput || !combinedInput) return;
+
+      const raw = String(heightValue || '').trim();
+      if (!raw) {
+        feetInput.value = '';
+        inchesInput.value = '';
+        combinedInput.value = '';
+        return;
+      }
+
+      let feet = 0;
+      let inches = 0;
+      let matched = false;
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        feet = Number(m[1] || '0');
+        inches = Number(m[2] || '0');
+        matched = true;
+      }
+
+      if (!matched) {
+        m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+        if (m) {
+          feet = Number(m[1] || '0');
+          inches = Number(m[2] || '0');
+          matched = true;
+        }
+      }
+
+      if (!matched) {
+        m = raw.match(/^(\d+)\s*[- ]\s*(\d+(?:\.\d+)?)$/);
+        if (m) {
+          feet = Number(m[1] || '0');
+          inches = Number(m[2] || '0');
+          matched = true;
+        }
+      }
+
+      if (!matched) {
+        const numeric = Number(raw);
+        if (Number.isFinite(numeric) && numeric > 0) {
+          feet = Math.floor(numeric / 12);
+          inches = Number((numeric - (feet * 12)).toFixed(1));
+          matched = true;
+        }
+      }
+
+      if (!matched) {
+        combinedInput.value = raw;
+        feetInput.value = '';
+        inchesInput.value = '';
+        return;
+      }
+
+      if (inches >= 12) {
+        feet += Math.floor(inches / 12);
+        inches = inches % 12;
+      }
+
+      feet = Math.floor(feet);
+      inches = Number(inches.toFixed(1));
+      feetInput.value = String(feet);
+      inchesInput.value = inches ? String(inches) : '';
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+      combinedInput.value = `${feet}'${inchesText}"`;
+    }
+
+    function initHeightInputs() {
+      const feetInput = document.getElementById('heightFeet');
+      const inchesInput = document.getElementById('heightInches');
+      if (!feetInput || !inchesInput) return;
+      feetInput.addEventListener('input', syncHeightCombined);
+      inchesInput.addEventListener('input', syncHeightCombined);
+    }
+
+    function syncBroadJumpTotalInches() {
+      const feetInput = document.getElementById('broadJumpFeet');
+      const inchesInput = document.getElementById('broadJumpInches');
+      const totalInput = document.getElementById('broadJumpTotalInches');
+      if (!feetInput || !inchesInput || !totalInput) return;
+
+      const feetRaw = feetInput.value.trim();
+      const inchesRaw = inchesInput.value.trim();
+      if (!feetRaw && !inchesRaw) {
+        totalInput.value = '';
+        return;
+      }
+
+      let feet = Number(feetRaw || '0');
+      let inches = Number(inchesRaw || '0');
+      if (!Number.isFinite(feet) || feet < 0) feet = 0;
+      if (!Number.isFinite(inches) || inches < 0) inches = 0;
+
+      if (inches >= 12) {
+        feet += Math.floor(inches / 12);
+        inches = inches % 12;
+      }
+
+      feetInput.value = String(Math.floor(feet));
+      inchesInput.value = inches ? String(Number(inches.toFixed(1))) : '';
+      const totalInches = (Math.floor(feet) * 12) + inches;
+      totalInput.value = String(Number(totalInches.toFixed(1)));
+    }
+
+    function populateBroadJumpFeetInches(totalInchesValue) {
+      const feetInput = document.getElementById('broadJumpFeet');
+      const inchesInput = document.getElementById('broadJumpInches');
+      const totalInput = document.getElementById('broadJumpTotalInches');
+      if (!feetInput || !inchesInput || !totalInput) return;
+
+      const total = Number(totalInchesValue);
+      if (!Number.isFinite(total) || total <= 0) {
+        feetInput.value = '';
+        inchesInput.value = '';
+        totalInput.value = '';
+        return;
+      }
+
+      const feet = Math.floor(total / 12);
+      const inches = Number((total - (feet * 12)).toFixed(1));
+      feetInput.value = String(feet);
+      inchesInput.value = inches ? String(inches) : '';
+      totalInput.value = String(Number(total.toFixed(1)));
+    }
+
+    function initBroadJumpInputs() {
+      const feetInput = document.getElementById('broadJumpFeet');
+      const inchesInput = document.getElementById('broadJumpInches');
+      if (!feetInput || !inchesInput) return;
+      feetInput.addEventListener('input', syncBroadJumpTotalInches);
+      inchesInput.addEventListener('input', syncBroadJumpTotalInches);
+    }
+
     function setBioAiStatus(message, type = '') {
       const statusEl = document.getElementById('bioAiStatus');
       if (!statusEl) return;
@@ -1277,9 +1532,11 @@
         document.getElementById('playerEmail').value = profile.email || '';
         document.querySelector('[name="phone"]').value = profile.phone || '';
         document.querySelector('[name="highSchool"]').value = profile.high_school || '';
+        ensureGraduationYearOption(profile.graduation_year || '');
         document.querySelector('[name="graduationYear"]').value = profile.graduation_year || '';
         document.querySelector('[name="position"]').value = profile.position || '';
         document.querySelector('[name="height"]').value = profile.height || '';
+        populateHeightFeetInches(profile.height);
         document.querySelector('[name="weight"]').value = profile.weight || '';
         document.querySelector('[name="fortyYardDash"]').value = profile.forty_yard_dash || '';
         document.querySelector('[name="benchPress"]').value = profile.bench_press || '';
@@ -1288,6 +1545,7 @@
         document.querySelector('[name="shuttle5105"]').value = profile.shuttle_5_10_5 || '';
         document.querySelector('[name="lDrill"]').value = profile.l_drill || '';
         document.querySelector('[name="broadJump"]').value = profile.broad_jump || '';
+        populateBroadJumpFeetInches(profile.broad_jump);
         document.querySelector('[name="powerClean"]').value = profile.power_clean || '';
         document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
         document.querySelector('[name="gpa"]').value = profile.gpa || '';
@@ -1492,6 +1750,8 @@
 
       let timeoutId;
       try {
+        syncHeightCombined();
+        syncBroadJumpTotalInches();
         const formData = new FormData(e.target);
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 300000);

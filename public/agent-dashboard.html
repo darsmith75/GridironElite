@@ -399,6 +399,39 @@
       }
     }
 
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        const feet = Math.floor(numeric / 12);
+        const inches = Number((numeric - (feet * 12)).toFixed(1));
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+        return `${feet}'${inchesText}"`;
+      }
+
+      return raw;
+    }
+
     function renderPage(page) {
       const players = window._allPlayers || [];
       const favoriteIds = window._favIds || [];
@@ -437,7 +470,7 @@
               <div class="player-stats-compact">
                 <div class="stat-item">
                   <div class="stat-label">Height</div>
-                  <div class="stat-value">${p.height || 'N/A'}</div>
+                  <div class="stat-value">${formatHeightDisplay(p.height) || 'N/A'}</div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-label">Weight</div>

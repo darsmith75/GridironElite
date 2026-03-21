@@ -164,6 +164,39 @@
       } catch { return null; }
     }
 
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        const feet = Math.floor(numeric / 12);
+        const inches = Number((numeric - (feet * 12)).toFixed(1));
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+        return `${feet}'${inchesText}"`;
+      }
+
+      return raw;
+    }
+
     function escapeHtml(value) {
       return String(value || '')
         .replace(/&/g, '&amp;')
@@ -353,7 +386,7 @@
               ${player.position ? `<span class="meta-badge">${player.position}</span>` : ''}
               ${player.graduation_year ? `<span class="meta-badge">Class of ${player.graduation_year}</span>` : ''}
               ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
-              ${player.height ? `<span class="meta-badge">${player.height}</span>` : ''}
+              ${player.height ? `<span class="meta-badge">${formatHeightDisplay(player.height)}</span>` : ''}
               ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
               ${player.gpa ? `<span class="meta-badge ${player.report_card_image ? 'clickable-gpa' : ''}" ${player.report_card_image ? `role="button" tabindex="0" title="Hover to preview, click to view full size" aria-label="View report card image" onmouseenter="showReportCardPreview(event, '/uploads/${player.report_card_image}')" onmouseleave="hideReportCardPreview()" onmousemove="moveReportCardPreview(event)" onclick="openLightbox('/uploads/${player.report_card_image}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openLightbox('/uploads/${player.report_card_image}');}"` : ''}>GPA: ${player.gpa}${player.report_card_image ? ' (View)' : ''}</span>` : ''}
               ${player.achievement ? `<span class="meta-badge">${player.achievement}</span>` : ''}
@@ -750,7 +783,7 @@
       
       // Physical Attributes
       excel += addSectionHeader('PHYSICAL ATTRIBUTES');
-      excel += addDataRow('Height', player.height);
+      excel += addDataRow('Height', formatHeightDisplay(player.height));
       excel += addDataRow('Weight', player.weight ? `${player.weight} lbs` : null);
       excel += addEmptyRow();
       
