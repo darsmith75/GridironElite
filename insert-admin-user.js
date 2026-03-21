@@ -12,14 +12,14 @@ async function insertAdminUser() {
   if (existing) {
     await db.prepare(`
       UPDATE users
-      SET password = ?, role = 'admin', full_name = ?
+      SET password = ?, role = 'admin', full_name = ?, email_verified = true
       WHERE id = ?
     `).run(passwordHash, fullName, existing.id);
     console.log(`Updated admin user: ${email}`);
   } else {
     await db.prepare(`
-      INSERT INTO users (email, password, role, full_name)
-      VALUES (?, ?, 'admin', ?)
+      INSERT INTO users (email, password, role, full_name, email_verified)
+      VALUES (?, ?, 'admin', ?, true)
     `).run(email, passwordHash, fullName);
     console.log(`Inserted admin user: ${email}`);
   }

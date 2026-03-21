@@ -22,6 +22,7 @@ const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
@@ -626,17 +627,80 @@ async function enrichPlayerProfile(profile) {
   return profile;
 }
 
+async function sendVerificationEmail(toEmail, token) {
+  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+  const verifyUrl = `${appUrl}/api/verify-email?token=${token}`;
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
+    }
+  });
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: 'Verify your Gridiron Elite account',
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
+        <h2 style="color:#1e3a5f">Welcome to Gridiron Elite!</h2>
+        <p>Thanks for registering. Click the button below to verify your email address and activate your account.</p>
+        <p style="margin:32px 0">
+          <a href="${verifyUrl}" style="background:#2563eb;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px">Verify Email Address</a>
+        </p>
+        <p style="color:#6b7280;font-size:13px">If you didn't create a Gridiron Elite account, you can safely ignore this email.</p>
+      </div>
+    `,
+    text: `Welcome to Gridiron Elite!\n\nPlease verify your email address by visiting the link below:\n\n${verifyUrl}\n\nIf you didn't create an account, please ignore this email.`
+  });
+}
+
+async function sendPasswordResetEmail(toEmail, token) {
+  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+  const resetUrl = `${appUrl}/reset-password.html?token=${token}`;
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
+    }
+  });
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: 'Reset your Gridiron Elite password',
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
+        <h2 style="color:#1e3a5f">Password reset request</h2>
+        <p>We received a request to reset your password. Click the button below to choose a new one.</p>
+        <p style="margin:32px 0">
+          <a href="${resetUrl}" style="background:#2563eb;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px">Reset Password</a>
+        </p>
+        <p style="color:#6b7280;font-size:13px">This link expires in 60 minutes. If you did not request this, you can safely ignore this email.</p>
+      </div>
+    `,
+    text: `Use this link to reset your password (valid for 60 minutes):\n\n${resetUrl}`
+  });
+}
+
 // Register
 app.post('/api/register', async (req, res) => {
   const { email, password, role, fullName } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await db.prepare('INSERT INTO users (email, password, role) VALUES (?, ?, ?)').run(email, hashedPassword, role);
-    
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const result = await db.prepare(
+      'INSERT INTO users (email, password, role, email_verified, email_verification_token) VALUES (?, ?, ?, false, ?)'
+    ).run(email, hashedPassword, role, verificationToken);
+
     if (role === 'player') {
       await db.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)').run(result.lastInsertRowid, fullName);
     }
-    
+
     // Notify all admin users about the new registration
     const admins = await db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
     const roleLabel = role === 'player' ? 'Athlete' : role.charAt(0).toUpperCase() + role.slice(1);
@@ -645,11 +709,98 @@ app.post('/api/register', async (req, res) => {
     for (const admin of admins) {
       await insertMsg.run(result.lastInsertRowid, admin.id, notifMessage);
     }
-    
-    res.json({ success: true, message: 'Registration successful' });
+
+    // Send verification email (non-fatal – log error but still return success)
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr.message);
+    }
+
+    res.json({ success: true, message: 'Registration successful! Please check your email to verify your account.' });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(400).json({ error: 'Email already exists or registration failed' });
+  }
+});
+
+// Email verification
+app.get('/api/verify-email', async (req, res) => {
+  const { token } = req.query;
+  if (!token || typeof token !== 'string' || !/^[0-9a-f]{64}$/.test(token)) {
+    return res.redirect('/?verified=invalid');
+  }
+  try {
+    const user = await db.prepare('SELECT id, email_verified FROM users WHERE email_verification_token = ?').get(token);
+    if (!user) {
+      return res.redirect('/?verified=invalid');
+    }
+    if (user.email_verified) {
+      return res.redirect('/?verified=already');
+    }
+    await db.prepare('UPDATE users SET email_verified = true, email_verification_token = NULL WHERE id = ?').run(user.id);
+    res.redirect('/?verified=true');
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.redirect('/?verified=error');
+  }
+});
+
+// Forgot password - always return success so emails cannot be enumerated
+app.post('/api/forgot-password', async (req, res) => {
+  const email = (req.body?.email || '').trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  try {
+    const user = await db.prepare('SELECT id, email FROM users WHERE LOWER(email) = ?').get(email);
+    if (user) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + (60 * 60 * 1000));
+      await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(token, expiresAt, user.id);
+      try {
+        await sendPasswordResetEmail(user.email, token);
+      } catch (emailErr) {
+        console.error('Failed to send password reset email:', emailErr.message);
+      }
+    }
+    return res.json({ success: true, message: 'If an account exists with that email, a password reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// Reset password with token
+app.post('/api/reset-password', async (req, res) => {
+  const token = (req.body?.token || '').trim();
+  const newPassword = req.body?.newPassword || '';
+
+  if (!token || !/^[0-9a-f]{64}$/.test(token)) {
+    return res.status(400).json({ error: 'Invalid reset token' });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+  }
+
+  try {
+    const user = await db.prepare(
+      'SELECT id FROM users WHERE password_reset_token = ? AND password_reset_expires IS NOT NULL AND password_reset_expires > CURRENT_TIMESTAMP'
+    ).get(token);
+
+    if (!user) {
+      return res.status(400).json({ error: 'Reset link is invalid or expired' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.prepare(
+      'UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?'
+    ).run(hashedPassword, user.id);
+
+    return res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 
@@ -657,11 +808,15 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-  
+
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  
+
+  if (!user.email_verified) {
+    return res.status(403).json({ error: 'Please verify your email address before logging in. Check your inbox for the verification link.' });
+  }
+
   req.session.userId = user.id;
   req.session.role = user.role;
   res.json({ success: true, role: user.role });
