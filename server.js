@@ -27,6 +27,7 @@ const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
 const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, checkB2Health } = require('./backblaze');
+const { PROMPT_VERSION, normalizeAudience, buildSourceHash, generateScoutingSummary } = require('./ai-provider');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -55,6 +56,188 @@ const METRIC_TIP_CONFIG = [
   { key: 'single_leg_squat', label: 'Single Leg Squat' }
 ];
 const METRIC_TIP_KEYS = new Set(METRIC_TIP_CONFIG.map(item => item.key));
+const aiGenerateRateTracker = new Map();
+
+function isAiGenerationEnabled() {
+  return String(process.env.AI_FEATURE_ENABLED || 'false').toLowerCase() === 'true';
+}
+
+function getActiveAiProviderName() {
+  return String(process.env.AI_PROVIDER || 'openai').toLowerCase();
+}
+
+function getActiveAiModelName() {
+  const provider = getActiveAiProviderName();
+  if (process.env.AI_MODEL_SUMMARY) return process.env.AI_MODEL_SUMMARY;
+  if (provider === 'gemini' || provider === 'google') return 'gemini-2.5-flash';
+  return 'gpt-4.1-mini';
+}
+
+function parseAiPlayerId(rawValue) {
+  const id = parseInt(rawValue, 10);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function aiRateLimitKey(actorUserId, playerUserId) {
+  return `${actorUserId}:${playerUserId}`;
+}
+
+function isAiGenerationRateLimited(actorUserId, playerUserId) {
+  const limitPerHour = parseInt(process.env.AI_GENERATE_MAX_PER_HOUR || '8', 10);
+  const windowMs = 60 * 60 * 1000;
+  const now = Date.now();
+  const key = aiRateLimitKey(actorUserId, playerUserId);
+  const entry = aiGenerateRateTracker.get(key) || { stamps: [] };
+  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
+  if (entry.stamps.length >= limitPerHour) {
+    aiGenerateRateTracker.set(key, entry);
+    return true;
+  }
+  entry.stamps.push(now);
+  aiGenerateRateTracker.set(key, entry);
+  return false;
+}
+
+function mapSummaryRow(row) {
+  if (!row) return null;
+  return {
+    summaryId: row.id,
+    playerUserId: row.player_user_id,
+    audience: row.generated_for_role,
+    modelName: row.model_name,
+    promptVersion: row.prompt_version,
+    sourceHash: row.source_hash,
+    summaryText: row.summary_text,
+    strengths: Array.isArray(row.strengths_json) ? row.strengths_json : [],
+    improvementAreas: Array.isArray(row.improvement_areas_json) ? row.improvement_areas_json : [],
+    confidenceScore: row.confidence_score !== null ? Number(row.confidence_score) : null,
+    safetyFlags: Array.isArray(row.safety_flags_json) ? row.safety_flags_json : [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+async function logAiEvent({ eventType, actorUserId, playerUserId, summaryId = null, metadata = {} }) {
+  try {
+    await db.prepare(
+      'INSERT INTO ai_events (event_type, actor_user_id, player_user_id, summary_id, metadata_json) VALUES (?, ?, ?, ?, ?::jsonb)'
+    ).run(eventType, actorUserId || null, playerUserId || null, summaryId || null, JSON.stringify(metadata || {}));
+  } catch (error) {
+    console.error('Failed to write AI event:', error.message || error);
+  }
+}
+
+async function canAccessPlayerSummary(req, playerUserId) {
+  if (!req.session.userId) return false;
+  if (req.session.role === 'admin' || req.session.role === 'agent') return true;
+  return req.session.userId === playerUserId;
+}
+
+async function loadPlayerSummarySourceBundle(playerUserId) {
+  const profile = await db.prepare(`
+    SELECT user_id, full_name, high_school, graduation_year, position, height, weight,
+      forty_yard_dash, bench_press, squat, vertical_jump, shuttle_5_10_5, l_drill,
+      broad_jump, power_clean, single_leg_squat, gpa, achievement, bio
+    FROM player_profiles
+    WHERE user_id = ?
+  `).get(playerUserId);
+
+  if (!profile) return null;
+
+  const [highlightVideos, additionalImages, verifiedMetricVideos, linkedVideos] = await Promise.all([
+    db.prepare('SELECT COUNT(*)::int AS count FROM player_videos WHERE user_id = ?').get(playerUserId),
+    db.prepare('SELECT COUNT(*)::int AS count FROM player_images WHERE user_id = ?').get(playerUserId),
+    db.prepare('SELECT COUNT(*)::int AS count FROM player_metric_videos WHERE user_id = ? AND is_verified = true').get(playerUserId),
+    db.prepare('SELECT COUNT(*)::int AS count FROM player_video_links WHERE user_id = ?').get(playerUserId)
+  ]);
+
+  return {
+    full_name: profile.full_name || null,
+    high_school: profile.high_school || null,
+    graduation_year: profile.graduation_year || null,
+    position: profile.position || null,
+    height: profile.height || null,
+    weight: profile.weight || null,
+    forty_yard_dash: profile.forty_yard_dash || null,
+    bench_press: profile.bench_press || null,
+    squat: profile.squat || null,
+    vertical_jump: profile.vertical_jump || null,
+    shuttle_5_10_5: profile.shuttle_5_10_5 || null,
+    l_drill: profile.l_drill || null,
+    broad_jump: profile.broad_jump || null,
+    power_clean: profile.power_clean || null,
+    single_leg_squat: profile.single_leg_squat || null,
+    gpa: profile.gpa || null,
+    achievement: profile.achievement || null,
+    bio: profile.bio || null,
+    highlight_video_count: highlightVideos?.count || 0,
+    linked_video_count: linkedVideos?.count || 0,
+    additional_image_count: additionalImages?.count || 0,
+    verified_metric_video_count: verifiedMetricVideos?.count || 0
+  };
+}
+
+async function getCachedAiSummary(playerUserId, audience, sourceHash) {
+  const modelName = process.env.AI_MODEL_SUMMARY || 'gpt-4.1-mini';
+  return db.prepare(`
+    SELECT *
+    FROM ai_player_summaries
+    WHERE player_user_id = ?
+      AND generated_for_role = ?
+      AND source_hash = ?
+      AND prompt_version = ?
+      AND model_name = ?
+      AND is_active = true
+    ORDER BY updated_at DESC, id DESC
+    LIMIT 1
+  `).get(playerUserId, audience, sourceHash, PROMPT_VERSION, modelName);
+}
+
+async function saveAiSummary({ playerUserId, generatedForUserId, audience, sourceHash, modelName, summaryText, strengths, improvementAreas, confidenceScore, safetyFlags }) {
+  await db.prepare(`
+    UPDATE ai_player_summaries
+    SET is_active = false, updated_at = CURRENT_TIMESTAMP
+    WHERE player_user_id = ?
+      AND generated_for_role = ?
+      AND source_hash = ?
+      AND prompt_version = ?
+      AND model_name = ?
+      AND is_active = true
+  `).run(playerUserId, audience, sourceHash, PROMPT_VERSION, modelName);
+
+  const insertResult = await db.prepare(`
+    INSERT INTO ai_player_summaries (
+      player_user_id,
+      generated_for_user_id,
+      generated_for_role,
+      source_hash,
+      model_name,
+      prompt_version,
+      summary_text,
+      strengths_json,
+      improvement_areas_json,
+      confidence_score,
+      safety_flags_json,
+      is_active,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?::jsonb, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `).run(
+    playerUserId,
+    generatedForUserId || null,
+    audience,
+    sourceHash,
+    modelName,
+    PROMPT_VERSION,
+    summaryText,
+    JSON.stringify(strengths || []),
+    JSON.stringify(improvementAreas || []),
+    confidenceScore,
+    JSON.stringify(safetyFlags || [])
+  );
+
+  return db.prepare('SELECT * FROM ai_player_summaries WHERE id = ?').get(insertResult.lastInsertRowid);
+}
 
 const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
   profilePicture: 1,
@@ -594,7 +777,16 @@ app.use('/images', express.static('images'));
 app.use('/logos', express.static('logos'));
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'gridiron-elite', uptimeSec: Math.round(process.uptime()) });
+  res.json({
+    ok: true,
+    service: 'gridiron-elite',
+    uptimeSec: Math.round(process.uptime()),
+    ai: {
+      enabled: isAiGenerationEnabled(),
+      provider: getActiveAiProviderName(),
+      model: getActiveAiModelName()
+    }
+  });
 });
 
 app.get('/ready', async (req, res) => {
@@ -603,10 +795,29 @@ app.get('/ready', async (req, res) => {
 
     const b2 = await checkB2Health();
     if (b2Enabled && !b2.ok) {
-      return res.status(503).json({ ok: false, db: 'ok', b2: 'error', reason: b2.reason || 'b2-not-ready' });
+      return res.status(503).json({
+        ok: false,
+        db: 'ok',
+        b2: 'error',
+        reason: b2.reason || 'b2-not-ready',
+        ai: {
+          enabled: isAiGenerationEnabled(),
+          provider: getActiveAiProviderName(),
+          model: getActiveAiModelName()
+        }
+      });
     }
 
-    res.json({ ok: true, db: 'ok', b2: b2Enabled ? 'ok' : 'disabled' });
+    res.json({
+      ok: true,
+      db: 'ok',
+      b2: b2Enabled ? 'ok' : 'disabled',
+      ai: {
+        enabled: isAiGenerationEnabled(),
+        provider: getActiveAiProviderName(),
+        model: getActiveAiModelName()
+      }
+    });
   } catch (error) {
     res.status(503).json({ ok: false, db: 'error', reason: error.message || 'db-not-ready' });
   }
@@ -2251,6 +2462,178 @@ app.delete('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, a
   }
 });
 
+// AI: Get cached player scouting summary
+app.get('/api/ai/player/:playerUserId/summary', requireAuth, async (req, res) => {
+  try {
+    const playerUserId = parseAiPlayerId(req.params.playerUserId);
+    if (!playerUserId) return res.status(400).json({ error: 'Invalid player user ID' });
+
+    if (!(await canAccessPlayerSummary(req, playerUserId))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const audience = normalizeAudience(req.query.audience);
+    const sourceBundle = await loadPlayerSummarySourceBundle(playerUserId);
+    if (!sourceBundle) return res.status(404).json({ error: 'Player not found' });
+
+    const sourceHash = buildSourceHash(sourceBundle);
+    const cached = await getCachedAiSummary(playerUserId, audience, sourceHash);
+    if (!cached) {
+      await logAiEvent({
+        eventType: 'summary_cache_miss',
+        actorUserId: req.session.userId,
+        playerUserId,
+        metadata: { audience, sourceHash }
+      });
+      return res.status(404).json({
+        error: 'No cached summary for current profile data',
+        canGenerate: isAiGenerationEnabled(),
+        sourceHash
+      });
+    }
+
+    await logAiEvent({
+      eventType: 'summary_cache_hit',
+      actorUserId: req.session.userId,
+      playerUserId,
+      summaryId: cached.id,
+      metadata: { audience, sourceHash, promptVersion: cached.prompt_version, modelName: cached.model_name }
+    });
+
+    await logAiEvent({
+      eventType: 'summary_viewed',
+      actorUserId: req.session.userId,
+      playerUserId,
+      summaryId: cached.id,
+      metadata: { audience }
+    });
+
+    res.json({ ...mapSummaryRow(cached), cached: true });
+  } catch (error) {
+    console.error('AI summary get error:', error);
+    res.status(500).json({ error: 'Failed to fetch AI summary' });
+  }
+});
+
+// AI: Generate or refresh player scouting summary
+app.post('/api/ai/player/:playerUserId/summary/generate', requireAuth, async (req, res) => {
+  try {
+    if (!isAiGenerationEnabled()) {
+      return res.status(503).json({ error: 'AI summary generation is disabled' });
+    }
+
+    const playerUserId = parseAiPlayerId(req.params.playerUserId);
+    if (!playerUserId) return res.status(400).json({ error: 'Invalid player user ID' });
+
+    if (!(await canAccessPlayerSummary(req, playerUserId))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const audience = normalizeAudience(req.body?.audience);
+    const forceRegenerate = !!req.body?.forceRegenerate;
+
+    if (req.session.role !== 'admin' && isAiGenerationRateLimited(req.session.userId, playerUserId)) {
+      return res.status(429).json({ error: 'Rate limit exceeded. Please try again shortly.' });
+    }
+
+    const sourceBundle = await loadPlayerSummarySourceBundle(playerUserId);
+    if (!sourceBundle) return res.status(404).json({ error: 'Player not found' });
+    const sourceHash = buildSourceHash(sourceBundle);
+
+    const cached = await getCachedAiSummary(playerUserId, audience, sourceHash);
+    if (cached && !forceRegenerate) {
+      await logAiEvent({
+        eventType: 'summary_cache_hit',
+        actorUserId: req.session.userId,
+        playerUserId,
+        summaryId: cached.id,
+        metadata: { audience, sourceHash, path: 'generate' }
+      });
+      return res.json({ ...mapSummaryRow(cached), cached: true });
+    }
+
+    const startMs = Date.now();
+    const generated = await generateScoutingSummary({ player: sourceBundle, audience });
+    const saved = await saveAiSummary({
+      playerUserId,
+      generatedForUserId: req.session.userId,
+      audience,
+      sourceHash,
+      modelName: generated.modelName,
+      summaryText: generated.summaryText,
+      strengths: generated.strengths,
+      improvementAreas: generated.improvementAreas,
+      confidenceScore: generated.confidenceScore,
+      safetyFlags: generated.safetyFlags
+    });
+
+    await logAiEvent({
+      eventType: 'summary_generated',
+      actorUserId: req.session.userId,
+      playerUserId,
+      summaryId: saved.id,
+      metadata: {
+        audience,
+        sourceHash,
+        modelName: generated.modelName,
+        promptVersion: generated.promptVersion,
+        latencyMs: Date.now() - startMs,
+        forceRegenerate
+      }
+    });
+
+    res.json({ ...mapSummaryRow(saved), cached: false });
+  } catch (error) {
+    console.error('AI summary generate error:', error);
+    await logAiEvent({
+      eventType: 'summary_generation_failed',
+      actorUserId: req.session?.userId || null,
+      playerUserId: parseAiPlayerId(req.params.playerUserId),
+      metadata: { message: error.message || 'unknown-error' }
+    });
+    res.status(500).json({ error: 'Failed to generate AI summary' });
+  }
+});
+
+// AI: Summary feedback
+app.post('/api/ai/player/:playerUserId/summary/:summaryId/feedback', requireAuth, async (req, res) => {
+  try {
+    const playerUserId = parseAiPlayerId(req.params.playerUserId);
+    const summaryId = parseInt(req.params.summaryId, 10);
+    if (!playerUserId || !Number.isInteger(summaryId) || summaryId <= 0) {
+      return res.status(400).json({ error: 'Invalid player or summary ID' });
+    }
+
+    if (!(await canAccessPlayerSummary(req, playerUserId))) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const rating = String(req.body?.rating || '').toLowerCase();
+    const reason = String(req.body?.reason || '').trim().slice(0, 240);
+    if (rating !== 'up' && rating !== 'down') {
+      return res.status(400).json({ error: 'rating must be up or down' });
+    }
+
+    const summary = await db.prepare('SELECT id, player_user_id FROM ai_player_summaries WHERE id = ?').get(summaryId);
+    if (!summary || summary.player_user_id !== playerUserId) {
+      return res.status(404).json({ error: 'Summary not found' });
+    }
+
+    await logAiEvent({
+      eventType: rating === 'up' ? 'summary_feedback_up' : 'summary_feedback_down',
+      actorUserId: req.session.userId,
+      playerUserId,
+      summaryId,
+      metadata: { reason }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('AI summary feedback error:', error);
+    res.status(500).json({ error: 'Failed to submit summary feedback' });
+  }
+});
+
 // Centralized upload error handling so clients see actionable errors.
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -2277,6 +2660,7 @@ async function initializeAndStart() {
   try {
     await db.initialize();
     await migrateUploads();
+    console.log(`[ai] feature=${isAiGenerationEnabled() ? 'enabled' : 'disabled'} provider=${getActiveAiProviderName()} model=${getActiveAiModelName()}`);
     app.listen(process.env.PORT || PORT, () => {
       console.log(`Server running on ${process.env.PORT ? 'iisnode' : 'http://localhost:' + PORT}`);
     });

@@ -2469,6 +2469,123 @@ textarea {
   border-bottom: 2px solid #f0f0f0;
 }
 
+.ai-summary-section {
+  border: 1px solid #d9e6fb;
+  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+}
+
+.ai-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-summary-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ai-summary-btn {
+  border: none;
+  border-radius: 8px;
+  background: #1f4b8f;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+
+.ai-summary-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.ai-summary-btn.secondary {
+  background: #5d769e;
+}
+
+.ai-summary-status {
+  margin: 6px 0;
+  font-size: 14px;
+  color: #4e5f77;
+}
+
+.ai-summary-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #6a778b;
+}
+
+.ai-summary-text {
+  margin: 0 0 14px 0;
+  line-height: 1.7;
+  color: #334155;
+}
+
+.ai-summary-list-wrap h3 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #1f4b8f;
+}
+
+.ai-summary-list {
+  margin: 0 0 12px 0;
+  padding-left: 18px;
+  color: #3c4a5f;
+}
+
+.ai-summary-list li {
+  margin-bottom: 4px;
+}
+
+.ai-summary-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #5a6b82;
+  border-top: 1px solid #e6eefb;
+  padding-top: 10px;
+}
+
+.ai-feedback-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-feedback-btn {
+  border: 1px solid #b6c8e8;
+  background: #ffffff;
+  color: #1f4b8f;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ai-feedback-btn:hover {
+  background: #ecf3ff;
+}
+
+.ai-feedback-toast {
+  font-size: 12px;
+  color: #1f6f41;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ai-feedback-toast.show {
+  opacity: 1;
+}
+
 /* Physical Stats Inline */
 .physical-stats-inline {
   display: flex;
@@ -2902,6 +3019,19 @@ textarea {
   
   .profile-section {
     padding: 20px;
+  }
+
+  .ai-summary-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ai-summary-actions {
+    width: 100%;
+  }
+
+  .ai-summary-btn {
+    width: 100%;
   }
 }
 

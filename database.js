@@ -39,7 +39,9 @@ const insertPrimaryKeys = {
   metric_pro_tips: 'id',
   player_school_interests: 'id',
   school_notes: 'id',
-  school_contacts: 'id'
+  school_contacts: 'id',
+  ai_player_summaries: 'id',
+  ai_events: 'id'
 };
 
 const createTablesSQL = `
@@ -215,6 +217,39 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS ai_player_summaries (
+    id SERIAL PRIMARY KEY,
+    player_user_id INTEGER NOT NULL,
+    generated_for_user_id INTEGER,
+    generated_for_role VARCHAR(50) NOT NULL,
+    source_hash VARCHAR(64) NOT NULL,
+    model_name VARCHAR(100) NOT NULL,
+    prompt_version VARCHAR(50) NOT NULL,
+    summary_text TEXT NOT NULL,
+    strengths_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    improvement_areas_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    confidence_score NUMERIC(4,3),
+    safety_flags_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (generated_for_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS ai_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(64) NOT NULL,
+    actor_user_id INTEGER,
+    player_user_id INTEGER,
+    summary_id INTEGER,
+    metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (summary_id) REFERENCES ai_player_summaries(id) ON DELETE SET NULL
+  );
 `;
 
 const alterTablesSQL = `
@@ -250,6 +285,12 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
+  CREATE INDEX IF NOT EXISTS idx_ai_summary_player_active ON ai_player_summaries(player_user_id, is_active);
+  CREATE INDEX IF NOT EXISTS idx_ai_summary_source_hash ON ai_player_summaries(player_user_id, source_hash);
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_ai_summary_cache ON ai_player_summaries(player_user_id, generated_for_role, source_hash, prompt_version, model_name) WHERE is_active = TRUE;
+  CREATE INDEX IF NOT EXISTS idx_ai_events_event_type ON ai_events(event_type);
+  CREATE INDEX IF NOT EXISTS idx_ai_events_created_at ON ai_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_ai_events_player ON ai_events(player_user_id);
 `;
 
 function splitStatements(sql) {
