@@ -659,7 +659,7 @@ label {
   padding: 0;
   border: 1px solid #aab8cb;
   transition: all 0.3s ease;
-  box-shadow: 0 6px 18px rgba(24, 42, 74, 0.12);
+  box-shadow: 0 7px 20px rgba(24, 42, 74, 0.14);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -806,7 +806,7 @@ label {
 }
 
 .player-card-compact:hover {
-  box-shadow: 0 14px 34px rgba(24, 42, 74, 0.2);
+  box-shadow: 0 15px 36px rgba(24, 42, 74, 0.23);
   transform: translateY(-6px);
   border-color: #4a6fa5;
 }
@@ -3226,6 +3226,12 @@ textarea {
   align-items: center;
   gap: 3px;
   line-height: 1.2;
+}
+
+.nav-link svg {
+  width: 20px;
+  height: 20px;
+  opacity: 0.92;
 }
 
 .nav-link:hover {
