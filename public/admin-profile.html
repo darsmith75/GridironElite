@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Profile</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-profile-photo-section {
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .admin-profile-photo-section h3 {
+      margin-top: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-wrapper">
@@ -38,7 +51,7 @@
       <div class="profile-page-container">
         <div class="profile-section">
           <h2 class="section-title-small">ADMIN PROFILE</h2>
-          <form id="adminProfileForm">
+          <form id="adminProfileForm" enctype="multipart/form-data">
             <div class="form-grid">
               <div class="form-section">
                 <h3>👤 Personal Information</h3>
@@ -54,7 +67,12 @@
                 <label>Role:</label>
                 <input type="text" name="role" id="adminRole" value="Site Administrator" readonly>
                 <label>Last Login:</label>
-                <input type="text" name="lastLogin" id="adminLastLogin" value="March 13, 2026" readonly>
+                <input type="text" name="lastLogin" id="adminLastLogin" value="Never" readonly>
+              </div>
+              <div class="form-section admin-profile-photo-section">
+                <h3>🖼️ Profile Photo</h3>
+                <img id="adminProfilePicture" src="/uploads/default-profile.png" alt="Profile Picture" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #c7d0da; margin-bottom: 10px;">
+                <input type="file" id="adminProfilePictureInput" accept="image/*">
               </div>
               <div class="form-section full-width">
                 <h3>📝 Bio</h3>
@@ -89,6 +107,35 @@
     checkAuth('admin');
     loadAdminProfile();
 
+    const DEFAULT_PROFILE_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="%23eef2f7"/><circle cx="60" cy="45" r="23" fill="%2394a3b8"/><path d="M18 108c4-23 20-35 42-35s38 12 42 35" fill="%2394a3b8"/></svg>';
+
+    function setAdminProfileImage(src) {
+      const img = document.getElementById('adminProfilePicture');
+      if (!img) return;
+      img.onerror = function () {
+        img.onerror = null;
+        img.src = DEFAULT_PROFILE_AVATAR;
+      };
+      img.src = src || DEFAULT_PROFILE_AVATAR;
+    }
+
+    document.getElementById('adminProfilePictureInput').addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('adminProfilePicture').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function formatLastLogin(value) {
+      if (!value) return 'Never';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'Unknown';
+      return date.toLocaleString();
+    }
+
     async function loadAdminProfile() {
       try {
         const res = await fetch('/api/admin/profile');
@@ -98,30 +145,35 @@
         document.getElementById('adminEmail').value = data.email || '';
         document.getElementById('adminPhone').value = data.phone || '';
         document.getElementById('adminBio').value = data.bio || '';
+        document.getElementById('adminLastLogin').value = formatLastLogin(data.last_login_at);
+        setAdminProfileImage(data.profile_picture ? '/uploads/' + data.profile_picture : DEFAULT_PROFILE_AVATAR);
         // Optionally populate organization, title, experience if you add those fields to the form
       } catch (error) {
-        // Optionally show error
+        setAdminProfileImage(DEFAULT_PROFILE_AVATAR);
       }
     }
 
     document.getElementById('adminProfileForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = {
-        fullName: document.getElementById('adminFullName').value,
-        email: document.getElementById('adminEmail').value,
-        phone: document.getElementById('adminPhone').value,
-        bio: document.getElementById('adminBio').value
-      };
+
+      const formData = new FormData();
+      formData.append('fullName', document.getElementById('adminFullName').value);
+      formData.append('email', document.getElementById('adminEmail').value);
+      formData.append('phone', document.getElementById('adminPhone').value);
+      formData.append('bio', document.getElementById('adminBio').value);
+      const pictureInput = document.getElementById('adminProfilePictureInput');
+      if (pictureInput.files && pictureInput.files[0]) {
+        formData.append('profilePicture', pictureInput.files[0]);
+      }
+
       try {
         const res = await fetch('/api/admin/profile', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formData)
+          body: formData
         });
         if (res.ok) {
           alert('Profile updated successfully!');
+          loadAdminProfile();
         } else {
           const error = await res.text();
           alert(error || 'Error updating profile');

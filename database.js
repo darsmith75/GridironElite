@@ -57,6 +57,8 @@ const createTablesSQL = `
     experience INTEGER,
     bio TEXT,
     profile_picture TEXT,
+    last_login_at TIMESTAMP,
+    login_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -88,8 +90,10 @@ const createTablesSQL = `
     instagram_link TEXT,
     twitter_link TEXT,
     hudl_username TEXT,
-    instagram_username TEXT,
-    twitter_username TEXT,
+      instagram_username TEXT,
+      twitter_username TEXT,
+      profile_view_count INTEGER NOT NULL DEFAULT 0,
+      last_viewed_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
@@ -260,10 +264,14 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS achievement TEXT;
+    ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS profile_view_count INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0;
 `;
 
 const createIndexesSQL = `

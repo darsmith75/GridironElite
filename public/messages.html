@@ -76,17 +76,11 @@
         const user = await res.json();
         currentRole = user.role;
         currentUserId = user.id;
-      
-        // Set navigation links based on role
-        if (currentRole === 'admin') {
-          document.getElementById('homeLink').href = 'admin-dashboard.html';
-          document.getElementById('profileLink').href = 'admin-profile.html';
-        } else if (currentRole === 'agent') {
-          document.getElementById('homeLink').href = 'agent-dashboard.html';
-          document.getElementById('profileLink').href = 'agent-profile.html';
-        } else {
-          document.getElementById('homeLink').href = 'player-profile.html';
-          document.getElementById('profileLink').href = 'player-profile.html';
+
+        // Apply shared nav rules: Home -> agent dashboard for all,
+        // Dashboard link for admins only, role-aware My Profile destination.
+        if (typeof applyRoleBasedTopNav === 'function') {
+          applyRoleBasedTopNav(user);
         }
       } catch (error) {
         console.error('Auth check failed:', error);

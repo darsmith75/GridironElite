@@ -1116,6 +1116,8 @@ app.post('/api/login', async (req, res) => {
     return res.status(403).json({ error: 'Please verify your email address before logging in. Check your inbox for the verification link.' });
   }
 
+  await db.prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP, login_count = COALESCE(login_count, 0) + 1 WHERE id = ?').run(user.id);
+
   req.session.userId = user.id;
   req.session.role = user.role;
   res.json({ success: true, role: user.role });
@@ -1455,8 +1457,6 @@ app.post('/api/player/report-card/delete', requireAuth, async (req, res) => {
 
 // Agent: Get all players with filters
 app.get('/api/agent/players', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -1501,8 +1501,6 @@ app.get('/api/agent/players', requireAuth, async (req, res) => {
 
 // Agent: Get single player detail
 app.get('/api/agent/player/:id', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -1512,6 +1510,15 @@ app.get('/api/agent/player/:id', requireAuth, async (req, res) => {
   
   if (!player) {
     return res.status(404).json({ error: 'Player not found' });
+  }
+
+  const updatedViewStats = await db.prepare(
+    'UPDATE player_profiles SET profile_view_count = COALESCE(profile_view_count, 0) + 1, last_viewed_at = CURRENT_TIMESTAMP WHERE user_id = ? RETURNING profile_view_count, last_viewed_at'
+  ).get(req.params.id);
+
+  if (updatedViewStats) {
+    player.profile_view_count = updatedViewStats.profile_view_count;
+    player.last_viewed_at = updatedViewStats.last_viewed_at;
   }
   
   await enrichPlayerProfile(player);
@@ -1616,8 +1623,6 @@ app.post('/api/agent/change-password', requireAuth, async (req, res) => {
 
 // Agent: Add player to favorites
 app.post('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   try {
     await db.prepare('INSERT OR IGNORE INTO agent_favorites (agent_id, user_id) VALUES (?, ?)').run(req.session.userId, req.params.playerId);
     res.json({ success: true });
@@ -1629,8 +1634,6 @@ app.post('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
 
 // Agent: Remove player from favorites
 app.delete('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   try {
     await db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? AND user_id = ?').run(req.session.userId, req.params.playerId);
     res.json({ success: true });
@@ -1642,8 +1645,6 @@ app.delete('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
 
 // Agent: Get all favorite player IDs
 app.get('/api/agent/favorites', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   try {
     const favorites = await db.prepare('SELECT user_id FROM agent_favorites WHERE agent_id = ?').all(req.session.userId);
     res.json(favorites.map(f => f.user_id));
@@ -1655,8 +1656,6 @@ app.get('/api/agent/favorites', requireAuth, async (req, res) => {
 
 // Agent: Check if player is favorited
 app.get('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
-  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
-  
   try {
     const favorite = await db.prepare('SELECT id FROM agent_favorites WHERE agent_id = ? AND user_id = ?').get(req.session.userId, req.params.playerId);
     res.json({ isFavorite: !!favorite });
@@ -1963,7 +1962,7 @@ const requireAdmin = (req, res, next) => {
 // Admin: Get own profile
 app.get('/api/admin/profile', requireAdmin, async (req, res) => {
   try {
-    const admin = await db.prepare('SELECT email, full_name, phone, organization, title, experience, bio FROM users WHERE id = ?').get(req.session.userId);
+    const admin = await db.prepare('SELECT email, full_name, phone, organization, title, experience, bio, profile_picture, last_login_at FROM users WHERE id = ?').get(req.session.userId);
     if (!admin) return res.status(404).json({ error: 'Admin not found' });
     res.json(admin);
   } catch (error) {
@@ -1971,11 +1970,26 @@ app.get('/api/admin/profile', requireAdmin, async (req, res) => {
     res.status(500).json({ error: 'Failed to get profile' });
   }
 });
-app.post('/api/admin/profile', requireAdmin, async (req, res) => {
+app.post('/api/admin/profile', requireAdmin, upload.fields([
+  { name: 'profilePicture', maxCount: 1 }
+]), async (req, res) => {
   const { fullName, email, phone, organization, title, experience, bio } = req.body;
+  const files = req.files;
   try {
+    await processUploadedFiles(req.session.userId, files);
+    const existingAdmin = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
+    let profilePicFilename = existingAdmin?.profile_picture || null;
+    if (files && files.profilePicture && files.profilePicture[0]) {
+      profilePicFilename = req.session.userId + '/' + files.profilePicture[0].filename;
+    }
+
     await db.prepare(`UPDATE users SET full_name = ?, email = ?, phone = ?, organization = ?, title = ?, experience = ?, bio = ? WHERE id = ?`)
       .run(fullName, email, phone, organization, title, experience, bio, req.session.userId);
+
+    if (files && files.profilePicture && files.profilePicture[0]) {
+      await replaceUserFile(req.session.userId, 'profile_picture', profilePicFilename);
+    }
+
     res.json({ success: true });
   } catch (error) {
     console.error('Admin update own profile error:', error);
@@ -1986,7 +2000,7 @@ app.post('/api/admin/profile', requireAdmin, async (req, res) => {
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
     const users = await db.prepare(`
-      SELECT u.id, u.email, u.role, u.full_name, u.phone, u.organization, u.created_at,
+      SELECT u.id, u.email, u.role, u.full_name, u.phone, u.organization, u.created_at, u.last_login_at, u.login_count,
         pp.full_name as player_name, pp.high_school, pp.position, pp.graduation_year, pp.gpa
       FROM users u
       LEFT JOIN player_profiles pp ON u.id = pp.user_id
@@ -2002,7 +2016,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
 // Admin: Get single user details
 app.get('/api/admin/users/:id', requireAdmin, async (req, res) => {
   try {
-    const user = await db.prepare('SELECT id, email, role, full_name, phone, organization, title, experience, bio, created_at FROM users WHERE id = ?').get(req.params.id);
+    const user = await db.prepare('SELECT id, email, role, full_name, phone, organization, title, experience, bio, created_at, last_login_at, login_count FROM users WHERE id = ?').get(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     let profile = null;
@@ -2127,7 +2141,42 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     const totalPlayers = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'player'").get()).count;
     const totalAgents = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'agent'").get()).count;
     const totalMessages = (await db.prepare('SELECT COUNT(*) as count FROM messages').get()).count;
-    res.json({ totalUsers, totalPlayers, totalAgents, totalMessages });
+
+    const usersActive24h = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE last_login_at >= NOW() - INTERVAL '24 hours'").get()).count;
+    const newUsers7d = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= NOW() - INTERVAL '7 days'").get()).count;
+    const messages7d = (await db.prepare("SELECT COUNT(*) as count FROM messages WHERE created_at >= NOW() - INTERVAL '7 days'").get()).count;
+    const totalProfileViews = (await db.prepare('SELECT COALESCE(SUM(profile_view_count), 0) as count FROM player_profiles').get()).count;
+    const aiSummariesGenerated = (await db.prepare('SELECT COUNT(*) as count FROM ai_player_summaries').get()).count;
+
+    const recentLogins = await db.prepare(`
+      SELECT u.id, u.email, u.role, COALESCE(pp.full_name, u.full_name, '') AS display_name, u.last_login_at
+      FROM users u
+      LEFT JOIN player_profiles pp ON pp.user_id = u.id
+      WHERE u.last_login_at IS NOT NULL
+      ORDER BY u.last_login_at DESC
+      LIMIT 8
+    `).all();
+
+    const topViewedPlayers = await db.prepare(`
+      SELECT pp.user_id, pp.full_name, COALESCE(pp.profile_view_count, 0) AS profile_view_count, pp.last_viewed_at
+      FROM player_profiles pp
+      ORDER BY COALESCE(pp.profile_view_count, 0) DESC, pp.last_viewed_at DESC NULLS LAST
+      LIMIT 8
+    `).all();
+
+    res.json({
+      totalUsers,
+      totalPlayers,
+      totalAgents,
+      totalMessages,
+      usersActive24h,
+      newUsers7d,
+      messages7d,
+      totalProfileViews,
+      aiSummariesGenerated,
+      recentLogins,
+      topViewedPlayers
+    });
   } catch (error) {
     console.error('Admin stats error:', error);
     res.status(500).json({ error: 'Failed to get stats' });

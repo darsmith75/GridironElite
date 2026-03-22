@@ -41,10 +41,11 @@
 
   <script src="app.js"></script>
   <script>
-    checkAuth('agent');
+    checkAuth();
     let reportCardPreviewEl = null;
     const AI_AUDIENCE = 'agent';
     let currentAiSummaryId = null;
+    let aiSummaryExpanded = true;
     const DETAIL_METRICS = [
       { key: 'forty_yard_dash', label: '40-Yard Dash', suffix: 's' },
       { key: 'vertical_jump', label: 'Vertical Jump', suffix: '"' },
@@ -210,6 +211,42 @@
       const box = document.getElementById('aiSummaryContent');
       if (!box) return;
       box.innerHTML = `<p class="ai-summary-status">${escapeHtml(message || 'Loading AI scouting summary...')}</p>`;
+    }
+
+    function getAiSummaryStorageKey() {
+      return `gridiron:aiSummaryExpanded:${playerId || 'unknown'}`;
+    }
+
+    function getStoredAiSummaryExpanded() {
+      try {
+        const raw = localStorage.getItem(getAiSummaryStorageKey());
+        if (raw === '0') return false;
+        if (raw === '1') return true;
+      } catch (_) {}
+      return true;
+    }
+
+    function setAiSummaryExpanded(expanded) {
+      aiSummaryExpanded = !!expanded;
+      const body = document.getElementById('aiSummaryBody');
+      const toggle = document.getElementById('aiSummaryToggleBtn');
+
+      try {
+        localStorage.setItem(getAiSummaryStorageKey(), aiSummaryExpanded ? '1' : '0');
+      } catch (_) {}
+
+      if (body) {
+        body.classList.toggle('is-collapsed', !aiSummaryExpanded);
+      }
+
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', aiSummaryExpanded ? 'true' : 'false');
+        toggle.innerHTML = `<span>${aiSummaryExpanded ? 'Collapse' : 'Expand'}</span><span class="ai-summary-toggle-icon">${aiSummaryExpanded ? '&#9662;' : '&#9656;'}</span>`;
+      }
+    }
+
+    function toggleAiSummary() {
+      setAiSummaryExpanded(!aiSummaryExpanded);
     }
 
     function renderAiSummary(data) {
@@ -411,18 +448,25 @@
           <div class="profile-section ai-summary-section">
             <div class="ai-summary-header">
               <h2 class="section-title-small">AI SCOUTING SUMMARY</h2>
-              <div class="ai-summary-actions">
-                <button id="generateAiSummaryBtn" class="ai-summary-btn" onclick="generateAiSummary(false)">Generate Summary</button>
-                <button class="ai-summary-btn secondary" onclick="generateAiSummary(true)">Regenerate</button>
+              <div class="ai-summary-controls">
+                <button id="aiSummaryToggleBtn" class="ai-summary-toggle-btn" type="button" aria-expanded="true" aria-controls="aiSummaryBody" onclick="toggleAiSummary()">
+                  <span>Collapse</span><span class="ai-summary-toggle-icon">&#9662;</span>
+                </button>
+                <div class="ai-summary-actions">
+                  <button id="generateAiSummaryBtn" class="ai-summary-btn" onclick="generateAiSummary(false)">Generate Summary</button>
+                  <button class="ai-summary-btn secondary" onclick="generateAiSummary(true)">Regenerate</button>
+                </div>
               </div>
             </div>
-            <div id="aiSummaryContent">
-              <p class="ai-summary-status">Loading AI scouting summary...</p>
-            </div>
-            <div class="ai-feedback-row">
-              <button class="ai-feedback-btn" onclick="submitAiFeedback('up')">Helpful</button>
-              <button class="ai-feedback-btn" onclick="submitAiFeedback('down')">Not Helpful</button>
-              <span id="aiFeedbackToast" class="ai-feedback-toast" aria-live="polite"></span>
+            <div id="aiSummaryBody">
+              <div id="aiSummaryContent">
+                <p class="ai-summary-status">Loading AI scouting summary...</p>
+              </div>
+              <div class="ai-feedback-row">
+                <button class="ai-feedback-btn" onclick="submitAiFeedback('up')">Helpful</button>
+                <button class="ai-feedback-btn" onclick="submitAiFeedback('down')">Not Helpful</button>
+                <span id="aiFeedbackToast" class="ai-feedback-toast" aria-live="polite"></span>
+              </div>
             </div>
           </div>
           
@@ -569,6 +613,7 @@
       
       // Check if player is favorited
       checkFavoriteStatus();
+      setAiSummaryExpanded(getStoredAiSummaryExpanded());
       loadAiSummary();
     }
     

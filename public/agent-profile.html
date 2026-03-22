@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent Profile</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .agent-profile-photo-section {
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .agent-profile-photo-section h3 {
+      margin-top: 0;
+    }
+  </style>
 </head>
 <body>
   <div class="dashboard-wrapper">
@@ -64,7 +77,7 @@
                 <label>Years of Experience:</label>
                 <input type="number" name="experience" id="agentExperience" placeholder="Years">
               </div>
-                <div class="form-section" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 10px;">
+                <div class="form-section agent-profile-photo-section">
                   <h3>🖼️ Profile Photo</h3>
                   <img id="agentProfilePicture" src="/uploads/default-profile.png" alt="Profile Picture" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 2px solid #c7d0da; margin-bottom: 10px;">
                   <input type="file" id="agentProfilePictureInput" accept="image/*">
@@ -110,6 +123,18 @@
     checkAuth('agent');
     loadAgentProfile();
 
+    const DEFAULT_PROFILE_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="%23eef2f7"/><circle cx="60" cy="45" r="23" fill="%2394a3b8"/><path d="M18 108c4-23 20-35 42-35s38 12 42 35" fill="%2394a3b8"/></svg>';
+
+    function setAgentProfileImage(src) {
+      const img = document.getElementById('agentProfilePicture');
+      if (!img) return;
+      img.onerror = function () {
+        img.onerror = null;
+        img.src = DEFAULT_PROFILE_AVATAR;
+      };
+      img.src = src || DEFAULT_PROFILE_AVATAR;
+    }
+
     document.getElementById('agentProfilePictureInput').addEventListener('change', function () {
       const file = this.files && this.files[0];
       if (!file) return;
@@ -134,11 +159,12 @@
             document.getElementById('agentExperience').value = profile.experience || '';
             document.getElementById('agentBio').value = profile.bio || '';
             // Set profile picture
-            document.getElementById('agentProfilePicture').src = profile.profile_picture ? '/uploads/' + profile.profile_picture : '/uploads/default-profile.png';
+            setAgentProfileImage(profile.profile_picture ? '/uploads/' + profile.profile_picture : DEFAULT_PROFILE_AVATAR);
           }
         }
       } catch (error) {
         console.error('Error loading profile:', error);
+        setAgentProfileImage(DEFAULT_PROFILE_AVATAR);
       }
     }
 

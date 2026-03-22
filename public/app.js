@@ -150,6 +150,63 @@ async function logout() {
   window.location.href = '/';
 }
 
+function normalizeNavLabel(text) {
+  return String(text || '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function findTopNavLinkByLabel(nav, label) {
+  const expected = normalizeNavLabel(label);
+  const links = Array.from(nav.querySelectorAll('a.nav-link'));
+  return links.find(link => normalizeNavLabel(link.textContent) === expected) || null;
+}
+
+function getProfilePathForRole(role) {
+  if (role === 'player') return 'player-profile.html';
+  if (role === 'admin') return 'admin-profile.html';
+  return 'agent-profile.html';
+}
+
+function ensureDashboardLink(nav, shouldShow) {
+  let dashboardLink = findTopNavLinkByLabel(nav, 'Dashboard');
+
+  if (!shouldShow) {
+    if (dashboardLink) dashboardLink.remove();
+    return;
+  }
+
+  if (!dashboardLink) {
+    dashboardLink = document.createElement('a');
+    dashboardLink.className = 'nav-link';
+    dashboardLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Dashboard';
+
+    const homeLink = findTopNavLinkByLabel(nav, 'Home');
+    if (homeLink && homeLink.parentNode) {
+      homeLink.insertAdjacentElement('afterend', dashboardLink);
+    } else {
+      nav.prepend(dashboardLink);
+    }
+  }
+
+  dashboardLink.href = 'admin-dashboard.html';
+}
+
+function applyRoleBasedTopNav(user) {
+  const nav = document.querySelector('.top-nav-menu');
+  if (!nav || !user || !user.role) return;
+
+  const homeLink = findTopNavLinkByLabel(nav, 'Home');
+  if (homeLink) {
+    homeLink.href = 'agent-dashboard.html';
+  }
+
+  const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
+  if (profileLink) {
+    profileLink.href = getProfilePathForRole(user.role);
+  }
+
+  ensureDashboardLink(nav, user.role === 'admin');
+}
+
 // Check authentication
 async function checkAuth(requiredRole) {
   const res = await fetch('/api/user');
@@ -164,6 +221,9 @@ async function checkAuth(requiredRole) {
     // Admin can access any page
     if (user.role !== 'admin') {
       window.location.href = '/';
+      return;
     }
   }
+
+  applyRoleBasedTopNav(user);
 }
