@@ -149,9 +149,6 @@
       
       <div class="filter-actions">
         <div style="display: flex; gap: 10px;">
-          <button onclick="loadPlayers()" class="search-btn">
-            <span>Search</span>
-          </button>
           <button onclick="clearFilters()" class="clear-btn">
             <span>Reset</span>
           </button>
@@ -233,25 +230,20 @@
       loadPlayers();
     });
     
-    // Add Enter key handler for advanced filter fields
-    document.addEventListener('DOMContentLoaded', function() {
-      const filterFields = [
-        'filterPosition', 'filterYear', 'filterGpa', 'filterForty',
-        'filterHeight', 'filterWeight', 'filterVertical', 'filterBench',
-        'filterSquat', 'filterShuttle', 'filterLDrill', 'filterBroadJump'
-      ];
-      
-      filterFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-          field.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              loadPlayers();
-            }
-          });
-        }
-      });
+    // Add auto-search to all advanced filter fields
+    const advancedFilterFields = [
+      'filterYear', 'filterGpa', 'filterForty',
+      'filterHeight', 'filterWeight', 'filterVertical', 'filterBench',
+      'filterSquat', 'filterShuttle', 'filterLDrill', 'filterBroadJump'
+    ];
+    
+    advancedFilterFields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.addEventListener('input', function() {
+          loadPlayers();
+        });
+      }
     });
 
     function clearFilters() {
