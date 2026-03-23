@@ -262,6 +262,33 @@ async function getMetricTipsMap() {
   return map;
 }
 
+async function getPlayerMetricTipOverridesMap(playerUserId) {
+  const rows = await db.prepare(
+    'SELECT metric_key, tip_text FROM player_metric_pro_tips WHERE player_user_id = ?'
+  ).all(playerUserId);
+
+  const map = {};
+  rows.forEach(row => {
+    if (METRIC_TIP_KEYS.has(row.metric_key)) {
+      map[row.metric_key] = row.tip_text || '';
+    }
+  });
+  return map;
+}
+
+async function getMergedMetricTipsForPlayer(playerUserId) {
+  const defaults = await getMetricTipsMap();
+  const overrides = await getPlayerMetricTipOverridesMap(playerUserId);
+  const merged = { ...defaults };
+  for (const key of Object.keys(overrides)) {
+    const overrideText = String(overrides[key] || '').trim();
+    if (overrideText) {
+      merged[key] = overrideText;
+    }
+  }
+  return { defaults, overrides, merged };
+}
+
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
 
@@ -1146,6 +1173,11 @@ app.get('/api/player/profile', requireAuth, async (req, res) => {
 // Player: Get pro tips for athletic metrics
 app.get('/api/player/metric-pro-tips', requireAuth, async (req, res) => {
   try {
+    if (req.session.role === 'player') {
+      const tips = await getMergedMetricTipsForPlayer(req.session.userId);
+      return res.json({ tips: tips.merged, metrics: METRIC_TIP_CONFIG });
+    }
+
     const tips = await getMetricTipsMap();
     res.json({ tips, metrics: METRIC_TIP_CONFIG });
   } catch (error) {
@@ -2221,6 +2253,121 @@ app.put('/api/admin/metric-pro-tips', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin save metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to save metric tips' });
+  }
+});
+
+// Admin: List players for per-player metric tip overrides
+app.get('/api/admin/player-metric-pro-tips/players', requireAdmin, async (req, res) => {
+  try {
+    const players = await db.prepare(`
+      SELECT u.id AS user_id,
+        COALESCE(pp.full_name, u.full_name, u.email) AS full_name,
+        pp.high_school,
+        pp.graduation_year,
+        pp.position
+      FROM users u
+      LEFT JOIN player_profiles pp ON pp.user_id = u.id
+      WHERE u.role = 'player'
+      ORDER BY COALESCE(pp.full_name, u.full_name, u.email) ASC
+    `).all();
+    res.json({ players });
+  } catch (error) {
+    console.error('Admin list player metric tip players error:', error);
+    res.status(500).json({ error: 'Failed to load players' });
+  }
+});
+
+// Admin: Get default + override + merged metric tips for a player
+app.get('/api/admin/player-metric-pro-tips/:playerUserId', requireAdmin, async (req, res) => {
+  try {
+    const playerUserId = parseInt(req.params.playerUserId, 10);
+    if (!Number.isInteger(playerUserId) || playerUserId <= 0) {
+      return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    const player = await db.prepare(`
+      SELECT u.id AS user_id,
+        COALESCE(pp.full_name, u.full_name, u.email) AS full_name,
+        pp.high_school,
+        pp.graduation_year,
+        pp.position,
+        pp.forty_yard_dash,
+        pp.vertical_jump,
+        pp.bench_press,
+        pp.squat,
+        pp.shuttle_5_10_5,
+        pp.l_drill,
+        pp.broad_jump,
+        pp.power_clean,
+        pp.single_leg_squat
+      FROM users u
+      LEFT JOIN player_profiles pp ON pp.user_id = u.id
+      WHERE u.id = ? AND u.role = 'player'
+      LIMIT 1
+    `).get(playerUserId);
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const tips = await getMergedMetricTipsForPlayer(playerUserId);
+    res.json({
+      player,
+      metrics: METRIC_TIP_CONFIG,
+      defaults: tips.defaults,
+      overrides: tips.overrides,
+      tips: tips.merged
+    });
+  } catch (error) {
+    console.error('Admin get player metric pro tips error:', error);
+    res.status(500).json({ error: 'Failed to load player metric tips' });
+  }
+});
+
+// Admin: Save metric tip overrides for a player
+app.put('/api/admin/player-metric-pro-tips/:playerUserId', requireAdmin, async (req, res) => {
+  try {
+    const playerUserId = parseInt(req.params.playerUserId, 10);
+    if (!Number.isInteger(playerUserId) || playerUserId <= 0) {
+      return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    const playerExists = await db.prepare('SELECT id FROM users WHERE id = ? AND role = ?').get(playerUserId, 'player');
+    if (!playerExists) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const incomingTips = req.body?.tips;
+    if (!incomingTips || typeof incomingTips !== 'object') {
+      return res.status(400).json({ error: 'Invalid tips payload' });
+    }
+
+    for (const [metricKey, tipValue] of Object.entries(incomingTips)) {
+      if (!METRIC_TIP_KEYS.has(metricKey)) continue;
+      const tipText = (tipValue || '').toString().trim();
+      if (!tipText) {
+        await db.prepare(
+          'DELETE FROM player_metric_pro_tips WHERE player_user_id = ? AND metric_key = ?'
+        ).run(playerUserId, metricKey);
+        continue;
+      }
+
+      await db.prepare(`
+        INSERT INTO player_metric_pro_tips (player_user_id, metric_key, tip_text, updated_by_user_id, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (player_user_id, metric_key)
+        DO UPDATE SET
+          tip_text = EXCLUDED.tip_text,
+          updated_by_user_id = EXCLUDED.updated_by_user_id,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(playerUserId, metricKey, tipText, req.session.userId);
+    }
+
+    const tips = await getMergedMetricTipsForPlayer(playerUserId);
+    res.json({ success: true, metrics: METRIC_TIP_CONFIG, overrides: tips.overrides, tips: tips.merged });
+  } catch (error) {
+    console.error('Admin save player metric pro tips error:', error);
+    res.status(500).json({ error: 'Failed to save player metric tips' });
   }
 });
 

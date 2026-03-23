@@ -746,7 +746,7 @@
       const isVerified = !!(media && media.is_verified);
       const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
       const cardAttrs = hasVideo
-        ? ` role="button" tabindex="0" title="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
+        ? ` role="button" tabindex="0" aria-label="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
       const displayValue = metric.key === 'broad_jump'
         ? formatBroadJumpFeetInches(value)
@@ -755,10 +755,11 @@
         <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
           <div class="metric-label-row">
             <div class="metric-label">${metric.label}</div>
+            <span class="metric-tip-icon" data-tip-key="${metric.key}" aria-label="Pro tip" role="button" tabindex="0" onclick="event.stopPropagation();">i</span>
             ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
           </div>
           <div class="metric-value">${displayValue}</div>
-          ${hasVideo ? '<div class="metric-video-hint">View Video</div>' : ''}
+          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? 'View Video' : '&nbsp;'}</div>
         </div>
       `;
     }
@@ -1005,6 +1006,7 @@
       }
 
       document.getElementById('viewProfileContent').innerHTML = html;
+      applyMetricTipsToIcons();
     }
 
     function getEmbedUrl(url) {

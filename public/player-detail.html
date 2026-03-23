@@ -123,6 +123,15 @@
       return map;
     }
 
+    function formatBroadJumpFeetInches(totalInchesValue) {
+      const total = Number(totalInchesValue);
+      if (!Number.isFinite(total) || total <= 0) return '';
+      const feet = Math.floor(total / 12);
+      const inches = Number((total - (feet * 12)).toFixed(1));
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+      return `${feet}' ${inchesText}"`;
+    }
+
     function buildDetailMetricCard(player, metric, metricVideoMap) {
       const value = player[metric.key];
       if (!value) return '';
@@ -130,8 +139,11 @@
       const hasVideo = !!(media && media.video_filename);
       const isVerified = !!(media && media.is_verified);
       const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
+      const displayValue = metric.key === 'broad_jump'
+        ? formatBroadJumpFeetInches(value)
+        : `${value}${metric.suffix}`;
       const cardAttrs = hasVideo
-        ? ` role="button" tabindex="0" title="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
+        ? ` role="button" tabindex="0" aria-label="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
       return `
         <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
@@ -139,8 +151,8 @@
             <div class="metric-label">${metric.label}</div>
             ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
           </div>
-          <div class="metric-value">${value}${metric.suffix}</div>
-          ${hasVideo ? '<div class="metric-video-hint">View Video</div>' : ''}
+          <div class="metric-value">${displayValue}</div>
+          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? 'View Video' : '&nbsp;'}</div>
         </div>
       `;
     }
@@ -853,7 +865,7 @@
         excel += addDataRow('Squat', player.squat ? `${player.squat} lbs` : null);
         excel += addDataRow('5-10-5 Shuttle', player.shuttle_5_10_5 ? `${player.shuttle_5_10_5} seconds` : null);
         excel += addDataRow('L-Drill', player.l_drill ? `${player.l_drill} seconds` : null);
-        excel += addDataRow('Broad Jump', player.broad_jump ? `${player.broad_jump} inches` : null);
+        excel += addDataRow('Broad Jump', player.broad_jump ? formatBroadJumpFeetInches(player.broad_jump) : null);
         excel += addDataRow('Power Clean', player.power_clean ? `${player.power_clean} lbs` : null);
         excel += addDataRow('Single Leg Squat', player.single_leg_squat ? `${player.single_leg_squat} lbs` : null);
         excel += addEmptyRow();

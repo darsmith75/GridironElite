@@ -2840,6 +2840,10 @@ textarea {
   border-radius: 8px;
   border: 1px solid #e9ecef;
   transition: all 0.3s;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .metric-item:hover {
@@ -2854,20 +2858,33 @@ textarea {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 5px;
+  margin-bottom: 0;
+  line-height: 1.2;
 }
 
 .metric-value {
   font-size: 18px;
   color: #1e3c72;
   font-weight: 800;
+  line-height: 1.1;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .metric-label-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
+  min-height: 26px;
+}
+
+.metric-label-row .metric-tip-icon,
+.metric-label-row .metric-verified-star {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .metric-item-clickable {
@@ -2880,10 +2897,15 @@ textarea {
 }
 
 .metric-video-hint {
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 11px;
   color: #2a5298;
   font-weight: 600;
+  min-height: 14px;
+}
+
+.metric-video-hint-empty {
+  visibility: hidden;
 }
 
 .metric-verified-star {

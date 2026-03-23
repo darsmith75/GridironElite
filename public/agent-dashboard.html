@@ -173,8 +173,13 @@
 
   <script src="app.js"></script>
   <script>
-    checkAuth();
-    loadPlayers();
+    initDashboard();
+
+    async function initDashboard() {
+      const user = await checkAuth();
+      if (!user) return;
+      loadPlayers();
+    }
 
     function escapeHtml(value) {
       return String(value ?? '')
@@ -432,6 +437,14 @@
       return raw;
     }
 
+    function getPlayerCardDestination(player) {
+      const currentUser = window.currentUser;
+      if (currentUser && currentUser.role === 'player' && Number(player.user_id) === Number(currentUser.id)) {
+        return 'player-profile.html';
+      }
+      return `player-detail.html?id=${player.id}`;
+    }
+
     function renderPage(page) {
       const players = window._allPlayers || [];
       const favoriteIds = window._favIds || [];
@@ -454,7 +467,7 @@
         const hasVerifiedBadge = hasVerifiedMetric(p);
         return `
         <div class="player-card-compact">
-          <div onclick="window.location.href='player-detail.html?id=${p.id}'" style="cursor: pointer;">
+          <div onclick="window.location.href='${getPlayerCardDestination(p)}'" style="cursor: pointer;">
             <div class="player-card-header">
               ${p.profile_picture ? 
                 `<img src="/uploads/${p.profile_picture}" alt="${p.full_name}" class="player-card-photo">` : 

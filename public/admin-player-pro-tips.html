@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Pro Tips</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .page-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .page-toolbar h1 {
+      margin: 0;
+      color: #1e3c72;
+      font-size: 30px;
+    }
+
+    .pro-tip-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .pro-tip-panel {
+      background: #ffffff;
+      border: 1px solid #c7d0da;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 16px;
+    }
+
+    .pro-tip-panel h2 {
+      margin: 0 0 12px;
+      color: #1e3c72;
+      font-size: 18px;
+    }
+
+    .player-filter {
+      width: 100%;
+      height: 42px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .player-list {
+      max-height: 64vh;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .player-row {
+      border: 1px solid #d5dde8;
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .player-row:hover {
+      border-color: #89a6cf;
+      transform: translateY(-1px);
+    }
+
+    .player-row.active {
+      border-color: #2a5298;
+      background: #eaf2ff;
+      box-shadow: 0 2px 10px rgba(42, 82, 152, 0.2);
+    }
+
+    .player-row-name {
+      font-weight: 700;
+      color: #20365e;
+      margin-bottom: 2px;
+      font-size: 14px;
+    }
+
+    .player-row-meta {
+      color: #5f6e84;
+      font-size: 12px;
+    }
+
+    .tips-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tips-header h2 {
+      margin: 0;
+    }
+
+    .tips-subtitle {
+      margin: 0 0 12px;
+      color: #607086;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
+    }
+
+    .tip-card {
+      border: 1px solid #c9d4e5;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .tip-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #1e3c72;
+    }
+
+    .tip-default-label {
+      margin: 0 0 6px;
+      font-size: 11px;
+      color: #6d7c93;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+
+    .tip-default {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #4f6078;
+      background: #ffffff;
+      border: 1px solid #d5deeb;
+      border-radius: 8px;
+      padding: 8px;
+      min-height: 54px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    .tip-current {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #2f456c;
+      background: #ffffff;
+      border: 1px solid #c8d5ea;
+      border-radius: 8px;
+      padding: 8px;
+      min-height: 40px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .tip-input {
+      width: 100%;
+      border: 1px solid #b8c7df;
+      border-radius: 8px;
+      min-height: 82px;
+      padding: 8px 10px;
+      resize: vertical;
+      font-size: 13px;
+      font-family: inherit;
+      box-sizing: border-box;
+      background: #ffffff;
+      color: #2d3d56;
+    }
+
+    .tip-status {
+      margin-top: 12px;
+      min-height: 18px;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .page-empty {
+      color: #6f7e93;
+      font-size: 14px;
+      padding: 10px 0;
+    }
+
+    @media (max-width: 980px) {
+      .pro-tip-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .player-list {
+        max-height: 34vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="admin-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="messages.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            Messages
+          </a>
+          <a href="admin-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="page-toolbar">
+        <h1>Player Metric Pro Tips</h1>
+        <a href="admin-dashboard.html" class="player-card-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Back to Admin</a>
+      </div>
+
+      <div class="pro-tip-layout">
+        <section class="pro-tip-panel">
+          <h2>Select Player</h2>
+          <input id="playerSearchInput" class="player-filter" type="text" placeholder="Search player name, school, position...">
+          <div id="playerList" class="player-list"></div>
+        </section>
+
+        <section class="pro-tip-panel">
+          <div class="tips-header">
+            <h2 id="selectedPlayerTitle">Choose a player to edit tips</h2>
+            <button id="savePlayerTipsBtn" class="btn-save" disabled>Save Overrides</button>
+          </div>
+          <p class="tips-subtitle">Default tips remain in effect. Add text in Override to replace default for this player. Leave blank to use default.</p>
+          <div id="playerTipsGrid" class="tips-grid"></div>
+          <div id="playerTipsStatus" class="tip-status"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth('admin');
+
+    let players = [];
+    let filteredPlayers = [];
+    let selectedPlayerId = null;
+    let selectedPlayer = null;
+    let tipMetrics = [];
+    let defaultTips = {};
+    let overrideTips = {};
+    let selectedPlayerMetrics = {};
+
+    document.getElementById('playerSearchInput').addEventListener('input', renderPlayerList);
+    document.getElementById('savePlayerTipsBtn').addEventListener('click', savePlayerTips);
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function setStatus(text) {
+      const el = document.getElementById('playerTipsStatus');
+      if (el) el.textContent = text || '';
+    }
+
+    function formatMetricValue(metricKey, rawValue) {
+      if (rawValue === null || rawValue === undefined || rawValue === '') {
+        return 'No recorded value';
+      }
+
+      const numeric = Number(rawValue);
+      const isNumeric = Number.isFinite(numeric);
+      switch (metricKey) {
+        case 'forty_yard_dash':
+        case 'shuttle_5_10_5':
+        case 'l_drill':
+          return isNumeric ? `${numeric}s` : String(rawValue);
+        case 'vertical_jump':
+          return isNumeric ? `${numeric} in` : String(rawValue);
+        case 'bench_press':
+        case 'squat':
+        case 'power_clean':
+        case 'single_leg_squat':
+          return isNumeric ? `${numeric} lbs` : String(rawValue);
+        case 'broad_jump': {
+          if (!isNumeric) return String(rawValue);
+          const feet = Math.floor(numeric / 12);
+          const inches = Number((numeric - (feet * 12)).toFixed(1));
+          const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+          return `${feet}'${inchesText}"`;
+        }
+        default:
+          return String(rawValue);
+      }
+    }
+
+    async function loadPlayers() {
+      const listEl = document.getElementById('playerList');
+      listEl.innerHTML = '<p class="page-empty">Loading players...</p>';
+      setStatus('');
+
+      try {
+        const res = await fetch('/api/admin/player-metric-pro-tips/players');
+        if (!res.ok) throw new Error('Failed to load players');
+        const payload = await res.json();
+        players = Array.isArray(payload.players) ? payload.players : [];
+        filteredPlayers = players.slice();
+        renderPlayerList();
+      } catch (error) {
+        listEl.innerHTML = '<p class="page-empty">Failed to load players.</p>';
+      }
+    }
+
+    function renderPlayerList() {
+      const query = (document.getElementById('playerSearchInput').value || '').trim().toLowerCase();
+      filteredPlayers = players.filter(player => {
+        if (!query) return true;
+        const text = [
+          player.full_name,
+          player.high_school,
+          player.position,
+          player.graduation_year ? String(player.graduation_year) : ''
+        ].join(' ').toLowerCase();
+        return text.includes(query);
+      });
+
+      const listEl = document.getElementById('playerList');
+      if (!filteredPlayers.length) {
+        listEl.innerHTML = '<p class="page-empty">No players match your search.</p>';
+        return;
+      }
+
+      listEl.innerHTML = filteredPlayers.map(player => {
+        const activeClass = Number(player.user_id) === Number(selectedPlayerId) ? 'active' : '';
+        const meta = [
+          player.position || '',
+          player.high_school || '',
+          player.graduation_year ? `Class of ${player.graduation_year}` : ''
+        ].filter(Boolean).join(' · ');
+
+        return `<div class="player-row ${activeClass}" onclick="selectPlayer(${Number(player.user_id)})">
+          <div class="player-row-name">${escapeHtml(player.full_name || 'Player')}</div>
+          <div class="player-row-meta">${escapeHtml(meta || 'No profile metadata')}</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function selectPlayer(playerUserId) {
+      selectedPlayerId = Number(playerUserId);
+      selectedPlayer = players.find(player => Number(player.user_id) === selectedPlayerId) || null;
+      renderPlayerList();
+      document.getElementById('savePlayerTipsBtn').disabled = true;
+      setStatus('Loading tip overrides...');
+
+      try {
+        const res = await fetch(`/api/admin/player-metric-pro-tips/${selectedPlayerId}`);
+        if (!res.ok) throw new Error('Failed to load player tips');
+        const payload = await res.json();
+        selectedPlayer = payload.player || selectedPlayer;
+        tipMetrics = Array.isArray(payload.metrics) ? payload.metrics : [];
+        defaultTips = payload.defaults || {};
+        overrideTips = payload.overrides || {};
+        selectedPlayerMetrics = payload.player || {};
+
+        renderTipsEditor();
+        document.getElementById('savePlayerTipsBtn').disabled = false;
+        setStatus('');
+      } catch (error) {
+        document.getElementById('playerTipsGrid').innerHTML = '<p class="page-empty">Failed to load tips for this player.</p>';
+        setStatus('');
+      }
+    }
+
+    function renderTipsEditor() {
+      const titleEl = document.getElementById('selectedPlayerTitle');
+      if (selectedPlayer) {
+        titleEl.textContent = `Pro Tips for ${selectedPlayer.full_name || 'Player'}`;
+      } else {
+        titleEl.textContent = 'Choose a player to edit tips';
+      }
+
+      const gridEl = document.getElementById('playerTipsGrid');
+      if (!tipMetrics.length) {
+        gridEl.innerHTML = '<p class="page-empty">No metric configuration found.</p>';
+        return;
+      }
+
+      gridEl.innerHTML = tipMetrics.map(metric => {
+        const defaultText = (defaultTips[metric.key] || '').toString().trim();
+        const overrideText = (overrideTips[metric.key] || '').toString();
+        const currentValueText = formatMetricValue(metric.key, selectedPlayerMetrics[metric.key]);
+        return `<div class="tip-card">
+          <h3>${escapeHtml(metric.label || metric.key)}</h3>
+          <p class="tip-default-label">Default Tip</p>
+          <div class="tip-default">${escapeHtml(defaultText || 'No default tip set')}</div>
+          <p class="tip-default-label">Current Player Metric</p>
+          <div class="tip-current">${escapeHtml(currentValueText)}</div>
+          <p class="tip-default-label">Override For This Player</p>
+          <textarea class="tip-input" data-metric-key="${escapeHtml(metric.key)}" placeholder="Leave blank to use default">${escapeHtml(overrideText)}</textarea>
+        </div>`;
+      }).join('');
+    }
+
+    async function savePlayerTips() {
+      if (!selectedPlayerId) return;
+      setStatus('Saving player tip overrides...');
+
+      const tips = {};
+      document.querySelectorAll('.tip-input[data-metric-key]').forEach(input => {
+        tips[input.dataset.metricKey] = input.value || '';
+      });
+
+      try {
+        const res = await fetch(`/api/admin/player-metric-pro-tips/${selectedPlayerId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tips })
+        });
+
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload.error || 'Failed to save overrides');
+        }
+
+        const payload = await res.json();
+        overrideTips = payload.overrides || {};
+        setStatus('Saved successfully.');
+      } catch (error) {
+        setStatus(error.message || 'Failed to save overrides.');
+      }
+    }
+
+    loadPlayers();
+  </script>
+</body>
+</html>

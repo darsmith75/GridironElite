@@ -213,7 +213,7 @@ async function checkAuth(requiredRole) {
   
   if (!res.ok) {
     window.location.href = '/';
-    return;
+    return null;
   }
   
   const user = await res.json();
@@ -221,9 +221,11 @@ async function checkAuth(requiredRole) {
     // Admin can access any page
     if (user.role !== 'admin') {
       window.location.href = '/';
-      return;
+      return null;
     }
   }
 
+  window.currentUser = user;
   applyRoleBasedTopNav(user);
+  return user;
 }
