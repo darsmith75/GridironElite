@@ -163,6 +163,10 @@
       </div>
     </div>
 
+    <div class="ad-slot ad-slot-leaderboard" data-ad-slot="agent_dashboard_leaderboard" aria-label="Sponsored advertisement space">
+      Sponsored Space 728 x 90
+    </div>
+
     <div id="playersList"></div>
     <div id="pagination"></div>
     </div>
@@ -175,6 +179,7 @@
     async function initDashboard() {
       const user = await checkAuth();
       if (!user) return;
+      await applyManagedAdSlots(document);
       loadPlayers();
     }
 

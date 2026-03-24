@@ -56,7 +56,33 @@ const METRIC_TIP_CONFIG = [
   { key: 'single_leg_squat', label: 'Single Leg Squat' }
 ];
 const METRIC_TIP_KEYS = new Set(METRIC_TIP_CONFIG.map(item => item.key));
+const AD_SLOT_CONFIG = [
+  { key: 'agent_dashboard_leaderboard', label: 'Agent Dashboard Top Leaderboard (728x90)' },
+  { key: 'player_detail_top_leaderboard', label: 'Player Detail Top Leaderboard (728x90)' },
+  { key: 'player_detail_inline', label: 'Player Detail Inline Banner (468x120)' }
+];
+const AD_SLOT_KEYS = new Set(AD_SLOT_CONFIG.map(item => item.key));
 const aiGenerateRateTracker = new Map();
+
+async function getAdSlotsMap() {
+  const rows = await db.prepare('SELECT slot_key, enabled, content_html, updated_at FROM site_ad_slots').all();
+  const map = {};
+
+  for (const config of AD_SLOT_CONFIG) {
+    map[config.key] = { enabled: false, contentHtml: '', updatedAt: null };
+  }
+
+  rows.forEach(row => {
+    if (!AD_SLOT_KEYS.has(row.slot_key)) return;
+    map[row.slot_key] = {
+      enabled: !!row.enabled,
+      contentHtml: row.content_html || '',
+      updatedAt: row.updated_at || null
+    };
+  });
+
+  return map;
+}
 
 function isAiGenerationEnabled() {
   return String(process.env.AI_FEATURE_ENABLED || 'false').toLowerCase() === 'true';
@@ -1186,6 +1212,16 @@ app.get('/api/player/metric-pro-tips', requireAuth, async (req, res) => {
   }
 });
 
+app.get('/api/ad-slots', requireAuth, async (req, res) => {
+  try {
+    const slots = await getAdSlotsMap();
+    res.json({ slots });
+  } catch (error) {
+    console.error('Get ad slots error:', error);
+    res.status(500).json({ error: 'Failed to load ad slots' });
+  }
+});
+
 // Player: AI-assisted bio writing/improvement
 app.post('/api/player/bio-assist', requireAuth, async (req, res) => {
   try {
@@ -2253,6 +2289,48 @@ app.put('/api/admin/metric-pro-tips', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin save metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to save metric tips' });
+  }
+});
+
+app.get('/api/admin/ad-slots', requireAdmin, async (req, res) => {
+  try {
+    const slots = await getAdSlotsMap();
+    res.json({ slots, config: AD_SLOT_CONFIG });
+  } catch (error) {
+    console.error('Admin get ad slots error:', error);
+    res.status(500).json({ error: 'Failed to load ad slots' });
+  }
+});
+
+app.put('/api/admin/ad-slots', requireAdmin, async (req, res) => {
+  try {
+    const incomingSlots = req.body?.slots;
+    if (!incomingSlots || typeof incomingSlots !== 'object') {
+      return res.status(400).json({ error: 'Invalid ad slots payload' });
+    }
+
+    for (const [slotKey, slotValue] of Object.entries(incomingSlots)) {
+      if (!AD_SLOT_KEYS.has(slotKey)) continue;
+      const enabled = !!slotValue?.enabled;
+      const contentHtml = (slotValue?.contentHtml || '').toString();
+
+      await db.prepare(`
+        INSERT INTO site_ad_slots (slot_key, enabled, content_html, updated_by_user_id, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (slot_key)
+        DO UPDATE SET
+          enabled = EXCLUDED.enabled,
+          content_html = EXCLUDED.content_html,
+          updated_by_user_id = EXCLUDED.updated_by_user_id,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(slotKey, enabled, contentHtml, req.session.userId);
+    }
+
+    const slots = await getAdSlotsMap();
+    res.json({ success: true, slots, config: AD_SLOT_CONFIG });
+  } catch (error) {
+    console.error('Admin save ad slots error:', error);
+    res.status(500).json({ error: 'Failed to save ad slots' });
   }
 });
 

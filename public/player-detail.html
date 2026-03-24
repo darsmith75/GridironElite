@@ -449,6 +449,10 @@
               <button onclick="exportPlayerData()" class="export-btn" style="margin-left: 10px;">📊 Export to Excel</button>
             </div>
           </div>
+
+          <div class="ad-slot ad-slot-leaderboard" data-ad-slot="player_detail_top_leaderboard" aria-label="Sponsored advertisement space">
+            Sponsored Space 728 x 90
+          </div>
           
           ${player.bio ? `
             <div class="profile-section">
@@ -488,6 +492,10 @@
             <div class="metrics-grid">
               ${DETAIL_METRICS.map(metric => buildDetailMetricCard(player, metric, metricVideoMap)).join('')}
             </div>
+          </div>
+
+          <div class="ad-slot ad-slot-inline" data-ad-slot="player_detail_inline" aria-label="Sponsored advertisement space">
+            Sponsored Space 468 x 120
           </div>
           
           ${(player.highlight_videos || player.video_links) ? (() => {
@@ -622,6 +630,8 @@
           ` : ''}
         </div>
       `;
+
+      await applyManagedAdSlots(document.getElementById('playerDetail'));
       
       // Check if player is favorited
       checkFavoriteStatus();

@@ -229,3 +229,51 @@ async function checkAuth(requiredRole) {
   applyRoleBasedTopNav(user);
   return user;
 }
+
+async function loadAdSlots() {
+  try {
+    const res = await fetch('/api/ad-slots');
+    if (!res.ok) return {};
+    const data = await res.json();
+    return data?.slots || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function renderAdSlotHtml(slotEl, html) {
+  slotEl.innerHTML = html;
+  const scripts = Array.from(slotEl.querySelectorAll('script'));
+  scripts.forEach(oldScript => {
+    const newScript = document.createElement('script');
+    for (const attr of oldScript.attributes) {
+      newScript.setAttribute(attr.name, attr.value);
+    }
+    newScript.textContent = oldScript.textContent;
+    oldScript.parentNode.replaceChild(newScript, oldScript);
+  });
+}
+
+async function applyManagedAdSlots(root = document) {
+  const slotElements = Array.from(root.querySelectorAll('[data-ad-slot]'));
+  if (!slotElements.length) return;
+
+  const slots = await loadAdSlots();
+  slotElements.forEach(slotEl => {
+    const slotKey = slotEl.dataset.adSlot;
+    const slotConfig = slots[slotKey];
+    if (!slotConfig) return;
+
+    if (slotConfig.enabled === false) {
+      slotEl.style.display = 'none';
+      return;
+    }
+
+    slotEl.style.display = '';
+    const contentHtml = String(slotConfig.contentHtml || '').trim();
+    if (!contentHtml) return;
+
+    renderAdSlotHtml(slotEl, contentHtml);
+    slotEl.classList.add('ad-slot-configured');
+  });
+}

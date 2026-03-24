@@ -38,6 +38,7 @@ const insertPrimaryKeys = {
   player_metric_videos: 'id',
   metric_pro_tips: 'id',
   player_metric_pro_tips: 'id',
+  site_ad_slots: 'id',
   player_school_interests: 'id',
   school_notes: 'id',
   school_contacts: 'id',
@@ -198,6 +199,16 @@ const createTablesSQL = `
     FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS site_ad_slots (
+    id SERIAL PRIMARY KEY,
+    slot_key VARCHAR(120) UNIQUE NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    content_html TEXT,
+    updated_by_user_id INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
   CREATE TABLE IF NOT EXISTS player_school_interests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -307,6 +318,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
   CREATE INDEX IF NOT EXISTS idx_player_metric_pro_tips_player ON player_metric_pro_tips(player_user_id);
+  CREATE INDEX IF NOT EXISTS idx_site_ad_slots_key ON site_ad_slots(slot_key);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_player_active ON ai_player_summaries(player_user_id, is_active);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_source_hash ON ai_player_summaries(player_user_id, source_hash);
   CREATE UNIQUE INDEX IF NOT EXISTS uq_ai_summary_cache ON ai_player_summaries(player_user_id, generated_for_role, source_hash, prompt_version, model_name) WHERE is_active = TRUE;

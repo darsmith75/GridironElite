@@ -330,6 +330,63 @@
       color: #1e3c72;
       min-height: 18px;
     }
+    .ad-slot-admin-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .ad-slot-admin-card {
+      background: #f8fbff;
+      border: 1px solid #c7d0da;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .ad-slot-admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .ad-slot-admin-title {
+      margin: 0;
+      color: #1e3c72;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .ad-slot-admin-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #425066;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .ad-slot-admin-key {
+      font-size: 12px;
+      color: #76849b;
+      margin-bottom: 8px;
+      font-family: Consolas, 'Courier New', monospace;
+    }
+    .ad-slot-admin-card textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 13px;
+      font-family: Consolas, 'Courier New', monospace;
+      box-sizing: border-box;
+    }
+    .ad-slot-admin-status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3c72;
+      min-height: 18px;
+    }
   </style>
 </head>
 <body>
@@ -388,6 +445,7 @@
         <button class="admin-tab active" onclick="switchTab('users')">User Management</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
         <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
+        <button class="admin-tab" onclick="switchTab('ads')">Advertising</button>
       </div>
 
       <!-- User Management Tab -->
@@ -460,6 +518,18 @@
           <p style="margin:0 0 16px; color:#666; font-size:14px;">These tips appear when athletes click the info icon beside each metric on their profile form.</p>
           <div id="proTipGrid" class="pro-tip-grid"></div>
           <div id="proTipStatus" class="pro-tip-status"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-ads">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Advertising Slots</h2>
+            <button class="btn-save" onclick="saveAdSlotsConfig()">Save Ad Slots</button>
+          </div>
+          <p style="margin:0 0 16px; color:#666; font-size:14px;">Manage enabled state and HTML/embed content for reserved ad spaces on site pages.</p>
+          <div id="adSlotGrid" class="ad-slot-admin-grid"></div>
+          <div id="adSlotStatus" class="ad-slot-admin-status"></div>
         </div>
       </div>
     </div>
@@ -619,6 +689,8 @@
     let allUsers = [];
     let metricTipConfig = [];
     let metricTips = {};
+    let adSlotConfig = [];
+    let adSlots = {};
 
     async function loadStats() {
       const res = await fetch('/api/admin/stats');
@@ -868,6 +940,7 @@
       document.getElementById('tab-' + tab).classList.add('active');
       if (tab === 'colleges') loadColleges();
       if (tab === 'protips') loadMetricTips();
+      if (tab === 'ads') loadAdSlotsConfig();
     }
 
     function formatDateTime(value) {
@@ -931,6 +1004,85 @@
         if (status) status.textContent = 'Saved successfully.';
       } catch (error) {
         if (status) status.textContent = 'Failed to save pro tips.';
+      }
+    }
+
+    function renderAdSlotsConfig() {
+      const grid = document.getElementById('adSlotGrid');
+      if (!grid) return;
+
+      grid.innerHTML = adSlotConfig.map(slot => {
+        const slotState = adSlots[slot.key] || { enabled: false, contentHtml: '' };
+        return `
+          <div class="ad-slot-admin-card">
+            <div class="ad-slot-admin-header">
+              <h4 class="ad-slot-admin-title">${escapeHtml(slot.label)}</h4>
+              <label class="ad-slot-admin-toggle">
+                <input type="checkbox" data-ad-slot-enabled="${escapeHtml(slot.key)}" ${slotState.enabled ? 'checked' : ''}>
+                Enabled
+              </label>
+            </div>
+            <div class="ad-slot-admin-key">${escapeHtml(slot.key)}</div>
+            <textarea data-ad-slot-content="${escapeHtml(slot.key)}" placeholder="Paste sponsor HTML/embed code here...">${escapeHtml(slotState.contentHtml || '')}</textarea>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadAdSlotsConfig() {
+      const status = document.getElementById('adSlotStatus');
+      if (status) status.textContent = 'Loading ad slots...';
+
+      try {
+        const res = await fetch('/api/admin/ad-slots');
+        if (!res.ok) {
+          if (status) status.textContent = 'Failed to load ad slots.';
+          return;
+        }
+
+        const data = await res.json();
+        adSlotConfig = Array.isArray(data.config) ? data.config : [];
+        adSlots = data.slots || {};
+        renderAdSlotsConfig();
+        if (status) status.textContent = '';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to load ad slots.';
+      }
+    }
+
+    async function saveAdSlotsConfig() {
+      const status = document.getElementById('adSlotStatus');
+      const payload = { slots: {} };
+
+      adSlotConfig.forEach(slot => {
+        const enabledInput = document.querySelector(`input[data-ad-slot-enabled="${slot.key}"]`);
+        const contentInput = document.querySelector(`textarea[data-ad-slot-content="${slot.key}"]`);
+        payload.slots[slot.key] = {
+          enabled: !!enabledInput?.checked,
+          contentHtml: contentInput?.value || ''
+        };
+      });
+
+      if (status) status.textContent = 'Saving...';
+      try {
+        const res = await fetch('/api/admin/ad-slots', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (status) status.textContent = err.error || 'Failed to save ad slots.';
+          return;
+        }
+
+        const data = await res.json();
+        adSlotConfig = Array.isArray(data.config) ? data.config : adSlotConfig;
+        adSlots = data.slots || payload.slots;
+        if (status) status.textContent = 'Saved successfully.';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to save ad slots.';
       }
     }
 

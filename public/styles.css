@@ -2523,6 +2523,47 @@ textarea {
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
+.ad-slot {
+  width: 100%;
+  border: 1px dashed #b8c4d4;
+  background: #f7f9fc;
+  color: #5a6b84;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ad-slot.ad-slot-configured {
+  border-style: solid;
+  background: #ffffff;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  padding: 8px;
+  display: block;
+}
+
+.ad-slot-leaderboard {
+  min-height: 90px;
+  margin: 14px 0 20px;
+}
+
+.ad-slot-rectangle {
+  min-height: 250px;
+  margin: 16px 0;
+}
+
+.ad-slot-inline {
+  min-height: 120px;
+  margin: 12px 0;
+}
+
 .section-title-small {
   font-size: 12px;
   font-weight: 700;
