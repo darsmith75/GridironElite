@@ -180,6 +180,7 @@
       const user = await checkAuth();
       if (!user) return;
       await applyManagedAdSlots(document);
+      logPageView('agent_dashboard');
       loadPlayers();
     }
 

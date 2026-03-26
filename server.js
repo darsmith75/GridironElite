@@ -64,6 +64,43 @@ const AD_SLOT_CONFIG = [
 const AD_SLOT_KEYS = new Set(AD_SLOT_CONFIG.map(item => item.key));
 const aiGenerateRateTracker = new Map();
 
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const rawIp = forwarded ? String(forwarded).split(',')[0].trim() : (req.ip || req.socket?.remoteAddress || '');
+  return String(rawIp || '').replace(/^::ffff:/, '').trim();
+}
+
+async function logSiteTrafficEvent({
+  req,
+  eventType,
+  path = null,
+  method = null,
+  userId = null,
+  role = null,
+  metadata = {}
+}) {
+  try {
+    await db.prepare(`
+      INSERT INTO site_traffic_events (
+        event_type, path, method, user_id, role, ip_address, user_agent, referer, metadata_json
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)
+    `).run(
+      eventType,
+      path || req?.path || null,
+      method || req?.method || null,
+      userId,
+      role,
+      req ? getClientIp(req) : null,
+      req?.headers?.['user-agent'] || null,
+      req?.headers?.referer || null,
+      JSON.stringify(metadata || {})
+    );
+  } catch (error) {
+    console.error('Site traffic log error:', error.message || error);
+  }
+}
+
 async function getAdSlotsMap() {
   const rows = await db.prepare('SELECT slot_key, enabled, content_html, updated_at FROM site_ad_slots').all();
   const map = {};
@@ -813,6 +850,7 @@ function buildProfileUploadSignature(userId, reqBody, reqFiles) {
   return `${userId}|${bodyFields}|${fileEntries.join('|')}`;
 }
 
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -1173,6 +1211,15 @@ app.post('/api/login', async (req, res) => {
 
   req.session.userId = user.id;
   req.session.role = user.role;
+  await logSiteTrafficEvent({
+    req,
+    eventType: 'login',
+    path: '/login',
+    method: 'POST',
+    userId: user.id,
+    role: user.role,
+    metadata: { email: user.email }
+  });
   res.json({ success: true, role: user.role });
 });
 
@@ -1219,6 +1266,33 @@ app.get('/api/ad-slots', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Get ad slots error:', error);
     res.status(500).json({ error: 'Failed to load ad slots' });
+  }
+});
+
+app.post('/api/traffic/page-view', requireAuth, async (req, res) => {
+  try {
+    const pageKey = String(req.body?.pageKey || '').trim();
+    const pagePath = String(req.body?.pagePath || '').trim();
+    const metadata = req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {};
+
+    if (!pageKey) {
+      return res.status(400).json({ error: 'Missing page key' });
+    }
+
+    await logSiteTrafficEvent({
+      req,
+      eventType: 'page_view',
+      path: pagePath || pageKey,
+      method: 'GET',
+      userId: req.session.userId,
+      role: req.session.role,
+      metadata: { pageKey, ...metadata }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Page view traffic log error:', error);
+    res.status(500).json({ error: 'Failed to log page view' });
   }
 });
 
@@ -1588,6 +1662,19 @@ app.get('/api/agent/player/:id', requireAuth, async (req, res) => {
     player.profile_view_count = updatedViewStats.profile_view_count;
     player.last_viewed_at = updatedViewStats.last_viewed_at;
   }
+
+  await logSiteTrafficEvent({
+    req,
+    eventType: 'player_profile_view',
+    path: '/player-detail',
+    method: 'GET',
+    userId: req.session.userId,
+    role: req.session.role,
+    metadata: {
+      playerUserId: Number(req.params.id),
+      profileViewCount: Number(player.profile_view_count || 0)
+    }
+  });
   
   await enrichPlayerProfile(player);
   res.json(player);
@@ -2215,6 +2302,9 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     const messages7d = (await db.prepare("SELECT COUNT(*) as count FROM messages WHERE created_at >= NOW() - INTERVAL '7 days'").get()).count;
     const totalProfileViews = (await db.prepare('SELECT COALESCE(SUM(profile_view_count), 0) as count FROM player_profiles').get()).count;
     const aiSummariesGenerated = (await db.prepare('SELECT COUNT(*) as count FROM ai_player_summaries').get()).count;
+    const totalTrafficEvents = (await db.prepare('SELECT COUNT(*) as count FROM site_traffic_events').get()).count;
+    const pageViews24h = (await db.prepare("SELECT COUNT(*) as count FROM site_traffic_events WHERE event_type = 'page_view' AND created_at >= NOW() - INTERVAL '24 hours'").get()).count;
+    const uniqueVisitors24h = (await db.prepare("SELECT COUNT(DISTINCT ip_address) as count FROM site_traffic_events WHERE created_at >= NOW() - INTERVAL '24 hours' AND ip_address IS NOT NULL AND ip_address <> ''").get()).count;
 
     const recentLogins = await db.prepare(`
       SELECT u.id, u.email, u.role, COALESCE(pp.full_name, u.full_name, '') AS display_name, u.last_login_at
@@ -2232,6 +2322,32 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
       LIMIT 8
     `).all();
 
+    const topPages = await db.prepare(`
+      SELECT COALESCE(NULLIF(path, ''), metadata_json->>'pageKey', 'unknown') AS page_path,
+        COUNT(*)::int AS views
+      FROM site_traffic_events
+      WHERE event_type = 'page_view'
+      GROUP BY COALESCE(NULLIF(path, ''), metadata_json->>'pageKey', 'unknown')
+      ORDER BY views DESC, page_path ASC
+      LIMIT 8
+    `).all();
+
+    const recentProfileViews = await db.prepare(`
+      SELECT ste.created_at,
+        ste.ip_address,
+        ste.role,
+        COALESCE(viewer_profile.full_name, viewer.full_name, viewer.email, 'Unknown viewer') AS viewer_name,
+        COALESCE(target_profile.full_name, target_user.full_name, target_user.email, 'Unknown player') AS player_name
+      FROM site_traffic_events ste
+      LEFT JOIN users viewer ON viewer.id = ste.user_id
+      LEFT JOIN player_profiles viewer_profile ON viewer_profile.user_id = viewer.id
+      LEFT JOIN users target_user ON target_user.id = NULLIF(ste.metadata_json->>'playerUserId', '')::int
+      LEFT JOIN player_profiles target_profile ON target_profile.user_id = target_user.id
+      WHERE ste.event_type = 'player_profile_view'
+      ORDER BY ste.created_at DESC
+      LIMIT 8
+    `).all();
+
     res.json({
       totalUsers,
       totalPlayers,
@@ -2242,8 +2358,13 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
       messages7d,
       totalProfileViews,
       aiSummariesGenerated,
+      totalTrafficEvents,
+      pageViews24h,
+      uniqueVisitors24h,
       recentLogins,
-      topViewedPlayers
+      topViewedPlayers,
+      topPages,
+      recentProfileViews
     });
   } catch (error) {
     console.error('Admin stats error:', error);

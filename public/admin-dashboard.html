@@ -438,6 +438,14 @@
           <h3>Top Viewed Player Profiles</h3>
           <div id="topViewedPlayersList" class="monitor-list"><p class="monitor-empty">Loading...</p></div>
         </div>
+        <div class="monitor-card">
+          <h3>Top Pages</h3>
+          <div id="topPagesList" class="monitor-list"><p class="monitor-empty">Loading...</p></div>
+        </div>
+        <div class="monitor-card">
+          <h3>Recent Profile Views</h3>
+          <div id="recentProfileViewsList" class="monitor-list"><p class="monitor-empty">Loading...</p></div>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -685,6 +693,7 @@
   <script src="app.js"></script>
   <script>
     checkAuth('admin');
+    logPageView('admin_dashboard');
 
     let allUsers = [];
     let metricTipConfig = [];
@@ -706,6 +715,9 @@
         <div class="stat-card"><div class="stat-number">${stats.messages7d || 0}</div><div class="stat-label">Messages (7d)</div></div>
         <div class="stat-card"><div class="stat-number">${stats.totalProfileViews || 0}</div><div class="stat-label">Total Profile Views</div></div>
         <div class="stat-card"><div class="stat-number">${stats.aiSummariesGenerated || 0}</div><div class="stat-label">AI Summaries Generated</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.totalTrafficEvents || 0}</div><div class="stat-label">Traffic Events Logged</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.pageViews24h || 0}</div><div class="stat-label">Page Views (24h)</div></div>
+        <div class="stat-card"><div class="stat-number">${stats.uniqueVisitors24h || 0}</div><div class="stat-label">Unique Visitor IPs (24h)</div></div>
       `;
 
       const recentLogins = Array.isArray(stats.recentLogins) ? stats.recentLogins : [];
@@ -738,6 +750,39 @@
         `).join('');
       } else {
         topViewedEl.innerHTML = '<p class="monitor-empty">No profile views tracked yet.</p>';
+      }
+
+      const topPages = Array.isArray(stats.topPages) ? stats.topPages : [];
+      const topPagesEl = document.getElementById('topPagesList');
+      if (topPages.length) {
+        topPagesEl.innerHTML = topPages.map(page => `
+          <div class="monitor-row">
+            <div>
+              <div class="monitor-name">${escapeHtml(page.page_path || 'unknown')}</div>
+              <div>Page View</div>
+            </div>
+            <div>${Number(page.views || 0)} views</div>
+          </div>
+        `).join('');
+      } else {
+        topPagesEl.innerHTML = '<p class="monitor-empty">No page views tracked yet.</p>';
+      }
+
+      const recentProfileViews = Array.isArray(stats.recentProfileViews) ? stats.recentProfileViews : [];
+      const recentProfileViewsEl = document.getElementById('recentProfileViewsList');
+      if (recentProfileViews.length) {
+        recentProfileViewsEl.innerHTML = recentProfileViews.map(view => `
+          <div class="monitor-row">
+            <div>
+              <div class="monitor-name">${escapeHtml(view.player_name || 'Player')}</div>
+              <div>${escapeHtml(view.viewer_name || 'Viewer')} (${escapeHtml(view.role || 'unknown')})</div>
+              <div>IP: ${escapeHtml(view.ip_address || 'Unknown')}</div>
+            </div>
+            <div>${formatDateTime(view.created_at)}</div>
+          </div>
+        `).join('');
+      } else {
+        recentProfileViewsEl.innerHTML = '<p class="monitor-empty">No profile view traffic logged yet.</p>';
       }
     }
 

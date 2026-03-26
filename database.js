@@ -39,6 +39,7 @@ const insertPrimaryKeys = {
   metric_pro_tips: 'id',
   player_metric_pro_tips: 'id',
   site_ad_slots: 'id',
+  site_traffic_events: 'id',
   player_school_interests: 'id',
   school_notes: 'id',
   school_contacts: 'id',
@@ -209,6 +210,21 @@ const createTablesSQL = `
     FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS site_traffic_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(64) NOT NULL,
+    path TEXT,
+    method VARCHAR(10),
+    user_id INTEGER,
+    role VARCHAR(50),
+    ip_address TEXT,
+    user_agent TEXT,
+    referer TEXT,
+    metadata_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
   CREATE TABLE IF NOT EXISTS player_school_interests (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -319,6 +335,9 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
   CREATE INDEX IF NOT EXISTS idx_player_metric_pro_tips_player ON player_metric_pro_tips(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_site_ad_slots_key ON site_ad_slots(slot_key);
+  CREATE INDEX IF NOT EXISTS idx_site_traffic_events_type ON site_traffic_events(event_type);
+  CREATE INDEX IF NOT EXISTS idx_site_traffic_events_created_at ON site_traffic_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_site_traffic_events_user ON site_traffic_events(user_id);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_player_active ON ai_player_summaries(player_user_id, is_active);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_source_hash ON ai_player_summaries(player_user_id, source_hash);
   CREATE UNIQUE INDEX IF NOT EXISTS uq_ai_summary_cache ON ai_player_summaries(player_user_id, generated_for_role, source_hash, prompt_version, model_name) WHERE is_active = TRUE;

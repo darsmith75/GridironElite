@@ -277,3 +277,17 @@ async function applyManagedAdSlots(root = document) {
     slotEl.classList.add('ad-slot-configured');
   });
 }
+
+async function logPageView(pageKey, metadata = {}) {
+  try {
+    await fetch('/api/traffic/page-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pageKey,
+        pagePath: window.location.pathname,
+        metadata
+      })
+    });
+  } catch (_) {}
+}
