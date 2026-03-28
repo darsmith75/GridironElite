@@ -4083,21 +4083,21 @@ textarea {
   flex-shrink: 0;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
-  color: #c7d0da;
-  transition: all 0.2s;
+  color: #b8c4d4;
+  transition: color 0.2s;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
 .favorite-star-list:hover {
   color: #ffa500;
-  transform: scale(1.2);
 }
 
 .favorite-star-list.favorited {
