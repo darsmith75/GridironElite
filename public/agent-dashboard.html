@@ -603,7 +603,7 @@
             <button class="favorite-star-list ${isFavorite ? 'favorited' : ''}" 
                     onclick="event.stopPropagation(); toggleFavorite(${p.user_id}, this)"
                     title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
-              ${isFavorite ? '⭐' : '☆'}
+              ${isFavorite ? '★' : '☆'}
             </button>
           </div>
         `;
@@ -655,17 +655,26 @@
     
     async function toggleFavorite(playerId, button) {
       const isFavorite = button.classList.contains('favorited');
+      const isListFavoriteButton = button.classList.contains('favorite-star-list');
       
       try {
         if (isFavorite) {
           await fetch(`/api/agent/favorites/${playerId}`, { method: 'DELETE' });
           button.classList.remove('favorited');
-          button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">☆</span><span class="favorite-button-label">Add to Favorites</span>';
+          if (isListFavoriteButton) {
+            button.textContent = '☆';
+          } else {
+            button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">☆</span><span class="favorite-button-label">Add to Favorites</span>';
+          }
           button.title = 'Add to favorites';
         } else {
           await fetch(`/api/agent/favorites/${playerId}`, { method: 'POST' });
           button.classList.add('favorited');
-          button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">⭐</span><span class="favorite-button-label">Favorited</span>';
+          if (isListFavoriteButton) {
+            button.textContent = '★';
+          } else {
+            button.innerHTML = '<span class="favorite-button-icon" aria-hidden="true">⭐</span><span class="favorite-button-label">Favorited</span>';
+          }
           button.title = 'Remove from favorites';
         }
         
