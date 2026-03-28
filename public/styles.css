@@ -4062,7 +4062,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  min-width: 50px;
+    min-width: 65px;
 }
 
 .list-stat-label {
