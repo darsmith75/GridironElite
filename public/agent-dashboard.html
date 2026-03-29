@@ -624,6 +624,10 @@
                 <span class="list-stat-value">${hasVerifiedBadge ? '✓' : '—'}</span>
               </div>
             </div>
+            <button class="list-expand-btn" 
+                    onclick="event.stopPropagation(); toggleListDetails(this)"
+                    aria-expanded="false"
+                    title="Show more stats">More</button>
             <button class="favorite-star-list ${isFavorite ? 'favorited' : ''}" 
                     onclick="event.stopPropagation(); toggleFavorite(${p.user_id}, this)"
                     title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
@@ -675,6 +679,15 @@
     function goToPage(page) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       renderPage(page);
+    }
+
+    function toggleListDetails(button) {
+      const row = button.closest('.player-list-row');
+      if (!row) return;
+      const isExpanded = row.classList.toggle('expanded');
+      button.textContent = isExpanded ? 'Less' : 'More';
+      button.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      button.title = isExpanded ? 'Show fewer stats' : 'Show more stats';
     }
     
     async function toggleFavorite(playerId, button) {

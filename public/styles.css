@@ -4121,6 +4121,25 @@ textarea {
   color: #ffa500;
 }
 
+.list-expand-btn {
+  display: none;
+  background: #f1f5fa;
+  color: #385884;
+  border: 1px solid #d4deea;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+.list-expand-btn:hover {
+  background: #e6eef8;
+  transform: none;
+  box-shadow: none;
+}
+
 /* Responsive adjustments for list view */
 @media (max-width: 1200px) {
   .player-list-stats {
@@ -4174,7 +4193,7 @@ textarea {
     grid-template-columns: 44px 1fr auto;
     grid-template-areas:
       "photo info star"
-      "stats stats stats";
+      "stats stats expand";
     gap: 8px 10px;
     align-items: center;
     padding: 10px 12px;
@@ -4199,10 +4218,22 @@ textarea {
   .player-list-stats {
     grid-area: stats;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
     width: 100%;
     margin-top: 2px;
+  }
+
+  .player-list-stats .list-stat:nth-child(n+4) {
+    display: none;
+  }
+
+  .player-list-row.expanded .player-list-stats .list-stat:nth-child(n+4) {
+    display: flex;
+  }
+
+  .player-list-row.expanded .player-list-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .list-stat {
@@ -4229,6 +4260,14 @@ textarea {
     font-size: 16px;
     line-height: 1;
     padding-top: 2px;
+  }
+
+  .list-expand-btn {
+    display: inline-flex;
+    grid-area: expand;
+    justify-self: end;
+    align-self: end;
+    margin-top: 4px;
   }
 }
 
