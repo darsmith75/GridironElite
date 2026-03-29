@@ -3960,6 +3960,23 @@ textarea {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+.agent-controls-wrap {
+  margin-bottom: 25px;
+}
+
+.agent-controls-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.agent-results-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
 /* Players List View Styles */
 .players-list {
   display: flex;
@@ -4124,30 +4141,107 @@ textarea {
 }
 
 @media (max-width: 768px) {
-  .view-toggle {
-    order: 1;
+  .agent-controls-row {
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .agent-controls-row .filter-group {
+    flex: 1 1 100%;
+  }
+
+  .agent-controls-row .favorites-filter-btn,
+  .agent-controls-row .filters-toggle-btn,
+  .agent-controls-row .view-toggle,
+  .agent-controls-row #sortSelect {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+  }
+
+  .agent-controls-row #sortSelect {
+    width: 100%;
+  }
+
+  .agent-results-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .player-list-row {
-    flex-wrap: wrap;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    grid-template-areas:
+      "photo info star"
+      "stats stats stats";
+    gap: 8px 10px;
+    align-items: center;
+    padding: 10px 12px;
+  }
+
+  .player-list-photo {
+    grid-area: photo;
+    width: 44px;
+    height: 44px;
   }
 
   .player-list-info {
-    flex-basis: 100%;
-    order: 2;
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .player-list-details {
+    font-size: 12px;
+    gap: 4px;
   }
 
   .player-list-stats {
-    gap: 10px;
-    order: 3;
-    flex-basis: 100%;
-    flex-wrap: wrap;
+    grid-area: stats;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .list-stat {
+    min-width: 0;
+    padding: 6px 4px;
+    border: 1px solid #e2e9f2;
+    border-radius: 7px;
+    background: #f8fbff;
+    gap: 2px;
+  }
+
+  .list-stat-label {
+    font-size: 8px;
+  }
+
+  .list-stat-value {
+    font-size: 11px;
   }
 
   .favorite-star-list {
-    order: 4;
-    align-self: flex-end;
+    grid-area: star;
+    justify-self: end;
+    align-self: start;
+    font-size: 16px;
+    line-height: 1;
+    padding-top: 2px;
+  }
+}
+
+@media (max-width: 560px) {
+  .agent-controls-row .favorites-filter-btn,
+  .agent-controls-row .filters-toggle-btn,
+  .agent-controls-row .view-toggle,
+  .agent-controls-row #sortSelect {
+    flex: 1 1 100%;
+  }
+
+  .player-list-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

@@ -38,8 +38,8 @@
 
     <div class="filters">
       <!-- Quick Search Bar with Filters Button -->
-      <div style="margin-bottom: 25px;">
-        <div style="display: flex; gap: 12px; align-items: center;">
+      <div class="agent-controls-wrap">
+        <div class="agent-controls-row">
           <div class="filter-group" style="flex: 1;">
             <div class="search-input-wrapper">
               <span class="search-icon">🔍</span>
@@ -165,7 +165,7 @@
       </div>
       <!-- End Advanced Filters -->
       
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+      <div class="agent-results-row">
         <span id="lastUpdate" class="last-update"></span>
         <div class="results-count" id="resultsCount"></div>
       </div>
@@ -182,7 +182,8 @@
 
   <script src="app.js"></script>
   <script>
-    let viewMode = localStorage.getItem('agentDashboardViewMode') || 'grid';
+    const VIEW_MODE_STORAGE_KEY = 'agentDashboardViewMode';
+    let viewMode = getDefaultViewMode();
     
     initDashboard();
 
@@ -196,6 +197,38 @@
       setupViewToggle();
       
       loadPlayers();
+
+      // If user has never chosen a view, adapt when viewport crosses mobile/desktop.
+      window.addEventListener('resize', handleResponsiveViewResize);
+    }
+
+    function isMobileViewport() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function getDefaultViewMode() {
+      const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (saved === 'grid' || saved === 'list') return saved;
+      return isMobileViewport() ? 'list' : 'grid';
+    }
+
+    function updateViewToggleButtons() {
+      const toggleButtons = document.querySelectorAll('.view-toggle-btn');
+      toggleButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === viewMode);
+      });
+    }
+
+    function handleResponsiveViewResize() {
+      const hasSavedPreference = !!localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (hasSavedPreference) return;
+      const preferredMode = isMobileViewport() ? 'list' : 'grid';
+      if (viewMode === preferredMode) return;
+      viewMode = preferredMode;
+      updateViewToggleButtons();
+      if (Array.isArray(window._allPlayers)) {
+        renderPage(window._currentPage || 1);
+      }
     }
     
     function setupViewToggle() {
@@ -205,26 +238,17 @@
           const newView = this.dataset.view;
           if (viewMode !== newView) {
             viewMode = newView;
-            localStorage.setItem('agentDashboardViewMode', viewMode);
-            
-            // Update button states
-            toggleButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+            localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewMode);
+            updateViewToggleButtons();
             
             // Re-render with new view mode
             renderPage(window._currentPage || 1);
           }
         });
       });
-      
+
       // Set initial button state
-      toggleButtons.forEach(btn => {
-        if (btn.dataset.view === viewMode) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
+      updateViewToggleButtons();
     }
 
     function escapeHtml(value) {
