@@ -257,6 +257,8 @@ const createTablesSQL = `
     title VARCHAR(255),
     email VARCHAR(255),
     phone VARCHAR(20),
+    twitter_handle VARCHAR(255),
+    follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
@@ -306,6 +308,8 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS achievement TEXT;
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS profile_view_count INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
+  ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
+  ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;

@@ -2860,15 +2860,24 @@ app.post('/api/player/colleges/:collegeId/contacts', requireAuth, async (req, re
   try {
     const collegeId = parseInt(req.params.collegeId, 10);
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
-    const { name, title, email, phone } = req.body;
+    const { name, title, email, phone, twitterHandle, followsPlayerOnTwitter } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Contact name is required' });
 
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
 
     const result = await db.prepare(
-      'INSERT INTO school_contacts (user_id, college_id, name, title, email, phone) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(req.session.userId, collegeId, name.trim(), title?.trim() || null, email?.trim() || null, phone?.trim() || null);
+      'INSERT INTO school_contacts (user_id, college_id, name, title, email, phone, twitter_handle, follows_player_on_twitter) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      req.session.userId,
+      collegeId,
+      name.trim(),
+      title?.trim() || null,
+      email?.trim() || null,
+      phone?.trim() || null,
+      twitterHandle?.trim() || null,
+      !!followsPlayerOnTwitter
+    );
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Add school contact error:', error);
@@ -2881,14 +2890,22 @@ app.put('/api/player/colleges/:collegeId/contacts/:contactId', requireAuth, asyn
   try {
     const contactId = parseInt(req.params.contactId, 10);
     if (isNaN(contactId)) return res.status(400).json({ error: 'Invalid contact ID' });
-    const { name, title, email, phone } = req.body;
+    const { name, title, email, phone, twitterHandle, followsPlayerOnTwitter } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Contact name is required' });
 
     const existing = await db.prepare('SELECT id FROM school_contacts WHERE id = ? AND user_id = ?').get(contactId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Contact not found' });
 
-    await db.prepare('UPDATE school_contacts SET name = ?, title = ?, email = ?, phone = ? WHERE id = ?')
-      .run(name.trim(), title?.trim() || null, email?.trim() || null, phone?.trim() || null, contactId);
+    await db.prepare('UPDATE school_contacts SET name = ?, title = ?, email = ?, phone = ?, twitter_handle = ?, follows_player_on_twitter = ? WHERE id = ?')
+      .run(
+        name.trim(),
+        title?.trim() || null,
+        email?.trim() || null,
+        phone?.trim() || null,
+        twitterHandle?.trim() || null,
+        !!followsPlayerOnTwitter,
+        contactId
+      );
     res.json({ success: true });
   } catch (error) {
     console.error('Update school contact error:', error);
