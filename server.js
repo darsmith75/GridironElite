@@ -819,15 +819,43 @@ function enqueuePendingB2Delete(objectKey, context = {}, reason = '') {
   console.warn(`[b2-delete] queued key="${objectKey}" reason="${queued.reason}" context=${JSON.stringify(queued.context)}`);
 }
 
-async function processPendingB2DeleteQueue() {
+function getPendingB2DeleteQueueSnapshot() {
+  const entries = Array.from(pendingB2DeleteQueue.values())
+    .map(entry => ({
+      objectKey: entry.objectKey,
+      attempts: entry.attempts,
+      queuedAt: entry.queuedAt,
+      lastAttemptAt: entry.lastAttemptAt,
+      reason: entry.reason,
+      context: entry.context || {}
+    }))
+    .sort((a, b) => a.queuedAt - b.queuedAt);
+
+  return {
+    enabled: b2Enabled,
+    size: entries.length,
+    entries
+  };
+}
+
+async function processPendingB2DeleteQueue(options = {}) {
+  const force = !!options.force;
+  const maxItems = Number.isFinite(options.maxItems) ? Math.max(1, Math.floor(options.maxItems)) : Infinity;
   if (!b2Enabled || pendingB2DeleteQueue.size === 0) return;
 
+  let processedCount = 0;
+  let successCount = 0;
+  let failedCount = 0;
+  let droppedCount = 0;
+
   for (const [objectKey, entry] of pendingB2DeleteQueue.entries()) {
+    if (processedCount >= maxItems) break;
     const now = Date.now();
-    if (entry.lastAttemptAt && (now - entry.lastAttemptAt) < B2_DELETE_QUEUE_INTERVAL_MS) {
+    if (!force && entry.lastAttemptAt && (now - entry.lastAttemptAt) < B2_DELETE_QUEUE_INTERVAL_MS) {
       continue;
     }
 
+    processedCount += 1;
     entry.attempts += 1;
     entry.lastAttemptAt = now;
 
@@ -839,19 +867,31 @@ async function processPendingB2DeleteQueue() {
     });
 
     if (deleted) {
+      successCount += 1;
       pendingB2DeleteQueue.delete(objectKey);
       continue;
     }
+
+    failedCount += 1;
 
     if (entry.attempts >= B2_DELETE_QUEUE_MAX_ATTEMPTS) {
       console.error(
         `[b2-delete] queue-drop key="${objectKey}" attempts=${entry.attempts} context=${JSON.stringify(entry.context)}`
       );
+      droppedCount += 1;
       pendingB2DeleteQueue.delete(objectKey);
     } else {
       pendingB2DeleteQueue.set(objectKey, entry);
     }
   }
+
+  return {
+    processedCount,
+    successCount,
+    failedCount,
+    droppedCount,
+    remaining: pendingB2DeleteQueue.size
+  };
 }
 
 if (b2Enabled) {
@@ -2481,6 +2521,42 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin stats error:', error);
     res.status(500).json({ error: 'Failed to get stats' });
+  }
+});
+
+// Admin: Inspect pending Backblaze delete queue
+app.get('/api/admin/b2-delete-queue', requireAdmin, async (req, res) => {
+  try {
+    const snapshot = getPendingB2DeleteQueueSnapshot();
+    res.json(snapshot);
+  } catch (error) {
+    console.error('Admin B2 queue inspect error:', error);
+    res.status(500).json({ error: 'Failed to inspect B2 delete queue' });
+  }
+});
+
+// Admin: Force-run Backblaze delete queue immediately
+app.post('/api/admin/b2-delete-queue/flush', requireAdmin, async (req, res) => {
+  try {
+    const maxItems = Number(req.body?.maxItems);
+    const result = await processPendingB2DeleteQueue({
+      force: true,
+      maxItems: Number.isFinite(maxItems) && maxItems > 0 ? maxItems : Infinity
+    });
+
+    res.json({
+      success: true,
+      ...(result || {
+        processedCount: 0,
+        successCount: 0,
+        failedCount: 0,
+        droppedCount: 0,
+        remaining: getPendingB2DeleteQueueSnapshot().size
+      })
+    });
+  } catch (error) {
+    console.error('Admin B2 queue flush error:', error);
+    res.status(500).json({ error: 'Failed to flush B2 delete queue' });
   }
 });
 
