@@ -761,6 +761,110 @@ function normalizeOptionalFloat(value) {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+const B2_DELETE_RETRY_ATTEMPTS = parseInt(process.env.B2_DELETE_RETRY_ATTEMPTS || '3', 10);
+const B2_DELETE_RETRY_DELAY_MS = parseInt(process.env.B2_DELETE_RETRY_DELAY_MS || '1200', 10);
+const B2_DELETE_QUEUE_INTERVAL_MS = parseInt(process.env.B2_DELETE_QUEUE_INTERVAL_MS || '60000', 10);
+const B2_DELETE_QUEUE_MAX_ATTEMPTS = parseInt(process.env.B2_DELETE_QUEUE_MAX_ATTEMPTS || '20', 10);
+const pendingB2DeleteQueue = new Map();
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function buildB2DeleteCandidateKeys(normalizedFilename) {
+  const clean = String(normalizedFilename || '').replace(/^\/+/, '').replace(/\\/g, '/');
+  if (!clean) return [];
+  const withoutPrefix = clean.replace(/^uploads\//, '');
+  const withPrefix = withoutPrefix.startsWith('uploads/') ? withoutPrefix : `uploads/${withoutPrefix}`;
+  return Array.from(new Set([withPrefix, clean])).filter(Boolean);
+}
+
+async function tryDeleteB2KeyWithRetries(objectKey, context = {}) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= B2_DELETE_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const ok = await deleteFromB2(objectKey);
+      if (ok) {
+        console.log(`[b2-delete] success key="${objectKey}" attempt=${attempt} context=${JSON.stringify(context)}`);
+        return true;
+      }
+      lastError = new Error('deleteFromB2 returned false');
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < B2_DELETE_RETRY_ATTEMPTS) {
+      await sleep(B2_DELETE_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  console.error(
+    `[b2-delete] retry-exhausted key="${objectKey}" attempts=${B2_DELETE_RETRY_ATTEMPTS} context=${JSON.stringify(context)} error=${lastError?.message || 'unknown'}`
+  );
+  return false;
+}
+
+function enqueuePendingB2Delete(objectKey, context = {}, reason = '') {
+  if (!objectKey) return;
+  const existing = pendingB2DeleteQueue.get(objectKey);
+  const queued = {
+    objectKey,
+    attempts: existing?.attempts || 0,
+    queuedAt: existing?.queuedAt || Date.now(),
+    lastAttemptAt: existing?.lastAttemptAt || 0,
+    reason: reason || existing?.reason || 'unknown',
+    context: { ...(existing?.context || {}), ...(context || {}) }
+  };
+  pendingB2DeleteQueue.set(objectKey, queued);
+  console.warn(`[b2-delete] queued key="${objectKey}" reason="${queued.reason}" context=${JSON.stringify(queued.context)}`);
+}
+
+async function processPendingB2DeleteQueue() {
+  if (!b2Enabled || pendingB2DeleteQueue.size === 0) return;
+
+  for (const [objectKey, entry] of pendingB2DeleteQueue.entries()) {
+    const now = Date.now();
+    if (entry.lastAttemptAt && (now - entry.lastAttemptAt) < B2_DELETE_QUEUE_INTERVAL_MS) {
+      continue;
+    }
+
+    entry.attempts += 1;
+    entry.lastAttemptAt = now;
+
+    const deleted = await tryDeleteB2KeyWithRetries(objectKey, {
+      ...entry.context,
+      queueAttempt: entry.attempts,
+      queuedAt: new Date(entry.queuedAt).toISOString(),
+      reason: entry.reason
+    });
+
+    if (deleted) {
+      pendingB2DeleteQueue.delete(objectKey);
+      continue;
+    }
+
+    if (entry.attempts >= B2_DELETE_QUEUE_MAX_ATTEMPTS) {
+      console.error(
+        `[b2-delete] queue-drop key="${objectKey}" attempts=${entry.attempts} context=${JSON.stringify(entry.context)}`
+      );
+      pendingB2DeleteQueue.delete(objectKey);
+    } else {
+      pendingB2DeleteQueue.set(objectKey, entry);
+    }
+  }
+}
+
+if (b2Enabled) {
+  const timer = setInterval(() => {
+    processPendingB2DeleteQueue().catch(error => {
+      console.error('[b2-delete] queue-runner error:', error?.message || error);
+    });
+  }, B2_DELETE_QUEUE_INTERVAL_MS);
+  if (typeof timer.unref === 'function') {
+    timer.unref();
+  }
+}
+
 async function deleteUploadFile(filename) {
   if (!filename) return false;
   const normalizedFilename = normalizeUploadFilename(filename);
@@ -768,9 +872,17 @@ async function deleteUploadFile(filename) {
   let deletedInB2 = false;
   // Delete from Backblaze B2 using normalized and legacy key shapes.
   if (b2Enabled) {
-    deletedInB2 = await deleteFromB2('uploads/' + normalizedFilename);
-    if (!deletedInB2 && normalizedFilename.startsWith('uploads/')) {
-      deletedInB2 = await deleteFromB2(normalizedFilename);
+    const candidateKeys = buildB2DeleteCandidateKeys(normalizedFilename);
+    for (const objectKey of candidateKeys) {
+      const deleted = await tryDeleteB2KeyWithRetries(objectKey, {
+        filename: normalizedFilename,
+        source: 'deleteUploadFile'
+      });
+      if (deleted) {
+        deletedInB2 = true;
+      } else {
+        enqueuePendingB2Delete(objectKey, { filename: normalizedFilename, source: 'deleteUploadFile' }, 'immediate-delete-failed');
+      }
     }
   }
 

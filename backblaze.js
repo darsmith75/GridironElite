@@ -62,11 +62,12 @@ async function b2ObjectExists(key) {
 async function deleteFromB2(key) {
   try {
     const exists = await b2ObjectExists(key);
-    if (!exists) return false;
+    // Missing object is effectively already deleted.
+    if (!exists) return true;
     await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
     return true;
   } catch (err) {
-    console.error(`B2 delete error key="${key}":`, err.message);
+    console.error(`B2 delete error bucket="${BUCKET}" key="${key}":`, err.message);
     return false;
   }
 }
