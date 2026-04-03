@@ -725,6 +725,7 @@
     let metricTips = {};
     let adSlotConfig = [];
     let adSlots = {};
+    let b2QueueAutoRefreshTimer = null;
 
     function formatQueuedAge(queuedAtMs) {
       if (!queuedAtMs) return 'unknown age';
@@ -811,6 +812,33 @@
         if (summaryEl) summaryEl.textContent = 'Failed to flush queue.';
       }
     }
+
+    function startB2QueueAutoRefresh() {
+      if (b2QueueAutoRefreshTimer) {
+        clearInterval(b2QueueAutoRefreshTimer);
+      }
+
+      b2QueueAutoRefreshTimer = setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        loadB2DeleteQueue();
+      }, 45000);
+    }
+
+    function stopB2QueueAutoRefresh() {
+      if (!b2QueueAutoRefreshTimer) return;
+      clearInterval(b2QueueAutoRefreshTimer);
+      b2QueueAutoRefreshTimer = null;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        loadB2DeleteQueue();
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      stopB2QueueAutoRefresh();
+    });
 
     async function loadStats() {
       const res = await fetch('/api/admin/stats');
@@ -1364,6 +1392,7 @@
     loadUsers();
     loadMetricTips();
     loadB2DeleteQueue();
+    startB2QueueAutoRefresh();
   </script>
 </body>
 </html>
