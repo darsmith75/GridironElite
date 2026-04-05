@@ -6,70 +6,79 @@
   <title>Coach Dashboard</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    .coach-layout {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 24px;
-      align-items: start;
-    }
-    @media (max-width: 900px) {
-      .coach-layout { grid-template-columns: 1fr; }
-    }
-    .coach-sidebar-card {
-      background: white;
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-      border: 1px solid #c7d0da;
-    }
-    .team-badge {
+    /* ── Top banner ── */
+    .team-banner {
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       border-radius: 14px;
       color: white;
-      padding: 20px;
-      text-align: center;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
       margin-bottom: 16px;
     }
-    .team-badge .team-icon {
-      font-size: 40px;
+    .team-banner .team-icon {
+      font-size: 44px;
       line-height: 1;
-      margin-bottom: 8px;
+      flex-shrink: 0;
     }
-    .team-badge .team-name {
-      font-size: 20px;
+    .team-banner .team-text { flex: 1; min-width: 0; }
+    .team-banner .team-name {
+      font-size: 22px;
       font-weight: 700;
-      margin: 0 0 4px;
+      margin: 0 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .team-badge .school-name {
-      font-size: 13px;
+    .team-banner .school-name {
+      font-size: 14px;
       opacity: 0.85;
     }
-    .team-badge .team-location {
+    .team-banner .team-location {
       font-size: 12px;
       opacity: 0.7;
       margin-top: 2px;
     }
-    .team-stats-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
+    /* ── Middle row: stat tiles + invite card ── */
+    .coach-mid-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: stretch;
     }
     .team-stat {
       background: #f0f4fa;
       border-radius: 10px;
-      padding: 12px;
+      padding: 16px 24px;
       text-align: center;
+      flex-shrink: 0;
+      min-width: 110px;
     }
     .team-stat .ts-num {
-      font-size: 22px;
+      font-size: 28px;
       font-weight: 700;
       color: #1e3c72;
     }
     .team-stat .ts-label {
       font-size: 12px;
       color: #666;
-      margin-top: 2px;
+      margin-top: 3px;
+    }
+    .coach-invite-card {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      padding: 18px 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #c7d0da;
+    }
+    @media (max-width: 700px) {
+      .team-banner { flex-direction: column; text-align: center; }
+      .team-banner .team-name { white-space: normal; }
+      .coach-mid-row { flex-wrap: wrap; }
+      .team-stat { flex: 1 1 120px; }
+      .coach-invite-card { flex: 1 1 100%; }
     }
     .section-title {
       font-size: 16px;
@@ -303,52 +312,46 @@
     </header>
 
     <div class="dashboard-container">
-      <div class="coach-layout">
 
-        <!-- Left sidebar: team card + invite section -->
-        <div>
-          <!-- Team Badge -->
-          <div id="teamBadge" class="team-badge" style="display:none;">
-            <div class="team-icon">🏈</div>
-            <div class="team-name" id="teamNameDisplay"></div>
-            <div class="school-name" id="schoolNameDisplay"></div>
-            <div class="team-location" id="teamLocationDisplay"></div>
+      <!-- Top: full-width team banner -->
+      <div id="teamBadge" class="team-banner" style="display:none;">
+        <div class="team-icon">🏈</div>
+        <div class="team-text">
+          <div class="team-name" id="teamNameDisplay"></div>
+          <div class="school-name" id="schoolNameDisplay"></div>
+          <div class="team-location" id="teamLocationDisplay"></div>
+        </div>
+      </div>
+
+      <!-- Middle: stat tiles + invite card -->
+      <div class="coach-mid-row">
+        <div class="team-stat">
+          <div class="ts-num" id="rosterCount">—</div>
+          <div class="ts-label">Players</div>
+        </div>
+        <div class="team-stat">
+          <div class="ts-num" id="pendingInvitesCount">—</div>
+          <div class="ts-label">Pending Invites</div>
+        </div>
+        <div class="coach-invite-card">
+          <div class="section-title" style="margin:0 0 10px;">Invite a Player</div>
+          <p style="font-size:13px;color:#76849b;margin:0 0 10px;">Enter the email address of a player who has (or will create) an account on Gridiron Elite.</p>
+          <div class="invite-form">
+            <input type="email" id="inviteEmailInput" placeholder="player@email.com" onkeypress="handleInviteKeyPress(event)">
+            <button class="btn-invite" id="inviteBtn" onclick="sendInvite()">Send</button>
           </div>
-
-          <!-- Roster counts -->
-          <div class="team-stats-row">
-            <div class="team-stat">
-              <div class="ts-num" id="rosterCount">—</div>
-              <div class="ts-label">Players</div>
-            </div>
-            <div class="team-stat">
-              <div class="ts-num" id="pendingInvitesCount">—</div>
-              <div class="ts-label">Pending Invites</div>
-            </div>
-          </div>
-
-          <!-- Invite section -->
-          <div class="coach-sidebar-card">
-            <div class="section-title">Invite a Player</div>
-            <p style="font-size:13px;color:#76849b;margin:0 0 12px;">Enter the email address of a player who has (or will create) an account on Gridiron Elite.</p>
-            <div class="invite-form">
-              <input type="email" id="inviteEmailInput" placeholder="player@email.com" onkeypress="handleInviteKeyPress(event)">
-              <button class="btn-invite" id="inviteBtn" onclick="sendInvite()">Send</button>
-            </div>
-            <div class="invite-message" id="inviteMessage"></div>
-
-            <!-- Invites list toggle -->
-            <button class="invites-toggle" style="margin-top:16px;" onclick="toggleInvitesList()">
-              <span id="invitesToggleLabel">Show invites ▼</span>
-            </button>
-            <div id="invitesList" style="display:none;margin-top:10px;">
-              <div id="invitesContainer" class="invite-list"></div>
-            </div>
+          <div class="invite-message" id="inviteMessage"></div>
+          <button class="invites-toggle" style="margin-top:14px;" onclick="toggleInvitesList()">
+            <span id="invitesToggleLabel">Show invites ▼</span>
+          </button>
+          <div id="invitesList" style="display:none;margin-top:10px;">
+            <div id="invitesContainer" class="invite-list"></div>
           </div>
         </div>
+      </div>
 
-        <!-- Roster section -->
-        <div class="roster-section">
+      <!-- Bottom: full-width roster -->
+      <div class="roster-section">
           <div class="section-title" style="margin:0 0 12px;">Team Roster</div>
 
           <div class="filters">
@@ -471,7 +474,6 @@
           <div id="rosterContainer"></div>
         </div>
 
-      </div>
     </div><!-- /.dashboard-container -->
   </div><!-- /.dashboard-wrapper -->
 
