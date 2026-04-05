@@ -40,20 +40,59 @@
       opacity: 0.7;
       margin-top: 2px;
     }
-    /* ── Middle row: stat tiles + invite card ── */
-    .coach-mid-row {
+    /* ── Tabs ── */
+    .coach-tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e8f5;
+      margin-bottom: 20px;
+    }
+    .coach-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 11px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #76849b;
+      cursor: pointer;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .coach-tab:hover { color: #1e3c72; }
+    .coach-tab.active {
+      color: #1e3c72;
+      border-bottom-color: #1e3c72;
+    }
+    .coach-tab-panel.hidden { display: none; }
+    .pending-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e65100;
+      color: white;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+    }
+    /* Invites tab inner layout */
+    .coach-stats-row {
       display: flex;
       gap: 16px;
       margin-bottom: 20px;
-      align-items: stretch;
+      flex-wrap: wrap;
     }
     .team-stat {
       background: #f0f4fa;
       border-radius: 10px;
       padding: 16px 24px;
       text-align: center;
-      flex-shrink: 0;
-      min-width: 110px;
+      min-width: 120px;
     }
     .team-stat .ts-num {
       font-size: 28px;
@@ -66,19 +105,17 @@
       margin-top: 3px;
     }
     .coach-invite-card {
-      flex: 1;
       background: white;
       border-radius: 14px;
-      padding: 18px 22px;
+      padding: 22px 24px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.07);
       border: 1px solid #c7d0da;
+      max-width: 640px;
     }
     @media (max-width: 700px) {
       .team-banner { flex-direction: column; text-align: center; }
       .team-banner .team-name { white-space: normal; }
-      .coach-mid-row { flex-wrap: wrap; }
-      .team-stat { flex: 1 1 120px; }
-      .coach-invite-card { flex: 1 1 100%; }
+      .coach-invite-card { max-width: 100%; }
     }
     .section-title {
       font-size: 16px;
@@ -323,35 +360,17 @@
         </div>
       </div>
 
-      <!-- Middle: stat tiles + invite card -->
-      <div class="coach-mid-row">
-        <div class="team-stat">
-          <div class="ts-num" id="rosterCount">—</div>
-          <div class="ts-label">Players</div>
-        </div>
-        <div class="team-stat">
-          <div class="ts-num" id="pendingInvitesCount">—</div>
-          <div class="ts-label">Pending Invites</div>
-        </div>
-        <div class="coach-invite-card">
-          <div class="section-title" style="margin:0 0 10px;">Invite a Player</div>
-          <p style="font-size:13px;color:#76849b;margin:0 0 10px;">Enter the email address of a player who has (or will create) an account on Gridiron Elite.</p>
-          <div class="invite-form">
-            <input type="email" id="inviteEmailInput" placeholder="player@email.com" onkeypress="handleInviteKeyPress(event)">
-            <button class="btn-invite" id="inviteBtn" onclick="sendInvite()">Send</button>
-          </div>
-          <div class="invite-message" id="inviteMessage"></div>
-          <button class="invites-toggle" style="margin-top:14px;" onclick="toggleInvitesList()">
-            <span id="invitesToggleLabel">Show invites ▼</span>
-          </button>
-          <div id="invitesList" style="display:none;margin-top:10px;">
-            <div id="invitesContainer" class="invite-list"></div>
-          </div>
-        </div>
+      <!-- Coach tabs -->
+      <div class="coach-tabs">
+        <button class="coach-tab active" id="coachTab-roster" onclick="switchCoachTab('roster')">Team Roster</button>
+        <button class="coach-tab" id="coachTab-invites" onclick="switchCoachTab('invites')">
+          Invites <span id="pendingInvitesBadge" class="pending-badge" style="display:none;"></span>
+        </button>
       </div>
 
-      <!-- Bottom: full-width roster -->
-      <div class="roster-section">
+      <!-- Tab: Team Roster -->
+      <div id="tab-coach-roster" class="coach-tab-panel">
+        <div class="roster-section">
           <div class="section-title" style="margin:0 0 12px;">Team Roster</div>
 
           <div class="filters">
@@ -473,6 +492,34 @@
 
           <div id="rosterContainer"></div>
         </div>
+      </div><!-- /.tab-coach-roster -->
+
+      <!-- Tab: Invites -->
+      <div id="tab-coach-invites" class="coach-tab-panel hidden">
+        <div class="coach-stats-row">
+          <div class="team-stat">
+            <div class="ts-num" id="rosterCount">—</div>
+            <div class="ts-label">Players</div>
+          </div>
+          <div class="team-stat">
+            <div class="ts-num" id="pendingInvitesCount">—</div>
+            <div class="ts-label">Pending Invites</div>
+          </div>
+        </div>
+        <div class="coach-invite-card">
+          <div class="section-title" style="margin:0 0 10px;">Invite a Player</div>
+          <p style="font-size:13px;color:#76849b;margin:0 0 10px;">Enter the email address of a player who has (or will create) an account on Gridiron Elite.</p>
+          <div class="invite-form">
+            <input type="email" id="inviteEmailInput" placeholder="player@email.com" onkeypress="handleInviteKeyPress(event)">
+            <button class="btn-invite" id="inviteBtn" onclick="sendInvite()">Send</button>
+          </div>
+          <div class="invite-message" id="inviteMessage"></div>
+          <div style="margin-top:20px;">
+            <div class="section-title" style="margin:0 0 12px;">Invite History</div>
+            <div id="invitesContainer" class="invite-list"></div>
+          </div>
+        </div>
+      </div><!-- /.tab-coach-invites -->
 
     </div><!-- /.dashboard-container -->
   </div><!-- /.dashboard-wrapper -->
@@ -484,7 +531,6 @@
     let teamData = null;
     let rosterData = [];
     let invitesData = [];
-    let invitesVisible = false;
 
     async function init() {
       const user = await checkAuth('coach');
@@ -898,14 +944,20 @@
         invitesData = await res.json();
         const pendingCount = invitesData.filter(i => i.status === 'pending').length;
         document.getElementById('pendingInvitesCount').textContent = pendingCount;
+        const badge = document.getElementById('pendingInvitesBadge');
+        if (badge) {
+          badge.textContent = pendingCount;
+          badge.style.display = pendingCount > 0 ? '' : 'none';
+        }
         renderInvites();
       } catch (_) {}
     }
 
-    function toggleInvitesList() {
-      invitesVisible = !invitesVisible;
-      document.getElementById('invitesList').style.display = invitesVisible ? '' : 'none';
-      document.getElementById('invitesToggleLabel').textContent = invitesVisible ? 'Hide invites ▲' : 'Show invites ▼';
+    function switchCoachTab(tab) {
+      document.querySelectorAll('.coach-tab').forEach((btn) => btn.classList.remove('active'));
+      document.querySelectorAll('.coach-tab-panel').forEach((panel) => panel.classList.add('hidden'));
+      document.getElementById('coachTab-' + tab).classList.add('active');
+      document.getElementById('tab-coach-' + tab).classList.remove('hidden');
     }
 
     function renderInvites() {
@@ -957,9 +1009,6 @@
           msgEl.textContent = 'Invite sent!';
           document.getElementById('inviteEmailInput').value = '';
           await loadInvites();
-          if (!invitesVisible) {
-            toggleInvitesList();
-          }
         } else {
           msgEl.className = 'invite-message error';
           msgEl.textContent = data.error || 'Failed to send invite';
