@@ -961,18 +961,20 @@
 
       // College Offers (from school interests)
       if (profile.college_offer_schools) {
-        const offers = JSON.parse(profile.college_offer_schools);
+        const offersRaw = JSON.parse(profile.college_offer_schools);
+        const offers = applySavedCollegeOrder('offers', offersRaw);
         if (offers.length > 0) {
           html += `
             <div class="profile-section">
               <h2 class="section-title-small">COLLEGE OFFERS</h2>
-              <div class="college-offers-grid-profile">
+              <div class="college-offers-grid-profile" data-college-group="offers">
                 ${offers.map(offer => `
-                  <div class="college-logo-card" style="position:relative; cursor:pointer;"
+                  <div class="college-logo-card" style="position:relative; cursor:grab;"
                        data-college-id="${offer.id}"
+                       draggable="true"
                        onmouseenter="showOfferTooltip(event, ${offer.id})"
                        onmouseleave="hideOfferTooltip()"
-                       onclick="openSchoolDetailFromOffer(${offer.id})">
+                       onclick="handleCollegeLogoClick(event, ${offer.id})">
                     ${offer.logo
                       ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
@@ -987,18 +989,20 @@
 
       // College Favorites (excluding schools already in offers)
       if (profile.college_favorite_schools) {
-        const favorites = JSON.parse(profile.college_favorite_schools);
+        const favoritesRaw = JSON.parse(profile.college_favorite_schools);
+        const favorites = applySavedCollegeOrder('favorites', favoritesRaw);
         if (favorites.length > 0) {
           html += `
             <div class="profile-section">
               <h2 class="section-title-small">COLLEGE FAVORITES</h2>
-              <div class="college-offers-grid-profile">
+              <div class="college-offers-grid-profile" data-college-group="favorites">
                 ${favorites.map(fav => `
-                  <div class="college-logo-card" style="position:relative; cursor:pointer;"
+                  <div class="college-logo-card" style="position:relative; cursor:grab;"
                        data-college-id="${fav.id}"
+                       draggable="true"
                        onmouseenter="showOfferTooltip(event, ${fav.id})"
                        onmouseleave="hideOfferTooltip()"
-                       onclick="openSchoolDetailFromOffer(${fav.id})">
+                       onclick="handleCollegeLogoClick(event, ${fav.id})">
                     ${fav.logo
                       ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
@@ -1119,6 +1123,7 @@
 
       document.getElementById('viewProfileContent').innerHTML = html;
       applyMetricTipsToIcons();
+      initCollegeLogoDragAndDrop();
     }
 
     function getEmbedUrl(url) {
@@ -1932,6 +1937,132 @@
     let offerTooltipEl = null;
     let offerTooltipTimer = null;
     const offerContactsCache = {};
+    let isCollegeLogoDragging = false;
+
+    function getCollegeLogoOrderStorageKey() {
+      const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
+      return `playerCollegeLogoOrder:${userId}`;
+    }
+
+    function loadCollegeLogoOrderState() {
+      try {
+        const raw = localStorage.getItem(getCollegeLogoOrderStorageKey());
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function saveCollegeLogoOrderState(state) {
+      try {
+        localStorage.setItem(getCollegeLogoOrderStorageKey(), JSON.stringify(state || {}));
+      } catch (_) {}
+    }
+
+    function applySavedCollegeOrder(group, schools) {
+      if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
+      const orderState = loadCollegeLogoOrderState();
+      const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
+      if (ids.length === 0) return schools;
+
+      const indexMap = new Map(ids.map((id, index) => [id, index]));
+      return [...schools].sort((a, b) => {
+        const ai = indexMap.has(Number(a.id)) ? indexMap.get(Number(a.id)) : Number.MAX_SAFE_INTEGER;
+        const bi = indexMap.has(Number(b.id)) ? indexMap.get(Number(b.id)) : Number.MAX_SAFE_INTEGER;
+        if (ai !== bi) return ai - bi;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+    }
+
+    function saveCollegeOrderFromDom(group, container) {
+      if (!container) return;
+      const ids = Array.from(container.querySelectorAll('.college-logo-card[data-college-id]'))
+        .map(el => Number(el.dataset.collegeId))
+        .filter(id => Number.isFinite(id));
+      const orderState = loadCollegeLogoOrderState();
+      orderState[group] = ids;
+      saveCollegeLogoOrderState(orderState);
+    }
+
+    function setupCollegeLogoDragForGroup(group) {
+      const container = document.querySelector(`.college-offers-grid-profile[data-college-group="${group}"]`);
+      if (!container) return;
+
+      let draggedCard = null;
+
+      function getInsertBeforeElement(mouseX, mouseY) {
+        const cards = [...container.querySelectorAll('.college-logo-card:not(.dragging)')];
+        if (!cards.length) return null;
+
+        let closest = null;
+        let minDistance = Number.POSITIVE_INFINITY;
+
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const distance = Math.hypot(mouseX - centerX, mouseY - centerY);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closest = card;
+          }
+        });
+
+        if (!closest) return null;
+        const rect = closest.getBoundingClientRect();
+        const placeBefore = mouseY < rect.top + rect.height / 2 || (mouseY <= rect.bottom && mouseX < rect.left + rect.width / 2);
+        return placeBefore ? closest : closest.nextSibling;
+      }
+
+      container.querySelectorAll('.college-logo-card[draggable="true"]').forEach((card) => {
+        card.addEventListener('dragstart', (event) => {
+          draggedCard = card;
+          isCollegeLogoDragging = true;
+          card.classList.add('dragging');
+          card.style.opacity = '0.45';
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', card.dataset.collegeId || '');
+          }
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          card.style.opacity = '';
+          saveCollegeOrderFromDom(group, container);
+          setTimeout(() => { isCollegeLogoDragging = false; }, 0);
+          draggedCard = null;
+        });
+      });
+
+      container.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!draggedCard) return;
+        const insertBefore = getInsertBeforeElement(event.clientX, event.clientY);
+        if (insertBefore == null) container.appendChild(draggedCard);
+        else if (insertBefore !== draggedCard) container.insertBefore(draggedCard, insertBefore);
+      });
+
+      container.addEventListener('drop', (event) => {
+        event.preventDefault();
+      });
+    }
+
+    function initCollegeLogoDragAndDrop() {
+      setupCollegeLogoDragForGroup('offers');
+      setupCollegeLogoDragForGroup('favorites');
+    }
+
+    function handleCollegeLogoClick(event, collegeId) {
+      if (isCollegeLogoDragging) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      openSchoolDetailFromOffer(collegeId);
+    }
 
     function escapeHtmlTooltip(str) {
       if (!str) return '';
