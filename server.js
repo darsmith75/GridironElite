@@ -1227,6 +1227,10 @@ async function sendPasswordResetEmail(toEmail, token) {
 // Register
 app.post('/api/register', async (req, res) => {
   const { email, password, role, fullName } = req.body;
+  const ALLOWED_PUBLIC_ROLES = ['player', 'agent', 'coach'];
+  if (!ALLOWED_PUBLIC_ROLES.includes(role)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -1236,6 +1240,11 @@ app.post('/api/register', async (req, res) => {
 
     if (role === 'player') {
       await db.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)').run(result.lastInsertRowid, fullName);
+    }
+
+    if (role === 'coach') {
+      const teamName = (fullName ? fullName + "'s Team" : 'My Team');
+      await db.prepare('INSERT INTO hs_teams (coach_id, team_name) VALUES (?, ?)').run(result.lastInsertRowid, teamName);
     }
 
     // Notify all admin users about the new registration
@@ -2264,6 +2273,387 @@ const requireAdmin = (req, res, next) => {
   if (req.session.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   next();
 };
+
+// Coach middleware (admin can also access coach routes)
+const requireCoach = (req, res, next) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+  if (req.session.role !== 'coach' && req.session.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+
+async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, schoolName) {
+  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+  const acceptUrl = `${appUrl}/coach-dashboard.html?acceptInvite=${inviteToken}`;
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
+    }
+  });
+  const displaySchool = schoolName ? ` at ${schoolName}` : '';
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: `You've been invited to join ${teamName} on Gridiron Elite`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
+        <h2 style="color:#1e3a5f">Team Invitation</h2>
+        <p>${coachName || 'Your coach'} has invited you to join <strong>${teamName}</strong>${displaySchool} on Gridiron Elite.</p>
+        <p>Click the button below to accept the invitation and join the team.</p>
+        <p style="margin:32px 0">
+          <a href="${acceptUrl}" style="background:#2563eb;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px">Accept Invitation</a>
+        </p>
+        <p style="color:#6b7280;font-size:13px">This invitation expires in 7 days. If you don't have an account yet, please register as an Athlete first, then click the link above.</p>
+        <p style="color:#6b7280;font-size:13px">If you did not expect this invitation, you can safely ignore this email.</p>
+      </div>
+    `,
+    text: `${coachName || 'Your coach'} has invited you to join ${teamName}${displaySchool} on Gridiron Elite.\n\nAccept the invitation here:\n${acceptUrl}\n\nThis invitation expires in 7 days.`
+  });
+}
+
+// ============================================================
+// Coach routes
+// ============================================================
+
+// Coach: Get own team info
+app.get('/api/coach/team', requireCoach, async (req, res) => {
+  try {
+    let coachId = req.session.userId;
+    // admin impersonation: pass ?coachId=X
+    if (req.session.role === 'admin' && req.query.coachId) {
+      coachId = parseInt(req.query.coachId, 10);
+    }
+    const team = await db.prepare('SELECT * FROM hs_teams WHERE coach_id = ?').get(coachId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    const coach = await db.prepare('SELECT full_name, email, phone FROM users WHERE id = ?').get(coachId);
+    res.json({ ...team, coach });
+  } catch (error) {
+    console.error('Coach get team error:', error);
+    res.status(500).json({ error: 'Failed to get team' });
+  }
+});
+
+// Coach: Update team info
+app.put('/api/coach/team', requireCoach, async (req, res) => {
+  try {
+    const { teamName, schoolName, city, state } = req.body;
+    if (!teamName || !teamName.trim()) {
+      return res.status(400).json({ error: 'Team name is required' });
+    }
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    await db.prepare(
+      'UPDATE hs_teams SET team_name = ?, school_name = ?, city = ?, state = ? WHERE id = ?'
+    ).run(teamName.trim(), schoolName?.trim() || null, city?.trim() || null, state?.trim() || null, team.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach update team error:', error);
+    res.status(500).json({ error: 'Failed to update team' });
+  }
+});
+
+// Coach: Get team roster (enriched player profiles)
+app.get('/api/coach/team/roster', requireCoach, async (req, res) => {
+  try {
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    const players = await db.prepare(`
+      SELECT pp.*, u.email, tp.joined_at
+      FROM team_players tp
+      JOIN users u ON u.id = tp.player_id
+      JOIN player_profiles pp ON pp.user_id = tp.player_id
+      WHERE tp.team_id = ?
+      ORDER BY pp.full_name ASC
+    `).all(team.id);
+    for (const p of players) {
+      await enrichPlayerProfile(p);
+    }
+    res.json(players);
+  } catch (error) {
+    console.error('Coach get roster error:', error);
+    res.status(500).json({ error: 'Failed to get roster' });
+  }
+});
+
+// Coach: Remove player from team
+app.delete('/api/coach/team/roster/:playerId', requireCoach, async (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId, 10);
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    await db.prepare('DELETE FROM team_players WHERE team_id = ? AND player_id = ?').run(team.id, playerId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach remove player error:', error);
+    res.status(500).json({ error: 'Failed to remove player' });
+  }
+});
+
+// Coach: Send invite to a player by email
+app.post('/api/coach/invite', requireCoach, async (req, res) => {
+  try {
+    const { playerEmail } = req.body;
+    if (!playerEmail || typeof playerEmail !== 'string') {
+      return res.status(400).json({ error: 'Player email is required' });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(playerEmail.trim())) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    const normalizedEmail = playerEmail.trim().toLowerCase();
+
+    const team = await db.prepare('SELECT * FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    // Prevent duplicate pending invites to the same email for the same team
+    const existing = await db.prepare(
+      "SELECT id FROM team_invites WHERE team_id = ? AND player_email = ? AND status = 'pending'"
+    ).get(team.id, normalizedEmail);
+    if (existing) {
+      return res.status(409).json({ error: 'A pending invite already exists for this email' });
+    }
+
+    // Check if player already on the team
+    const playerUser = await db.prepare("SELECT id FROM users WHERE LOWER(email) = ? AND role = 'player'").get(normalizedEmail);
+    if (playerUser) {
+      const onTeam = await db.prepare('SELECT id FROM team_players WHERE team_id = ? AND player_id = ?').get(team.id, playerUser.id);
+      if (onTeam) {
+        return res.status(409).json({ error: 'This player is already on your team' });
+      }
+    }
+
+    const token = crypto.randomBytes(48).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const result = await db.prepare(
+      'INSERT INTO team_invites (team_id, player_email, player_user_id, token, status, expires_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(team.id, normalizedEmail, playerUser?.id || null, token, 'pending', expiresAt.toISOString());
+
+    const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
+    try {
+      await sendTeamInviteEmail(normalizedEmail, token, coach?.full_name, team.team_name, team.school_name);
+    } catch (emailErr) {
+      console.error('Failed to send team invite email:', emailErr.message);
+    }
+
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('Coach send invite error:', error);
+    res.status(500).json({ error: 'Failed to send invite' });
+  }
+});
+
+// Coach: List all invites for this team
+app.get('/api/coach/invites', requireCoach, async (req, res) => {
+  try {
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    const invites = await db.prepare(
+      'SELECT id, player_email, player_user_id, status, sent_at, expires_at FROM team_invites WHERE team_id = ? ORDER BY sent_at DESC'
+    ).all(team.id);
+    res.json(invites);
+  } catch (error) {
+    console.error('Coach get invites error:', error);
+    res.status(500).json({ error: 'Failed to get invites' });
+  }
+});
+
+// Coach: Cancel/delete an invite
+app.delete('/api/coach/invites/:id', requireCoach, async (req, res) => {
+  try {
+    const inviteId = parseInt(req.params.id, 10);
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+    const invite = await db.prepare('SELECT id FROM team_invites WHERE id = ? AND team_id = ?').get(inviteId, team.id);
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    await db.prepare('DELETE FROM team_invites WHERE id = ?').run(inviteId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach delete invite error:', error);
+    res.status(500).json({ error: 'Failed to cancel invite' });
+  }
+});
+
+// Coach: Get own profile
+app.get('/api/coach/profile', requireCoach, async (req, res) => {
+  try {
+    const coach = await db.prepare('SELECT email, full_name, phone, organization FROM users WHERE id = ?').get(req.session.userId);
+    if (!coach) return res.status(404).json({ error: 'Coach not found' });
+    const team = await db.prepare('SELECT team_name, school_name, city, state FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    res.json({ ...coach, team: team || {} });
+  } catch (error) {
+    console.error('Coach get profile error:', error);
+    res.status(500).json({ error: 'Failed to get profile' });
+  }
+});
+
+// Coach: Update own profile
+app.post('/api/coach/profile', requireCoach, async (req, res) => {
+  try {
+    const { fullName, phone, teamName, schoolName, city, state } = req.body;
+    await db.prepare('UPDATE users SET full_name = ?, phone = ? WHERE id = ?')
+      .run(fullName?.trim() || null, phone?.trim() || null, req.session.userId);
+    if (teamName && teamName.trim()) {
+      await db.prepare('UPDATE hs_teams SET team_name = ?, school_name = ?, city = ?, state = ? WHERE coach_id = ?')
+        .run(teamName.trim(), schoolName?.trim() || null, city?.trim() || null, state?.trim() || null, req.session.userId);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Coach: Change password
+app.post('/api/coach/change-password', requireCoach, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const coach = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+  if (!coach || !(await bcrypt.compare(currentPassword, coach.password))) {
+    return res.status(400).json({ error: 'Current password is incorrect' });
+  }
+  try {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.session.userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach change password error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// Player: Get pending team invites for the logged-in player
+app.get('/api/player/team-invites', requireAuth, async (req, res) => {
+  try {
+    if (req.session.role !== 'player') return res.status(403).json({ error: 'Forbidden' });
+    const player = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    // Match by player_user_id (already linked) OR by email (not yet linked)
+    const invites = await db.prepare(`
+      SELECT ti.id, ti.token, ti.status, ti.sent_at, ti.expires_at,
+        ht.team_name, ht.school_name, ht.city, ht.state,
+        u.full_name AS coach_name
+      FROM team_invites ti
+      JOIN hs_teams ht ON ht.id = ti.team_id
+      JOIN users u ON u.id = ht.coach_id
+      WHERE ti.status = 'pending'
+        AND ti.expires_at > CURRENT_TIMESTAMP
+        AND (ti.player_user_id = ? OR LOWER(ti.player_email) = LOWER(?))
+      ORDER BY ti.sent_at DESC
+    `).all(req.session.userId, player.email);
+    res.json(invites);
+  } catch (error) {
+    console.error('Player get team invites error:', error);
+    res.status(500).json({ error: 'Failed to get invites' });
+  }
+});
+
+// Player: Accept a team invite
+app.post('/api/player/team-invites/:id/accept', requireAuth, async (req, res) => {
+  try {
+    if (req.session.role !== 'player') return res.status(403).json({ error: 'Forbidden' });
+    const inviteId = parseInt(req.params.id, 10);
+    const player = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
+    const invite = await db.prepare(`
+      SELECT ti.* FROM team_invites ti
+      JOIN hs_teams ht ON ht.id = ti.team_id
+      WHERE ti.id = ? AND ti.status = 'pending'
+        AND ti.expires_at > CURRENT_TIMESTAMP
+        AND (ti.player_user_id = ? OR LOWER(ti.player_email) = LOWER(?))
+    `).get(inviteId, req.session.userId, player.email);
+    if (!invite) return res.status(404).json({ error: 'Invite not found or expired' });
+
+    // Add to team_players (ignore duplicate)
+    await db.prepare(
+      'INSERT INTO team_players (team_id, player_id) VALUES (?, ?) ON CONFLICT (team_id, player_id) DO NOTHING'
+    ).run(invite.team_id, req.session.userId);
+
+    // Mark invite accepted and link player_user_id
+    await db.prepare(
+      "UPDATE team_invites SET status = 'accepted', player_user_id = ? WHERE id = ?"
+    ).run(req.session.userId, invite.id);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Player accept invite error:', error);
+    res.status(500).json({ error: 'Failed to accept invite' });
+  }
+});
+
+// Player: Decline a team invite
+app.post('/api/player/team-invites/:id/decline', requireAuth, async (req, res) => {
+  try {
+    if (req.session.role !== 'player') return res.status(403).json({ error: 'Forbidden' });
+    const inviteId = parseInt(req.params.id, 10);
+    const player = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
+    const invite = await db.prepare(`
+      SELECT ti.id FROM team_invites ti
+      WHERE ti.id = ? AND ti.status = 'pending'
+        AND (ti.player_user_id = ? OR LOWER(ti.player_email) = LOWER(?))
+    `).get(inviteId, req.session.userId, player.email);
+    if (!invite) return res.status(404).json({ error: 'Invite not found' });
+    await db.prepare("UPDATE team_invites SET status = 'declined', player_user_id = ? WHERE id = ?").run(req.session.userId, invite.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Player decline invite error:', error);
+    res.status(500).json({ error: 'Failed to decline invite' });
+  }
+});
+
+// Public: Accept invite via token (for email link click)
+app.get('/api/team-invites/accept', requireAuth, async (req, res) => {
+  try {
+    if (req.session.role !== 'player') {
+      return res.redirect('/player-profile.html?inviteError=notPlayer');
+    }
+    const { token } = req.query;
+    if (!token || typeof token !== 'string' || !/^[0-9a-f]{96}$/.test(token)) {
+      return res.redirect('/player-profile.html?inviteError=invalid');
+    }
+    const player = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
+    const invite = await db.prepare(`
+      SELECT ti.* FROM team_invites ti
+      WHERE ti.token = ? AND ti.status = 'pending' AND ti.expires_at > CURRENT_TIMESTAMP
+        AND (ti.player_user_id = ? OR LOWER(ti.player_email) = LOWER(?))
+    `).get(token, req.session.userId, player.email);
+    if (!invite) {
+      return res.redirect('/player-profile.html?inviteError=invalidOrExpired');
+    }
+    await db.prepare(
+      'INSERT INTO team_players (team_id, player_id) VALUES (?, ?) ON CONFLICT (team_id, player_id) DO NOTHING'
+    ).run(invite.team_id, req.session.userId);
+    await db.prepare("UPDATE team_invites SET status = 'accepted', player_user_id = ? WHERE id = ?").run(req.session.userId, invite.id);
+    res.redirect('/player-profile.html?inviteAccepted=1');
+  } catch (error) {
+    console.error('Accept invite via token error:', error);
+    res.redirect('/player-profile.html?inviteError=error');
+  }
+});
+
+// ============================================================
+// Admin: Coach management
+// ============================================================
+
+// Admin: List all coaches with team info
+app.get('/api/admin/coaches', requireAdmin, async (req, res) => {
+  try {
+    const coaches = await db.prepare(`
+      SELECT u.id, u.email, u.full_name, u.phone, u.created_at, u.last_login_at, u.login_count,
+        ht.id AS team_id, ht.team_name, ht.school_name, ht.city, ht.state,
+        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count,
+        (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
+      FROM users u
+      LEFT JOIN hs_teams ht ON ht.coach_id = u.id
+      WHERE u.role = 'coach'
+      ORDER BY u.created_at DESC
+    `).all();
+    res.json(coaches);
+  } catch (error) {
+    console.error('Admin list coaches error:', error);
+    res.status(500).json({ error: 'Failed to get coaches' });
+  }
+});
 
 // Admin: Update own profile
 // Admin: Get own profile

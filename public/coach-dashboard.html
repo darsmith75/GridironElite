@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .coach-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .coach-layout { grid-template-columns: 1fr; }
+    }
+    .coach-sidebar-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #c7d0da;
+    }
+    .team-badge {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 14px;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .team-badge .team-icon {
+      font-size: 40px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .team-badge .team-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .team-badge .school-name {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+    .team-badge .team-location {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+    .team-stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .team-stat {
+      background: #f0f4fa;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .team-stat .ts-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e3c72;
+    }
+    .team-stat .ts-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin: 0 0 14px;
+    }
+    .invite-form {
+      display: flex;
+      gap: 8px;
+    }
+    .invite-form input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .invite-form input:focus {
+      outline: none;
+      border-color: #1e3c72;
+    }
+    .btn-invite {
+      padding: 10px 16px;
+      background: #1e3c72;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-invite:hover { background: #2a5298; }
+    .btn-invite:disabled { background: #999; cursor: not-allowed; }
+    .invite-message {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      min-height: 18px;
+    }
+    .invite-message.success { color: #2e7d32; }
+    .invite-message.error { color: #c62828; }
+    .invite-list {
+      display: grid;
+      gap: 8px;
+    }
+    .invite-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8faff;
+      border: 1px solid #e0e8f5;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .invite-row .invite-email {
+      font-weight: 600;
+      color: #1e3c72;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .invite-row .invite-meta {
+      color: #76849b;
+      font-size: 12px;
+    }
+    .invite-row .invite-status {
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .invite-status.pending { background: #fff3e0; color: #e65100; }
+    .invite-status.accepted { background: #e8f5e9; color: #2e7d32; }
+    .invite-status.declined { background: #fce4ec; color: #c62828; }
+    .invite-status.expired { background: #f5f5f5; color: #999; }
+    .btn-cancel-invite {
+      padding: 4px 10px;
+      background: #ffebee;
+      color: #c62828;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .btn-cancel-invite:hover { background: #ffcdd2; }
+
+    /* Roster */
+    .roster-section {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #c7d0da;
+    }
+    .roster-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .roster-search {
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 220px;
+    }
+    .roster-search:focus { outline: none; border-color: #1e3c72; }
+    .roster-empty {
+      text-align: center;
+      padding: 48px 0;
+      color: #76849b;
+    }
+    .roster-empty .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .roster-card {
+      border: 1px solid #c7d0da;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+      background: white;
+      cursor: pointer;
+    }
+    .roster-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .roster-card-photo {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+    }
+    .roster-card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .roster-card-body {
+      padding: 14px;
+    }
+    .roster-card-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .roster-card-sub {
+      font-size: 12px;
+      color: #76849b;
+      margin-bottom: 10px;
+    }
+    .roster-card-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .roster-stat {
+      text-align: center;
+      background: #f0f4fa;
+      border-radius: 6px;
+      padding: 6px 4px;
+    }
+    .roster-stat .rs-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e3c72;
+    }
+    .roster-stat .rs-key {
+      font-size: 11px;
+      color: #76849b;
+    }
+    .roster-card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .btn-view-player {
+      flex: 1;
+      padding: 7px 0;
+      background: #e3f2fd;
+      color: #1565c0;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-view-player:hover { background: #bbdefb; }
+    .btn-remove-player {
+      padding: 7px 12px;
+      background: #ffebee;
+      color: #c62828;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-remove-player:hover { background: #ffcdd2; }
+    .invites-toggle {
+      font-size: 13px;
+      color: #1e3c72;
+      cursor: pointer;
+      font-weight: 600;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: 8px;
+    }
+    .invites-toggle:hover { text-decoration: underline; }
+    .alert-banner {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .alert-banner.info { background: #e3f2fd; color: #1565c0; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="coach-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="messages.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            Messages
+          </a>
+          <a href="coach-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="coach-layout">
+
+        <!-- Left sidebar: team card + invite section -->
+        <div>
+          <!-- Team Badge -->
+          <div id="teamBadge" class="team-badge" style="display:none;">
+            <div class="team-icon">🏈</div>
+            <div class="team-name" id="teamNameDisplay"></div>
+            <div class="school-name" id="schoolNameDisplay"></div>
+            <div class="team-location" id="teamLocationDisplay"></div>
+          </div>
+
+          <!-- Roster counts -->
+          <div class="team-stats-row">
+            <div class="team-stat">
+              <div class="ts-num" id="rosterCount">—</div>
+              <div class="ts-label">Players</div>
+            </div>
+            <div class="team-stat">
+              <div class="ts-num" id="pendingInvitesCount">—</div>
+              <div class="ts-label">Pending Invites</div>
+            </div>
+          </div>
+
+          <!-- Invite section -->
+          <div class="coach-sidebar-card">
+            <div class="section-title">Invite a Player</div>
+            <p style="font-size:13px;color:#76849b;margin:0 0 12px;">Enter the email address of a player who has (or will create) an account on Gridiron Elite.</p>
+            <div class="invite-form">
+              <input type="email" id="inviteEmailInput" placeholder="player@email.com" onkeypress="handleInviteKeyPress(event)">
+              <button class="btn-invite" id="inviteBtn" onclick="sendInvite()">Send</button>
+            </div>
+            <div class="invite-message" id="inviteMessage"></div>
+
+            <!-- Invites list toggle -->
+            <button class="invites-toggle" style="margin-top:16px;" onclick="toggleInvitesList()">
+              <span id="invitesToggleLabel">Show invites ▼</span>
+            </button>
+            <div id="invitesList" style="display:none;margin-top:10px;">
+              <div id="invitesContainer" class="invite-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roster section -->
+        <div class="roster-section">
+          <div class="roster-header">
+            <div class="section-title" style="margin:0;">Team Roster</div>
+            <input type="text" class="roster-search" id="rosterSearch" placeholder="Search players..." oninput="filterRoster()">
+          </div>
+          <div id="rosterContainer"></div>
+        </div>
+
+      </div>
+    </div><!-- /.dashboard-container -->
+  </div><!-- /.dashboard-wrapper -->
+
+  <script src="app.js"></script>
+  <script>
+    let teamData = null;
+    let rosterData = [];
+    let invitesData = [];
+    let invitesVisible = false;
+
+    async function init() {
+      const user = await checkAuth('coach');
+      if (!user) return;
+
+      // Handle invite accept via email link token
+      const params = new URLSearchParams(window.location.search);
+      const acceptToken = params.get('acceptInvite');
+      if (acceptToken) {
+        window.history.replaceState({}, '', window.location.pathname);
+        // Redirect to the server-side accept route — only works for players, so coach links go directly
+        window.location.href = '/api/team-invites/accept?token=' + encodeURIComponent(acceptToken);
+        return;
+      }
+
+      await Promise.all([loadTeam(), loadRoster(), loadInvites()]);
+      await logPageView('coach_dashboard');
+    }
+
+    async function loadTeam() {
+      try {
+        const res = await fetch('/api/coach/team');
+        if (!res.ok) return;
+        teamData = await res.json();
+        renderTeamBadge();
+      } catch (_) {}
+    }
+
+    function renderTeamBadge() {
+      if (!teamData) return;
+      document.getElementById('teamBadge').style.display = '';
+      document.getElementById('teamNameDisplay').textContent = teamData.team_name || 'My Team';
+      document.getElementById('schoolNameDisplay').textContent = teamData.school_name || '';
+      const loc = [teamData.city, teamData.state].filter(Boolean).join(', ');
+      document.getElementById('teamLocationDisplay').textContent = loc;
+    }
+
+    async function loadRoster() {
+      try {
+        const res = await fetch('/api/coach/team/roster');
+        if (!res.ok) return;
+        rosterData = await res.json();
+        document.getElementById('rosterCount').textContent = rosterData.length;
+        renderRoster(rosterData);
+      } catch (_) {}
+    }
+
+    function renderRoster(players) {
+      const container = document.getElementById('rosterContainer');
+      if (!players.length) {
+        container.innerHTML = `
+          <div class="roster-empty">
+            <div class="empty-icon">👥</div>
+            <div style="font-size:16px;font-weight:600;color:#1e3c72;margin-bottom:6px;">No players yet</div>
+            <div>Send invites to your players to get started</div>
+          </div>`;
+        return;
+      }
+      container.innerHTML = `<div class="roster-grid">${players.map(renderRosterCard).join('')}</div>`;
+    }
+
+    function renderRosterCard(p) {
+      const photoHtml = p.profile_picture
+        ? `<img src="${escHtml('/api/upload-proxy?path=' + encodeURIComponent(p.profile_picture))}" alt="" onerror="this.parentElement.innerHTML='🏈'">`
+        : '🏈';
+      const pos = p.position || '—';
+      const ht = p.height || '—';
+      const wt = p.weight ? p.weight + ' lbs' : '—';
+      const gpa = p.gpa ? parseFloat(p.gpa).toFixed(2) : '—';
+      const grad = p.graduation_year || '—';
+      const school = p.high_school || '';
+      const sub = [pos, school].filter(Boolean).join(' • ');
+      return `
+        <div class="roster-card" onclick="viewPlayer(${p.user_id})">
+          <div class="roster-card-photo">${photoHtml}</div>
+          <div class="roster-card-body">
+            <div class="roster-card-name">${escHtml(p.full_name || 'Player')}</div>
+            <div class="roster-card-sub">${escHtml(sub)} &nbsp;•&nbsp; '${String(grad).slice(-2)}</div>
+            <div class="roster-card-stats">
+              <div class="roster-stat"><div class="rs-val">${escHtml(ht)}</div><div class="rs-key">HT</div></div>
+              <div class="roster-stat"><div class="rs-val">${escHtml(String(wt))}</div><div class="rs-key">WT</div></div>
+              <div class="roster-stat"><div class="rs-val">${escHtml(String(gpa))}</div><div class="rs-key">GPA</div></div>
+            </div>
+            <div class="roster-card-actions">
+              <button class="btn-view-player" onclick="event.stopPropagation();viewPlayer(${p.user_id})">View Profile</button>
+              <button class="btn-remove-player" onclick="event.stopPropagation();removePlayer(${p.user_id}, '${escHtml(p.full_name || 'this player')}')">Remove</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function filterRoster() {
+      const q = (document.getElementById('rosterSearch').value || '').toLowerCase();
+      const filtered = rosterData.filter(p => {
+        const name = (p.full_name || '').toLowerCase();
+        const school = (p.high_school || '').toLowerCase();
+        const pos = (p.position || '').toLowerCase();
+        return !q || name.includes(q) || school.includes(q) || pos.includes(q);
+      });
+      renderRoster(filtered);
+    }
+
+    function viewPlayer(playerId) {
+      window.location.href = 'player-detail.html?id=' + playerId;
+    }
+
+    async function removePlayer(playerId, playerName) {
+      if (!confirm(`Remove ${playerName} from your roster?`)) return;
+      try {
+        const res = await fetch('/api/coach/team/roster/' + playerId, { method: 'DELETE' });
+        if (res.ok) {
+          await loadRoster();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to remove player');
+        }
+      } catch (_) {
+        alert('Failed to remove player');
+      }
+    }
+
+    async function loadInvites() {
+      try {
+        const res = await fetch('/api/coach/invites');
+        if (!res.ok) return;
+        invitesData = await res.json();
+        const pendingCount = invitesData.filter(i => i.status === 'pending').length;
+        document.getElementById('pendingInvitesCount').textContent = pendingCount;
+        renderInvites();
+      } catch (_) {}
+    }
+
+    function toggleInvitesList() {
+      invitesVisible = !invitesVisible;
+      document.getElementById('invitesList').style.display = invitesVisible ? '' : 'none';
+      document.getElementById('invitesToggleLabel').textContent = invitesVisible ? 'Hide invites ▲' : 'Show invites ▼';
+    }
+
+    function renderInvites() {
+      const container = document.getElementById('invitesContainer');
+      if (!invitesData.length) {
+        container.innerHTML = '<div style="font-size:13px;color:#76849b;padding:8px 0;">No invites sent yet.</div>';
+        return;
+      }
+      container.innerHTML = invitesData.map(inv => {
+        const isExpired = new Date(inv.expires_at) < new Date() && inv.status === 'pending';
+        const status = isExpired ? 'expired' : inv.status;
+        const sentDate = new Date(inv.sent_at).toLocaleDateString();
+        const cancelBtn = (inv.status === 'pending' && !isExpired)
+          ? `<button class="btn-cancel-invite" onclick="cancelInvite(${inv.id})">Cancel</button>`
+          : '';
+        return `
+          <div class="invite-row">
+            <div style="flex:1;min-width:0;">
+              <div class="invite-email">${escHtml(inv.player_email)}</div>
+              <div class="invite-meta">Sent ${sentDate}</div>
+            </div>
+            <span class="invite-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            ${cancelBtn}
+          </div>`;
+      }).join('');
+    }
+
+    async function sendInvite() {
+      const email = (document.getElementById('inviteEmailInput').value || '').trim();
+      const msgEl = document.getElementById('inviteMessage');
+      const btn = document.getElementById('inviteBtn');
+      if (!email) {
+        msgEl.className = 'invite-message error';
+        msgEl.textContent = 'Please enter an email address.';
+        return;
+      }
+      btn.disabled = true;
+      msgEl.className = 'invite-message';
+      msgEl.textContent = 'Sending…';
+      try {
+        const res = await fetch('/api/coach/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerEmail: email })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msgEl.className = 'invite-message success';
+          msgEl.textContent = 'Invite sent!';
+          document.getElementById('inviteEmailInput').value = '';
+          await loadInvites();
+          if (!invitesVisible) {
+            toggleInvitesList();
+          }
+        } else {
+          msgEl.className = 'invite-message error';
+          msgEl.textContent = data.error || 'Failed to send invite';
+        }
+      } catch (_) {
+        msgEl.className = 'invite-message error';
+        msgEl.textContent = 'Network error. Please try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function handleInviteKeyPress(e) {
+      if (e.key === 'Enter') { e.preventDefault(); sendInvite(); }
+    }
+
+    async function cancelInvite(inviteId) {
+      if (!confirm('Cancel this invite?')) return;
+      try {
+        const res = await fetch('/api/coach/invites/' + inviteId, { method: 'DELETE' });
+        if (res.ok) {
+          await loadInvites();
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Failed to cancel invite');
+        }
+      } catch (_) {
+        alert('Failed to cancel invite');
+      }
+    }
+
+    function escHtml(str) {
+      if (str == null) return '';
+      const d = document.createElement('div');
+      d.textContent = String(str);
+      return d.innerHTML;
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -112,6 +112,8 @@ async function login() {
       window.location.href = 'player-profile.html';
     } else if (data.role === 'admin') {
       window.location.href = 'admin-dashboard.html';
+    } else if (data.role === 'coach') {
+      window.location.href = 'coach-dashboard.html';
     } else {
       window.location.href = 'agent-dashboard.html';
     }
@@ -163,6 +165,7 @@ function findTopNavLinkByLabel(nav, label) {
 function getProfilePathForRole(role) {
   if (role === 'player') return 'player-profile.html';
   if (role === 'admin') return 'admin-profile.html';
+  if (role === 'coach') return 'coach-profile.html';
   return 'agent-profile.html';
 }
 
@@ -196,7 +199,9 @@ function applyRoleBasedTopNav(user) {
 
   const homeLink = findTopNavLinkByLabel(nav, 'Home');
   if (homeLink) {
-    homeLink.href = 'agent-dashboard.html';
+    if (user.role === 'player') homeLink.href = 'player-profile.html';
+    else if (user.role === 'coach') homeLink.href = 'coach-dashboard.html';
+    else homeLink.href = 'agent-dashboard.html';
   }
 
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');

@@ -44,7 +44,10 @@ const insertPrimaryKeys = {
   school_notes: 'id',
   school_contacts: 'id',
   ai_player_summaries: 'id',
-  ai_events: 'id'
+  ai_events: 'id',
+  hs_teams: 'id',
+  team_invites: 'id',
+  team_players: 'id'
 };
 
 const createTablesSQL = `
@@ -52,7 +55,7 @@ const createTablesSQL = `
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    role VARCHAR(50) NOT NULL CHECK(role IN ('player', 'agent', 'admin')),
+    role VARCHAR(50) NOT NULL CHECK(role IN ('player', 'agent', 'admin', 'coach')),
     full_name VARCHAR(255),
     phone VARCHAR(20),
     organization VARCHAR(255),
@@ -296,6 +299,40 @@ const createTablesSQL = `
     FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (summary_id) REFERENCES ai_player_summaries(id) ON DELETE SET NULL
   );
+
+  CREATE TABLE IF NOT EXISTS hs_teams (
+    id SERIAL PRIMARY KEY,
+    coach_id INTEGER UNIQUE NOT NULL,
+    team_name VARCHAR(255) NOT NULL,
+    school_name VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS team_invites (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    player_email VARCHAR(255) NOT NULL,
+    player_user_id INTEGER,
+    token VARCHAR(128) UNIQUE NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS team_players (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(team_id, player_id),
+    FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `;
 
 const alterTablesSQL = `
@@ -310,6 +347,8 @@ const alterTablesSQL = `
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
+  ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+  ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('player', 'agent', 'admin', 'coach'));
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token TEXT;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
@@ -348,6 +387,12 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_ai_events_event_type ON ai_events(event_type);
   CREATE INDEX IF NOT EXISTS idx_ai_events_created_at ON ai_events(created_at);
   CREATE INDEX IF NOT EXISTS idx_ai_events_player ON ai_events(player_user_id);
+  CREATE INDEX IF NOT EXISTS idx_hs_teams_coach ON hs_teams(coach_id);
+  CREATE INDEX IF NOT EXISTS idx_team_invites_team ON team_invites(team_id);
+  CREATE INDEX IF NOT EXISTS idx_team_invites_email ON team_invites(player_email);
+  CREATE INDEX IF NOT EXISTS idx_team_invites_player ON team_invites(player_user_id);
+  CREATE INDEX IF NOT EXISTS idx_team_players_team ON team_players(team_id);
+  CREATE INDEX IF NOT EXISTS idx_team_players_player ON team_players(player_id);
 `;
 
 function splitStatements(sql) {

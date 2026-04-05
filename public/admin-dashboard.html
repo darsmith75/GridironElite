@@ -154,6 +154,7 @@
     .role-badge.player { background: #e8f5e9; color: #2e7d32; }
     .role-badge.agent { background: #e3f2fd; color: #1565c0; }
     .role-badge.admin { background: #fce4ec; color: #c62828; }
+    .role-badge.coach { background: #fff3e0; color: #e65100; }
     .action-btn {
       padding: 7px 10px;
       border: none;
@@ -476,6 +477,7 @@
       <!-- Tabs -->
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchTab('users')">User Management</button>
+        <button class="admin-tab" onclick="switchTab('coaches')">Coaches</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
         <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
         <button class="admin-tab" onclick="switchTab('ads')">Advertising</button>
@@ -490,6 +492,7 @@
             <option value="">All Roles</option>
             <option value="player">Athletes</option>
             <option value="agent">Agents</option>
+            <option value="coach">Coaches</option>
             <option value="admin">Admins</option>
           </select>
         </div>
@@ -563,6 +566,35 @@
           <p style="margin:0 0 16px; color:#666; font-size:14px;">Manage enabled state and HTML/embed content for reserved ad spaces on site pages.</p>
           <div id="adSlotGrid" class="ad-slot-admin-grid"></div>
           <div id="adSlotStatus" class="ad-slot-admin-status"></div>
+        </div>
+      </div>
+
+      <!-- Coaches Tab -->
+      <div class="tab-panel" id="tab-coaches">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">High School Coaches</h2>
+            <button class="btn-save" onclick="loadCoaches()">Refresh</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Coach</th>
+                  <th>Email</th>
+                  <th>Team Name</th>
+                  <th>School</th>
+                  <th>Location</th>
+                  <th>Roster</th>
+                  <th>Pending Invites</th>
+                  <th>Last Login</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody id="coachesTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1125,6 +1157,44 @@
       if (tab === 'colleges') loadColleges();
       if (tab === 'protips') loadMetricTips();
       if (tab === 'ads') loadAdSlotsConfig();
+      if (tab === 'coaches') loadCoaches();
+    }
+
+    async function loadCoaches() {
+      const tbody = document.getElementById('coachesTableBody');
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
+      try {
+        const res = await fetch('/api/admin/coaches');
+        if (!res.ok) throw new Error('Failed to load');
+        const coaches = await res.json();
+        if (!coaches.length) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">No coaches yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = coaches.map(c => {
+          const name = escapeHtml(c.full_name || c.email || '—');
+          const email = escapeHtml(c.email || '—');
+          const team = escapeHtml(c.team_name || '—');
+          const school = escapeHtml(c.school_name || '—');
+          const loc = [c.city, c.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
+          const lastLogin = formatDateTime(c.last_login_at);
+          const joined = c.created_at ? new Date(c.created_at).toLocaleDateString() : '—';
+          return `<tr>
+            <td>${c.id}</td>
+            <td><strong>${name}</strong></td>
+            <td>${email}</td>
+            <td>${team}</td>
+            <td>${school}</td>
+            <td>${loc}</td>
+            <td style="text-align:center;">${c.roster_count || 0}</td>
+            <td style="text-align:center;">${c.pending_invites || 0}</td>
+            <td>${lastLogin}</td>
+            <td>${joined}</td>
+          </tr>`;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#c62828;padding:24px;">Failed to load coaches: ${escapeHtml(err.message)}</td></tr>`;
+      }
     }
 
     function formatDateTime(value) {

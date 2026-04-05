@@ -36,6 +36,17 @@
 
     <div class="dashboard-container">
 
+    <!-- ============ TEAM INVITES PANEL ============ -->
+    <div id="teamInvitesPanel" style="display:none;margin-bottom:18px;">
+      <div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:12px;padding:16px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:22px;">🏈</span>
+          <span style="font-size:15px;font-weight:700;color:#1e3c72;">Team Invitations</span>
+        </div>
+        <div id="teamInvitesList"></div>
+      </div>
+    </div>
+
     <!-- ============ VIEW MODE ============ -->
     <div id="profileViewMode" class="profile-container">
       <!-- Hero Section -->
@@ -502,6 +513,93 @@
     let currentLightboxEl = null;
     let metricTipsMap = {};
     let metricTipTooltipEl = null;
+
+    // Handle invite-related URL params
+    (function handleInviteParams() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('acceptInvite');
+      const accepted = params.get('inviteAccepted');
+      const err = params.get('inviteError');
+      if (token || accepted || err) {
+        window.history.replaceState({}, '', window.location.pathname);
+        if (token) {
+          window.location.href = '/api/team-invites/accept?token=' + encodeURIComponent(token);
+          return;
+        }
+        if (accepted) {
+          const p = document.getElementById('teamInvitesPanel');
+          p.style.display = '';
+          p.querySelector('#teamInvitesList').innerHTML =
+            '<div style="color:#2e7d32;font-weight:600;padding:4px 0;">&#10003; You have joined the team!</div>';
+        }
+      }
+    })();
+
+    // Load and render team invites
+    async function loadTeamInvites() {
+      try {
+        const res = await fetch('/api/player/team-invites');
+        if (!res.ok) return;
+        const invites = await res.json();
+        if (!invites.length) return;
+        const panel = document.getElementById('teamInvitesPanel');
+        const list = document.getElementById('teamInvitesList');
+        panel.style.display = '';
+        list.innerHTML = invites.map(inv => {
+          const school = inv.school_name ? ` &mdash; ${escInvHtml(inv.school_name)}` : '';
+          const loc = [inv.city, inv.state].filter(Boolean).join(', ');
+          return `
+            <div style="background:white;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+              <div style="font-weight:700;color:#1e3c72;font-size:15px;margin-bottom:2px;">
+                ${escInvHtml(inv.team_name)}${school}
+              </div>
+              <div style="font-size:13px;color:#76849b;margin-bottom:10px;">
+                Coach: ${escInvHtml(inv.coach_name || '—')}${loc ? ' &nbsp;•&nbsp; ' + escInvHtml(loc) : ''}
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button onclick="respondToInvite(${inv.id},'accept',this)" style="padding:8px 18px;background:#1e3c72;color:white;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;">Accept</button>
+                <button onclick="respondToInvite(${inv.id},'decline',this)" style="padding:8px 18px;background:#ffebee;color:#c62828;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;">Decline</button>
+              </div>
+              <div id="inviteResult_${inv.id}" style="margin-top:8px;font-size:13px;font-weight:600;min-height:18px;"></div>
+            </div>`;
+        }).join('');
+      } catch (_) {}
+    }
+
+    async function respondToInvite(inviteId, action, btn) {
+      btn.disabled = true;
+      const msgEl = document.getElementById('inviteResult_' + inviteId);
+      try {
+        const res = await fetch(`/api/player/team-invites/${inviteId}/${action}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          if (action === 'accept') {
+            msgEl.style.color = '#2e7d32';
+            msgEl.textContent = '✓ You have joined the team!';
+          } else {
+            msgEl.style.color = '#76849b';
+            msgEl.textContent = 'Invitation declined.';
+          }
+          // Remove action buttons
+          btn.closest('div[style*="display:flex"]').style.display = 'none';
+        } else {
+          msgEl.style.color = '#c62828';
+          msgEl.textContent = data.error || 'Failed. Please try again.';
+          btn.disabled = false;
+        }
+      } catch (_) {
+        msgEl.style.color = '#c62828';
+        msgEl.textContent = 'Network error. Please try again.';
+        btn.disabled = false;
+      }
+    }
+
+    function escInvHtml(str) {
+      if (str == null) return '';
+      const d = document.createElement('div');
+      d.textContent = String(str);
+      return d.innerHTML;
+    }
     const METRIC_DEFINITIONS = [
       { key: 'forty_yard_dash', fieldName: 'fortyYardDash', label: '40-Yard Dash', suffix: 's', videoField: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash' },
       { key: 'vertical_jump', fieldName: 'verticalJump', label: 'Vertical Jump', suffix: '"', videoField: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump' },
@@ -519,6 +617,7 @@
     initBroadJumpInputs();
     loadPlayerProfile();
     loadMetricTipsForForm();
+    loadTeamInvites();
 
     async function loadMetricTipsForForm() {
       try {
