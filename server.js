@@ -1154,6 +1154,9 @@ async function enrichPlayerProfile(profile) {
   const favoriteSchools = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
   profile.college_favorite_schools = favoriteSchools.length > 0 ? JSON.stringify(favoriteSchools) : null;
 
+  // Include college logo ordering from database
+  profile.college_logo_order = profile.college_logo_order || null;
+
   const contacts = await db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE user_id = ?').all(playerId);
   contacts.forEach(c => {
     profile[c.role + '_name'] = c.name;
@@ -3341,6 +3344,23 @@ app.post('/api/player/colleges/:collegeId/offer', requireAuth, async (req, res) 
   } catch (error) {
     console.error('Toggle offer error:', error);
     res.status(500).json({ error: 'Failed to toggle offer' });
+  }
+});
+
+// Player: Save college logo order
+app.post('/api/player/college-logo-order', requireAuth, express.json(), async (req, res) => {
+  try {
+    const { orderData } = req.body;
+    if (!orderData || typeof orderData !== 'object') {
+      return res.status(400).json({ error: 'orderData must be an object' });
+    }
+    
+    await db.prepare('UPDATE player_profiles SET college_logo_order = ? WHERE user_id = ?')
+      .run(JSON.stringify(orderData), req.session.userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save college logo order error:', error);
+    res.status(500).json({ error: 'Failed to save college logo order' });
   }
 });
 

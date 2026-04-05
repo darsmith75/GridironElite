@@ -655,6 +655,8 @@
       return `${feet}'${inchesText}"`;
     }
     
+    let currentPlayerData = null;
+    
     async function loadPlayerCard(playerId) {
       // Fetch player data - use different endpoint based on whether viewing own card or another player's
       let res;
@@ -673,6 +675,7 @@
       }
       
       const player = await res.json();
+      currentPlayerData = player;
       
       // Header
       document.getElementById('playerName').textContent = player.full_name || 'Unknown Player';
@@ -823,7 +826,21 @@
 
     function applySavedCollegeOrder(group, schools) {
       if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
-      const orderState = loadCollegeLogoOrderState();
+      
+      // Try to get order from server (currentPlayerData.college_logo_order)
+      let orderState = {};
+      if (currentPlayerData && currentPlayerData.college_logo_order) {
+        try {
+          if (typeof currentPlayerData.college_logo_order === 'string') {
+            orderState = JSON.parse(currentPlayerData.college_logo_order);
+          } else {
+            orderState = currentPlayerData.college_logo_order;
+          }
+        } catch (_) {
+          orderState = {};
+        }
+      }
+      
       const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
       if (ids.length === 0) return schools;
 

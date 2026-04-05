@@ -1008,25 +1008,23 @@
     }
 
     // College Logo Ordering - Helper Functions
-    function getCollegeLogoOrderStorageKey() {
-      const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
-      return `playerCollegeLogoOrder:${userId}`;
-    }
-
-    function loadCollegeLogoOrderState() {
-      try {
-        const raw = localStorage.getItem(getCollegeLogoOrderStorageKey());
-        if (!raw) return {};
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' ? parsed : {};
-      } catch (_) {
-        return {};
-      }
-    }
-
     function applySavedCollegeOrder(group, schools) {
       if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
-      const orderState = loadCollegeLogoOrderState();
+      
+      // Try to get order from server (currentPlayerData.college_logo_order)
+      let orderState = {};
+      if (currentPlayerData && currentPlayerData.college_logo_order) {
+        try {
+          if (typeof currentPlayerData.college_logo_order === 'string') {
+            orderState = JSON.parse(currentPlayerData.college_logo_order);
+          } else {
+            orderState = currentPlayerData.college_logo_order;
+          }
+        } catch (_) {
+          orderState = {};
+        }
+      }
+      
       const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
       if (ids.length === 0) return schools;
 

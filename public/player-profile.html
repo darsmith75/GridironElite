@@ -1984,6 +1984,13 @@
       const orderState = loadCollegeLogoOrderState();
       orderState[group] = ids;
       saveCollegeLogoOrderState(orderState);
+      
+      // Save to backend
+      fetch('/api/player/college-logo-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderData: orderState })
+      }).catch(err => console.error('Failed to save college logo order to backend:', err));
     }
 
     function setupCollegeLogoDragForGroup(group) {
