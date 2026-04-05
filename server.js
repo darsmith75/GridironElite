@@ -3352,7 +3352,18 @@ app.get('/api/player/colleges/:collegeId/notes', requireAuth, async (req, res) =
     const collegeId = parseInt(req.params.collegeId, 10);
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const notes = await db.prepare(
-      'SELECT * FROM school_notes WHERE user_id = ? AND college_id = ? ORDER BY COALESCE(visit_date, created_at) DESC'
+      `SELECT *
+       FROM school_notes
+       WHERE user_id = ? AND college_id = ?
+       ORDER BY
+         COALESCE(
+           CASE
+             WHEN visit_date ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN visit_date::date
+             ELSE NULL
+           END,
+           created_at::date
+         ) DESC,
+         created_at DESC`
     ).all(req.session.userId, collegeId);
     res.json(notes);
   } catch (error) {
