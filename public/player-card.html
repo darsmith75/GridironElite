@@ -702,7 +702,8 @@
       
       // College Offers (from school interests)
       if (player.college_offer_schools) {
-        const offers = JSON.parse(player.college_offer_schools);
+        const offersRaw = JSON.parse(player.college_offer_schools);
+        const offers = applySavedCollegeOrder('offers', offersRaw);
         if (offers.length > 0) {
           document.getElementById('offersSection').style.display = 'block';
           let offersHTML = '';
@@ -800,6 +801,38 @@
             reject(new Error('Unable to create image blob from canvas'));
           }
         }, 'image/png');
+      });
+    }
+
+    // College Logo Ordering - Helper Functions
+    function getCollegeLogoOrderStorageKey() {
+      const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
+      return `playerCollegeLogoOrder:${userId}`;
+    }
+
+    function loadCollegeLogoOrderState() {
+      try {
+        const raw = localStorage.getItem(getCollegeLogoOrderStorageKey());
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function applySavedCollegeOrder(group, schools) {
+      if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
+      const orderState = loadCollegeLogoOrderState();
+      const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
+      if (ids.length === 0) return schools;
+
+      const indexMap = new Map(ids.map((id, index) => [id, index]));
+      return [...schools].sort((a, b) => {
+        const ai = indexMap.has(Number(a.id)) ? indexMap.get(Number(a.id)) : Number.MAX_SAFE_INTEGER;
+        const bi = indexMap.has(Number(b.id)) ? indexMap.get(Number(b.id)) : Number.MAX_SAFE_INTEGER;
+        if (ai !== bi) return ai - bi;
+        return String(a.name || '').localeCompare(String(b.name || ''));
       });
     }
 
