@@ -1467,7 +1467,7 @@ app.get('/api/player/metric-pro-tips', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/ad-slots', requireAuth, async (req, res) => {
+app.get('/api/ad-slots', async (req, res) => {
   try {
     const slots = await getAdSlotsMap();
     res.json({ slots });
