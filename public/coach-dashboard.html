@@ -849,7 +849,7 @@
             </div>
           </div>
           <div class="coach-card-actions">
-            <button class="btn-remove-player" onclick="event.stopPropagation(); confirmRemovePlayer(event, ${p.user_id}, ${safePlayerNameLiteral})" title="Remove from roster">&#x2715;</button>
+            <button class="btn-remove-player" data-player-id="${p.user_id}" data-player-name="${escapedName}" onclick="event.stopPropagation(); confirmRemovePlayer(event, this)" title="Remove from roster">&#x2715;</button>
           </div>
         </div>`;
     }
@@ -884,7 +884,8 @@
             <div class="list-stat"><span class="list-stat-label">Verified:</span><span class="list-stat-value">${hasVerifiedBadge ? '✓' : '—'}</span></div>
           </div>
           <button class="btn-remove-player-list"
-                  onclick="event.stopPropagation(); confirmRemovePlayer(event, ${p.user_id}, ${safePlayerNameLiteral})"
+                  data-player-id="${p.user_id}" data-player-name="${escapedName}"
+                  onclick="event.stopPropagation(); confirmRemovePlayer(event, this)"
                   title="Remove from roster">&#x2715;</button>
         </div>`;
     }
@@ -945,10 +946,11 @@
       }
     }
 
-    function confirmRemovePlayer(event, playerId, playerName) {
+    function confirmRemovePlayer(event, btn) {
       dismissRemovePopover();
 
-      const btn = event.currentTarget;
+      const playerId = btn.dataset.playerId;
+      const playerName = btn.dataset.playerName || 'this player';
       const rect = btn.getBoundingClientRect();
 
       const popover = document.createElement('div');
