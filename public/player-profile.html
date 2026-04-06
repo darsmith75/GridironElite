@@ -2521,10 +2521,7 @@
       updateContactTwitterFollowUi();
     }
 
-    fudocument.getElementById('contactInstagramHandle').value = '';
-      document.getElementById('contactFollowsPlayerOnInstagram').value = '0';
-      updateContactTwitterFollowUi();
-      updateContactInstagramInstagramFollow() {
+    function toggleContactInstagramFollow() {
       const hidden = document.getElementById('contactFollowsPlayerOnInstagram');
       hidden.value = hidden.value === '1' ? '0' : '1';
       updateContactInstagramFollowUi();
@@ -2535,13 +2532,13 @@
       document.getElementById('contactName').value = '';
       document.getElementById('contactTitle').value = '';
       document.getElementById('contactEmail').value = '';
-      document.getElementById('contactInstagramHandle').value = contactData.instagram_handle || '';
-      document.getElementById('contactFollowsPlayerOnInstagram').value = contactData.follows_player_on_instagram ? '1' : '0';
-      updateContactTwitterFollowUi();
-      updateContactInstagramyId('contactPhone').value = '';
+      document.getElementById('contactPhone').value = '';
       document.getElementById('contactTwitterHandle').value = '';
       document.getElementById('contactFollowsPlayerOnTwitter').value = '0';
+      document.getElementById('contactInstagramHandle').value = '';
+      document.getElementById('contactFollowsPlayerOnInstagram').value = '0';
       updateContactTwitterFollowUi();
+      updateContactInstagramFollowUi();
       document.getElementById('contactFormTitle').textContent = 'Add New Contact';
       document.getElementById('addContactForm').style.display = 'block';
       document.getElementById('contactName').focus();
@@ -2553,7 +2550,30 @@
       document.getElementById('contactTitle').value = contactData.title || '';
       document.getElementById('contactEmail').value = contactData.email || '';
       document.getElementById('contactPhone').value = contactData.phone || '';
-      documeinstagramHandleRaw = document.getElementById('contactInstagramHandle').value.trim();
+      document.getElementById('contactTwitterHandle').value = contactData.twitter_handle || '';
+      document.getElementById('contactFollowsPlayerOnTwitter').value = contactData.follows_player_on_twitter ? '1' : '0';
+      document.getElementById('contactInstagramHandle').value = contactData.instagram_handle || '';
+      document.getElementById('contactFollowsPlayerOnInstagram').value = contactData.follows_player_on_instagram ? '1' : '0';
+      updateContactTwitterFollowUi();
+      updateContactInstagramFollowUi();
+      document.getElementById('contactFormTitle').textContent = 'Edit Contact';
+      document.getElementById('addContactForm').style.display = 'block';
+      document.getElementById('contactName').focus();
+    }
+
+    function cancelContactForm() {
+      document.getElementById('addContactForm').style.display = 'none';
+    }
+
+    async function saveContact() {
+      const name = document.getElementById('contactName').value.trim();
+      const title = document.getElementById('contactTitle').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const phone = document.getElementById('contactPhone').value.trim();
+      const twitterHandleRaw = document.getElementById('contactTwitterHandle').value.trim();
+      const twitterHandle = twitterHandleRaw ? (twitterHandleRaw.startsWith('@') ? twitterHandleRaw : `@${twitterHandleRaw}`) : '';
+      const followsPlayerOnTwitter = document.getElementById('contactFollowsPlayerOnTwitter').value === '1';
+      const instagramHandleRaw = document.getElementById('contactInstagramHandle').value.trim();
       const instagramHandle = instagramHandleRaw ? (instagramHandleRaw.startsWith('@') ? instagramHandleRaw : `@${instagramHandleRaw}`) : '';
       const followsPlayerOnInstagram = document.getElementById('contactFollowsPlayerOnInstagram').value === '1';
       const editId = document.getElementById('editContactId').value;
@@ -2568,27 +2588,16 @@
         const res = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, title, email, phone, twitterHandle, followsPlayerOnTwitter, instagramHandle, followsPlayerOnInstagram
-      const name = document.getElementById('contactName').value.trim();
-      const title = document.getElementById('contactTitle').value.trim();
-      const email = document.getElementById('contactEmail').value.trim();
-      const phone = document.getElementById('contactPhone').value.trim();
-      const twitterHandleRaw = document.getElementById('contactTwitterHandle').value.trim();
-      const twitterHandle = twitterHandleRaw ? (twitterHandleRaw.startsWith('@') ? twitterHandleRaw : `@${twitterHandleRaw}`) : '';
-      const followsPlayerOnTwitter = document.getElementById('contactFollowsPlayerOnTwitter').value === '1';
-      const editId = document.getElementById('editContactId').value;
-
-      if (!name) { alert('Contact name is required'); return; }
-
-      try {
-        const url = editId
-          ? `/api/player/colleges/${currentSchoolId}/contacts/${editId}`
-          : `/api/player/colleges/${currentSchoolId}/contacts`;
-        const method = editId ? 'PUT' : 'POST';
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, title, email, phone, twitterHandle, followsPlayerOnTwitter })
+          body: JSON.stringify({
+            name,
+            title,
+            email,
+            phone,
+            twitterHandle,
+            followsPlayerOnTwitter,
+            instagramHandle,
+            followsPlayerOnInstagram
+          })
         });
         if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save contact'); return; }
         cancelContactForm();
