@@ -454,6 +454,208 @@
       cursor: pointer;
       font-weight: 600;
     }
+
+    @media (max-width: 1024px) {
+      body {
+        padding: 16px;
+      }
+
+      .card-header {
+        padding: 24px 24px;
+      }
+
+      .card-header h1 {
+        font-size: 38px;
+        letter-spacing: 2px;
+      }
+
+      .card-body {
+        grid-template-columns: 1fr;
+      }
+
+      .card-left,
+      .card-right-content {
+        padding: 24px;
+      }
+
+      .player-image-container {
+        min-height: 340px;
+      }
+
+      .offers-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .btn-back {
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+        z-index: 1200;
+      }
+
+      .button-bar {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        top: auto;
+        gap: 8px;
+        z-index: 1200;
+      }
+
+      .card-btn {
+        padding: 9px 12px;
+        font-size: 11px;
+        letter-spacing: 0.8px;
+        border-radius: 18px;
+      }
+
+      .card-btn .btn-icon {
+        font-size: 13px;
+      }
+
+      .card-container {
+        border-radius: 14px;
+        margin-bottom: 70px;
+      }
+
+      .card-header {
+        padding: 20px 16px;
+      }
+
+      .card-header h1 {
+        font-size: 30px;
+        letter-spacing: 1px;
+        line-height: 1.15;
+        word-break: break-word;
+      }
+
+      .card-header .player-meta {
+        font-size: 12px;
+        letter-spacing: 1px;
+        line-height: 1.5;
+      }
+
+      .card-header .player-meta span {
+        margin-right: 10px;
+      }
+
+      .card-left,
+      .card-right-content {
+        padding: 16px;
+      }
+
+      .section-title {
+        padding: 10px 12px;
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+
+      .info-list,
+      .college-offers,
+      .social-section {
+        padding: 0 8px;
+        margin-bottom: 18px;
+      }
+
+      .info-row {
+        padding: 9px 6px;
+      }
+
+      .info-label {
+        font-size: 11px;
+      }
+
+      .info-value {
+        font-size: 14px;
+      }
+
+      .offers-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .offer-logo {
+        padding: 8px;
+        height: 54px;
+      }
+
+      .player-image-container {
+        min-height: 280px;
+      }
+
+      .gpa-badge {
+        padding: 10px 16px;
+      }
+
+      .gpa-badge .value {
+        font-size: 26px;
+      }
+
+      .contact-item,
+      .social-item {
+        font-size: 12px;
+      }
+
+      .social-item strong {
+        min-width: 70px;
+      }
+
+      .preview-modal-content {
+        width: calc(100% - 16px);
+        max-width: none;
+      }
+
+      .preview-header,
+      .preview-body,
+      .preview-footer {
+        padding: 14px;
+      }
+
+      .preview-footer {
+        justify-content: stretch;
+      }
+
+      .preview-cancel-btn,
+      .preview-export-btn {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-header h1 {
+        font-size: 25px;
+      }
+
+      .card-header .player-meta {
+        font-size: 11px;
+      }
+
+      .offers-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .player-image-container {
+        min-height: 240px;
+      }
+
+      .btn-back {
+        max-width: 42vw;
+      }
+
+      .button-bar {
+        max-width: 56vw;
+      }
+
+      .card-btn {
+        padding: 8px 10px;
+      }
+    }
     
     @media print {
       body {
