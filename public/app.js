@@ -149,7 +149,7 @@ async function register() {
 // Logout
 async function logout() {
   await fetch('/api/logout', { method: 'POST' });
-  window.location.href = '/';
+  window.location.href = '/login';
 }
 
 function normalizeNavLabel(text) {
@@ -207,12 +207,20 @@ function applyRoleBasedTopNav(user) {
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
   if (profileLink) {
     profileLink.href = getProfilePathForRole(user.role);
+    profileLink.style.display = ''; // Show for authenticated users
   }
+
+  // Show Sign out, hide Login
+  const signOutLink = findTopNavLinkByLabel(nav, 'Sign out');
+  if (signOutLink) signOutLink.style.display = '';
+  
+  const loginLink = findTopNavLinkByLabel(nav, 'Login');
+  if (loginLink) loginLink.style.display = 'none';
 
   ensureDashboardLink(nav, user.role === 'admin');
 }
 
-// Check authentication
+// Check authentication (requires valid session, redirects on failure)
 async function checkAuth(requiredRole) {
   const res = await fetch('/api/user');
   
@@ -233,6 +241,46 @@ async function checkAuth(requiredRole) {
   window.currentUser = user;
   applyRoleBasedTopNav(user);
   return user;
+}
+
+// Try authentication (optional, no redirect)
+async function tryAuth() {
+  try {
+    const res = await fetch('/api/user');
+    if (!res.ok) return null;
+    
+    const user = await res.json();
+    window.currentUser = user;
+    return user;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Apply nav for unauthenticated users (shows Login button)
+function applyPublicTopNav() {
+  const nav = document.querySelector('.top-nav-menu');
+  if (!nav) return;
+
+  // Hide My Profile and Sign out
+  const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
+  if (profileLink) profileLink.style.display = 'none';
+  
+  const signOutLink = findTopNavLinkByLabel(nav, 'Sign out');
+  if (signOutLink) signOutLink.style.display = 'none';
+
+  // Show or create Login button
+  let loginLink = findTopNavLinkByLabel(nav, 'Login');
+  if (!loginLink) {
+    loginLink = document.createElement('a');
+    loginLink.className = 'nav-link';
+    loginLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H7a2 2 0 00-2 2v14a2 2 0 002 2h8"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Login';
+    loginLink.href = '/login';
+    nav.appendChild(loginLink);
+  } else {
+    loginLink.style.display = '';
+    loginLink.href = '/login';
+  }
 }
 
 async function loadAdSlots() {

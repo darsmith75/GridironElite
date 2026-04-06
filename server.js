@@ -1005,7 +1005,19 @@ function buildProfileUploadSignature(userId, reqBody, reqFiles) {
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Root path: show agent-dashboard (public landing page)
+app.get('/', (req, res) => {
+  res.redirect('/agent-dashboard.html');
+});
+
+// Explicit login page route
+app.get('/login', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 app.use(express.static('public'));
+
 // User uploads: redirect to Backblaze B2 when enabled; otherwise serve from local disk.
 if (b2Enabled) {
   app.use('/uploads', (req, res) => {
@@ -1794,7 +1806,7 @@ app.post('/api/player/report-card/delete', requireAuth, async (req, res) => {
 });
 
 // Agent: Get all players with filters
-app.get('/api/agent/players', requireAuth, async (req, res) => {
+app.get('/api/agent/players', async (req, res) => {
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -1803,8 +1815,8 @@ app.get('/api/agent/players', requireAuth, async (req, res) => {
   let query = 'SELECT * FROM player_profiles WHERE 1=1';
   const params = [];
   
-  // Filter by favorites only
-  if (req.query.favoritesOnly === 'true') {
+  // Filter by favorites only (only works if authenticated)
+  if (req.query.favoritesOnly === 'true' && req.session.userId) {
     query = `SELECT pp.* FROM player_profiles pp 
              INNER JOIN agent_favorites af ON pp.user_id = af.user_id 
              WHERE af.agent_id = ?`;
@@ -1837,8 +1849,8 @@ app.get('/api/agent/players', requireAuth, async (req, res) => {
   res.json(players);
 });
 
-// Agent: Get single player detail
-app.get('/api/agent/player/:id', requireAuth, async (req, res) => {
+// Agent: Get single player detail (public access)
+app.get('/api/agent/player/:id', async (req, res) => {
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -1995,8 +2007,13 @@ app.delete('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
 });
 
 // Agent: Get all favorite player IDs
-app.get('/api/agent/favorites', requireAuth, async (req, res) => {
+app.get('/api/agent/favorites', async (req, res) => {
   try {
+    // Return empty array for unauthenticated users
+    if (!req.session.userId) {
+      return res.json([]);
+    }
+    
     const favorites = await db.prepare('SELECT user_id FROM agent_favorites WHERE agent_id = ?').all(req.session.userId);
     res.json(favorites.map(f => f.user_id));
   } catch (error) {

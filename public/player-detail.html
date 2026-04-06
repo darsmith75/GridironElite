@@ -41,7 +41,16 @@
 
   <script src="app.js"></script>
   <script>
-    checkAuth();
+    // Try to authenticate (optional)
+    (async () => {
+      const user = await tryAuth();
+      if (user) {
+        applyRoleBasedTopNav(user);
+      } else {
+        applyPublicTopNav();
+      }
+    })();
+    
     let reportCardPreviewEl = null;
     const AI_AUDIENCE = 'agent';
     let currentAiSummaryId = null;

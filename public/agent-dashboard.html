@@ -188,8 +188,16 @@
     initDashboard();
 
     async function initDashboard() {
-      const user = await checkAuth();
-      if (!user) return;
+      // Try to authenticate (optional)
+      const user = await tryAuth();
+      
+      // Apply appropriate nav (with or without login button)
+      if (user) {
+        applyRoleBasedTopNav(user);
+      } else {
+        applyPublicTopNav();
+      }
+      
       await applyManagedAdSlots(document);
       logPageView('agent_dashboard');
       
