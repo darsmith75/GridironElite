@@ -230,50 +230,22 @@
     }
     .coach-card-actions {
       display: flex;
-      gap: 8px;
+      justify-content: flex-end;
       margin-top: 10px;
     }
-    .btn-view-player {
-      flex: 1;
-      padding: 7px 0;
-      background: #e3f2fd;
-      color: #1565c0;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-view-player:hover { background: #bbdefb; }
     .btn-remove-player {
-      padding: 7px 12px;
-      background: #ffebee;
-      color: #c62828;
+      background: none;
       border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 16px;
+      color: #b8c4d4;
       cursor: pointer;
-      transition: background 0.2s;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+      line-height: 1;
     }
-    .btn-remove-player:hover { background: #ffcdd2; }
-    /* List-row action buttons — same sizing as agent expand/favorite buttons */
-    .btn-view-player-list {
-      flex-shrink: 0;
-      background: #f1f5fa;
-      color: #385884;
-      border: 1px solid #d4deea;
-      border-radius: 999px;
-      padding: 3px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1.2;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .btn-view-player-list:hover { background: #e6eef8; }
+    .btn-remove-player:hover { color: #c62828; background: #ffebee; }
+    /* List-row remove button */
     .btn-remove-player-list {
       flex-shrink: 0;
       background: none;
@@ -291,6 +263,52 @@
       line-height: 1;
     }
     .btn-remove-player-list:hover { color: #c62828; }
+    /* Inline remove confirmation */
+    .remove-confirm-popover {
+      position: fixed;
+      z-index: 9999;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+      padding: 14px 18px;
+      min-width: 220px;
+      text-align: center;
+    }
+    .remove-confirm-popover p {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .remove-confirm-popover strong { color: #c62828; }
+    .remove-confirm-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .remove-confirm-yes {
+      background: #c62828;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .remove-confirm-yes:hover { background: #b71c1c; }
+    .remove-confirm-no {
+      background: #f1f5fa;
+      color: #333;
+      border: 1px solid #d4deea;
+      border-radius: 6px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .remove-confirm-no:hover { background: #e6eef8; }
     .invites-toggle {
       font-size: 13px;
       color: #1e3c72;
@@ -831,8 +849,7 @@
             </div>
           </div>
           <div class="coach-card-actions">
-            <button class="btn-view-player" onclick="event.stopPropagation(); viewPlayer(${p.user_id})">View Profile</button>
-            <button class="btn-remove-player" onclick="event.stopPropagation(); removePlayer(${p.user_id}, ${safePlayerNameLiteral})">Remove</button>
+            <button class="btn-remove-player" onclick="event.stopPropagation(); confirmRemovePlayer(event, ${p.user_id}, ${safePlayerNameLiteral})" title="Remove from roster">&#x2715;</button>
           </div>
         </div>`;
     }
@@ -866,12 +883,9 @@
             <div class="list-stat"><span class="list-stat-label">40yd:</span><span class="list-stat-value">${p.forty_yard_dash != null ? Number(p.forty_yard_dash).toFixed(2) : 'N/A'}</span></div>
             <div class="list-stat"><span class="list-stat-label">Verified:</span><span class="list-stat-value">${hasVerifiedBadge ? '✓' : '—'}</span></div>
           </div>
-          <button class="btn-view-player-list"
-                  onclick="event.stopPropagation(); viewPlayer(${p.user_id})"
-                  title="View player profile">View</button>
           <button class="btn-remove-player-list"
-                  onclick="event.stopPropagation(); removePlayer(${p.user_id}, ${safePlayerNameLiteral})"
-                  title="Remove from roster">✕</button>
+                  onclick="event.stopPropagation(); confirmRemovePlayer(event, ${p.user_id}, ${safePlayerNameLiteral})"
+                  title="Remove from roster">&#x2715;</button>
         </div>`;
     }
 
@@ -922,19 +936,66 @@
       window.location.href = 'player-detail.html?id=' + playerId;
     }
 
-    async function removePlayer(playerId, playerName) {
-      if (!confirm(`Remove ${playerName} from your roster?`)) return;
-      try {
-        const res = await fetch('/api/coach/team/roster/' + playerId, { method: 'DELETE' });
-        if (res.ok) {
-          await loadRoster();
-        } else {
-          const data = await res.json();
-          alert(data.error || 'Failed to remove player');
-        }
-      } catch (_) {
-        alert('Failed to remove player');
+    let _removePopover = null;
+
+    function dismissRemovePopover() {
+      if (_removePopover) {
+        _removePopover.remove();
+        _removePopover = null;
       }
+    }
+
+    function confirmRemovePlayer(event, playerId, playerName) {
+      dismissRemovePopover();
+
+      const btn = event.currentTarget;
+      const rect = btn.getBoundingClientRect();
+
+      const popover = document.createElement('div');
+      popover.className = 'remove-confirm-popover';
+      popover.innerHTML = `
+        <p>Remove <strong>${escHtml(playerName)}</strong> from your roster?</p>
+        <div class="remove-confirm-actions">
+          <button class="remove-confirm-yes">Remove</button>
+          <button class="remove-confirm-no">Cancel</button>
+        </div>`;
+
+      // Position below the button, stay within viewport
+      document.body.appendChild(popover);
+      const pw = popover.offsetWidth;
+      const ph = popover.offsetHeight;
+      let top = rect.bottom + window.scrollY + 6;
+      let left = rect.left + window.scrollX - pw / 2 + rect.width / 2;
+      if (left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+      if (left < 10) left = 10;
+      if (top + ph > window.scrollY + window.innerHeight - 10) {
+        top = rect.top + window.scrollY - ph - 6;
+      }
+      popover.style.top = top + 'px';
+      popover.style.left = left + 'px';
+      _removePopover = popover;
+
+      popover.querySelector('.remove-confirm-yes').addEventListener('click', async () => {
+        dismissRemovePopover();
+        try {
+          const res = await fetch('/api/coach/team/roster/' + playerId, { method: 'DELETE' });
+          if (res.ok) {
+            await loadRoster();
+          } else {
+            const data = await res.json();
+            alert(data.error || 'Failed to remove player');
+          }
+        } catch (_) {
+          alert('Failed to remove player');
+        }
+      });
+
+      popover.querySelector('.remove-confirm-no').addEventListener('click', dismissRemovePopover);
+
+      // Dismiss on outside click
+      setTimeout(() => {
+        document.addEventListener('click', dismissRemovePopover, { once: true });
+      }, 0);
     }
 
     async function loadInvites() {
