@@ -486,6 +486,10 @@
       <!-- User Management Tab -->
       <div class="tab-panel active" id="tab-users">
       <div class="admin-table-wrapper">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+          <h2 style="margin:0;">Users</h2>
+          <button class="add-college-btn" onclick="openAddUserModal()">+ Add User</button>
+        </div>
         <div class="admin-toolbar">
           <input type="text" id="userSearch" placeholder="Search by name or email...">
           <select id="roleFilter">
@@ -675,6 +679,46 @@
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
         <button class="btn-save" onclick="saveUser()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal-overlay" id="addUserModal">
+    <div class="modal">
+      <h3>Add User</h3>
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="addUserFullName" placeholder="Optional for non-athletes">
+      </div>
+      <div class="input-group">
+        <label>Email *</label>
+        <input type="email" id="addUserEmail" placeholder="user@example.com">
+      </div>
+      <div class="input-group">
+        <label>Password *</label>
+        <input type="password" id="addUserPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="input-group">
+        <label>Role *</label>
+        <select id="addUserRole">
+          <option value="player">Athlete</option>
+          <option value="agent">Agent</option>
+          <option value="coach">Coach</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Phone</label>
+        <input type="text" id="addUserPhone">
+      </div>
+      <div class="input-group">
+        <label>Organization</label>
+        <input type="text" id="addUserOrganization">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('addUserModal')">Cancel</button>
+        <button class="btn-save" onclick="createUser()">Create User</button>
       </div>
     </div>
   </div>
@@ -1048,6 +1092,48 @@
       }
 
       document.getElementById('editModal').classList.add('active');
+    }
+
+    function openAddUserModal() {
+      document.getElementById('addUserFullName').value = '';
+      document.getElementById('addUserEmail').value = '';
+      document.getElementById('addUserPassword').value = '';
+      document.getElementById('addUserRole').value = 'player';
+      document.getElementById('addUserPhone').value = '';
+      document.getElementById('addUserOrganization').value = '';
+      document.getElementById('addUserModal').classList.add('active');
+    }
+
+    async function createUser() {
+      const email = document.getElementById('addUserEmail').value.trim();
+      const password = document.getElementById('addUserPassword').value;
+      const role = document.getElementById('addUserRole').value;
+
+      if (!email) return alert('Email is required');
+      if (!password || password.length < 6) return alert('Password must be at least 6 characters');
+
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: document.getElementById('addUserFullName').value,
+          email,
+          password,
+          role,
+          phone: document.getElementById('addUserPhone').value,
+          organization: document.getElementById('addUserOrganization').value
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return alert(err.error || 'Failed to create user');
+      }
+
+      closeModal('addUserModal');
+      await loadUsers();
+      await loadStats();
+      alert('User created successfully');
     }
 
     async function saveUser() {

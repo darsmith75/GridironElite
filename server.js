@@ -2745,6 +2745,57 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: Create user
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  const { email, password, role, full_name, phone, organization } = req.body || {};
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedRole = String(role || '').trim().toLowerCase();
+  const normalizedFullName = String(full_name || '').trim();
+
+  const allowedRoles = ['player', 'agent', 'admin', 'coach'];
+  if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+  if (!password || String(password).length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  }
+  if (!allowedRoles.includes(normalizedRole)) {
+    return res.status(400).json({ error: 'Invalid role' });
+  }
+
+  try {
+    const existing = await db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?)').get(normalizedEmail);
+    if (existing) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+    const created = await db.prepare(
+      'INSERT INTO users (email, password, role, full_name, phone, organization, email_verified) VALUES (?, ?, ?, ?, ?, ?, true)'
+    ).run(
+      normalizedEmail,
+      hashedPassword,
+      normalizedRole,
+      normalizedFullName || null,
+      String(phone || '').trim() || null,
+      String(organization || '').trim() || null
+    );
+
+    const userId = created.lastInsertRowid;
+
+    if (normalizedRole === 'player') {
+      await db.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)')
+        .run(userId, normalizedFullName || normalizedEmail);
+    }
+
+    const user = await db.prepare('SELECT id, email, role, full_name, phone, organization, created_at FROM users WHERE id = ?').get(userId);
+    res.status(201).json({ success: true, user });
+  } catch (error) {
+    console.error('Admin create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
 // Admin: Get single user details
 app.get('/api/admin/users/:id', requireAdmin, async (req, res) => {
   try {
