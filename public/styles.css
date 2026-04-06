@@ -3126,6 +3126,9 @@ textarea {
   object-fit: contain;
   filter: none;
   opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* Responsive Design */

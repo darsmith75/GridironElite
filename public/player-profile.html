@@ -14,7 +14,7 @@
           <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
         </div>
         <nav class="top-nav-menu">
-          <a href="player-profile.html" class="nav-link">
+          <a href="agent-dashboard.html" class="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
             Home
           </a>
@@ -976,7 +976,7 @@
                        onmouseleave="hideOfferTooltip()"
                        onclick="handleCollegeLogoClick(event, ${offer.id})">
                     ${offer.logo
-                      ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img">`
+                      ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
                   </div>
@@ -1004,7 +1004,7 @@
                        onmouseleave="hideOfferTooltip()"
                        onclick="handleCollegeLogoClick(event, ${fav.id})">
                     ${fav.logo
-                      ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img">`
+                      ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
                   </div>
