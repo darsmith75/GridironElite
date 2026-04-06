@@ -2529,7 +2529,7 @@ textarea {
   background: #f7f9fc;
   color: #5a6b84;
   border-radius: 10px;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   text-align: center;

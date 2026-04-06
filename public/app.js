@@ -327,14 +327,21 @@ async function applyManagedAdSlots(root = document) {
     if (!slotConfig) return;
 
     if (slotConfig.enabled === false) {
+      // Ad is disabled, keep hidden
       slotEl.style.display = 'none';
       return;
     }
 
-    slotEl.style.display = '';
+    // Ad is enabled, show placeholder by default
+    slotEl.style.display = 'flex';
+    
     const contentHtml = String(slotConfig.contentHtml || '').trim();
-    if (!contentHtml) return;
+    if (!contentHtml) {
+      // No content configured yet, show placeholder
+      return;
+    }
 
+    // Content is configured, render it
     renderAdSlotHtml(slotEl, contentHtml);
     slotEl.classList.add('ad-slot-configured');
   });
