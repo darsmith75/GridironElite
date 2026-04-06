@@ -1499,6 +1499,10 @@
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
       playerProfileData = profile;
+      collegeLogoOrderState = parseCollegeLogoOrderState(profile.college_logo_order);
+      if (collegeLogoOrderState && Object.keys(collegeLogoOrderState).length > 0) {
+        saveCollegeLogoOrderState(collegeLogoOrderState);
+      }
       // Render view mode
       if (profile.id) {
         renderViewMode(profile);
@@ -1938,6 +1942,20 @@
     let offerTooltipTimer = null;
     const offerContactsCache = {};
     let isCollegeLogoDragging = false;
+    let collegeLogoOrderState = {};
+
+    function parseCollegeLogoOrderState(rawState) {
+      try {
+        if (!rawState) return {};
+        if (typeof rawState === 'string') {
+          const parsed = JSON.parse(rawState);
+          return parsed && typeof parsed === 'object' ? parsed : {};
+        }
+        return typeof rawState === 'object' ? rawState : {};
+      } catch (_) {
+        return {};
+      }
+    }
 
     function getCollegeLogoOrderStorageKey() {
       const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
@@ -1963,7 +1981,8 @@
 
     function applySavedCollegeOrder(group, schools) {
       if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
-      const orderState = loadCollegeLogoOrderState();
+      const hasServerState = collegeLogoOrderState && Object.keys(collegeLogoOrderState).length > 0;
+      const orderState = hasServerState ? collegeLogoOrderState : loadCollegeLogoOrderState();
       const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
       if (ids.length === 0) return schools;
 
@@ -1981,8 +2000,10 @@
       const ids = Array.from(container.querySelectorAll('.college-logo-card[data-college-id]'))
         .map(el => Number(el.dataset.collegeId))
         .filter(id => Number.isFinite(id));
-      const orderState = loadCollegeLogoOrderState();
+      const hasServerState = collegeLogoOrderState && Object.keys(collegeLogoOrderState).length > 0;
+      const orderState = hasServerState ? { ...collegeLogoOrderState } : loadCollegeLogoOrderState();
       orderState[group] = ids;
+      collegeLogoOrderState = orderState;
       saveCollegeLogoOrderState(orderState);
       
       // Save to backend
