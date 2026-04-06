@@ -41,6 +41,7 @@
 
   <script src="app.js"></script>
   <script>
+    let currentViewer = null;
     let reportCardPreviewEl = null;
     const AI_AUDIENCE = 'agent';
     let currentAiSummaryId = null;
@@ -66,14 +67,30 @@
 
     (async () => {
       const user = await tryAuth();
-      if (!user) {
-        window.location.href = '/login';
-        return;
+      currentViewer = user || null;
+      if (currentViewer) {
+        applyRoleBasedTopNav(currentViewer);
+      } else {
+        applyPublicTopNav();
       }
-
-      applyRoleBasedTopNav(user);
       loadPlayerDetail();
     })();
+
+    function applyReadOnlyDetailMode() {
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      if (favoriteBtn) {
+        favoriteBtn.style.display = 'none';
+      }
+
+      document.querySelectorAll('#playerDetail button').forEach((btn) => {
+        if (btn.id === 'favoriteBtn') return;
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+        btn.title = 'Log in to interact';
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
+      });
+    }
 
     function showReportCardPreview(event, imageUrl) {
       hideReportCardPreview();
@@ -642,8 +659,15 @@
 
       await applyManagedAdSlots(document.getElementById('playerDetail'));
       
-      // Check if player is favorited
-      checkFavoriteStatus();
+      // Check if player is favorited only for authenticated users
+      if (currentViewer) {
+        checkFavoriteStatus();
+      }
+
+      if (!currentViewer) {
+        applyReadOnlyDetailMode();
+      }
+
       setAiSummaryExpanded(getStoredAiSummaryExpanded());
       loadAiSummary();
     }
@@ -675,6 +699,9 @@
     }
     
     async function toggleFavoriteDetail() {
+      if (!currentViewer) {
+        return;
+      }
       const btn = document.getElementById('favoriteBtn');
       const isFavorite = btn.classList.contains('favorited');
       
@@ -757,6 +784,9 @@
     let currentPlayerData = null;
     
     async function startConversation() {
+      if (!currentViewer) {
+        return;
+      }
       if (currentPlayerData && currentPlayerData.user_id) {
         window.location.href = `messages.html?userId=${currentPlayerData.user_id}`;
       }
@@ -771,6 +801,9 @@
     
     // Export player data to Excel
     function exportPlayerData() {
+      if (!currentViewer) {
+        return;
+      }
       if (!currentPlayerData) {
         alert('No player data available to export');
         return;
