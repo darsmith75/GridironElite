@@ -1999,6 +1999,22 @@
 
       let draggedCard = null;
 
+      function clearDropIndicators() {
+        container.querySelectorAll('.college-logo-card.drop-before, .college-logo-card.drop-after').forEach((el) => {
+          el.classList.remove('drop-before', 'drop-after');
+        });
+      }
+
+      function getHoveredCard(mouseX, mouseY) {
+        if (!document.elementsFromPoint) return null;
+        return document.elementsFromPoint(mouseX, mouseY).find((el) => {
+          return el.classList
+            && el.classList.contains('college-logo-card')
+            && !el.classList.contains('dragging')
+            && el.parentElement === container;
+        }) || null;
+      }
+
       function getInsertBeforeElement(mouseX, mouseY) {
         const cards = [...container.querySelectorAll('.college-logo-card:not(.dragging)')];
         if (!cards.length) return null;
@@ -2053,6 +2069,7 @@
         });
 
         card.addEventListener('dragend', () => {
+          clearDropIndicators();
           card.classList.remove('dragging');
           card.style.opacity = '';
           saveCollegeOrderFromDom(group, container);
@@ -2064,6 +2081,15 @@
       container.addEventListener('dragover', (event) => {
         event.preventDefault();
         if (!draggedCard) return;
+
+        clearDropIndicators();
+        const hoveredCard = getHoveredCard(event.clientX, event.clientY);
+        if (hoveredCard) {
+          const rect = hoveredCard.getBoundingClientRect();
+          const placeBefore = event.clientX < rect.left + (rect.width / 2);
+          hoveredCard.classList.add(placeBefore ? 'drop-before' : 'drop-after');
+        }
+
         const insertBefore = getInsertBeforeElement(event.clientX, event.clientY);
         if (insertBefore == null) container.appendChild(draggedCard);
         else if (insertBefore !== draggedCard) container.insertBefore(draggedCard, insertBefore);
@@ -2071,6 +2097,7 @@
 
       container.addEventListener('drop', (event) => {
         event.preventDefault();
+        clearDropIndicators();
       });
     }
 

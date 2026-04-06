@@ -3120,6 +3120,14 @@ textarea {
   background: white;
 }
 
+.college-logo-card.drop-before {
+  box-shadow: inset 4px 0 0 #1e3c72, 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.college-logo-card.drop-after {
+  box-shadow: inset -4px 0 0 #1e3c72, 0 6px 16px rgba(0,0,0,0.08);
+}
+
 .college-logo-img {
   width: 100%;
   height: 60px;
