@@ -1134,6 +1134,36 @@ async function enrichPlayerProfile(profile) {
 
   const playerId = profile.user_id;
 
+  let collegeLogoOrderState = {};
+  if (profile.college_logo_order) {
+    try {
+      if (typeof profile.college_logo_order === 'string') {
+        const parsed = JSON.parse(profile.college_logo_order);
+        collegeLogoOrderState = parsed && typeof parsed === 'object' ? parsed : {};
+      } else if (typeof profile.college_logo_order === 'object') {
+        collegeLogoOrderState = profile.college_logo_order;
+      }
+    } catch (_) {
+      collegeLogoOrderState = {};
+    }
+  }
+
+  function applyCollegeOrder(group, schools) {
+    if (!Array.isArray(schools) || schools.length === 0) return [];
+    const ids = Array.isArray(collegeLogoOrderState[group])
+      ? collegeLogoOrderState[group].map(id => Number(id)).filter(Number.isFinite)
+      : [];
+    if (ids.length === 0) return schools;
+
+    const indexMap = new Map(ids.map((id, index) => [id, index]));
+    return [...schools].sort((a, b) => {
+      const ai = indexMap.has(Number(a.id)) ? indexMap.get(Number(a.id)) : Number.MAX_SAFE_INTEGER;
+      const bi = indexMap.has(Number(b.id)) ? indexMap.get(Number(b.id)) : Number.MAX_SAFE_INTEGER;
+      if (ai !== bi) return ai - bi;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
+
   const videos = await db.prepare('SELECT filename FROM player_videos WHERE user_id = ? ORDER BY id').all(playerId);
   profile.highlight_videos = videos.length > 0 ? JSON.stringify(videos.map(v => v.filename)) : null;
 
@@ -1148,10 +1178,12 @@ async function enrichPlayerProfile(profile) {
   ).all(playerId);
   profile.metric_videos = metricVideos.length > 0 ? JSON.stringify(metricVideos) : null;
 
-  const offerSchools = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
+  const offerSchoolsRaw = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
+  const offerSchools = applyCollegeOrder('offers', offerSchoolsRaw);
   profile.college_offer_schools = offerSchools.length > 0 ? JSON.stringify(offerSchools) : null;
 
-  const favoriteSchools = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
+  const favoriteSchoolsRaw = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
+  const favoriteSchools = applyCollegeOrder('favorites', favoriteSchoolsRaw);
   profile.college_favorite_schools = favoriteSchools.length > 0 ? JSON.stringify(favoriteSchools) : null;
 
   // Include college logo ordering from database
