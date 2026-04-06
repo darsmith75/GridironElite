@@ -512,10 +512,21 @@
 
     function getPlayerCardDestination(player) {
       const currentUser = window.currentUser;
+      if (!currentUser) {
+        return '';
+      }
       if (currentUser && currentUser.role === 'player' && Number(player.user_id) === Number(currentUser.id)) {
         return 'player-profile.html';
       }
       return `player-detail.html?id=${player.id}`;
+    }
+
+    function getPlayerCardClickAttrs(player) {
+      const destination = getPlayerCardDestination(player);
+      if (!destination) {
+        return 'style="cursor: default;" title="Log in to view player details"';
+      }
+      return `onclick="window.location.href='${destination}'" style="cursor: pointer;"`;
     }
 
     function renderPage(page) {
@@ -542,7 +553,7 @@
           const hasVerifiedBadge = hasVerifiedMetric(p);
           return `
           <div class="player-card-compact">
-            <div onclick="window.location.href='${getPlayerCardDestination(p)}'" style="cursor: pointer;">
+            <div ${getPlayerCardClickAttrs(p)}>
               <div class="player-card-header">
                 ${p.profile_picture ? 
                   `<img src="/uploads/${p.profile_picture}" alt="${p.full_name}" class="player-card-photo">` : 
@@ -600,7 +611,7 @@
                 `<img src="/uploads/${p.profile_picture}" alt="${p.full_name}" class="player-list-img">` : 
                 '<div class="player-list-img no-photo-list">No Photo</div>'}
             </div>
-            <div class="player-list-info" onclick="window.location.href='${getPlayerCardDestination(p)}'" style="cursor: pointer;">
+            <div class="player-list-info" ${getPlayerCardClickAttrs(p)}>
               <div class="player-list-name">${p.full_name}</div>
               <div class="player-list-details">
                 <span class="detail-item">${p.position || 'Position TBD'}</span>

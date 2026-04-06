@@ -41,16 +41,6 @@
 
   <script src="app.js"></script>
   <script>
-    // Try to authenticate (optional)
-    (async () => {
-      const user = await tryAuth();
-      if (user) {
-        applyRoleBasedTopNav(user);
-      } else {
-        applyPublicTopNav();
-      }
-    })();
-    
     let reportCardPreviewEl = null;
     const AI_AUDIENCE = 'agent';
     let currentAiSummaryId = null;
@@ -73,8 +63,17 @@
     if (!playerId) {
       window.location.href = 'agent-dashboard.html';
     }
-    
-    loadPlayerDetail();
+
+    (async () => {
+      const user = await tryAuth();
+      if (!user) {
+        window.location.href = '/login';
+        return;
+      }
+
+      applyRoleBasedTopNav(user);
+      loadPlayerDetail();
+    })();
 
     function showReportCardPreview(event, imageUrl) {
       hideReportCardPreview();
