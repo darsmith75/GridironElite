@@ -199,7 +199,7 @@ function applyRoleBasedTopNav(user) {
 
   const homeLink = findTopNavLinkByLabel(nav, 'Home');
   if (homeLink) {
-    if (user.role === 'player') homeLink.href = 'player-profile.html';
+    if (user.role === 'player') homeLink.href = 'agent-dashboard.html';
     else if (user.role === 'coach') homeLink.href = 'coach-dashboard.html';
     else homeLink.href = 'agent-dashboard.html';
   }
