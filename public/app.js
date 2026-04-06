@@ -204,6 +204,12 @@ function applyRoleBasedTopNav(user) {
     else homeLink.href = 'agent-dashboard.html';
   }
 
+  // Show Messages for authenticated users
+  const messagesLink = findTopNavLinkByLabel(nav, 'Messages');
+  if (messagesLink) {
+    messagesLink.style.display = '';
+  }
+
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
   if (profileLink) {
     profileLink.href = getProfilePathForRole(user.role);
@@ -262,7 +268,10 @@ function applyPublicTopNav() {
   const nav = document.querySelector('.top-nav-menu');
   if (!nav) return;
 
-  // Hide My Profile and Sign out
+  // Hide Messages, My Profile and Sign out
+  const messagesLink = findTopNavLinkByLabel(nav, 'Messages');
+  if (messagesLink) messagesLink.style.display = 'none';
+  
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
   if (profileLink) profileLink.style.display = 'none';
   
