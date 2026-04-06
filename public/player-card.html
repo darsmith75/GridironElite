@@ -827,19 +827,23 @@
     function applySavedCollegeOrder(group, schools) {
       if (!Array.isArray(schools) || schools.length === 0) return Array.isArray(schools) ? schools : [];
       
-      // Try to get order from server (currentPlayerData.college_logo_order)
+      // Get order from server (currentPlayerData.college_logo_order)
       let orderState = {};
       if (currentPlayerData && currentPlayerData.college_logo_order) {
         try {
           if (typeof currentPlayerData.college_logo_order === 'string') {
-            orderState = JSON.parse(currentPlayerData.college_logo_order);
+            const parsed = JSON.parse(currentPlayerData.college_logo_order);
+            orderState = parsed && typeof parsed === 'object' ? parsed : {};
           } else {
             orderState = currentPlayerData.college_logo_order;
           }
-        } catch (_) {
+        } catch (err) {
+          console.warn('Failed to parse college_logo_order:', err);
           orderState = {};
         }
       }
+      
+      if (!orderState || typeof orderState !== 'object') orderState = {};
       
       const ids = Array.isArray(orderState[group]) ? orderState[group].map(id => Number(id)) : [];
       if (ids.length === 0) return schools;

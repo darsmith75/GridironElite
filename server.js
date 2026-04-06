@@ -3355,8 +3355,9 @@ app.post('/api/player/college-logo-order', requireAuth, express.json(), async (r
       return res.status(400).json({ error: 'orderData must be an object' });
     }
     
-    await db.prepare('UPDATE player_profiles SET college_logo_order = ? WHERE user_id = ?')
-      .run(JSON.stringify(orderData), req.session.userId);
+    // Use $1::jsonb cast for proper JSONB handling with parameterized query
+    const query = `UPDATE player_profiles SET college_logo_order = $1::jsonb WHERE user_id = $2`;
+    await db.prepare(query).run(orderData, req.session.userId);
     res.json({ success: true });
   } catch (error) {
     console.error('Save college logo order error:', error);
