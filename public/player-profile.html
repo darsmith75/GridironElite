@@ -2003,13 +2003,30 @@
         const cards = [...container.querySelectorAll('.college-logo-card:not(.dragging)')];
         if (!cards.length) return null;
 
+        // Prefer the card directly under the pointer for stable, predictable drops.
+        if (document.elementsFromPoint) {
+          const hoveredCard = document.elementsFromPoint(mouseX, mouseY).find((el) => {
+            return el.classList
+              && el.classList.contains('college-logo-card')
+              && !el.classList.contains('dragging')
+              && el.parentElement === container;
+          });
+
+          if (hoveredCard) {
+            const rect = hoveredCard.getBoundingClientRect();
+            const placeBefore = mouseX < rect.left + (rect.width / 2);
+            return placeBefore ? hoveredCard : hoveredCard.nextSibling;
+          }
+        }
+
+        // Fallback for empty gaps: choose the nearest card center.
         let closest = null;
         let minDistance = Number.POSITIVE_INFINITY;
 
         cards.forEach((card) => {
           const rect = card.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
+          const centerX = rect.left + (rect.width / 2);
+          const centerY = rect.top + (rect.height / 2);
           const distance = Math.hypot(mouseX - centerX, mouseY - centerY);
           if (distance < minDistance) {
             minDistance = distance;
@@ -2019,7 +2036,7 @@
 
         if (!closest) return null;
         const rect = closest.getBoundingClientRect();
-        const placeBefore = mouseY < rect.top + rect.height / 2 || (mouseY <= rect.bottom && mouseX < rect.left + rect.width / 2);
+        const placeBefore = mouseX < rect.left + (rect.width / 2);
         return placeBefore ? closest : closest.nextSibling;
       }
 
