@@ -2407,6 +2407,31 @@ app.put('/api/coach/team', requireCoach, async (req, res) => {
   }
 });
 
+// Coach: Upload/update school logo for team banner customization
+app.post('/api/coach/team/logo', requireCoach, upload.single('schoolLogo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'School logo file is required' });
+    }
+
+    const team = await db.prepare('SELECT id, school_logo FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    await processUploadedFiles(req.session.userId, { schoolLogo: [req.file] });
+    const schoolLogo = req.session.userId + '/' + req.file.filename;
+
+    if (team.school_logo && team.school_logo !== schoolLogo) {
+      await deleteUploadFile(team.school_logo);
+    }
+
+    await db.prepare('UPDATE hs_teams SET school_logo = ? WHERE id = ?').run(schoolLogo, team.id);
+    res.json({ success: true, schoolLogo });
+  } catch (error) {
+    console.error('Coach upload school logo error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload school logo' });
+  }
+});
+
 // Coach: Get team roster (enriched player profiles)
 app.get('/api/coach/team/roster', requireCoach, async (req, res) => {
   try {

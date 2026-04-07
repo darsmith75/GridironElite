@@ -305,6 +305,7 @@ const createTablesSQL = `
     coach_id INTEGER UNIQUE NOT NULL,
     team_name VARCHAR(255) NOT NULL,
     school_name VARCHAR(255),
+    school_logo VARCHAR(255),
     city VARCHAR(100),
     state VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -350,6 +351,7 @@ const alterTablesSQL = `
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_instagram BOOLEAN NOT NULL DEFAULT FALSE;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS school_logo VARCHAR(255);
   ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
   ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('player', 'agent', 'admin', 'coach'));
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;
