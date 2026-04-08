@@ -3299,6 +3299,8 @@ app.put('/api/admin/school-rating-categories', requireAdmin, async (req, res) =>
   const normalizedCategories = [];
   for (let i = 0; i < incomingCategories.length; i++) {
     const item = incomingCategories[i] || {};
+    const parsedId = parseInt(item.id, 10);
+    const id = Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null;
     const categoryName = String(item.categoryName || '').trim();
     const whatToRate = String(item.whatToRate || '').trim();
     const whyItMatters = String(item.whyItMatters || '').trim();
@@ -3310,6 +3312,7 @@ app.put('/api/admin/school-rating-categories', requireAdmin, async (req, res) =>
     }
 
     normalizedCategories.push({
+      id,
       categoryName: categoryName.slice(0, 120),
       whatToRate: whatToRate.slice(0, 2000),
       whyItMatters: whyItMatters.slice(0, 2000),
@@ -3320,28 +3323,64 @@ app.put('/api/admin/school-rating-categories', requireAdmin, async (req, res) =>
 
   try {
     await db.query('BEGIN');
-    await db.query('DELETE FROM school_rating_categories');
+
+    const existingRows = await db.prepare('SELECT id FROM school_rating_categories').all();
+    const existingIds = new Set(existingRows.map(row => Number(row.id)));
+    const keptIds = [];
 
     for (const item of normalizedCategories) {
-      await db.prepare(`
-        INSERT INTO school_rating_categories (
-          category_name,
-          what_to_rate,
-          why_it_matters,
-          sort_order,
-          is_active,
-          updated_by_user_id,
-          updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `).run(
-        item.categoryName,
-        item.whatToRate,
-        item.whyItMatters,
-        item.sortOrder,
-        item.isActive,
-        req.session.userId
-      );
+      if (item.id && existingIds.has(item.id)) {
+        await db.prepare(`
+          UPDATE school_rating_categories
+          SET category_name = ?,
+            what_to_rate = ?,
+            why_it_matters = ?,
+            sort_order = ?,
+            is_active = ?,
+            updated_by_user_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(
+          item.categoryName,
+          item.whatToRate,
+          item.whyItMatters,
+          item.sortOrder,
+          item.isActive,
+          req.session.userId,
+          item.id
+        );
+        keptIds.push(item.id);
+      } else {
+        const inserted = await db.prepare(`
+          INSERT INTO school_rating_categories (
+            category_name,
+            what_to_rate,
+            why_it_matters,
+            sort_order,
+            is_active,
+            updated_by_user_id,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `).run(
+          item.categoryName,
+          item.whatToRate,
+          item.whyItMatters,
+          item.sortOrder,
+          item.isActive,
+          req.session.userId
+        );
+        if (inserted?.lastInsertRowid) {
+          keptIds.push(Number(inserted.lastInsertRowid));
+        }
+      }
+    }
+
+    if (keptIds.length > 0) {
+      const placeholders = keptIds.map(() => '?').join(', ');
+      await db.prepare(`DELETE FROM school_rating_categories WHERE id NOT IN (${placeholders})`).run(...keptIds);
+    } else {
+      await db.prepare('DELETE FROM school_rating_categories').run();
     }
 
     await db.query('COMMIT');
@@ -3600,6 +3639,85 @@ app.delete('/api/admin/colleges/:id', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin delete college error:', error);
     res.status(500).json({ error: 'Failed to delete college' });
+  }
+});
+
+// Player: Get school ratings for a college
+app.get('/api/player/colleges/:collegeId/ratings', requireAuth, async (req, res) => {
+  try {
+    const collegeId = parseInt(req.params.collegeId, 10);
+    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
+
+    const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
+    if (!college) return res.status(404).json({ error: 'College not found' });
+
+    const ratings = await db.prepare(`
+      SELECT c.id AS category_id,
+        c.category_name,
+        c.what_to_rate,
+        c.why_it_matters,
+        c.sort_order,
+        c.is_active,
+        r.rating_value,
+        r.updated_at AS rating_updated_at
+      FROM school_rating_categories c
+      LEFT JOIN player_school_ratings r
+        ON r.category_id = c.id
+       AND r.user_id = ?
+       AND r.college_id = ?
+      WHERE c.is_active = true
+      ORDER BY c.sort_order ASC, c.id ASC
+    `).all(req.session.userId, collegeId);
+
+    res.json(ratings.map(item => ({
+      categoryId: item.category_id,
+      categoryName: item.category_name,
+      whatToRate: item.what_to_rate,
+      whyItMatters: item.why_it_matters,
+      sortOrder: Number(item.sort_order || 0),
+      ratingValue: item.rating_value ? Number(item.rating_value) : null,
+      updatedAt: item.rating_updated_at || null
+    })));
+  } catch (error) {
+    console.error('Get school ratings error:', error);
+    res.status(500).json({ error: 'Failed to get school ratings' });
+  }
+});
+
+// Player: Upsert a school rating by category
+app.put('/api/player/colleges/:collegeId/ratings/:categoryId', requireAuth, async (req, res) => {
+  try {
+    const collegeId = parseInt(req.params.collegeId, 10);
+    const categoryId = parseInt(req.params.categoryId, 10);
+    const parsedRating = parseInt(req.body?.rating, 10);
+
+    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
+    if (isNaN(categoryId)) return res.status(400).json({ error: 'Invalid category ID' });
+    if (!Number.isInteger(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+      return res.status(400).json({ error: 'Rating must be an integer from 1 to 5' });
+    }
+
+    const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
+    if (!college) return res.status(404).json({ error: 'College not found' });
+
+    const category = await db.prepare(
+      'SELECT id FROM school_rating_categories WHERE id = ? AND is_active = true'
+    ).get(categoryId);
+    if (!category) return res.status(404).json({ error: 'Rating category not found' });
+
+    await db.prepare(`
+      INSERT INTO player_school_ratings (user_id, college_id, category_id, rating_value, updated_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, college_id, category_id)
+      DO UPDATE SET
+        rating_value = EXCLUDED.rating_value,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(req.session.userId, collegeId, categoryId, parsedRating);
+
+    res.json({ success: true, categoryId, ratingValue: parsedRating });
+  } catch (error) {
+    console.error('Save school rating error:', error);
+    res.status(500).json({ error: 'Failed to save school rating' });
   }
 });
 

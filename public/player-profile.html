@@ -519,6 +519,12 @@
 
       <!-- Ratings Panel -->
       <div id="panelRatings" style="padding:24px 30px; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0; color:#333; font-size:16px;">School Fit Ratings</h3>
+          <span style="font-size:12px; color:#76849b;">Rate this school from 1 to 5 stars in each category</span>
+        </div>
+        <div id="schoolRatingsStatus" style="margin-bottom:12px; min-height:18px; font-size:13px; font-weight:600; color:#1e3c72;"></div>
+        <div id="schoolRatingsList"></div>
       </div>
     </div>
   </div>
@@ -2450,6 +2456,7 @@
 
     // ============ SCHOOLS FEATURE ============
     let allSchools = [];
+    let currentSchoolRatings = [];
 
     async function openSchoolsModal() {
       document.getElementById('schoolsModal').style.display = 'block';
@@ -2629,6 +2636,110 @@
 
       if (tab === 'contacts') loadContacts();
       else if (tab === 'notes') loadNotes();
+      else if (tab === 'ratings') loadSchoolRatings();
+    }
+
+    function openSchoolRatingInfo(title, body) {
+      const popup = document.createElement('div');
+      popup.style.cssText = 'position:fixed; inset:0; z-index:10030; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; padding:20px;';
+      popup.innerHTML = `
+        <div style="background:#fff; border-radius:10px; width:min(560px, 92vw); max-height:80vh; overflow:auto; box-shadow:0 12px 34px rgba(0,0,0,0.24);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid #e5e7eb;">
+            <h4 style="margin:0; color:#1e3c72; font-size:16px;">${escapeHtmlDetail(title)}</h4>
+            <button type="button" style="background:none; border:none; color:#666; font-size:24px; line-height:1; cursor:pointer;">&times;</button>
+          </div>
+          <div style="padding:16px; color:#374151; font-size:14px; line-height:1.6; white-space:pre-wrap;">${escapeHtmlDetail(body)}</div>
+        </div>
+      `;
+
+      const closeBtn = popup.querySelector('button');
+      const close = () => popup.remove();
+      closeBtn.addEventListener('click', close);
+      popup.addEventListener('click', (ev) => {
+        if (ev.target === popup) close();
+      });
+      document.body.appendChild(popup);
+    }
+
+    function renderSchoolRatings(ratings) {
+      const listEl = document.getElementById('schoolRatingsList');
+      if (!listEl) return;
+
+      if (!ratings.length) {
+        listEl.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No rating categories are active yet.</p>';
+        return;
+      }
+
+      listEl.innerHTML = ratings.map((item) => {
+        const ratingValue = Number(item.ratingValue || 0);
+        const starsHtml = [1, 2, 3, 4, 5].map((value) => {
+          const filled = value <= ratingValue;
+          return `<button type="button" onclick="setSchoolCategoryRating(${Number(item.categoryId)}, ${value})" title="Rate ${value} star${value > 1 ? 's' : ''}" style="border:none; background:none; padding:0 3px; cursor:pointer; font-size:24px; color:${filled ? '#f59e0b' : '#c7d0da'}; line-height:1;">${filled ? '★' : '☆'}</button>`;
+        }).join('');
+
+        return `
+          <div style="display:grid; grid-template-columns:minmax(200px, 1fr) auto; gap:12px; align-items:center; padding:12px; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa; margin-bottom:10px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                <strong style="color:#1f2937; font-size:14px;">${escapeHtmlDetail(item.categoryName || 'Category')}</strong>
+                <button type="button" onclick="openSchoolRatingInfo('What to Rate: ${String(item.categoryName || '').replace(/'/g, '&#39;')}', ${JSON.stringify(item.whatToRate || '')})" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">What to Rate</button>
+                <button type="button" onclick="openSchoolRatingInfo('Why It Matters: ${String(item.categoryName || '').replace(/'/g, '&#39;')}', ${JSON.stringify(item.whyItMatters || '')})" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">Why It Matters</button>
+              </div>
+              <div style="font-size:12px; color:#76849b;">Current rating: ${ratingValue > 0 ? `${ratingValue}/5` : 'Not rated yet'}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:2px;">${starsHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadSchoolRatings() {
+      const statusEl = document.getElementById('schoolRatingsStatus');
+      if (statusEl) statusEl.textContent = 'Loading ratings...';
+
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/ratings`);
+        if (!res.ok) {
+          if (statusEl) statusEl.textContent = 'Failed to load ratings.';
+          return;
+        }
+        currentSchoolRatings = await res.json();
+        renderSchoolRatings(currentSchoolRatings);
+        if (statusEl) statusEl.textContent = '';
+      } catch (err) {
+        console.error('Failed to load school ratings:', err);
+        if (statusEl) statusEl.textContent = 'Failed to load ratings.';
+      }
+    }
+
+    async function setSchoolCategoryRating(categoryId, rating) {
+      const statusEl = document.getElementById('schoolRatingsStatus');
+      if (statusEl) statusEl.textContent = 'Saving rating...';
+
+      try {
+        const res = await fetch(`/api/player/colleges/${currentSchoolId}/ratings/${categoryId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (statusEl) statusEl.textContent = err.error || 'Failed to save rating.';
+          return;
+        }
+
+        currentSchoolRatings = currentSchoolRatings.map(item =>
+          Number(item.categoryId) === Number(categoryId)
+            ? { ...item, ratingValue: rating }
+            : item
+        );
+        renderSchoolRatings(currentSchoolRatings);
+        if (statusEl) statusEl.textContent = 'Rating saved.';
+      } catch (err) {
+        console.error('Save school rating error:', err);
+        if (statusEl) statusEl.textContent = 'Failed to save rating.';
+      }
     }
 
     // ---- CONTACTS ----

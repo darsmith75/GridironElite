@@ -44,6 +44,7 @@ const insertPrimaryKeys = {
   school_notes: 'id',
   school_contacts: 'id',
   school_rating_categories: 'id',
+  player_school_ratings: 'id',
   ai_player_summaries: 'id',
   ai_events: 'id',
   hs_teams: 'id',
@@ -280,6 +281,20 @@ const createTablesSQL = `
     FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS player_school_ratings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    college_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    rating_value INTEGER NOT NULL CHECK(rating_value BETWEEN 1 AND 5),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, college_id, category_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES school_rating_categories(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS ai_player_summaries (
     id SERIAL PRIMARY KEY,
     player_user_id INTEGER NOT NULL,
@@ -383,6 +398,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_school_contacts_user ON school_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
   CREATE INDEX IF NOT EXISTS idx_school_rating_categories_sort ON school_rating_categories(sort_order);
+  CREATE INDEX IF NOT EXISTS idx_player_school_ratings_user_college ON player_school_ratings(user_id, college_id);
+  CREATE INDEX IF NOT EXISTS idx_player_school_ratings_category ON player_school_ratings(category_id);
   CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
   CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_id);
   CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);

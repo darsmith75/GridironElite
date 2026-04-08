@@ -1424,7 +1424,7 @@
       }
 
       tbody.innerHTML = schoolRatingCategories.map((item, index) => `
-        <tr data-row-index="${index}">
+        <tr data-row-index="${index}" data-category-id="${item.id ? Number(item.id) : ''}">
           <td><input type="number" min="1" value="${Number(item.sortOrder || (index + 1))}"></td>
           <td><textarea>${escapeHtml(item.categoryName || '')}</textarea></td>
           <td><textarea>${escapeHtml(item.whatToRate || '')}</textarea></td>
@@ -1487,8 +1487,10 @@
 
       rows.forEach((row, index) => {
         const inputs = row.querySelectorAll('input, textarea, select');
+        const parsedId = parseInt(row.dataset.categoryId, 10);
         const sortOrder = parseInt(inputs[0]?.value, 10);
         payload.categories.push({
+          id: Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null,
           categoryName: (inputs[1]?.value || '').trim(),
           whatToRate: (inputs[2]?.value || '').trim(),
           whyItMatters: (inputs[3]?.value || '').trim(),
