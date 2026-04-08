@@ -2983,6 +2983,26 @@ textarea {
   color: #1f2937;
 }
 
+.metric-upload-status {
+  margin-top: 6px;
+  min-height: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #44546a;
+}
+
+.metric-upload-status.pending {
+  color: #1d4ed8;
+}
+
+.metric-upload-status.success {
+  color: #15803d;
+}
+
+.metric-upload-status.error {
+  color: #b91c1c;
+}
+
 .metric-proof-preview {
   display: flex;
   flex-direction: column;

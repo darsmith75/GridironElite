@@ -1774,6 +1774,78 @@ app.post('/api/player/profile', requireAuth, playerProfileUploadMiddleware, asyn
   }
 });
 
+// Upload one metric proof video at a time (auto-save flow from profile form).
+app.post('/api/player/metric-video', requireAuth, playerProfileUploadMiddleware, async (req, res) => {
+  const data = req.body || {};
+  const files = {};
+
+  for (const file of (req.files || [])) {
+    const fieldName = file.fieldname;
+    if (!PROFILE_UPLOAD_FIELD_MAX_COUNTS[fieldName]) {
+      return res.status(400).json({ error: `Unsupported upload field: ${fieldName}` });
+    }
+    if (!files[fieldName]) files[fieldName] = [];
+    files[fieldName].push(file);
+  }
+
+  try {
+    const metricEntries = METRIC_VIDEO_CONFIG
+      .map(config => ({ config, upload: files[config.fieldName]?.[0] || null }))
+      .filter(item => !!item.upload);
+
+    if (metricEntries.length !== 1) {
+      return res.status(400).json({
+        error: 'Upload exactly one metric proof video at a time.'
+      });
+    }
+
+    const { config, upload } = metricEntries[0];
+    await processUploadedFiles(req.session.userId, { [config.fieldName]: [upload] });
+
+    const userPrefix = req.session.userId + '/';
+    const existingMetricVideo = await db.prepare(
+      'SELECT video_filename FROM player_metric_videos WHERE user_id = ? AND metric_key = ?'
+    ).get(req.session.userId, config.key);
+
+    const resolvedFilename = userPrefix + upload.filename;
+    if (existingMetricVideo?.video_filename && existingMetricVideo.video_filename !== resolvedFilename) {
+      await deleteUploadFile(existingMetricVideo.video_filename);
+    }
+
+    const isVerified = !!data[config.verifiedField];
+    const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
+
+    await db.prepare(`
+      INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, metric_key)
+      DO UPDATE SET
+        video_filename = EXCLUDED.video_filename,
+        is_verified = EXCLUDED.is_verified,
+        verified_by = EXCLUDED.verified_by,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy);
+
+    res.json({
+      success: true,
+      metricKey: config.key,
+      videoFilename: resolvedFilename,
+      isVerified,
+      verifiedBy
+    });
+  } catch (error) {
+    console.error('Metric proof upload error:', error);
+    const details = error && typeof error === 'object'
+      ? {
+          message: error.message || null,
+          code: error.code || null,
+          field: error.field || null
+        }
+      : null;
+    res.status(500).json({ error: 'Failed to upload metric proof video', details });
+  }
+});
+
 // Delete card photo
 app.delete('/api/player/card-photo', requireAuth, async (req, res) => {
   try {

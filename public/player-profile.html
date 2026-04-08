@@ -526,6 +526,9 @@
     let currentLightboxEl = null;
     let metricTipsMap = {};
     let metricTipTooltipEl = null;
+    const metricUploadInProgress = new Set();
+    const pendingMetricUploadByKey = new Map();
+    let metricUploadQueueRunning = false;
 
     // Handle invite-related URL params
     (function handleInviteParams() {
@@ -628,9 +631,147 @@
     initGraduationYearPicker();
     initHeightInputs();
     initBroadJumpInputs();
+    initMetricVideoAutoUpload();
     loadPlayerProfile();
     loadMetricTipsForForm();
     loadTeamInvites();
+
+    function getMetricUploadStatusEl(metricKey, createIfMissing = true) {
+      const metric = METRIC_DEFINITIONS.find(item => item.key === metricKey);
+      if (!metric) return null;
+
+      const fileInput = document.querySelector(`input[type="file"][name="${metric.videoField}"]`);
+      if (!fileInput) return null;
+
+      let statusEl = fileInput.parentElement.querySelector(`.metric-upload-status[data-metric-key="${metricKey}"]`);
+      if (!statusEl && createIfMissing) {
+        statusEl = document.createElement('div');
+        statusEl.className = 'metric-upload-status';
+        statusEl.dataset.metricKey = metricKey;
+        fileInput.insertAdjacentElement('afterend', statusEl);
+      }
+      return statusEl;
+    }
+
+    function setMetricUploadStatus(metricKey, message, tone = '') {
+      const statusEl = getMetricUploadStatusEl(metricKey, !!message);
+      if (!statusEl) return;
+
+      statusEl.textContent = message || '';
+      statusEl.classList.remove('success', 'error', 'pending');
+      if (tone) statusEl.classList.add(tone);
+    }
+
+    function enqueueMetricVideoUpload(metric, file) {
+      if (!metric || !file) return;
+
+      const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
+      const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+      const payload = {
+        metric,
+        file,
+        isVerified: !!verifiedInput?.checked,
+        verifiedBy: (verifiedByInput?.value || '').trim()
+      };
+
+      pendingMetricUploadByKey.set(metric.key, payload);
+      setMetricUploadStatus(metric.key, 'Upload queued...', 'pending');
+      processMetricVideoUploadQueue();
+    }
+
+    async function processMetricVideoUploadQueue() {
+      if (metricUploadQueueRunning) return;
+      metricUploadQueueRunning = true;
+
+      try {
+        while (pendingMetricUploadByKey.size > 0) {
+          const [metricKey, payload] = pendingMetricUploadByKey.entries().next().value;
+          pendingMetricUploadByKey.delete(metricKey);
+          await uploadMetricVideo(payload.metric, payload.file, payload);
+        }
+      } finally {
+        metricUploadQueueRunning = false;
+      }
+    }
+
+    async function uploadMetricVideo(metric, file, payload = null) {
+      if (!metric || !file) return;
+      if (metricUploadInProgress.has(metric.key)) {
+        setMetricUploadStatus(metric.key, 'Upload already in progress for this metric.', 'pending');
+        return;
+      }
+
+      const MAX_METRIC_VIDEO_MB = 50;
+      const sizeMb = file.size / (1024 * 1024);
+      if (sizeMb > MAX_METRIC_VIDEO_MB) {
+        setMetricUploadStatus(metric.key, `Video is too large (${sizeMb.toFixed(1)}MB). Max is ${MAX_METRIC_VIDEO_MB}MB.`, 'error');
+        return;
+      }
+
+      const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
+      const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+      const fileInput = document.querySelector(`input[type="file"][name="${metric.videoField}"]`);
+      const isVerified = payload ? !!payload.isVerified : !!verifiedInput?.checked;
+      const verifiedBy = payload ? (payload.verifiedBy || '') : (verifiedByInput?.value || '');
+
+      const formData = new FormData();
+      formData.append(metric.videoField, file);
+      formData.append('metricKey', metric.key);
+      if (isVerified) {
+        formData.append(metric.verifiedField, 'on');
+      }
+      if (verifiedBy) {
+        formData.append(metric.verifiedByField, verifiedBy);
+      }
+
+      metricUploadInProgress.add(metric.key);
+      if (fileInput) fileInput.disabled = true;
+      setMetricUploadStatus(metric.key, 'Uploading and optimizing video...', 'pending');
+
+      try {
+        const res = await fetch('/api/player/metric-video', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          setMetricUploadStatus(metric.key, 'Metric video saved.', 'success');
+          if (fileInput) fileInput.value = '';
+          await loadPlayerProfile();
+        } else {
+          const raw = await res.text();
+          let err = {};
+          try {
+            err = raw ? JSON.parse(raw) : {};
+          } catch (_) {
+            err = { error: raw || '' };
+          }
+          setMetricUploadStatus(metric.key, err.error || `Upload failed (${res.status})`, 'error');
+        }
+      } catch (_) {
+        setMetricUploadStatus(metric.key, 'Upload failed. Please try again.', 'error');
+      } finally {
+        metricUploadInProgress.delete(metric.key);
+        if (fileInput) fileInput.disabled = false;
+      }
+    }
+
+    function initMetricVideoAutoUpload() {
+      METRIC_DEFINITIONS.forEach(metric => {
+        const input = document.querySelector(`input[type="file"][name="${metric.videoField}"]`);
+        if (!input || input.dataset.autoUploadBound === '1') return;
+
+        input.dataset.autoUploadBound = '1';
+        input.addEventListener('change', async () => {
+          const file = input.files?.[0];
+          if (!file) {
+            setMetricUploadStatus(metric.key, '', '');
+            return;
+          }
+          enqueueMetricVideoUpload(metric, file);
+        });
+      });
+    }
 
     async function loadMetricTipsForForm() {
       try {
@@ -1765,10 +1906,12 @@
           if (verifiedInput) verifiedInput.checked = false;
           if (verifiedByInput) verifiedByInput.value = '';
         }
+        setMetricUploadStatus(metricKey, 'Metric video deleted.', 'success');
         alert('Metric proof video deleted successfully');
         loadPlayerProfile();
       } else {
         const err = await res.json().catch(() => ({}));
+        setMetricUploadStatus(metricKey, err.error || 'Failed to delete metric proof video', 'error');
         alert(err.error || 'Failed to delete metric proof video');
       }
     }
@@ -1924,6 +2067,9 @@
         syncHeightCombined();
         syncBroadJumpTotalInches();
         const formData = new FormData(e.target);
+        METRIC_DEFINITIONS.forEach(metric => {
+          formData.delete(metric.videoField);
+        });
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 300000);
         const res = await fetch('/api/player/profile', {
