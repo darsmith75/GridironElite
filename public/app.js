@@ -204,10 +204,10 @@ function applyRoleBasedTopNav(user) {
     else homeLink.href = 'agent-dashboard.html';
   }
 
-  // Show Messages for authenticated users
+  // Only admins retain access to the Messages area.
   const messagesLink = findTopNavLinkByLabel(nav, 'Messages');
   if (messagesLink) {
-    messagesLink.style.display = '';
+    messagesLink.style.display = user.role === 'admin' ? '' : 'none';
   }
 
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');

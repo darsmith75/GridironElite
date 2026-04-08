@@ -2139,8 +2139,24 @@ app.get('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
 });
 
 // Messaging endpoints
+function ensureAdminMessagingAccess(req, res) {
+  if (!req.session.userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return false;
+  }
+
+  if (req.session.role !== 'admin') {
+    res.status(403).json({ error: 'Forbidden' });
+    return false;
+  }
+
+  return true;
+}
+
 // Send a message
 app.post('/api/messages/send', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
   const { recipientId, message } = req.body;
   
   if (!recipientId || !message) {
@@ -2159,6 +2175,8 @@ app.post('/api/messages/send', requireAuth, async (req, res) => {
 
 // Get conversations list
 app.get('/api/messages/conversations', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
   try {
     // First get all unique conversation partners
     const conversationPartners = await db.prepare(`
@@ -2226,6 +2244,8 @@ app.get('/api/messages/conversations', requireAuth, async (req, res) => {
 
 // Get messages with a specific user
 app.get('/api/messages/:userId', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
   try {
     const messages = await db.prepare(`
       SELECT m.*, 
@@ -2252,8 +2272,58 @@ app.get('/api/messages/:userId', requireAuth, async (req, res) => {
   }
 });
 
+// Delete a conversation with a specific user
+app.delete('/api/messages/conversations/:userId', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
+  const otherUserId = Number(req.params.userId);
+  if (!Number.isInteger(otherUserId) || otherUserId <= 0) {
+    return res.status(400).json({ error: 'Invalid user id' });
+  }
+
+  try {
+    const result = await db.prepare(`
+      DELETE FROM messages
+      WHERE (sender_id = ? AND recipient_id = ?)
+         OR (sender_id = ? AND recipient_id = ?)
+    `).run(req.session.userId, otherUserId, otherUserId, req.session.userId);
+
+    res.json({ success: true, deletedCount: result.changes || 0 });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    res.status(500).json({ error: 'Failed to delete conversation' });
+  }
+});
+
+// Purge messages by retention window
+app.delete('/api/messages/purge', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
+  const days = Number(req.body?.days);
+  if (!Number.isInteger(days) || days < 0) {
+    return res.status(400).json({ error: 'A non-negative integer days value is required' });
+  }
+
+  try {
+    let result;
+    if (days === 0) {
+      result = await db.prepare('DELETE FROM messages').run();
+    } else {
+      const cutoff = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
+      result = await db.prepare('DELETE FROM messages WHERE created_at < ?').run(cutoff);
+    }
+
+    res.json({ success: true, deletedCount: result.changes || 0, days });
+  } catch (error) {
+    console.error('Error purging messages:', error);
+    res.status(500).json({ error: 'Failed to purge messages' });
+  }
+});
+
 // Get unread message count
 app.get('/api/messages/unread/count', requireAuth, async (req, res) => {
+  if (!ensureAdminMessagingAccess(req, res)) return;
+
   try {
     const result = await db.prepare('SELECT COUNT(*) as count FROM messages WHERE recipient_id = ? AND read = 0')
       .get(req.session.userId);
