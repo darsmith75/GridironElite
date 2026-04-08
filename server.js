@@ -984,6 +984,23 @@ async function deleteOwnedPlayerMedia(tableName, playerId, filename) {
   return true;
 }
 
+async function deleteOwnedPlayerMetricVideo(playerId, metricKey) {
+  const media = await db.prepare(
+    'SELECT id, video_filename FROM player_metric_videos WHERE user_id = ? AND metric_key = ?'
+  ).get(playerId, metricKey);
+  if (!media?.video_filename) {
+    return false;
+  }
+
+  const fileDeleted = await deleteUploadFile(media.video_filename);
+  if (b2Enabled && !fileDeleted) {
+    return false;
+  }
+
+  await db.prepare('DELETE FROM player_metric_videos WHERE id = ?').run(media.id);
+  return true;
+}
+
 // Guard against accidental double-submit of the same profile upload payload.
 const recentProfileUploadSignatures = new Map();
 function buildProfileUploadSignature(userId, reqBody, reqFiles) {
@@ -2188,6 +2205,38 @@ app.post('/api/player/video/delete', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Delete video error:', error);
     res.status(500).json({ error: 'Failed to delete video' });
+  }
+});
+
+// Delete metric proof video from player profile via POST (for environments that block DELETE)
+app.post('/api/player/metric-video/delete', requireAuth, async (req, res) => {
+  try {
+    const metricKey = String(req.body?.metricKey || '').trim();
+    if (!metricKey) return res.status(400).json({ error: 'Metric key is required' });
+
+    const deleted = await deleteOwnedPlayerMetricVideo(req.session.userId, metricKey);
+    if (!deleted) return res.status(404).json({ error: 'Metric proof video not found' });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete metric proof video error:', error);
+    res.status(500).json({ error: 'Failed to delete metric proof video' });
+  }
+});
+
+// Delete metric proof video from player profile
+app.delete('/api/player/metric-video', requireAuth, async (req, res) => {
+  try {
+    const metricKey = String(req.query.metricKey || '').trim();
+    if (!metricKey) return res.status(400).json({ error: 'Metric key is required' });
+
+    const deleted = await deleteOwnedPlayerMetricVideo(req.session.userId, metricKey);
+    if (!deleted) return res.status(404).json({ error: 'Metric proof video not found' });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete metric proof video error:', error);
+    res.status(500).json({ error: 'Failed to delete metric proof video' });
   }
 });
 

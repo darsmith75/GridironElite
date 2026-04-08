@@ -1650,6 +1650,7 @@
                 <div class="metric-proof-title">${metric.label}</div>
                 <video controls src="/uploads/${media.video_filename}" class="current-video"></video>
                 ${media.is_verified ? `<div class="metric-proof-verified">★ Verified${media.verified_by ? ` by ${media.verified_by}` : ''}</div>` : ''}
+                <button onclick="deleteMetricVideo('${metric.key}', '${metric.label.replace(/'/g, '\\&#39;')}')" class="delete-media-btn">🗑️ Delete</button>
               </div>
             `;
           });
@@ -1736,6 +1737,39 @@
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.error || 'Failed to delete video');
+      }
+    }
+
+    async function deleteMetricVideo(metricKey, metricLabel) {
+      if (!confirm(`Are you sure you want to delete the ${metricLabel} proof video?`)) return;
+
+      let res = await fetch(`/api/player/metric-video?metricKey=${encodeURIComponent(metricKey)}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok && (res.status === 404 || res.status === 405 || res.status === 501)) {
+        res = await fetch('/api/player/metric-video/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metricKey })
+        });
+      }
+
+      if (res.ok) {
+        const metric = METRIC_DEFINITIONS.find(item => item.key === metricKey);
+        if (metric) {
+          const fileInput = document.querySelector(`input[type="file"][name="${metric.videoField}"]`);
+          const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
+          const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+          if (fileInput) fileInput.value = '';
+          if (verifiedInput) verifiedInput.checked = false;
+          if (verifiedByInput) verifiedByInput.value = '';
+        }
+        alert('Metric proof video deleted successfully');
+        loadPlayerProfile();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete metric proof video');
       }
     }
 
