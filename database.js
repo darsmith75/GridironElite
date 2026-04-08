@@ -43,6 +43,7 @@ const insertPrimaryKeys = {
   player_school_interests: 'id',
   school_notes: 'id',
   school_contacts: 'id',
+  school_rating_categories: 'id',
   ai_player_summaries: 'id',
   ai_events: 'id',
   hs_teams: 'id',
@@ -267,6 +268,18 @@ const createTablesSQL = `
     FOREIGN KEY (college_id) REFERENCES colleges(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS school_rating_categories (
+    id SERIAL PRIMARY KEY,
+    category_name VARCHAR(120) UNIQUE NOT NULL,
+    what_to_rate TEXT NOT NULL,
+    why_it_matters TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_by_user_id INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
   CREATE TABLE IF NOT EXISTS ai_player_summaries (
     id SERIAL PRIMARY KEY,
     player_user_id INTEGER NOT NULL,
@@ -369,6 +382,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_school_notes_college ON school_notes(college_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_user ON school_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
+  CREATE INDEX IF NOT EXISTS idx_school_rating_categories_sort ON school_rating_categories(sort_order);
   CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
   CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_id);
   CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
@@ -399,6 +413,69 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_team_players_team ON team_players(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_players_player ON team_players(player_id);
 `;
+
+const DEFAULT_SCHOOL_RATING_CATEGORIES = [
+  {
+    categoryName: 'Academics',
+    whatToRate: 'Major, academic support, graduation help',
+    whyItMatters: 'Football ends, degree lasts',
+    sortOrder: 1
+  },
+  {
+    categoryName: 'Playing Time Opportunity',
+    whatToRate: 'Path to the field, depth chart, role fit',
+    whyItMatters: 'Athletes want to compete and develop',
+    sortOrder: 2
+  },
+  {
+    categoryName: 'Coaching Staff',
+    whatToRate: 'Trust, communication, player development',
+    whyItMatters: 'Coaches shape growth and future success',
+    sortOrder: 3
+  },
+  {
+    categoryName: 'Scheme Fit',
+    whatToRate: "Offense/defense fit for the athlete's style",
+    whyItMatters: 'Better fit usually means better performance',
+    sortOrder: 4
+  },
+  {
+    categoryName: 'Facilities',
+    whatToRate: 'Weight room, training room, recovery, stadium',
+    whyItMatters: 'Shows investment in players and development',
+    sortOrder: 5
+  },
+  {
+    categoryName: 'Program Success',
+    whatToRate: 'Winning culture, exposure, conference level',
+    whyItMatters: 'Strong programs can boost recruiting value',
+    sortOrder: 6
+  },
+  {
+    categoryName: 'Team Culture',
+    whatToRate: 'Brotherhood, leadership, locker room vibe',
+    whyItMatters: 'Good culture improves daily experience',
+    sortOrder: 7
+  },
+  {
+    categoryName: 'Location',
+    whatToRate: 'Distance from home, city, environment',
+    whyItMatters: 'Comfort and family access matter',
+    sortOrder: 8
+  },
+  {
+    categoryName: 'NIL / Financial Fit',
+    whatToRate: 'NIL opportunity, scholarship, overall value',
+    whyItMatters: 'Important for money, exposure, and stability',
+    sortOrder: 9
+  },
+  {
+    categoryName: 'Career Support',
+    whatToRate: 'Networking, alumni, life-after-football support',
+    whyItMatters: 'Helps after football and after college',
+    sortOrder: 10
+  }
+];
 
 function splitStatements(sql) {
   return sql
@@ -470,6 +547,28 @@ async function initialize() {
   await exec(createTablesSQL);
   await exec(alterTablesSQL);
   await exec(createIndexesSQL);
+
+  const existing = await prepare('SELECT COUNT(*)::int AS count FROM school_rating_categories').get();
+  if ((existing?.count || 0) === 0) {
+    for (const category of DEFAULT_SCHOOL_RATING_CATEGORIES) {
+      await prepare(`
+        INSERT INTO school_rating_categories (
+          category_name,
+          what_to_rate,
+          why_it_matters,
+          sort_order,
+          is_active,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, true, CURRENT_TIMESTAMP)
+      `).run(
+        category.categoryName,
+        category.whatToRate,
+        category.whyItMatters,
+        category.sortOrder
+      );
+    }
+  }
 }
 
 function prepare(sql) {

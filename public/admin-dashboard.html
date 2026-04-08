@@ -347,6 +347,41 @@
       color: #1e3c72;
       min-height: 18px;
     }
+    .school-ratings-table input,
+    .school-ratings-table textarea,
+    .school-ratings-table select {
+      width: 100%;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .school-ratings-table textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+    .school-ratings-status {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3c72;
+      min-height: 18px;
+    }
+    .btn-ghost {
+      padding: 9px 14px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      background: #fff;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-ghost:hover {
+      background: #f4f7fb;
+    }
     .ad-slot-admin-grid {
       display: grid;
       gap: 14px;
@@ -480,6 +515,7 @@
         <button class="admin-tab" onclick="switchTab('coaches')">Coaches</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
         <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
+        <button class="admin-tab" onclick="switchTab('school-ratings')">School Ratings</button>
         <button class="admin-tab" onclick="switchTab('ads')">Advertising</button>
       </div>
 
@@ -558,6 +594,35 @@
           <p style="margin:0 0 16px; color:#666; font-size:14px;">These tips appear when athletes click the info icon beside each metric on their profile form.</p>
           <div id="proTipGrid" class="pro-tip-grid"></div>
           <div id="proTipStatus" class="pro-tip-status"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-school-ratings">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">School Ratings Categories</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn-ghost" onclick="addSchoolRatingCategoryRow()">+ Add Category</button>
+              <button class="btn-save" onclick="saveSchoolRatingCategories()">Save Categories</button>
+            </div>
+          </div>
+          <p style="margin:0 0 16px; color:#666; font-size:14px;">This list controls the categories shown in the school Ratings workflow.</p>
+          <div style="overflow-x:auto;">
+            <table class="admin-table school-ratings-table">
+              <thead>
+                <tr>
+                  <th style="width:80px;">Order</th>
+                  <th style="min-width:180px;">Category</th>
+                  <th style="min-width:240px;">What to Rate</th>
+                  <th style="min-width:240px;">Why It Matters</th>
+                  <th style="width:110px;">Active</th>
+                  <th style="width:110px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="schoolRatingsCategoryBody"></tbody>
+            </table>
+          </div>
+          <div id="schoolRatingsStatus" class="school-ratings-status"></div>
         </div>
       </div>
 
@@ -799,6 +864,7 @@
     let allUsers = [];
     let metricTipConfig = [];
     let metricTips = {};
+    let schoolRatingCategories = [];
     let adSlotConfig = [];
     let adSlots = {};
     let b2QueueAutoRefreshTimer = null;
@@ -1242,6 +1308,7 @@
       document.getElementById('tab-' + tab).classList.add('active');
       if (tab === 'colleges') loadColleges();
       if (tab === 'protips') loadMetricTips();
+      if (tab === 'school-ratings') loadSchoolRatingCategories();
       if (tab === 'ads') loadAdSlotsConfig();
       if (tab === 'coaches') loadCoaches();
     }
@@ -1344,6 +1411,113 @@
         if (status) status.textContent = 'Saved successfully.';
       } catch (error) {
         if (status) status.textContent = 'Failed to save pro tips.';
+      }
+    }
+
+    function renderSchoolRatingCategories() {
+      const tbody = document.getElementById('schoolRatingsCategoryBody');
+      if (!tbody) return;
+
+      if (!schoolRatingCategories.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#76849b;padding:20px;">No categories yet. Click + Add Category.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = schoolRatingCategories.map((item, index) => `
+        <tr data-row-index="${index}">
+          <td><input type="number" min="1" value="${Number(item.sortOrder || (index + 1))}"></td>
+          <td><textarea>${escapeHtml(item.categoryName || '')}</textarea></td>
+          <td><textarea>${escapeHtml(item.whatToRate || '')}</textarea></td>
+          <td><textarea>${escapeHtml(item.whyItMatters || '')}</textarea></td>
+          <td>
+            <select>
+              <option value="true" ${item.isActive !== false ? 'selected' : ''}>Yes</option>
+              <option value="false" ${item.isActive === false ? 'selected' : ''}>No</option>
+            </select>
+          </td>
+          <td><button class="action-btn delete" onclick="removeSchoolRatingCategoryRow(${index})">Remove</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function addSchoolRatingCategoryRow() {
+      schoolRatingCategories.push({
+        categoryName: '',
+        whatToRate: '',
+        whyItMatters: '',
+        sortOrder: schoolRatingCategories.length + 1,
+        isActive: true
+      });
+      renderSchoolRatingCategories();
+      const status = document.getElementById('schoolRatingsStatus');
+      if (status) status.textContent = '';
+    }
+
+    function removeSchoolRatingCategoryRow(index) {
+      schoolRatingCategories = schoolRatingCategories.filter((_, i) => i !== index);
+      renderSchoolRatingCategories();
+      const status = document.getElementById('schoolRatingsStatus');
+      if (status) status.textContent = '';
+    }
+
+    async function loadSchoolRatingCategories() {
+      const status = document.getElementById('schoolRatingsStatus');
+      if (status) status.textContent = 'Loading categories...';
+
+      try {
+        const res = await fetch('/api/admin/school-rating-categories');
+        if (!res.ok) {
+          if (status) status.textContent = 'Failed to load categories.';
+          return;
+        }
+
+        const data = await res.json();
+        schoolRatingCategories = Array.isArray(data.categories) ? data.categories : [];
+        renderSchoolRatingCategories();
+        if (status) status.textContent = '';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to load categories.';
+      }
+    }
+
+    async function saveSchoolRatingCategories() {
+      const status = document.getElementById('schoolRatingsStatus');
+      const rows = document.querySelectorAll('#schoolRatingsCategoryBody tr[data-row-index]');
+      const payload = { categories: [] };
+
+      rows.forEach((row, index) => {
+        const inputs = row.querySelectorAll('input, textarea, select');
+        const sortOrder = parseInt(inputs[0]?.value, 10);
+        payload.categories.push({
+          categoryName: (inputs[1]?.value || '').trim(),
+          whatToRate: (inputs[2]?.value || '').trim(),
+          whyItMatters: (inputs[3]?.value || '').trim(),
+          isActive: (inputs[4]?.value || 'true') === 'true',
+          sortOrder: Number.isInteger(sortOrder) ? sortOrder : (index + 1)
+        });
+      });
+
+      if (status) status.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/admin/school-rating-categories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (status) status.textContent = err.error || 'Failed to save categories.';
+          return;
+        }
+
+        const data = await res.json();
+        schoolRatingCategories = Array.isArray(data.categories) ? data.categories : payload.categories;
+        renderSchoolRatingCategories();
+        if (status) status.textContent = 'Saved successfully.';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to save categories.';
       }
     }
 
@@ -1547,6 +1721,7 @@
     loadStats();
     loadUsers();
     loadMetricTips();
+    loadSchoolRatingCategories();
     loadB2DeleteQueue();
     startB2QueueAutoRefresh();
   </script>

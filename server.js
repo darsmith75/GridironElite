@@ -3258,6 +3258,119 @@ app.put('/api/admin/metric-pro-tips', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: Get school rating categories list
+app.get('/api/admin/school-rating-categories', requireAdmin, async (req, res) => {
+  try {
+    const categories = await db.prepare(`
+      SELECT id, category_name, what_to_rate, why_it_matters, sort_order, is_active, updated_at
+      FROM school_rating_categories
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({
+      categories: categories.map(item => ({
+        id: item.id,
+        categoryName: item.category_name,
+        whatToRate: item.what_to_rate,
+        whyItMatters: item.why_it_matters,
+        sortOrder: Number(item.sort_order || 0),
+        isActive: !!item.is_active,
+        updatedAt: item.updated_at || null
+      }))
+    });
+  } catch (error) {
+    console.error('Admin get school rating categories error:', error);
+    res.status(500).json({ error: 'Failed to load school rating categories' });
+  }
+});
+
+// Admin: Save school rating categories list
+app.put('/api/admin/school-rating-categories', requireAdmin, async (req, res) => {
+  const incomingCategories = req.body?.categories;
+
+  if (!Array.isArray(incomingCategories)) {
+    return res.status(400).json({ error: 'Invalid categories payload' });
+  }
+
+  if (incomingCategories.length > 100) {
+    return res.status(400).json({ error: 'Too many categories submitted' });
+  }
+
+  const normalizedCategories = [];
+  for (let i = 0; i < incomingCategories.length; i++) {
+    const item = incomingCategories[i] || {};
+    const categoryName = String(item.categoryName || '').trim();
+    const whatToRate = String(item.whatToRate || '').trim();
+    const whyItMatters = String(item.whyItMatters || '').trim();
+    const parsedSortOrder = parseInt(item.sortOrder, 10);
+    const sortOrder = Number.isInteger(parsedSortOrder) ? parsedSortOrder : (i + 1);
+
+    if (!categoryName || !whatToRate || !whyItMatters) {
+      return res.status(400).json({ error: 'Each category must include category name, what to rate, and why it matters.' });
+    }
+
+    normalizedCategories.push({
+      categoryName: categoryName.slice(0, 120),
+      whatToRate: whatToRate.slice(0, 2000),
+      whyItMatters: whyItMatters.slice(0, 2000),
+      sortOrder,
+      isActive: item.isActive !== false
+    });
+  }
+
+  try {
+    await db.query('BEGIN');
+    await db.query('DELETE FROM school_rating_categories');
+
+    for (const item of normalizedCategories) {
+      await db.prepare(`
+        INSERT INTO school_rating_categories (
+          category_name,
+          what_to_rate,
+          why_it_matters,
+          sort_order,
+          is_active,
+          updated_by_user_id,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `).run(
+        item.categoryName,
+        item.whatToRate,
+        item.whyItMatters,
+        item.sortOrder,
+        item.isActive,
+        req.session.userId
+      );
+    }
+
+    await db.query('COMMIT');
+
+    const categories = await db.prepare(`
+      SELECT id, category_name, what_to_rate, why_it_matters, sort_order, is_active, updated_at
+      FROM school_rating_categories
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({
+      success: true,
+      categories: categories.map(item => ({
+        id: item.id,
+        categoryName: item.category_name,
+        whatToRate: item.what_to_rate,
+        whyItMatters: item.why_it_matters,
+        sortOrder: Number(item.sort_order || 0),
+        isActive: !!item.is_active,
+        updatedAt: item.updated_at || null
+      }))
+    });
+  } catch (error) {
+    try { await db.query('ROLLBACK'); } catch (_) {}
+    console.error('Admin save school rating categories error:', error);
+    res.status(500).json({ error: 'Failed to save school rating categories' });
+  }
+});
+
 app.get('/api/admin/ad-slots', requireAdmin, async (req, res) => {
   try {
     const slots = await getAdSlotsMap();
