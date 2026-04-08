@@ -1327,15 +1327,6 @@ app.post('/api/register', async (req, res) => {
       await db.prepare('INSERT INTO hs_teams (coach_id, team_name) VALUES (?, ?)').run(result.lastInsertRowid, teamName);
     }
 
-    // Notify all admin users about the new registration
-    const admins = await db.prepare("SELECT id FROM users WHERE role = 'admin'").all();
-    const roleLabel = role === 'player' ? 'Athlete' : role.charAt(0).toUpperCase() + role.slice(1);
-    const notifMessage = `New ${roleLabel} registration: ${fullName || email} (${email})`;
-    const insertMsg = db.prepare('INSERT INTO messages (sender_id, recipient_id, message) VALUES (?, ?, ?)');
-    for (const admin of admins) {
-      await insertMsg.run(result.lastInsertRowid, admin.id, notifMessage);
-    }
-
     // Send verification email (non-fatal – log error but still return success)
     try {
       await sendVerificationEmail(email, verificationToken);
@@ -2138,202 +2129,6 @@ app.get('/api/agent/favorites/:playerId', requireAuth, async (req, res) => {
   }
 });
 
-// Messaging endpoints
-function ensureAdminMessagingAccess(req, res) {
-  if (!req.session.userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-    return false;
-  }
-
-  if (req.session.role !== 'admin') {
-    res.status(403).json({ error: 'Forbidden' });
-    return false;
-  }
-
-  return true;
-}
-
-// Send a message
-app.post('/api/messages/send', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  const { recipientId, message } = req.body;
-  
-  if (!recipientId || !message) {
-    return res.status(400).json({ error: 'Recipient and message are required' });
-  }
-  
-  try {
-    await db.prepare('INSERT INTO messages (sender_id, recipient_id, message) VALUES (?, ?, ?)')
-      .run(req.session.userId, recipientId, message);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
-  }
-});
-
-// Get conversations list
-app.get('/api/messages/conversations', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  try {
-    // First get all unique conversation partners
-    const conversationPartners = await db.prepare(`
-      SELECT DISTINCT
-        CASE 
-          WHEN sender_id = ? THEN recipient_id
-          ELSE sender_id
-        END as other_user_id
-      FROM messages
-      WHERE sender_id = ? OR recipient_id = ?
-    `).all(req.session.userId, req.session.userId, req.session.userId);
-    
-    // Then get details for each conversation
-    const conversations = await Promise.all(conversationPartners.map(async partner => {
-      const user = await db.prepare('SELECT email, full_name, role FROM users WHERE id = ?').get(partner.other_user_id);
-      
-      // If the user is a player, get their name from player_profiles
-      let displayName = user.full_name || user.email;
-      if (user.role === 'player') {
-        const playerProfile = await db.prepare('SELECT full_name FROM player_profiles WHERE user_id = ?').get(partner.other_user_id);
-        if (playerProfile && playerProfile.full_name) {
-          displayName = playerProfile.full_name;
-        }
-      }
-      
-      const lastMessage = await db.prepare(`
-        SELECT message, created_at 
-        FROM messages 
-        WHERE (sender_id = ? AND recipient_id = ?) 
-           OR (sender_id = ? AND recipient_id = ?)
-        ORDER BY created_at DESC 
-        LIMIT 1
-      `).get(req.session.userId, partner.other_user_id, partner.other_user_id, req.session.userId);
-      
-      const unreadCount = await db.prepare(`
-        SELECT COUNT(*) as count 
-        FROM messages 
-        WHERE sender_id = ? AND recipient_id = ? AND read = 0
-      `).get(partner.other_user_id, req.session.userId);
-      
-      return {
-        other_user_id: partner.other_user_id,
-        email: user.email,
-        full_name: displayName,
-        role: user.role,
-        last_message: lastMessage ? lastMessage.message : null,
-        last_message_time: lastMessage ? lastMessage.created_at : null,
-        unread_count: unreadCount.count
-      };
-    }));
-    
-    // Sort by last message time
-    conversations.sort((a, b) => {
-      if (!a.last_message_time) return 1;
-      if (!b.last_message_time) return -1;
-      return new Date(b.last_message_time) - new Date(a.last_message_time);
-    });
-    
-    res.json(conversations);
-  } catch (error) {
-    console.error('Error getting conversations:', error);
-    res.status(500).json({ error: 'Failed to get conversations' });
-  }
-});
-
-// Get messages with a specific user
-app.get('/api/messages/:userId', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  try {
-    const messages = await db.prepare(`
-      SELECT m.*, 
-        sender.email as sender_email, 
-        sender.full_name as sender_name,
-        recipient.email as recipient_email,
-        recipient.full_name as recipient_name
-      FROM messages m
-      JOIN users sender ON m.sender_id = sender.id
-      JOIN users recipient ON m.recipient_id = recipient.id
-      WHERE (sender_id = ? AND recipient_id = ?) 
-         OR (sender_id = ? AND recipient_id = ?)
-      ORDER BY created_at ASC
-    `).all(req.session.userId, req.params.userId, req.params.userId, req.session.userId);
-    
-    // Mark messages as read
-    await db.prepare('UPDATE messages SET read = 1 WHERE sender_id = ? AND recipient_id = ? AND read = 0')
-      .run(req.params.userId, req.session.userId);
-    
-    res.json(messages);
-  } catch (error) {
-    console.error('Error getting messages:', error);
-    res.status(500).json({ error: 'Failed to get messages' });
-  }
-});
-
-// Delete a conversation with a specific user
-app.delete('/api/messages/conversations/:userId', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  const otherUserId = Number(req.params.userId);
-  if (!Number.isInteger(otherUserId) || otherUserId <= 0) {
-    return res.status(400).json({ error: 'Invalid user id' });
-  }
-
-  try {
-    const result = await db.prepare(`
-      DELETE FROM messages
-      WHERE (sender_id = ? AND recipient_id = ?)
-         OR (sender_id = ? AND recipient_id = ?)
-    `).run(req.session.userId, otherUserId, otherUserId, req.session.userId);
-
-    res.json({ success: true, deletedCount: result.changes || 0 });
-  } catch (error) {
-    console.error('Error deleting conversation:', error);
-    res.status(500).json({ error: 'Failed to delete conversation' });
-  }
-});
-
-// Purge messages by retention window
-app.delete('/api/messages/purge', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  const days = Number(req.body?.days);
-  if (!Number.isInteger(days) || days < 0) {
-    return res.status(400).json({ error: 'A non-negative integer days value is required' });
-  }
-
-  try {
-    let result;
-    if (days === 0) {
-      result = await db.prepare('DELETE FROM messages').run();
-    } else {
-      const cutoff = new Date(Date.now() - (days * 24 * 60 * 60 * 1000)).toISOString();
-      result = await db.prepare('DELETE FROM messages WHERE created_at < ?').run(cutoff);
-    }
-
-    res.json({ success: true, deletedCount: result.changes || 0, days });
-  } catch (error) {
-    console.error('Error purging messages:', error);
-    res.status(500).json({ error: 'Failed to purge messages' });
-  }
-});
-
-// Get unread message count
-app.get('/api/messages/unread/count', requireAuth, async (req, res) => {
-  if (!ensureAdminMessagingAccess(req, res)) return;
-
-  try {
-    const result = await db.prepare('SELECT COUNT(*) as count FROM messages WHERE recipient_id = ? AND read = 0')
-      .get(req.session.userId);
-    res.json({ count: result.count });
-  } catch (error) {
-    console.error('Error getting unread count:', error);
-    res.status(500).json({ error: 'Failed to get unread count' });
-  }
-});
-
 // Delete video from player profile (query param variant)
 app.delete('/api/player/video', requireAuth, async (req, res) => {
   try {
@@ -3120,7 +2915,6 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
     }
 
     // Delete related data
-    await db.prepare('DELETE FROM messages WHERE sender_id = ? OR recipient_id = ?').run(user.id, user.id);
     await db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? OR user_id = ?').run(user.id, user.id);
     if (user.role === 'player') {
       await db.prepare('DELETE FROM player_videos WHERE user_id = ?').run(user.id);
@@ -3172,11 +2966,8 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
     const totalUsers = (await db.prepare('SELECT COUNT(*) as count FROM users').get()).count;
     const totalPlayers = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'player'").get()).count;
     const totalAgents = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'agent'").get()).count;
-    const totalMessages = (await db.prepare('SELECT COUNT(*) as count FROM messages').get()).count;
-
     const usersActive24h = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE last_login_at >= NOW() - INTERVAL '24 hours'").get()).count;
     const newUsers7d = (await db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= NOW() - INTERVAL '7 days'").get()).count;
-    const messages7d = (await db.prepare("SELECT COUNT(*) as count FROM messages WHERE created_at >= NOW() - INTERVAL '7 days'").get()).count;
     const totalProfileViews = (await db.prepare('SELECT COALESCE(SUM(profile_view_count), 0) as count FROM player_profiles').get()).count;
     const aiSummariesGenerated = (await db.prepare('SELECT COUNT(*) as count FROM ai_player_summaries').get()).count;
     const totalTrafficEvents = (await db.prepare('SELECT COUNT(*) as count FROM site_traffic_events').get()).count;
@@ -3229,10 +3020,8 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
       totalUsers,
       totalPlayers,
       totalAgents,
-      totalMessages,
       usersActive24h,
       newUsers7d,
-      messages7d,
       totalProfileViews,
       aiSummariesGenerated,
       totalTrafficEvents,

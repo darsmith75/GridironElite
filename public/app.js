@@ -204,12 +204,6 @@ function applyRoleBasedTopNav(user) {
     else homeLink.href = 'agent-dashboard.html';
   }
 
-  // Only admins retain access to the Messages area.
-  const messagesLink = findTopNavLinkByLabel(nav, 'Messages');
-  if (messagesLink) {
-    messagesLink.style.display = user.role === 'admin' ? '' : 'none';
-  }
-
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
   if (profileLink) {
     profileLink.href = getProfilePathForRole(user.role);
@@ -268,9 +262,7 @@ function applyPublicTopNav() {
   const nav = document.querySelector('.top-nav-menu');
   if (!nav) return;
 
-  // Hide Messages, My Profile and Sign out
-  const messagesLink = findTopNavLinkByLabel(nav, 'Messages');
-  if (messagesLink) messagesLink.style.display = 'none';
+  // Hide My Profile and Sign out
   
   const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
   if (profileLink) profileLink.style.display = 'none';

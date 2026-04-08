@@ -28,7 +28,6 @@ const pool = new Pool(poolConfig);
 const insertPrimaryKeys = {
   users: 'id',
   player_profiles: 'user_id',
-  messages: 'id',
   agent_favorites: 'id',
   colleges: 'id',
   player_videos: 'id',
@@ -103,17 +102,6 @@ const createTablesSQL = `
       profile_view_count INTEGER NOT NULL DEFAULT 0,
       last_viewed_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS messages (
-    id SERIAL PRIMARY KEY,
-    sender_id INTEGER NOT NULL,
-    recipient_id INTEGER NOT NULL,
-    message TEXT NOT NULL,
-    read INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS agent_favorites (
@@ -388,6 +376,7 @@ const alterTablesSQL = `
   ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0;
+  DROP TABLE IF EXISTS messages;
 `;
 
 const createIndexesSQL = `
@@ -400,9 +389,6 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_school_rating_categories_sort ON school_rating_categories(sort_order);
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_user_college ON player_school_ratings(user_id, college_id);
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_category ON player_school_ratings(category_id);
-  CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
-  CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages(recipient_id);
-  CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);
   CREATE INDEX IF NOT EXISTS idx_favorites_agent ON agent_favorites(agent_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_user ON player_profiles(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
