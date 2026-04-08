@@ -364,6 +364,8 @@
       if (year) params.append('graduationYear', year);
       if (gpa) params.append('minGpa', gpa);
       if (favoritesOnly) params.append('favoritesOnly', 'true');
+      params.append('limit', '500');
+      params.append('offset', '0');
       
       // Add timestamp to prevent caching
       params.append('_t', Date.now());
@@ -377,7 +379,9 @@
           'Pragma': 'no-cache'
         }
       });
-      let players = await res.json();
+      const payload = await res.json();
+      let players = Array.isArray(payload) ? payload : (payload.players || []);
+      const pagination = Array.isArray(payload) ? null : (payload.pagination || null);
       
       // Load favorites list
       let favoriteIds = [];
@@ -457,7 +461,11 @@
       
       // Update last refresh time and results count
       document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-      document.getElementById('resultsCount').textContent = `${players.length} player${players.length !== 1 ? 's' : ''} found`;
+      let resultsLabel = `${players.length} player${players.length !== 1 ? 's' : ''} found`;
+      if (pagination && pagination.hasMore) {
+        resultsLabel += ` (showing first ${players.length} of ${pagination.total})`;
+      }
+      document.getElementById('resultsCount').textContent = resultsLabel;
 
       // Store for pagination
       window._allPlayers = players;
@@ -469,6 +477,9 @@
     const PAGE_SIZE = 20;
 
     function hasVerifiedMetric(player) {
+      if (player && typeof player.has_verified_metric === 'boolean') {
+        return player.has_verified_metric;
+      }
       if (!player || !player.metric_videos) return false;
       try {
         const metricVideos = JSON.parse(player.metric_videos);

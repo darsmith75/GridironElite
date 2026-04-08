@@ -14,7 +14,13 @@ const poolConfig = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
   database: process.env.DB_NAME || 'GridironElite',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || ''
+  password: process.env.DB_PASS || '',
+  max: parseInt(process.env.DB_MAX_CONNECTIONS || '30', 10),
+  min: parseInt(process.env.DB_MIN_CONNECTIONS || '2', 10),
+  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT_MS || '30000', 10),
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '5000', 10),
+  statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT_MS || '30000', 10),
+  query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT_MS || '30000', 10)
 };
 
 if (shouldUseSsl) {
@@ -390,18 +396,23 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_user_college ON player_school_ratings(user_id, college_id);
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_category ON player_school_ratings(category_id);
   CREATE INDEX IF NOT EXISTS idx_favorites_agent ON agent_favorites(agent_id);
+  CREATE INDEX IF NOT EXISTS idx_favorites_agent_user ON agent_favorites(agent_id, user_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_user ON player_profiles(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+  CREATE INDEX IF NOT EXISTS idx_users_role_created ON users(role, created_at);
+  CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
   CREATE INDEX IF NOT EXISTS idx_player_videos_user ON player_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_images_user ON player_images(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_contacts_user ON player_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user_verified ON player_metric_videos(user_id, is_verified);
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
   CREATE INDEX IF NOT EXISTS idx_player_metric_pro_tips_player ON player_metric_pro_tips(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_site_ad_slots_key ON site_ad_slots(slot_key);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_type ON site_traffic_events(event_type);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_created_at ON site_traffic_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_site_traffic_events_type_created ON site_traffic_events(event_type, created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_user ON site_traffic_events(user_id);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_player_active ON ai_player_summaries(player_user_id, is_active);
   CREATE INDEX IF NOT EXISTS idx_ai_summary_source_hash ON ai_player_summaries(player_user_id, source_hash);

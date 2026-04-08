@@ -1907,42 +1907,88 @@ app.get('/api/agent/players', async (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
-  
-  let query = 'SELECT * FROM player_profiles WHERE 1=1';
+
+  const limit = Math.min(Math.max(parseInt(req.query.limit || '100', 10) || 100, 1), 500);
+  const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+
+  let fromAndWhere = `
+    FROM player_profiles pp
+    LEFT JOIN (
+      SELECT user_id, true AS has_verified_metric
+      FROM player_metric_videos
+      WHERE is_verified = true
+      GROUP BY user_id
+    ) pmv ON pmv.user_id = pp.user_id
+    WHERE 1=1
+  `;
   const params = [];
-  
+
   // Filter by favorites only (only works if authenticated)
   if (req.query.favoritesOnly === 'true' && req.session.userId) {
-    query = `SELECT pp.* FROM player_profiles pp 
-             INNER JOIN agent_favorites af ON pp.user_id = af.user_id 
-             WHERE af.agent_id = ?`;
+    fromAndWhere = `
+      FROM player_profiles pp
+      INNER JOIN agent_favorites af ON pp.user_id = af.user_id
+      LEFT JOIN (
+        SELECT user_id, true AS has_verified_metric
+        FROM player_metric_videos
+        WHERE is_verified = true
+        GROUP BY user_id
+      ) pmv ON pmv.user_id = pp.user_id
+      WHERE af.agent_id = ?
+    `;
     params.push(req.session.userId);
   }
-  
+
   if (req.query.position) {
-    query += ' AND position = ?';
+    fromAndWhere += ' AND pp.position = ?';
     params.push(req.query.position);
   }
   if (req.query.graduationYear) {
-    query += ' AND graduation_year = ?';
+    fromAndWhere += ' AND pp.graduation_year = ?';
     params.push(req.query.graduationYear);
   }
   if (req.query.minGpa) {
-    query += ' AND gpa >= ?';
+    fromAndWhere += ' AND pp.gpa >= ?';
     params.push(req.query.minGpa);
   }
-  
-  const players = await db.prepare(query).all(...params);
-  await Promise.all(players.map(enrichPlayerProfile));
-  console.log(`Agent query returned ${players.length} players at ${new Date().toISOString()}`);
-  
-  // Log Brandon's GPA for debugging
-  const brandon = players.find(p => p.full_name.includes('Brandon'));
-  if (brandon) {
-    console.log(`Brandon Mitchell GPA: ${brandon.gpa}`);
-  }
-  
-  res.json(players);
+
+  const totalRow = await db.prepare(`SELECT COUNT(*)::int AS count ${fromAndWhere}`).get(...params);
+  const players = await db.prepare(`
+    SELECT
+      pp.user_id AS id,
+      pp.user_id,
+      pp.full_name,
+      pp.high_school,
+      pp.graduation_year,
+      pp.position,
+      pp.height,
+      pp.weight,
+      pp.forty_yard_dash,
+      pp.vertical_jump,
+      pp.bench_press,
+      pp.squat,
+      pp.shuttle_5_10_5,
+      pp.l_drill,
+      pp.broad_jump,
+      pp.gpa,
+      pp.achievement,
+      pp.profile_picture,
+      pp.bio,
+      COALESCE(pmv.has_verified_metric, false) AS has_verified_metric
+    ${fromAndWhere}
+    ORDER BY pp.full_name ASC NULLS LAST, pp.user_id ASC
+    LIMIT ? OFFSET ?
+  `).all(...params, limit, offset);
+
+  res.json({
+    players,
+    pagination: {
+      limit,
+      offset,
+      total: totalRow?.count || 0,
+      hasMore: offset + players.length < (totalRow?.count || 0)
+    }
+  });
 });
 
 // Agent: Get single player detail (public access)
