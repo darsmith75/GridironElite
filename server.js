@@ -3642,6 +3642,27 @@ app.delete('/api/admin/colleges/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Player: Get top 10 schools by average rating (only schools with at least one rated category)
+app.get('/api/player/top-schools', requireAuth, async (req, res) => {
+  try {
+    const rows = await db.prepare(`
+      SELECT c.id, c.name, c.logo, c.conference, c.team,
+             ROUND(AVG(r.rating_value)::numeric, 2) AS avg_rating,
+             COUNT(r.id) AS rated_categories
+      FROM player_school_ratings r
+      JOIN colleges c ON c.id = r.college_id
+      WHERE r.user_id = ?
+      GROUP BY c.id, c.name, c.logo, c.conference, c.team
+      ORDER BY avg_rating DESC, rated_categories DESC
+      LIMIT 10
+    `).all(req.session.userId);
+    res.json(rows);
+  } catch (error) {
+    console.error('Player top schools error:', error);
+    res.status(500).json({ error: 'Failed to get top schools' });
+  }
+});
+
 // Player: Get school ratings for a college
 app.get('/api/player/colleges/:collegeId/ratings', requireAuth, async (req, res) => {
   try {

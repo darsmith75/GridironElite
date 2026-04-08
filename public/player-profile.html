@@ -60,6 +60,14 @@
 
       <!-- Profile Content Sections -->
       <div id="viewProfileContent"></div>
+
+      <!-- Top 10 Schools by Rating -->
+      <div id="topSchoolsSection" style="display:none;">
+        <div class="profile-section">
+          <h2 class="section-title-small">🏆 MY TOP 10 SCHOOLS</h2>
+          <div id="topSchoolsList"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ============ EDIT MODE ============ -->
@@ -1671,6 +1679,7 @@
       // Render view mode
       if (profile.id) {
         renderViewMode(profile);
+        loadTopSchools();
       }
       
       // Display profile picture in edit mode hero section
@@ -2458,6 +2467,55 @@
     let allSchools = [];
     let currentSchoolRatings = [];
 
+    async function loadTopSchools() {
+      const section = document.getElementById('topSchoolsSection');
+      try {
+        const res = await fetch('/api/player/top-schools');
+        if (!res.ok) { section.style.display = 'none'; return; }
+        const schools = await res.json();
+        if (!schools || !schools.length) { section.style.display = 'none'; return; }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+        schools.forEach((school, i) => {
+          const avgRating = parseFloat(school.avg_rating);
+          const fullStars = Math.round(avgRating);
+          const stars = Array.from({length: 5}, (_, si) =>
+            `<span style="color:${si < fullStars ? '#f5a623' : '#c7d0da'}; font-size:17px;">★</span>`
+          ).join('');
+          const rankDisplay = i < 3
+            ? `<span style="font-size:22px; line-height:1;">${medals[i]}</span>`
+            : `<span style="font-weight:700; font-size:15px; color:#1e3c72; width:24px; text-align:center; display:inline-block;">${i + 1}</span>`;
+          const logoHtml = school.logo
+            ? `<img src="/${escapeHtmlDetail(school.logo)}" style="max-width:44px; max-height:44px; object-fit:contain; border-radius:6px;" alt="">`
+            : `<div style="width:44px;height:44px;background:#e9ecef;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">🏫</div>`;
+          const catCount = parseInt(school.rated_categories, 10);
+          html += `
+            <div style="display:flex; align-items:center; gap:14px; padding:12px 16px; background:#f8f9fa; border-radius:10px; border:1px solid #c7d0da; cursor:pointer; transition:background 0.15s;"
+                 onmouseenter="this.style.background='#eef1f7'" onmouseleave="this.style.background='#f8f9fa'"
+                 onclick="openSchoolDetailFromOffer(${school.id})">
+              <div style="width:28px; text-align:center; flex-shrink:0;">${rankDisplay}</div>
+              <div style="flex-shrink:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">${logoHtml}</div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-weight:600; font-size:14px; color:#1e3c72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtmlDetail(school.name)}</div>
+                ${school.conference ? `<div style="font-size:12px; color:#76849b; margin-top:1px;">${escapeHtmlDetail(school.conference)}</div>` : ''}
+              </div>
+              <div style="flex-shrink:0; text-align:right;">
+                <div style="line-height:1;">${stars}</div>
+                <div style="font-size:11px; color:#76849b; margin-top:3px;">${avgRating.toFixed(1)} / 5 &bull; ${catCount} ${catCount === 1 ? 'category' : 'categories'}</div>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        document.getElementById('topSchoolsList').innerHTML = html;
+        section.style.display = '';
+      } catch (err) {
+        console.error('Failed to load top schools:', err);
+        section.style.display = 'none';
+      }
+    }
+
     async function openSchoolsModal() {
       document.getElementById('schoolsModal').style.display = 'block';
       document.body.style.overflow = 'hidden';
@@ -2613,6 +2671,7 @@
       document.getElementById('schoolDetailModal').style.display = 'none';
       currentSchoolId = null;
       currentSchoolData = null;
+      loadTopSchools();
     }
 
     function switchDetailTab(tab) {
