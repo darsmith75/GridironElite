@@ -2984,6 +2984,9 @@ textarea {
 }
 
 .metric-proof-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: #f8fbff;
   border-radius: 10px;
   border: 1px solid #d9e1ef;
@@ -3001,6 +3004,10 @@ textarea {
   font-size: 12px;
   font-weight: 700;
   color: #a16207;
+}
+
+.metric-proof-preview .delete-media-btn {
+  margin-top: auto;
 }
 
 .metric-video-lightbox {
