@@ -1211,32 +1211,30 @@ async function enrichPlayerProfile(profile) {
     });
   }
 
-  const videos = await db.prepare('SELECT filename FROM player_videos WHERE user_id = ? ORDER BY id').all(playerId);
+  const [videos, videoLinks, images, metricVideos, offerSchoolsRaw, favoriteSchoolsRaw, contacts] = await Promise.all([
+    db.prepare('SELECT filename FROM player_videos WHERE user_id = ? ORDER BY id').all(playerId),
+    db.prepare('SELECT id, url, title FROM player_video_links WHERE user_id = ? ORDER BY id').all(playerId),
+    db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId),
+    db.prepare('SELECT metric_key, video_filename, is_verified, verified_by FROM player_metric_videos WHERE user_id = ? ORDER BY id').all(playerId),
+    db.prepare('SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name').all(playerId),
+    db.prepare('SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name').all(playerId),
+    db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE user_id = ?').all(playerId),
+  ]);
+
   profile.highlight_videos = videos.length > 0 ? JSON.stringify(videos.map(v => v.filename)) : null;
-
-  const videoLinks = await db.prepare('SELECT id, url, title FROM player_video_links WHERE user_id = ? ORDER BY id').all(playerId);
   profile.video_links = videoLinks.length > 0 ? JSON.stringify(videoLinks) : null;
-
-  const images = await db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId);
   profile.additional_images = images.length > 0 ? JSON.stringify(images.map(i => i.filename)) : null;
-
-  const metricVideos = await db.prepare(
-    'SELECT metric_key, video_filename, is_verified, verified_by FROM player_metric_videos WHERE user_id = ? ORDER BY id'
-  ).all(playerId);
   profile.metric_videos = metricVideos.length > 0 ? JSON.stringify(metricVideos) : null;
 
-  const offerSchoolsRaw = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name`).all(playerId);
   const offerSchools = applyCollegeOrder('offers', offerSchoolsRaw);
   profile.college_offer_schools = offerSchools.length > 0 ? JSON.stringify(offerSchools) : null;
 
-  const favoriteSchoolsRaw = await db.prepare(`SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name`).all(playerId);
   const favoriteSchools = applyCollegeOrder('favorites', favoriteSchoolsRaw);
   profile.college_favorite_schools = favoriteSchools.length > 0 ? JSON.stringify(favoriteSchools) : null;
 
   // Include college logo ordering from database
   profile.college_logo_order = profile.college_logo_order || null;
 
-  const contacts = await db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE user_id = ?').all(playerId);
   contacts.forEach(c => {
     profile[c.role + '_name'] = c.name;
     profile[c.role + '_email'] = c.email;
