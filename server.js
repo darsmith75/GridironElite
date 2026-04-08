@@ -437,6 +437,7 @@ const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
 const MAX_HIGHLIGHT_VIDEO_MB = parseInt(process.env.MAX_HIGHLIGHT_VIDEO_MB || '35', 10);
 const MAX_HIGHLIGHT_VIDEO_BYTES = MAX_HIGHLIGHT_VIDEO_MB * 1024 * 1024;
+const VIDEO_OPTIMIZATION_MODE = String(process.env.VIDEO_OPTIMIZATION_MODE || 'off').toLowerCase();
 
 const IMAGE_PRESETS = {
   reportCardImage: { maxWidth: 2200, quality: 88 },
@@ -474,6 +475,12 @@ function getImagePreset(fieldName) {
 
 function getVideoPreset(fieldName) {
   return VIDEO_PRESETS[fieldName] || { maxWidth: 1280, crf: 27, preset: 'veryfast', audioBitrate: '128k' };
+}
+
+function shouldOptimizeVideoField(fieldName) {
+  if (VIDEO_OPTIMIZATION_MODE === 'all') return true;
+  if (VIDEO_OPTIMIZATION_MODE === 'highlight-only') return fieldName === 'highlightVideos';
+  return false;
 }
 
 function runFfmpeg(args) {
@@ -546,6 +553,17 @@ async function optimizeImageFile(file) {
 
 async function optimizeVideoFile(file) {
   if ((!file?.buffer && !file?.path)) {
+    return {
+      filePath: file.path,
+      buffer: file.buffer,
+      extension: path.extname(file.originalname).toLowerCase() || '.bin',
+      mimeType: file.mimetype
+    };
+  }
+
+  // ffmpeg transcoding can exceed memory limits on smaller instances.
+  // Keep original video unless explicitly enabled via VIDEO_OPTIMIZATION_MODE.
+  if (!shouldOptimizeVideoField(file.fieldname)) {
     return {
       filePath: file.path,
       buffer: file.buffer,
