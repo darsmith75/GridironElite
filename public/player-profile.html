@@ -2672,6 +2672,11 @@
 
       listEl.innerHTML = ratings.map((item) => {
         const ratingValue = Number(item.ratingValue || 0);
+        const safeCategoryName = escapeHtmlDetail(item.categoryName || 'Category');
+        const safeWhatToRate = escapeHtmlDetail(item.whatToRate || '');
+        const safeWhyItMatters = escapeHtmlDetail(item.whyItMatters || '');
+        const whatToRateEncoded = encodeURIComponent(item.whatToRate || '');
+        const whyItMattersEncoded = encodeURIComponent(item.whyItMatters || '');
         const starsHtml = [1, 2, 3, 4, 5].map((value) => {
           const filled = value <= ratingValue;
           return `<button type="button" onclick="setSchoolCategoryRating(${Number(item.categoryId)}, ${value})" title="Rate ${value} star${value > 1 ? 's' : ''}" style="border:none; background:none; padding:0 3px; cursor:pointer; font-size:24px; color:${filled ? '#f59e0b' : '#c7d0da'}; line-height:1;">${filled ? '★' : '☆'}</button>`;
@@ -2681,9 +2686,9 @@
           <div style="display:grid; grid-template-columns:minmax(200px, 1fr) auto; gap:12px; align-items:center; padding:12px; border:1px solid #e8e8e8; border-radius:10px; background:#fafafa; margin-bottom:10px;">
             <div>
               <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
-                <strong style="color:#1f2937; font-size:14px;">${escapeHtmlDetail(item.categoryName || 'Category')}</strong>
-                <button type="button" onclick="openSchoolRatingInfo('What to Rate: ${String(item.categoryName || '').replace(/'/g, '&#39;')}', ${JSON.stringify(item.whatToRate || '')})" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">What to Rate</button>
-                <button type="button" onclick="openSchoolRatingInfo('Why It Matters: ${String(item.categoryName || '').replace(/'/g, '&#39;')}', ${JSON.stringify(item.whyItMatters || '')})" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">Why It Matters</button>
+                <strong style="color:#1f2937; font-size:14px;">${safeCategoryName}</strong>
+                <button type="button" onclick="openSchoolRatingInfo('What to Rate: ${safeCategoryName.replace(/'/g, '&#39;')}', decodeURIComponent('${whatToRateEncoded}'))" title="${safeWhatToRate}" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">What to Rate</button>
+                <button type="button" onclick="openSchoolRatingInfo('Why It Matters: ${safeCategoryName.replace(/'/g, '&#39;')}', decodeURIComponent('${whyItMattersEncoded}'))" title="${safeWhyItMatters}" style="border:1px solid #c7d0da; background:#fff; color:#1e3c72; border-radius:999px; padding:2px 8px; font-size:11px; cursor:pointer;">Why It Matters</button>
               </div>
               <div style="font-size:12px; color:#76849b;">Current rating: ${ratingValue > 0 ? `${ratingValue}/5` : 'Not rated yet'}</div>
             </div>
