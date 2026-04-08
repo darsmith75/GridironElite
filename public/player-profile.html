@@ -421,6 +421,7 @@
       <div style="display:flex; border-bottom:2px solid #c7d0da; background:#f8f9fa;">
         <button id="tabContacts" onclick="switchDetailTab('contacts')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">👥 Contacts</button>
         <button id="tabNotes" onclick="switchDetailTab('notes')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">📝 Notes</button>
+        <button id="tabRatings" onclick="switchDetailTab('ratings')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">⭐ Ratings</button>
       </div>
 
       <!-- Contacts Panel -->
@@ -514,6 +515,10 @@
           </div>
         </div>
         <div id="notesList"></div>
+      </div>
+
+      <!-- Ratings Panel -->
+      <div id="panelRatings" style="padding:24px 30px; display:none;">
       </div>
     </div>
   </div>
@@ -2606,19 +2611,24 @@
     function switchDetailTab(tab) {
       const tabContacts = document.getElementById('tabContacts');
       const tabNotes = document.getElementById('tabNotes');
+      const tabRatings = document.getElementById('tabRatings');
       const panelContacts = document.getElementById('panelContacts');
       const panelNotes = document.getElementById('panelNotes');
+      const panelRatings = document.getElementById('panelRatings');
 
       tabContacts.style.color = tab === 'contacts' ? '#1e3c72' : '#666';
       tabContacts.style.borderBottomColor = tab === 'contacts' ? '#1e3c72' : 'transparent';
       tabNotes.style.color = tab === 'notes' ? '#1e3c72' : '#666';
       tabNotes.style.borderBottomColor = tab === 'notes' ? '#1e3c72' : 'transparent';
+      tabRatings.style.color = tab === 'ratings' ? '#1e3c72' : '#666';
+      tabRatings.style.borderBottomColor = tab === 'ratings' ? '#1e3c72' : 'transparent';
 
       panelContacts.style.display = tab === 'contacts' ? 'block' : 'none';
       panelNotes.style.display = tab === 'notes' ? 'block' : 'none';
+      panelRatings.style.display = tab === 'ratings' ? 'block' : 'none';
 
       if (tab === 'contacts') loadContacts();
-      else loadNotes();
+      else if (tab === 'notes') loadNotes();
     }
 
     // ---- CONTACTS ----
