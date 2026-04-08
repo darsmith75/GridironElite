@@ -180,6 +180,7 @@
   <script>
     const VIEW_MODE_STORAGE_KEY = 'agentDashboardViewMode';
     let viewMode = getDefaultViewMode();
+    let loadPlayersDebounceTimer = null;
     
     initDashboard();
 
@@ -265,6 +266,16 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+
+    function scheduleLoadPlayers(page = 1, debounceMs = 220) {
+      if (loadPlayersDebounceTimer) {
+        clearTimeout(loadPlayersDebounceTimer);
+      }
+      loadPlayersDebounceTimer = setTimeout(() => {
+        loadPlayersDebounceTimer = null;
+        loadPlayers(page);
+      }, debounceMs);
+    }
     
     // Toggle advanced filters
     function toggleAdvancedFilters() {
@@ -301,12 +312,12 @@
     
     // Add auto-search functionality to quick search input
     document.getElementById('quickSearch').addEventListener('input', function() {
-      loadPlayers();
+      scheduleLoadPlayers(1);
     });
     
     // Add auto-search when position is selected
     document.getElementById('filterPosition').addEventListener('change', function() {
-      loadPlayers();
+      loadPlayers(1);
     });
     
     // Add auto-search to all advanced filter fields
@@ -320,7 +331,7 @@
       const field = document.getElementById(fieldId);
       if (field) {
         field.addEventListener('input', function() {
-          loadPlayers();
+          scheduleLoadPlayers(1);
         });
       }
     });
@@ -343,7 +354,9 @@
       loadPlayers();
     }
 
-    async function loadPlayers() {
+    const PAGE_SIZE = 20;
+
+    async function loadPlayers(page = 1) {
       const position = document.getElementById('filterPosition').value;
       const year = document.getElementById('filterYear').value;
       const gpa = document.getElementById('filterGpa').value;
@@ -357,18 +370,29 @@
       const lDrill = document.getElementById('filterLDrill').value;
       const broadJump = document.getElementById('filterBroadJump').value;
       const quickSearch = document.getElementById('quickSearch').value.toLowerCase().trim();
+      const sortBy = document.getElementById('sortSelect').value;
       const favoritesOnly = document.getElementById('favoritesFilterBtn').classList.contains('active');
+      const safePage = Math.max(1, parseInt(page, 10) || 1);
+      const offset = (safePage - 1) * PAGE_SIZE;
       
       const params = new URLSearchParams();
       if (position) params.append('position', position);
       if (year) params.append('graduationYear', year);
       if (gpa) params.append('minGpa', gpa);
+      if (forty) params.append('maxForty', forty);
+      if (height) params.append('minHeight', height);
+      if (weight) params.append('minWeight', weight);
+      if (vertical) params.append('minVertical', vertical);
+      if (bench) params.append('minBench', bench);
+      if (squat) params.append('minSquat', squat);
+      if (shuttle) params.append('maxShuttle', shuttle);
+      if (lDrill) params.append('maxLDrill', lDrill);
+      if (broadJump) params.append('minBroadJump', broadJump);
+      if (quickSearch) params.append('quickSearch', quickSearch);
+      if (sortBy) params.append('sortBy', sortBy);
       if (favoritesOnly) params.append('favoritesOnly', 'true');
-      params.append('limit', '500');
-      params.append('offset', '0');
-      
-      // Add timestamp to prevent caching
-      params.append('_t', Date.now());
+      params.append('limit', String(PAGE_SIZE));
+      params.append('offset', String(offset));
       
       console.log('Fetching players at:', new Date().toISOString());
       
@@ -390,91 +414,31 @@
         favoriteIds = await favoritesRes.json();
       }
       
-      // Quick search filter - searches across multiple fields
-      if (quickSearch) {
-        players = players.filter(p => {
-          const searchableText = [
-            p.full_name,
-            p.high_school,
-            p.position,
-            p.bio,
-            p.graduation_year?.toString(),
-            p.height,
-            p.weight?.toString(),
-            p.gpa?.toString()
-          ].filter(Boolean).join(' ').toLowerCase();
-          
-          return searchableText.includes(quickSearch);
-        });
-      }
-      
-      // Client-side filtering for additional criteria
-      if (forty) {
-        players = players.filter(p => p.forty_yard_dash != null && parseFloat(p.forty_yard_dash) <= parseFloat(forty));
-      }
-      if (height) {
-        players = players.filter(p => p.height && p.height >= height);
-      }
-      if (weight) {
-        players = players.filter(p => p.weight != null && parseInt(p.weight) >= parseInt(weight));
-      }
-      if (vertical) {
-        players = players.filter(p => p.vertical_jump != null && parseFloat(p.vertical_jump) >= parseFloat(vertical));
-      }
-      if (bench) {
-        players = players.filter(p => p.bench_press != null && parseInt(p.bench_press) >= parseInt(bench));
-      }
-      if (squat) {
-        players = players.filter(p => p.squat != null && parseInt(p.squat) >= parseInt(squat));
-      }
-      if (shuttle) {
-        players = players.filter(p => p.shuttle_5_10_5 != null && parseFloat(p.shuttle_5_10_5) <= parseFloat(shuttle));
-      }
-      if (lDrill) {
-        players = players.filter(p => p.l_drill != null && parseFloat(p.l_drill) <= parseFloat(lDrill));
-      }
-      if (broadJump) {
-        players = players.filter(p => p.broad_jump != null && parseFloat(p.broad_jump) >= parseFloat(broadJump));
-      }
-
-      // Sorting — nulls always go to the end
-      const sortBy = document.getElementById('sortSelect').value;
-      const cmp = (av, bv) => {
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        return av < bv ? -1 : av > bv ? 1 : 0;
-      };
-      if      (sortBy === 'name_asc')       players.sort((a, b) => cmp(a.full_name?.toLowerCase(), b.full_name?.toLowerCase()));
-      else if (sortBy === 'name_desc')      players.sort((a, b) => cmp(b.full_name?.toLowerCase(), a.full_name?.toLowerCase()));
-      else if (sortBy === 'grad_year_asc')  players.sort((a, b) => cmp(a.graduation_year, b.graduation_year));
-      else if (sortBy === 'grad_year_desc') players.sort((a, b) => cmp(b.graduation_year, a.graduation_year));
-      else if (sortBy === 'gpa_desc')       players.sort((a, b) => cmp(b.gpa != null ? +b.gpa : null, a.gpa != null ? +a.gpa : null));
-      else if (sortBy === 'gpa_asc')        players.sort((a, b) => cmp(a.gpa != null ? +a.gpa : null, b.gpa != null ? +b.gpa : null));
-      else if (sortBy === 'forty_asc')      players.sort((a, b) => cmp(a.forty_yard_dash != null ? +a.forty_yard_dash : null, b.forty_yard_dash != null ? +b.forty_yard_dash : null));
-      else if (sortBy === 'forty_desc')     players.sort((a, b) => cmp(b.forty_yard_dash != null ? +b.forty_yard_dash : null, a.forty_yard_dash != null ? +a.forty_yard_dash : null));
-      else if (sortBy === 'height_desc')    players.sort((a, b) => cmp(b.height, a.height));
-      else if (sortBy === 'weight_desc')    players.sort((a, b) => cmp(b.weight != null ? +b.weight : null, a.weight != null ? +a.weight : null));
-      else if (sortBy === 'vertical_desc')  players.sort((a, b) => cmp(b.vertical_jump != null ? +b.vertical_jump : null, a.vertical_jump != null ? +a.vertical_jump : null));
-      
       console.log('Loaded players:', players.length);
       
       // Update last refresh time and results count
       document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-      let resultsLabel = `${players.length} player${players.length !== 1 ? 's' : ''} found`;
-      if (pagination && pagination.hasMore) {
-        resultsLabel += ` (showing first ${players.length} of ${pagination.total})`;
+      const totalPlayers = pagination ? Number(pagination.total || 0) : players.length;
+      const rangeStart = totalPlayers > 0 ? offset + 1 : 0;
+      const rangeEnd = totalPlayers > 0 ? Math.min(offset + players.length, totalPlayers) : 0;
+      let resultsLabel = `${totalPlayers} player${totalPlayers !== 1 ? 's' : ''} found`;
+      if (totalPlayers > 0) {
+        resultsLabel += ` (showing ${rangeStart}-${rangeEnd})`;
       }
       document.getElementById('resultsCount').textContent = resultsLabel;
 
-      // Store for pagination
+      // Store current server page and metadata for rendering/pagination controls
       window._allPlayers = players;
       window._favIds = favoriteIds;
-      window._currentPage = 1;
-      renderPage(1);
+      window._currentPage = safePage;
+      window._pagination = {
+        total: totalPlayers,
+        limit: pagination?.limit || PAGE_SIZE,
+        offset: pagination?.offset || offset,
+        hasMore: !!pagination?.hasMore
+      };
+      renderPage(safePage);
     }
-
-    const PAGE_SIZE = 20;
 
     function hasVerifiedMetric(player) {
       if (player && typeof player.has_verified_metric === 'boolean') {
@@ -533,7 +497,15 @@
     function renderPage(page) {
       const players = window._allPlayers || [];
       const favoriteIds = window._favIds || [];
-      const totalPages = Math.max(1, Math.ceil(players.length / PAGE_SIZE));
+      const pagination = window._pagination || {
+        total: players.length,
+        limit: PAGE_SIZE,
+        offset: ((window._currentPage || 1) - 1) * PAGE_SIZE,
+        hasMore: false
+      };
+      const totalPlayers = Number(pagination.total || 0);
+      const pageSize = Number(pagination.limit || PAGE_SIZE) || PAGE_SIZE;
+      const totalPages = Math.max(1, Math.ceil(totalPlayers / pageSize));
       page = Math.min(Math.max(1, page), totalPages);
       window._currentPage = page;
 
@@ -544,8 +516,8 @@
         return;
       }
 
-      const start = (page - 1) * PAGE_SIZE;
-      const pageSlice = players.slice(start, start + PAGE_SIZE);
+      const start = Number(pagination.offset || 0);
+      const pageSlice = players;
 
       if (viewMode === 'grid') {
         // Card view
@@ -667,7 +639,7 @@
       if (totalPages <= 1) { pag.innerHTML = ''; return; }
 
       const rangeStart = start + 1;
-      const rangeEnd = Math.min(start + PAGE_SIZE, players.length);
+      const rangeEnd = Math.min(start + players.length, totalPlayers);
 
       // Build page number buttons (show up to 7 around current)
       const pages = [];
@@ -688,7 +660,7 @@
 
       pag.innerHTML = `
         <div class="pagination-bar">
-          <span class="pagination-info">Showing ${rangeStart}–${rangeEnd} of ${players.length}</span>
+          <span class="pagination-info">Showing ${rangeStart}–${rangeEnd} of ${totalPlayers}</span>
           <div class="pagination-controls">
             <button class="page-btn" onclick="goToPage(${page - 1})" ${page === 1 ? 'disabled' : ''}>← Prev</button>
             ${items.map(item => item === '...'
@@ -702,7 +674,7 @@
 
     function goToPage(page) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      renderPage(page);
+      loadPlayers(page);
     }
 
     function toggleListDetails(button) {

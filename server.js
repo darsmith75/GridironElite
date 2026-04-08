@@ -20,6 +20,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const { Readable } = require('stream');
 const { spawn } = require('child_process');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -63,6 +64,85 @@ const AD_SLOT_CONFIG = [
 ];
 const AD_SLOT_KEYS = new Set(AD_SLOT_CONFIG.map(item => item.key));
 const aiGenerateRateTracker = new Map();
+const agentPlayersRateTracker = new Map();
+const agentPlayersResponseCache = new Map();
+
+function parseQueryNumber(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getAgentPlayersRateKey(req) {
+  if (req.session?.userId) return `user:${req.session.userId}`;
+  return `ip:${getClientIp(req) || 'unknown'}`;
+}
+
+function isAgentPlayersRateLimited(req) {
+  const windowMs = parseInt(process.env.AGENT_PLAYERS_RATE_WINDOW_MS || '60000', 10);
+  const authedLimit = parseInt(process.env.AGENT_PLAYERS_RATE_LIMIT_AUTH || '180', 10);
+  const anonLimit = parseInt(process.env.AGENT_PLAYERS_RATE_LIMIT_ANON || '90', 10);
+  const limit = req.session?.userId ? authedLimit : anonLimit;
+  const now = Date.now();
+  const key = getAgentPlayersRateKey(req);
+  const entry = agentPlayersRateTracker.get(key) || { stamps: [] };
+  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
+  if (entry.stamps.length >= limit) {
+    agentPlayersRateTracker.set(key, entry);
+    return true;
+  }
+  entry.stamps.push(now);
+  agentPlayersRateTracker.set(key, entry);
+
+  if (agentPlayersRateTracker.size > 2500) {
+    const cutoff = now - (windowMs * 2);
+    for (const [trackerKey, trackerEntry] of agentPlayersRateTracker.entries()) {
+      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
+        agentPlayersRateTracker.delete(trackerKey);
+      }
+    }
+  }
+
+  return false;
+}
+
+function buildAgentPlayersCacheKey(req, normalized) {
+  return JSON.stringify({
+    actor: req.session?.userId || null,
+    role: req.session?.role || null,
+    filters: normalized
+  });
+}
+
+function getCachedAgentPlayers(cacheKey) {
+  const ttlMs = parseInt(process.env.AGENT_PLAYERS_CACHE_TTL_MS || '7000', 10);
+  if (ttlMs <= 0) return null;
+  const entry = agentPlayersResponseCache.get(cacheKey);
+  if (!entry) return null;
+  if ((Date.now() - entry.cachedAt) > ttlMs) {
+    agentPlayersResponseCache.delete(cacheKey);
+    return null;
+  }
+  return entry.payload;
+}
+
+function setCachedAgentPlayers(cacheKey, payload) {
+  const ttlMs = parseInt(process.env.AGENT_PLAYERS_CACHE_TTL_MS || '7000', 10);
+  if (ttlMs <= 0) return;
+  agentPlayersResponseCache.set(cacheKey, {
+    cachedAt: Date.now(),
+    payload
+  });
+
+  if (agentPlayersResponseCache.size > 400) {
+    const cutoff = Date.now() - (ttlMs * 2);
+    for (const [key, value] of agentPlayersResponseCache.entries()) {
+      if ((value?.cachedAt || 0) < cutoff) {
+        agentPlayersResponseCache.delete(key);
+      }
+    }
+  }
+}
 
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
@@ -1146,18 +1226,35 @@ app.get('/api/upload-proxy', async (req, res) => {
     if (b2Enabled) {
       const objectKey = 'uploads/' + requestedPath;
       const upstream = await fetch(getB2Url(objectKey));
-      if (!upstream.ok) {
-        return res.status(upstream.status).send('File not found');
+      if (upstream.ok) {
+        const contentType = upstream.headers.get('content-type');
+        if (contentType) {
+          res.setHeader('Content-Type', contentType);
+        }
+        const contentLength = upstream.headers.get('content-length');
+        if (contentLength) {
+          res.setHeader('Content-Length', contentLength);
+        }
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+
+        const upstreamBody = upstream.body;
+        if (!upstreamBody) {
+          return res.status(502).send('File stream unavailable');
+        }
+
+        if (typeof upstreamBody.pipe === 'function') {
+          upstreamBody.pipe(res);
+          return;
+        }
+
+        Readable.fromWeb(upstreamBody).pipe(res);
+        return;
       }
 
-      const contentType = upstream.headers.get('content-type');
-      if (contentType) {
-        res.setHeader('Content-Type', contentType);
+      // B2 may be missing legacy files. Fall back to local disk before returning 404.
+      if (upstream.status !== 404) {
+        return res.status(upstream.status).send('File unavailable');
       }
-      res.setHeader('Cache-Control', 'public, max-age=86400');
-
-      const arrayBuffer = await upstream.arrayBuffer();
-      return res.send(Buffer.from(arrayBuffer));
     }
 
     const safePath = safeUploadPath(requestedPath);
@@ -1903,13 +2000,48 @@ app.post('/api/player/report-card/delete', requireAuth, async (req, res) => {
 
 // Agent: Get all players with filters
 app.get('/api/agent/players', async (req, res) => {
+  if (isAgentPlayersRateLimited(req)) {
+    return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+  }
+
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
 
-  const limit = Math.min(Math.max(parseInt(req.query.limit || '100', 10) || 100, 1), 500);
+  const limit = Math.min(Math.max(parseInt(req.query.limit || '20', 10) || 20, 1), 100);
   const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+  const quickSearch = String(req.query.quickSearch || '').trim().toLowerCase();
+  const sortBy = String(req.query.sortBy || 'name_asc').trim().toLowerCase();
+
+  const normalizedFilters = {
+    limit,
+    offset,
+    favoritesOnly: req.query.favoritesOnly === 'true' && !!req.session.userId,
+    position: String(req.query.position || '').trim(),
+    graduationYear: String(req.query.graduationYear || '').trim(),
+    minGpa: parseQueryNumber(req.query.minGpa),
+    maxForty: parseQueryNumber(req.query.maxForty),
+    minHeight: String(req.query.minHeight || '').trim(),
+    minWeight: parseQueryNumber(req.query.minWeight),
+    minVertical: parseQueryNumber(req.query.minVertical),
+    minBench: parseQueryNumber(req.query.minBench),
+    minSquat: parseQueryNumber(req.query.minSquat),
+    maxShuttle: parseQueryNumber(req.query.maxShuttle),
+    maxLDrill: parseQueryNumber(req.query.maxLDrill),
+    minBroadJump: parseQueryNumber(req.query.minBroadJump),
+    quickSearch,
+    sortBy
+  };
+
+  const shouldUseCache = !normalizedFilters.favoritesOnly;
+  const cacheKey = buildAgentPlayersCacheKey(req, normalizedFilters);
+  if (shouldUseCache) {
+    const cachedPayload = getCachedAgentPlayers(cacheKey);
+    if (cachedPayload) {
+      return res.json(cachedPayload);
+    }
+  }
 
   let fromAndWhere = `
     FROM player_profiles pp
@@ -1924,7 +2056,7 @@ app.get('/api/agent/players', async (req, res) => {
   const params = [];
 
   // Filter by favorites only (only works if authenticated)
-  if (req.query.favoritesOnly === 'true' && req.session.userId) {
+  if (normalizedFilters.favoritesOnly) {
     fromAndWhere = `
       FROM player_profiles pp
       INNER JOIN agent_favorites af ON pp.user_id = af.user_id
@@ -1939,48 +2071,110 @@ app.get('/api/agent/players', async (req, res) => {
     params.push(req.session.userId);
   }
 
-  if (req.query.position) {
+  if (normalizedFilters.position) {
     fromAndWhere += ' AND pp.position = ?';
-    params.push(req.query.position);
+    params.push(normalizedFilters.position);
   }
-  if (req.query.graduationYear) {
+  if (normalizedFilters.graduationYear) {
     fromAndWhere += ' AND pp.graduation_year = ?';
-    params.push(req.query.graduationYear);
+    params.push(normalizedFilters.graduationYear);
   }
-  if (req.query.minGpa) {
+  if (normalizedFilters.minGpa !== null) {
     fromAndWhere += ' AND pp.gpa >= ?';
-    params.push(req.query.minGpa);
+    params.push(normalizedFilters.minGpa);
+  }
+  if (normalizedFilters.maxForty !== null) {
+    fromAndWhere += ' AND pp.forty_yard_dash <= ?';
+    params.push(normalizedFilters.maxForty);
+  }
+  if (normalizedFilters.minHeight) {
+    fromAndWhere += ' AND pp.height ILIKE ?';
+    params.push(`%${normalizedFilters.minHeight}%`);
+  }
+  if (normalizedFilters.minWeight !== null) {
+    fromAndWhere += ' AND pp.weight >= ?';
+    params.push(normalizedFilters.minWeight);
+  }
+  if (normalizedFilters.minVertical !== null) {
+    fromAndWhere += ' AND pp.vertical_jump >= ?';
+    params.push(normalizedFilters.minVertical);
+  }
+  if (normalizedFilters.minBench !== null) {
+    fromAndWhere += ' AND pp.bench_press >= ?';
+    params.push(normalizedFilters.minBench);
+  }
+  if (normalizedFilters.minSquat !== null) {
+    fromAndWhere += ' AND pp.squat >= ?';
+    params.push(normalizedFilters.minSquat);
+  }
+  if (normalizedFilters.maxShuttle !== null) {
+    fromAndWhere += ' AND pp.shuttle_5_10_5 <= ?';
+    params.push(normalizedFilters.maxShuttle);
+  }
+  if (normalizedFilters.maxLDrill !== null) {
+    fromAndWhere += ' AND pp.l_drill <= ?';
+    params.push(normalizedFilters.maxLDrill);
+  }
+  if (normalizedFilters.minBroadJump !== null) {
+    fromAndWhere += ' AND pp.broad_jump >= ?';
+    params.push(normalizedFilters.minBroadJump);
+  }
+  if (normalizedFilters.quickSearch) {
+    fromAndWhere += `
+      AND (
+        LOWER(COALESCE(pp.full_name, '')) LIKE ?
+        OR LOWER(COALESCE(pp.high_school, '')) LIKE ?
+        OR LOWER(COALESCE(pp.position, '')) LIKE ?
+        OR LOWER(COALESCE(pp.bio, '')) LIKE ?
+      )
+    `;
+    const token = `%${normalizedFilters.quickSearch}%`;
+    params.push(token, token, token, token);
   }
 
-  const totalRow = await db.prepare(`SELECT COUNT(*)::int AS count ${fromAndWhere}`).get(...params);
-  const players = await db.prepare(`
-    SELECT
-      pp.user_id AS id,
-      pp.user_id,
-      pp.full_name,
-      pp.high_school,
-      pp.graduation_year,
-      pp.position,
-      pp.height,
-      pp.weight,
-      pp.forty_yard_dash,
-      pp.vertical_jump,
-      pp.bench_press,
-      pp.squat,
-      pp.shuttle_5_10_5,
-      pp.l_drill,
-      pp.broad_jump,
-      pp.gpa,
-      pp.achievement,
-      pp.profile_picture,
-      pp.bio,
-      COALESCE(pmv.has_verified_metric, false) AS has_verified_metric
-    ${fromAndWhere}
-    ORDER BY pp.full_name ASC NULLS LAST, pp.user_id ASC
-    LIMIT ? OFFSET ?
-  `).all(...params, limit, offset);
+  let orderBy = 'pp.full_name ASC NULLS LAST, pp.user_id ASC';
+  if (sortBy === 'name_desc') orderBy = 'pp.full_name DESC NULLS LAST, pp.user_id DESC';
+  else if (sortBy === 'grad_year_asc') orderBy = 'pp.graduation_year ASC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'grad_year_desc') orderBy = 'pp.graduation_year DESC NULLS LAST, pp.user_id DESC';
+  else if (sortBy === 'gpa_desc') orderBy = 'pp.gpa DESC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'gpa_asc') orderBy = 'pp.gpa ASC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'forty_asc') orderBy = 'pp.forty_yard_dash ASC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'forty_desc') orderBy = 'pp.forty_yard_dash DESC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'height_desc') orderBy = 'pp.height DESC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'weight_desc') orderBy = 'pp.weight DESC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'vertical_desc') orderBy = 'pp.vertical_jump DESC NULLS LAST, pp.user_id ASC';
 
-  res.json({
+  const [totalRow, players] = await Promise.all([
+    db.prepare(`SELECT COUNT(*)::int AS count ${fromAndWhere}`).get(...params),
+    db.prepare(`
+      SELECT
+        pp.user_id AS id,
+        pp.user_id,
+        pp.full_name,
+        pp.high_school,
+        pp.graduation_year,
+        pp.position,
+        pp.height,
+        pp.weight,
+        pp.forty_yard_dash,
+        pp.vertical_jump,
+        pp.bench_press,
+        pp.squat,
+        pp.shuttle_5_10_5,
+        pp.l_drill,
+        pp.broad_jump,
+        pp.gpa,
+        pp.achievement,
+        pp.profile_picture,
+        pp.bio,
+        COALESCE(pmv.has_verified_metric, false) AS has_verified_metric
+      ${fromAndWhere}
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset)
+  ]);
+
+  const payload = {
     players,
     pagination: {
       limit,
@@ -1988,7 +2182,12 @@ app.get('/api/agent/players', async (req, res) => {
       total: totalRow?.count || 0,
       hasMore: offset + players.length < (totalRow?.count || 0)
     }
-  });
+  };
+
+  if (shouldUseCache) {
+    setCachedAgentPlayers(cacheKey, payload);
+  }
+  res.json(payload);
 });
 
 // Agent: Get single player detail (public access)
