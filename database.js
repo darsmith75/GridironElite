@@ -54,7 +54,9 @@ const insertPrimaryKeys = {
   ai_events: 'id',
   hs_teams: 'id',
   team_invites: 'id',
-  team_players: 'id'
+  team_players: 'id',
+  recruiter_player_shares: 'id',
+  recruiter_player_share_items: 'id'
 };
 
 const createTablesSQL = `
@@ -356,6 +358,32 @@ const createTablesSQL = `
     FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS recruiter_player_shares (
+    id SERIAL PRIMARY KEY,
+    coach_user_id INTEGER NOT NULL,
+    team_id INTEGER NOT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    subject TEXT,
+    message TEXT,
+    expires_at TIMESTAMP NOT NULL,
+    first_opened_at TIMESTAMP,
+    open_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (coach_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS recruiter_player_share_items (
+    id SERIAL PRIMARY KEY,
+    share_id INTEGER NOT NULL,
+    player_user_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(share_id, player_user_id),
+    FOREIGN KEY (share_id) REFERENCES recruiter_player_shares(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `;
 
 const alterTablesSQL = `
@@ -426,6 +454,12 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_team_invites_player ON team_invites(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_team_players_team ON team_players(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_players_player ON team_players(player_id);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_shares_coach ON recruiter_player_shares(coach_user_id);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_shares_team ON recruiter_player_shares(team_id);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_shares_email ON recruiter_player_shares(recipient_email);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_shares_expires ON recruiter_player_shares(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_share_items_share ON recruiter_player_share_items(share_id);
+  CREATE INDEX IF NOT EXISTS idx_recruiter_share_items_player ON recruiter_player_share_items(player_user_id);
 `;
 
 const DEFAULT_SCHOOL_RATING_CATEGORIES = [

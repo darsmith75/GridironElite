@@ -267,6 +267,103 @@
       border-radius: 0;
       flex-shrink: 0;
     }
+    .share-toolbar {
+      border: 1px solid #d3deef;
+      background: #f7faff;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .share-toolbar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .share-selection-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e3c72;
+    }
+    .share-toolbar-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .share-toolbar-grid input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      padding: 9px 10px;
+      font-size: 13px;
+    }
+    .share-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .share-btn-primary {
+      background: #1e3c72;
+      color: #fff;
+    }
+    .share-btn-primary:disabled {
+      background: #9fb0ca;
+      cursor: not-allowed;
+    }
+    .share-btn-secondary {
+      border: 1px solid #b6c7de;
+      background: #fff;
+      color: #2a3f66;
+    }
+    .share-toolbar-message {
+      min-height: 18px;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .share-toolbar-message.success { color: #2e7d32; }
+    .share-toolbar-message.error { color: #c62828; }
+    .player-share-checkbox-wrap {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid #c7d0da;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+    }
+    .player-share-checkbox-wrap input {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+    .player-list-select {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      flex-shrink: 0;
+    }
+    .player-list-select input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
     .coach-favorite-star-bottom {
       display: inline-flex;
       align-items: center;
@@ -494,6 +591,9 @@
       .roster-section {
         padding: 16px;
       }
+      .share-toolbar-grid {
+        grid-template-columns: 1fr;
+      }
       .roster-section .players-grid {
         grid-template-columns: 1fr;
       }
@@ -556,6 +656,19 @@
       <div id="tab-coach-roster" class="coach-tab-panel">
         <div class="roster-section">
           <div class="section-title" style="margin:0 0 12px;">Team Roster</div>
+
+          <div class="share-toolbar">
+            <div class="share-toolbar-top">
+              <div class="share-selection-count" id="shareSelectionCount">0 players selected</div>
+            </div>
+            <div class="share-toolbar-grid">
+              <input type="email" id="shareRecruiterEmail" placeholder="Recruiter email (required)">
+              <input type="text" id="shareEmailSubject" placeholder="Email subject (optional)">
+              <button class="share-btn share-btn-secondary" type="button" onclick="clearSelectedPlayers()">Clear Selection</button>
+              <button class="share-btn share-btn-primary" id="sendSelectedPlayersBtn" type="button" onclick="sendSelectedPlayersToRecruiter()" disabled>Send Selected Players</button>
+            </div>
+            <div class="share-toolbar-message" id="sharePlayersMessage"></div>
+          </div>
 
           <div class="filters">
             <div class="agent-controls-wrap">
@@ -740,6 +853,7 @@
     let rosterData = [];
     let invitesData = [];
     let favoriteIds = [];
+    let selectedPlayerIds = new Set();
 
     async function init() {
       const user = await checkAuth('coach');
@@ -978,10 +1092,104 @@
         const res = await fetch('/api/coach/team/roster');
         if (!res.ok) return;
         rosterData = await res.json();
+        const rosterIdSet = new Set(rosterData.map((player) => Number(player.user_id)));
+        selectedPlayerIds = new Set([...selectedPlayerIds].filter((id) => rosterIdSet.has(Number(id))));
         document.getElementById('rosterCount').textContent = rosterData.length;
         document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        updateShareSelectionUI();
         applyRosterFilters();
       } catch (_) {}
+    }
+
+    function updateShareSelectionUI() {
+      const count = selectedPlayerIds.size;
+      const countEl = document.getElementById('shareSelectionCount');
+      const sendBtn = document.getElementById('sendSelectedPlayersBtn');
+      if (countEl) {
+        countEl.textContent = `${count} player${count === 1 ? '' : 's'} selected`;
+      }
+      if (sendBtn) {
+        sendBtn.disabled = count === 0;
+      }
+    }
+
+    function isPlayerSelected(playerId) {
+      return selectedPlayerIds.has(Number(playerId));
+    }
+
+    function togglePlayerSelection(playerId, checked) {
+      const normalizedId = Number(playerId);
+      if (checked) {
+        selectedPlayerIds.add(normalizedId);
+      } else {
+        selectedPlayerIds.delete(normalizedId);
+      }
+      updateShareSelectionUI();
+    }
+
+    function clearSelectedPlayers() {
+      selectedPlayerIds.clear();
+      updateShareSelectionUI();
+      applyRosterFilters();
+      const msg = document.getElementById('sharePlayersMessage');
+      if (msg) {
+        msg.className = 'share-toolbar-message';
+        msg.textContent = '';
+      }
+    }
+
+    async function sendSelectedPlayersToRecruiter() {
+      const messageEl = document.getElementById('sharePlayersMessage');
+      const sendBtn = document.getElementById('sendSelectedPlayersBtn');
+      const recruiterEmail = String(document.getElementById('shareRecruiterEmail')?.value || '').trim();
+      const subject = String(document.getElementById('shareEmailSubject')?.value || '').trim();
+      const playerUserIds = [...selectedPlayerIds];
+
+      if (!recruiterEmail) {
+        messageEl.className = 'share-toolbar-message error';
+        messageEl.textContent = 'Recruiter email is required.';
+        return;
+      }
+
+      if (!playerUserIds.length) {
+        messageEl.className = 'share-toolbar-message error';
+        messageEl.textContent = 'Select at least one player.';
+        return;
+      }
+
+      sendBtn.disabled = true;
+      messageEl.className = 'share-toolbar-message';
+      messageEl.textContent = 'Sending player share email...';
+
+      try {
+        const res = await fetch('/api/coach/recruiter-shares', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recruiterEmail, subject, playerUserIds })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          messageEl.className = 'share-toolbar-message error';
+          messageEl.textContent = data.error || 'Failed to send shared player link.';
+          return;
+        }
+
+        const emailNote = data.emailSent === false
+          ? ' Share was created but email delivery failed; copy and send the link manually.'
+          : '';
+        const successText = `Share sent successfully.${emailNote}`;
+        if (data.shareUrl) {
+          try { await navigator.clipboard.writeText(data.shareUrl); } catch (_) {}
+        }
+        clearSelectedPlayers();
+        messageEl.className = 'share-toolbar-message success';
+        messageEl.textContent = successText;
+      } catch (_) {
+        messageEl.className = 'share-toolbar-message error';
+        messageEl.textContent = 'Network error while sending share.';
+      } finally {
+        updateShareSelectionUI();
+      }
     }
 
     function applyRosterFilters() {
@@ -1108,8 +1316,12 @@
       const profilePicture = p.profile_picture ? `/uploads/${p.profile_picture}` : '';
       const escapedName = escHtml(p.full_name || 'Player');
       const isFavorite = favoriteIds.includes(p.user_id);
+      const checkedAttribute = isPlayerSelected(p.user_id) ? 'checked' : '';
       return `
-        <div class="player-card-compact">
+        <div class="player-card-compact" style="position:relative;">
+          <label class="player-share-checkbox-wrap" title="Select player for recruiter share" onclick="event.stopPropagation();">
+            <input type="checkbox" ${checkedAttribute} onchange="togglePlayerSelection(${p.user_id}, this.checked)">
+          </label>
           <div onclick="viewPlayer(${p.user_id})" style="cursor: pointer;">
             <div class="player-card-header">
               ${profilePicture
@@ -1164,8 +1376,12 @@
       const profilePicture = p.profile_picture ? `/uploads/${p.profile_picture}` : '';
       const escapedName = escHtml(p.full_name || 'Player');
       const isFavorite = favoriteIds.includes(p.user_id);
+      const checkedAttribute = isPlayerSelected(p.user_id) ? 'checked' : '';
       return `
         <div class="player-list-row">
+          <div class="player-list-select" onclick="event.stopPropagation();">
+            <input type="checkbox" ${checkedAttribute} onchange="togglePlayerSelection(${p.user_id}, this.checked)" title="Select player for recruiter share">
+          </div>
           <div class="player-list-photo">
             ${profilePicture
               ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-list-img">`

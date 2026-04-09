@@ -2613,6 +2613,62 @@ async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, sc
   });
 }
 
+function escapeHtmlEmail(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function sendRecruiterShareEmail({
+  toEmail,
+  shareToken,
+  coachName,
+  teamName,
+  schoolName,
+  subject,
+  message,
+  playerCount,
+  expiresAt
+}) {
+  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+  const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
+    }
+  });
+
+  const safeSubject = String(subject || '').trim() || `${teamName || 'Team'} Player Profiles`;
+  const displaySchool = schoolName ? ` (${schoolName})` : '';
+  const escapedMessage = escapeHtmlEmail(message || '').trim();
+  const expiresText = new Date(expiresAt).toLocaleString();
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: safeSubject,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
+        <h2 style="color:#1e3a5f;margin:0 0 12px;">Player Profiles Shared With You</h2>
+        <p><strong>${escapeHtmlEmail(coachName || 'A coach')}</strong> shared ${playerCount} player profile${playerCount === 1 ? '' : 's'} from <strong>${escapeHtmlEmail(teamName || 'their team')}</strong>${escapeHtmlEmail(displaySchool)}.</p>
+        ${escapedMessage ? `<p style="background:#f5f8ff;border:1px solid #d9e4ff;border-radius:8px;padding:12px;white-space:pre-wrap;">${escapedMessage}</p>` : ''}
+        <p style="margin:24px 0">
+          <a href="${shareUrl}" style="background:#1e3c72;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">View Shared Players</a>
+        </p>
+        <p style="font-size:12px;color:#6b7280;">This secure link expires on ${escapeHtmlEmail(expiresText)}.</p>
+      </div>
+    `,
+    text: `${coachName || 'A coach'} shared ${playerCount} player profile${playerCount === 1 ? '' : 's'} from ${teamName || 'their team'}${displaySchool}.\n\n${message ? `${message}\n\n` : ''}Open this secure link: ${shareUrl}\n\nThis link expires on ${expiresText}.`
+  });
+}
+
 // ============================================================
 // Coach routes
 // ============================================================
@@ -2797,6 +2853,175 @@ app.delete('/api/coach/invites/:id', requireCoach, async (req, res) => {
   } catch (error) {
     console.error('Coach delete invite error:', error);
     res.status(500).json({ error: 'Failed to cancel invite' });
+  }
+});
+
+// Coach: Share selected roster players with a recruiter by secure link
+app.post('/api/coach/recruiter-shares', requireCoach, async (req, res) => {
+  try {
+    const recruiterEmail = String(req.body?.recruiterEmail || '').trim().toLowerCase();
+    const playerUserIdsRaw = Array.isArray(req.body?.playerUserIds) ? req.body.playerUserIds : [];
+    const emailSubject = String(req.body?.subject || '').trim();
+    const emailMessage = String(req.body?.message || '').trim().slice(0, 5000);
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recruiterEmail)) {
+      return res.status(400).json({ error: 'Valid recruiter email is required' });
+    }
+
+    const selectedPlayerIds = [...new Set(
+      playerUserIdsRaw
+        .map(value => parseInt(value, 10))
+        .filter(value => Number.isInteger(value) && value > 0)
+    )];
+
+    if (selectedPlayerIds.length === 0) {
+      return res.status(400).json({ error: 'Select at least one player' });
+    }
+
+    if (selectedPlayerIds.length > 50) {
+      return res.status(400).json({ error: 'You can share up to 50 players at once' });
+    }
+
+    const team = await db.prepare('SELECT id, team_name, school_name FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const placeholders = selectedPlayerIds.map(() => '?').join(', ');
+    const rosterMatches = await db.prepare(
+      `SELECT player_id FROM team_players WHERE team_id = ? AND player_id IN (${placeholders})`
+    ).all(team.id, ...selectedPlayerIds);
+
+    if (rosterMatches.length !== selectedPlayerIds.length) {
+      return res.status(400).json({ error: 'One or more selected players are not on your roster' });
+    }
+
+    const shareToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(shareToken).digest('hex');
+    const expiresAt = new Date(Date.now() + (14 * 24 * 60 * 60 * 1000));
+
+    await db.query('BEGIN');
+    let shareId;
+    try {
+      const insertedShare = await db.prepare(`
+        INSERT INTO recruiter_player_shares (
+          coach_user_id, team_id, recipient_email, token_hash, subject, message, expires_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        req.session.userId,
+        team.id,
+        recruiterEmail,
+        tokenHash,
+        emailSubject || null,
+        emailMessage || null,
+        expiresAt.toISOString()
+      );
+
+      shareId = insertedShare.lastInsertRowid;
+      for (const playerId of selectedPlayerIds) {
+        await db.prepare(
+          'INSERT INTO recruiter_player_share_items (share_id, player_user_id) VALUES (?, ?)'
+        ).run(shareId, playerId);
+      }
+      await db.query('COMMIT');
+    } catch (txError) {
+      await db.query('ROLLBACK');
+      throw txError;
+    }
+
+    const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
+    const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+    const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
+
+    let emailSent = true;
+    try {
+      await sendRecruiterShareEmail({
+        toEmail: recruiterEmail,
+        shareToken,
+        coachName: coach?.full_name,
+        teamName: team.team_name,
+        schoolName: team.school_name,
+        subject: emailSubject,
+        message: emailMessage,
+        playerCount: selectedPlayerIds.length,
+        expiresAt
+      });
+    } catch (emailError) {
+      emailSent = false;
+      console.error('Failed to send recruiter share email:', emailError.message || emailError);
+    }
+
+    res.json({
+      success: true,
+      shareId,
+      shareUrl,
+      emailSent,
+      expiresAt: expiresAt.toISOString()
+    });
+  } catch (error) {
+    console.error('Coach create recruiter share error:', error);
+    res.status(500).json({ error: 'Failed to share players' });
+  }
+});
+
+// Public: Resolve a recruiter share link and return only shared players
+app.get('/api/recruiter-share/:token', async (req, res) => {
+  try {
+    const token = String(req.params.token || '').trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(token)) {
+      return res.status(400).json({ error: 'Invalid share token' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const share = await db.prepare(`
+      SELECT s.id, s.subject, s.message, s.recipient_email, s.expires_at, s.first_opened_at, s.open_count,
+        t.team_name, t.school_name,
+        u.full_name AS coach_name
+      FROM recruiter_player_shares s
+      JOIN hs_teams t ON t.id = s.team_id
+      JOIN users u ON u.id = s.coach_user_id
+      WHERE s.token_hash = ?
+        AND s.expires_at > CURRENT_TIMESTAMP
+      LIMIT 1
+    `).get(tokenHash);
+
+    if (!share) {
+      return res.status(404).json({ error: 'Share link is invalid or expired' });
+    }
+
+    await db.prepare(`
+      UPDATE recruiter_player_shares
+      SET open_count = COALESCE(open_count, 0) + 1,
+        first_opened_at = COALESCE(first_opened_at, CURRENT_TIMESTAMP)
+      WHERE id = ?
+    `).run(share.id);
+
+    const players = await db.prepare(`
+      SELECT pp.*
+      FROM recruiter_player_share_items items
+      JOIN player_profiles pp ON pp.user_id = items.player_user_id
+      WHERE items.share_id = ?
+      ORDER BY pp.full_name ASC
+    `).all(share.id);
+
+    await Promise.all(players.map(player => enrichPlayerProfile(player)));
+
+    res.json({
+      share: {
+        id: share.id,
+        subject: share.subject || null,
+        message: share.message || null,
+        coachName: share.coach_name || null,
+        teamName: share.team_name || null,
+        schoolName: share.school_name || null,
+        expiresAt: share.expires_at,
+        firstOpenedAt: share.first_opened_at,
+        openCount: Number(share.open_count || 0) + 1
+      },
+      players
+    });
+  } catch (error) {
+    console.error('Recruiter share fetch error:', error);
+    res.status(500).json({ error: 'Failed to load shared players' });
   }
 });
 

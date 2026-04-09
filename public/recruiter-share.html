@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Player Profiles</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f3f7ff 0%, #ffffff 38%);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: #1f2937;
+    }
+    .share-page {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 26px 16px 36px;
+    }
+    .share-header {
+      background: #ffffff;
+      border: 1px solid #d8e2f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(10, 30, 60, 0.08);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .share-title {
+      margin: 0 0 8px;
+      color: #153766;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .share-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #4b5e78;
+    }
+    .share-pill {
+      background: #eef3fb;
+      border: 1px solid #d4deee;
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-weight: 600;
+    }
+    .share-message {
+      margin-top: 12px;
+      padding: 11px 12px;
+      border: 1px solid #d3dcef;
+      border-radius: 10px;
+      background: #f8faff;
+      font-size: 14px;
+      color: #27354f;
+      white-space: pre-wrap;
+    }
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .share-player-card {
+      background: #fff;
+      border: 1px solid #d8e2f0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(10, 30, 60, 0.05);
+      display: flex;
+      flex-direction: column;
+      min-height: 300px;
+    }
+    .share-player-photo {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: #e8eef8;
+    }
+    .share-player-photo-empty {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #e8eef8;
+      color: #4f6587;
+      font-weight: 700;
+    }
+    .share-player-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      flex: 1;
+    }
+    .share-player-name {
+      font-size: 17px;
+      margin: 0;
+      color: #16355f;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .share-player-line {
+      margin: 0;
+      font-size: 13px;
+      color: #425777;
+    }
+    .share-player-link {
+      margin-top: auto;
+      display: inline-block;
+      text-decoration: none;
+      background: #1e3c72;
+      color: #fff;
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .share-player-link:hover {
+      background: #2a5298;
+    }
+    .status-box {
+      background: #fff;
+      border: 1px solid #d8e2f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(10, 30, 60, 0.08);
+      padding: 26px;
+      text-align: center;
+      color: #1f2937;
+      margin-top: 14px;
+    }
+    .status-box h2 {
+      margin: 0 0 8px;
+      color: #153766;
+    }
+    .status-box p {
+      margin: 0;
+      color: #465b7b;
+    }
+  </style>
+</head>
+<body>
+  <div class="share-page">
+    <div id="loadingBox" class="status-box">
+      <h2>Loading Shared Player Profiles...</h2>
+      <p>Please wait a moment.</p>
+    </div>
+
+    <div id="contentBox" style="display:none;">
+      <div class="share-header">
+        <h1 class="share-title" id="shareTitle">Shared Players</h1>
+        <div class="share-meta">
+          <span class="share-pill" id="coachNamePill"></span>
+          <span class="share-pill" id="teamNamePill"></span>
+          <span class="share-pill" id="countPill"></span>
+          <span class="share-pill" id="expiresPill"></span>
+        </div>
+        <div id="shareMessage" class="share-message" style="display:none;"></div>
+      </div>
+      <div id="playersGrid" class="players-grid"></div>
+    </div>
+
+    <div id="errorBox" class="status-box" style="display:none;"></div>
+  </div>
+
+  <script>
+    function escHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    function renderError(message) {
+      document.getElementById('loadingBox').style.display = 'none';
+      const errorBox = document.getElementById('errorBox');
+      errorBox.style.display = '';
+      errorBox.innerHTML = '<h2>Unable to Open Share Link</h2><p>' + escHtml(message) + '</p>';
+    }
+
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let match = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (match) {
+        const feet = Number(match[1] || '0');
+        const inches = Number(match[2] || '0');
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return feet + '\'' + inchesText + '"';
+      }
+
+      match = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (match) {
+        const feet = Number(match[1] || '0');
+        const inches = Number(match[2] || '0');
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return feet + '\'' + inchesText + '"';
+      }
+
+      return raw;
+    }
+
+    function renderPlayers(players) {
+      const grid = document.getElementById('playersGrid');
+      grid.innerHTML = players.map((player) => {
+        const photo = player.profile_picture ? '/uploads/' + escHtml(player.profile_picture) : '';
+        const name = escHtml(player.full_name || 'Player');
+        const position = escHtml(player.position || 'Position not set');
+        const school = escHtml(player.high_school || 'School not set');
+        const year = escHtml(player.graduation_year || 'N/A');
+        const height = escHtml(formatHeightDisplay(player.height) || 'N/A');
+        const weight = player.weight ? escHtml(String(player.weight) + ' lbs') : 'N/A';
+        const gpa = player.gpa != null ? escHtml(String(player.gpa)) : 'N/A';
+
+        return '<div class="share-player-card">'
+          + (photo
+            ? '<img class="share-player-photo" src="' + photo + '" alt="' + name + '">'
+            : '<div class="share-player-photo-empty">No Photo</div>')
+          + '<div class="share-player-body">'
+          + '<h3 class="share-player-name">' + name + '</h3>'
+          + '<p class="share-player-line"><strong>' + position + '</strong></p>'
+          + '<p class="share-player-line">' + school + '</p>'
+          + '<p class="share-player-line">Class of ' + year + '</p>'
+          + '<p class="share-player-line">Height: ' + height + ' | Weight: ' + weight + '</p>'
+          + '<p class="share-player-line">GPA: ' + gpa + '</p>'
+          + '<a class="share-player-link" href="/player-detail.html?id=' + encodeURIComponent(player.user_id) + '">Open Full Profile</a>'
+          + '</div></div>';
+      }).join('');
+    }
+
+    async function init() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      if (!token) {
+        renderError('Missing share token.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/recruiter-share/' + encodeURIComponent(token));
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          renderError(data.error || 'This link is invalid or has expired.');
+          return;
+        }
+
+        document.getElementById('loadingBox').style.display = 'none';
+        document.getElementById('contentBox').style.display = '';
+
+        const share = data.share || {};
+        const players = Array.isArray(data.players) ? data.players : [];
+        const headline = share.subject || 'Shared Player Profiles';
+        document.getElementById('shareTitle').textContent = headline;
+        document.getElementById('coachNamePill').textContent = 'Coach: ' + (share.coachName || 'Unknown');
+        document.getElementById('teamNamePill').textContent = 'Team: ' + (share.teamName || 'Unknown Team');
+        document.getElementById('countPill').textContent = players.length + ' Player' + (players.length === 1 ? '' : 's');
+        document.getElementById('expiresPill').textContent = 'Expires: ' + (share.expiresAt ? new Date(share.expiresAt).toLocaleString() : 'N/A');
+
+        if (share.message) {
+          const messageEl = document.getElementById('shareMessage');
+          messageEl.style.display = '';
+          messageEl.textContent = share.message;
+        }
+
+        renderPlayers(players);
+      } catch (_) {
+        renderError('Network error while loading shared players.');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
