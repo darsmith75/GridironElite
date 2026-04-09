@@ -3340,7 +3340,6 @@ app.post('/api/admin/profile', requireAdmin, upload.fields([
   const files = req.files;
   try {
     await processUploadedFiles(req.session.userId, files);
-            coachUserId: share.coach_user_id || null
     const existingAdmin = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
     let profilePicFilename = existingAdmin?.profile_picture || null;
     if (files && files.profilePicture && files.profilePicture[0]) {
