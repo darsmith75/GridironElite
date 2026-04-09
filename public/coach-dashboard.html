@@ -1181,7 +1181,6 @@
         if (data.shareUrl) {
           try { await navigator.clipboard.writeText(data.shareUrl); } catch (_) {}
         }
-        clearSelectedPlayers();
         messageEl.className = 'share-toolbar-message success';
         messageEl.textContent = successText;
       } catch (_) {

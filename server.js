@@ -1341,8 +1341,8 @@ async function enrichPlayerProfile(profile) {
   return profile;
 }
 
-async function sendVerificationEmail(toEmail, token) {
-  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+async function sendVerificationEmail(toEmail, token, req) {
+  const appUrl = getPublicAppUrl(req);
   const verifyUrl = `${appUrl}/api/verify-email?token=${token}`;
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -1371,8 +1371,8 @@ async function sendVerificationEmail(toEmail, token) {
   });
 }
 
-async function sendPasswordResetEmail(toEmail, token) {
-  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+async function sendPasswordResetEmail(toEmail, token, req) {
+  const appUrl = getPublicAppUrl(req);
   const resetUrl = `${appUrl}/reset-password.html?token=${token}`;
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -1426,7 +1426,7 @@ app.post('/api/register', async (req, res) => {
 
     // Send verification email (non-fatal – log error but still return success)
     try {
-      await sendVerificationEmail(email, verificationToken);
+      await sendVerificationEmail(email, verificationToken, req);
     } catch (emailErr) {
       console.error('Failed to send verification email:', emailErr.message);
     }
@@ -1473,7 +1473,7 @@ app.post('/api/forgot-password', async (req, res) => {
       const expiresAt = new Date(Date.now() + (60 * 60 * 1000));
       await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(token, expiresAt.toISOString(), user.id);
       try {
-        await sendPasswordResetEmail(user.email, token);
+        await sendPasswordResetEmail(user.email, token, req);
       } catch (emailErr) {
         console.error('Failed to send password reset email:', emailErr.message);
       }
@@ -2580,8 +2580,8 @@ const requireCoach = (req, res, next) => {
   next();
 };
 
-async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, schoolName) {
-  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, schoolName, req) {
+  const appUrl = getPublicAppUrl(req);
   const acceptUrl = `${appUrl}/coach-dashboard.html?acceptInvite=${inviteToken}`;
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -2622,6 +2622,31 @@ function escapeHtmlEmail(text) {
     .replace(/'/g, '&#39;');
 }
 
+function getPublicAppUrl(req) {
+  const configured = String(process.env.APP_URL || process.env.PUBLIC_BASE_URL || '').trim();
+  const configuredSanitized = configured.replace(/\/$/, '');
+  const isConfiguredLocal = /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(configuredSanitized);
+
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '').split(',')[0].trim();
+  const forwardedHost = String(req?.headers?.['x-forwarded-host'] || '').split(',')[0].trim();
+  const host = forwardedHost || req?.get?.('host') || req?.headers?.host;
+  const protocol = forwardedProto || req?.protocol || 'https';
+
+  if (configuredSanitized && !isConfiguredLocal) {
+    return configuredSanitized;
+  }
+
+  if (host) {
+    return `${protocol}://${host}`.replace(/\/$/, '');
+  }
+
+  if (configuredSanitized) {
+    return configuredSanitized;
+  }
+
+  return 'https://gridironathletes.com';
+}
+
 async function sendRecruiterShareEmail({
   toEmail,
   shareToken,
@@ -2631,9 +2656,9 @@ async function sendRecruiterShareEmail({
   subject,
   message,
   playerCount,
-  expiresAt
+  expiresAt,
+  appUrl
 }) {
-  const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
   const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -2813,7 +2838,7 @@ app.post('/api/coach/invite', requireCoach, async (req, res) => {
 
     const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
     try {
-      await sendTeamInviteEmail(normalizedEmail, token, coach?.full_name, team.team_name, team.school_name);
+      await sendTeamInviteEmail(normalizedEmail, token, coach?.full_name, team.team_name, team.school_name, req);
     } catch (emailErr) {
       console.error('Failed to send team invite email:', emailErr.message);
     }
@@ -2929,7 +2954,7 @@ app.post('/api/coach/recruiter-shares', requireCoach, async (req, res) => {
     }
 
     const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
-    const appUrl = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+    const appUrl = getPublicAppUrl(req);
     const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
 
     let emailSent = true;
@@ -2943,7 +2968,8 @@ app.post('/api/coach/recruiter-shares', requireCoach, async (req, res) => {
         subject: emailSubject,
         message: emailMessage,
         playerCount: selectedPlayerIds.length,
-        expiresAt
+        expiresAt,
+        appUrl
       });
     } catch (emailError) {
       emailSent = false;
