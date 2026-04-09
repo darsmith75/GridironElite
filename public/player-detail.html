@@ -10,57 +10,6 @@
       display: inline-flex;
       align-items: center;
     }
-    .shared-flow-bar {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
-      padding: 14px 18px;
-      border: 1px solid #d3deef;
-      border-radius: 12px;
-      background: #f7faff;
-    }
-    .shared-flow-copy {
-      min-width: 0;
-    }
-    .shared-flow-title {
-      margin: 0 0 4px;
-      color: #1e3c72;
-      font-size: 16px;
-      font-weight: 700;
-    }
-    .shared-flow-text {
-      margin: 0;
-      color: #586b87;
-      font-size: 13px;
-    }
-    .shared-flow-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #b7c6db;
-      background: #e4eaf4;
-      color: #1f3c68;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .shared-flow-btn:hover {
-      background: #d8e2f0;
-    }
-    @media (max-width: 768px) {
-      .shared-flow-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .shared-flow-btn {
-        width: 100%;
-      }
-    }
   </style>
 </head>
 <body>
@@ -90,7 +39,6 @@
     </header>
 
     <div class="dashboard-container">
-      <div id="sharedFlowBar" class="shared-flow-bar"></div>
       <div id="playerDetail"></div>
     </div>
   </div>
@@ -135,7 +83,6 @@
       const shareUrl = getRecruiterShareUrl();
       const nav = document.getElementById('topNavMenu');
       const homeLink = document.getElementById('headerHomeLink');
-      const sharedFlowBar = document.getElementById('sharedFlowBar');
       if (homeLink) {
         homeLink.href = shareUrl;
       }
@@ -153,20 +100,8 @@
             + '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>'
             + 'Sign out</a>';
         } else {
-          nav.innerHTML = homeMarkup
-            + '<a href="/login" class="nav-link">'
-            + '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3H7a2 2 0 00-2 2v14a2 2 0 002 2h8"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>'
-            + 'Login</a>';
+          nav.innerHTML = homeMarkup;
         }
-      }
-
-      if (sharedFlowBar) {
-        sharedFlowBar.style.display = 'flex';
-        sharedFlowBar.innerHTML = '<div class="shared-flow-copy">'
-          + '<p class="shared-flow-title">Shared recruiter view</p>'
-          + '<p class="shared-flow-text">Return to the coach-curated player list without losing this shared-link context.</p>'
-          + '</div>'
-          + '<a href="' + shareUrl + '" class="shared-flow-btn">Return to Shared Players</a>';
       }
     }
     
