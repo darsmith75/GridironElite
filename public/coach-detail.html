@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Profile</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .top-nav-menu {
+      visibility: hidden;
+    }
+    .top-nav-menu.nav-ready {
+      visibility: visible;
+    }
+    .shared-logo-link {
+      display: inline-flex;
+      align-items: center;
+    }
+    .coach-detail-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .coach-card {
+      background: white;
+      border-radius: 14px;
+      padding: 40px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid #e8edf5;
+    }
+    .coach-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .coach-photo {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid #1e3c72;
+      margin-bottom: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .coach-header h1 {
+      margin: 20px 0 8px;
+      color: #1e3c72;
+      font-size: 28px;
+    }
+    .coach-title {
+      color: #6b7280;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    .coach-info-section {
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid #e8edf5;
+    }
+    .coach-info-section h2 {
+      color: #1e3c72;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-item {
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+    .info-label {
+      color: #6b7280;
+      font-weight: 600;
+      display: inline-block;
+      width: 120px;
+    }
+    .info-value {
+      color: #1f2937;
+    }
+    .contact-link {
+      color: #1e3c72;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contact-link:hover {
+      text-decoration: underline;
+    }
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #1e3c72;
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    .back-button:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <a href="#" id="headerHomeLink" class="shared-logo-link" aria-label="Home">
+            <img src="/images/GridIronLogoWhiteBG.png" alt="Gridiron Athletes" class="header-logo">
+          </a>
+        </div>
+        <nav class="top-nav-menu" id="topNavMenu"></nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="coach-detail-container">
+        <a href="#" id="backLink" class="back-button" style="display:none;">
+          <span>← Back to Players</span>
+        </a>
+        <div id="coachDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const coachId = urlParams.get('id');
+    const shareToken = urlParams.get('shareToken');
+
+    function escHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
+    function getRecruiterShareUrl() {
+      return shareToken
+        ? 'recruiter-share.html?token=' + encodeURIComponent(shareToken)
+        : 'recruiter-share.html';
+    }
+
+    function applyRecruiterShareTopNav() {
+      const shareUrl = getRecruiterShareUrl();
+      const nav = document.getElementById('topNavMenu');
+      const homeLink = document.getElementById('headerHomeLink');
+      if (homeLink) {
+        homeLink.href = shareUrl;
+      }
+      if (nav) {
+        const homeMarkup = '<a href="' + shareUrl + '" class="nav-link">'
+          + '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>'
+          + 'Back to Players</a>';
+        nav.innerHTML = homeMarkup;
+      }
+    }
+
+    function markTopNavReady() {
+      const nav = document.getElementById('topNavMenu');
+      if (nav) nav.classList.add('nav-ready');
+    }
+
+    function renderCoachDetail(coach) {
+      const detail = document.getElementById('coachDetail');
+      const photo = coach.profile_picture ? '/uploads/' + encodeURI(coach.profile_picture) : '/uploads/default-profile.png';
+      const name = escHtml(coach.full_name || 'Coach');
+      const teamName = escHtml(coach.team_name || 'Team Not Set');
+      const schoolName = escHtml(coach.school_name || '');
+      const phone = escHtml(coach.phone || '');
+      const email = escHtml(coach.email || '');
+      const city = escHtml(coach.city || '');
+      const state = escHtml(coach.state || '');
+
+      let html = '<div class="coach-card">';
+      html += '<div class="coach-header">'
+        + '<img src="' + photo + '" alt="' + name + '" class="coach-photo">'
+        + '<h1>' + name + '</h1>'
+        + '<p class="coach-title">' + teamName + (schoolName ? ' at ' + schoolName : '') + '</p>'
+        + '</div>';
+
+      html += '<div class="coach-info-section">';
+      html += '<h2>Contact Information</h2>';
+      if (email) {
+        html += '<div class="info-item">'
+          + '<span class="info-label">Email:</span>'
+          + '<span class="info-value"><a href="mailto:' + escHtml(email) + '" class="contact-link">' + email + '</a></span>'
+          + '</div>';
+      }
+      if (phone) {
+        html += '<div class="info-item">'
+          + '<span class="info-label">Phone:</span>'
+          + '<span class="info-value"><a href="tel:' + escHtml(phone) + '" class="contact-link">' + phone + '</a></span>'
+          + '</div>';
+      }
+      html += '</div>';
+
+      if (teamName) {
+        html += '<div class="coach-info-section">';
+        html += '<h2>Team Information</h2>';
+        html += '<div class="info-item">'
+          + '<span class="info-label">Team:</span>'
+          + '<span class="info-value">' + teamName + '</span>'
+          + '</div>';
+        if (schoolName) {
+          html += '<div class="info-item">'
+            + '<span class="info-label">School:</span>'
+            + '<span class="info-value">' + schoolName + '</span>'
+            + '</div>';
+        }
+        if (city || state) {
+          const location = [city, state].filter(Boolean).join(', ');
+          if (location) {
+            html += '<div class="info-item">'
+              + '<span class="info-label">Location:</span>'
+              + '<span class="info-value">' + escHtml(location) + '</span>'
+              + '</div>';
+          }
+        }
+        html += '</div>';
+      }
+
+      html += '</div>';
+      detail.innerHTML = html;
+    }
+
+    async function init() {
+      if (shareToken) {
+        applyRecruiterShareTopNav();
+      }
+
+      if (!coachId) {
+        document.getElementById('coachDetail').innerHTML = '<p style="color:#c62828;">Coach ID not provided.</p>';
+        return;
+      }
+
+      try {
+        const endpoint = shareToken
+          ? `/api/recruiter-share-coach/${encodeURIComponent(coachId)}?token=${encodeURIComponent(shareToken)}`
+          : `/api/coach/${encodeURIComponent(coachId)}`;
+
+        const res = await fetch(endpoint);
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          document.getElementById('coachDetail').innerHTML = '<p style="color:#c62828;">' + escHtml(data.error || 'Failed to load coach profile') + '</p>';
+          markTopNavReady();
+          return;
+        }
+
+        renderCoachDetail(data);
+        markTopNavReady();
+
+        if (shareToken) {
+          const backLink = document.getElementById('backLink');
+          if (backLink) {
+            backLink.style.display = '';
+            backLink.href = getRecruiterShareUrl();
+          }
+        }
+      } catch (error) {
+        console.error('Coach detail load error:', error);
+        document.getElementById('coachDetail').innerHTML = '<p style="color:#c62828;">Error loading coach profile.</p>';
+        markTopNavReady();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -178,6 +178,51 @@
       await loadProfile();
       await logPageView('coach_profile');
     }
+          <!-- Profile Photo Upload -->
+          <div class="profile-photo-section">
+            <h2>Profile Photo</h2>
+            <img id="coachProfilePicture" src="/uploads/default-profile.png" alt="Profile Picture">
+            <div class="file-input-wrapper">
+              <input type="file" id="coachProfilePictureInput" accept="image/*">
+            </div>
+            <button class="save-btn" id="savePhotoBtn" onclick="uploadPhoto()" style="margin-bottom:0;">Upload Photo</button>
+            <div class="form-msg" id="photoMsg"></div>
+          </div>
+        .profile-photo-section {
+          background: white;
+          border-radius: 14px;
+          padding: 28px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+          border: 1px solid #c7d0da;
+          max-width: 640px;
+          margin: 0 auto 28px;
+          text-align: center;
+        }
+        .profile-photo-section h2 {
+          margin: 0 0 20px;
+          color: #1e3c72;
+          font-size: 18px;
+          text-align: left;
+        }
+        #coachProfilePicture {
+          width: 120px;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 50%;
+          border: 3px solid #c7d0da;
+          margin-bottom: 16px;
+        }
+        .file-input-wrapper {
+          position: relative;
+          margin-bottom: 12px;
+        }
+        .file-input-wrapper input[type="file"] {
+          padding: 10px 12px;
+          border: 1px solid #c7d0da;
+          border-radius: 8px;
+          width: 100%;
+          box-sizing: border-box;
+        }
 
     async function loadProfile() {
       try {
@@ -192,6 +237,47 @@
         document.getElementById('state').value = data.team?.state || '';
       } catch (_) {}
     }
+        async function uploadPhoto() {
+          const input = document.getElementById('coachProfilePictureInput');
+          const msg = document.getElementById('photoMsg');
+          const btn = document.getElementById('savePhotoBtn');
+
+          if (!input || !input.files || !input.files[0]) {
+            msg.className = 'form-msg error';
+            msg.textContent = 'Please choose a photo first.';
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append('profilePicture', input.files[0]);
+
+          btn.disabled = true;
+          msg.className = 'form-msg';
+          msg.textContent = 'Uploading...';
+
+          try {
+            const res = await fetch('/api/coach/profile/photo', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              msg.className = 'form-msg error';
+              msg.textContent = data.error || 'Failed to upload photo.';
+              return;
+            }
+
+            msg.className = 'form-msg success';
+            msg.textContent = 'Photo uploaded successfully!';
+            input.value = '';
+            await loadProfile();
+          } catch (error) {
+            msg.className = 'form-msg error';
+            msg.textContent = 'Network error. Please try again.';
+          } finally {
+            btn.disabled = false;
+          }
+        }
 
     async function saveProfile() {
       const btn = document.getElementById('saveProfileBtn');
@@ -204,6 +290,9 @@
       }
       btn.disabled = true;
       msgEl.className = 'form-msg';
+            if (data.profile_picture) {
+              document.getElementById('coachProfilePicture').src = '/uploads/' + encodeURI(data.profile_picture);
+            }
       msgEl.textContent = 'Saving…';
       try {
         const res = await fetch('/api/coach/profile', {

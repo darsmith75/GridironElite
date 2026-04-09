@@ -99,6 +99,22 @@
       font-size: 13px;
       color: #fff;
     }
+        .coach-link-pill {
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.24);
+          border-radius: 999px;
+          padding: 5px 11px;
+          font-weight: 600;
+          font-size: 13px;
+          color: #fff;
+          text-decoration: none;
+          display: inline-block;
+          transition: background 0.2s;
+        }
+        .coach-link-pill:hover {
+          background: rgba(255,255,255,0.18);
+          border-color: rgba(255,255,255,0.32);
+        }
     .share-message {
       margin-top: 12px;
       padding: 14px 16px;
@@ -407,8 +423,14 @@
           messageEl.style.display = '';
           messageEl.textContent = share.message;
         }
-
         renderPlayers(players);
+                const coachPill = document.getElementById('coachNamePill');
+                if (share.coachUserId) {
+                  const coachUrl = 'coach-detail.html?id=' + encodeURIComponent(share.coachUserId) + '&shareToken=' + encodeURIComponent(shareToken || '');
+                  coachPill.innerHTML = '<a href="' + escHtml(coachUrl) + '" class="coach-link-pill">Coach: ' + escHtml(share.coachName || 'Unknown') + '</a>';
+                } else {
+                  coachPill.textContent = 'Coach: ' + (share.coachName || 'Unknown');
+                }
       } catch (_) {
         renderError('Network error while loading shared players.');
       }

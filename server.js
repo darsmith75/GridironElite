@@ -3082,6 +3082,29 @@ app.post('/api/coach/profile', requireCoach, async (req, res) => {
     console.error('Coach update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
+  // Coach: Upload/update profile photo
+  app.post('/api/coach/profile/photo', requireCoach, upload.single('profilePicture'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Profile picture file is required' });
+      }
+
+      const coach = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
+
+      await processUploadedFiles(req.session.userId, { profilePicture: [req.file] });
+      const profilePicture = req.session.userId + '/' + req.file.filename;
+
+      if (coach?.profile_picture && coach.profile_picture !== profilePicture) {
+        await deleteUploadFile(coach.profile_picture);
+      }
+
+      await db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(profilePicture, req.session.userId);
+      res.json({ success: true, profilePicture });
+    } catch (error) {
+      console.error('Coach upload profile photo error:', error);
+      res.status(500).json({ error: error.message || 'Failed to upload profile photo' });
+    }
+  });
 });
 
 // Coach: Change password
@@ -3125,6 +3148,66 @@ app.get('/api/player/team-invites', requireAuth, async (req, res) => {
     console.error('Player get team invites error:', error);
     res.status(500).json({ error: 'Failed to get invites' });
   }
+  // Public: Get coach profile by ID
+  app.get('/api/coach/:id', async (req, res) => {
+    try {
+      const coachId = parseInt(req.params.id, 10);
+      if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
+
+      const coach = await db.prepare(`
+        SELECT u.full_name, u.phone, u.email, u.profile_picture,
+          t.team_name, t.school_name, t.city, t.state
+        FROM users u
+        LEFT JOIN hs_teams t ON t.coach_id = u.id
+        WHERE u.id = ? AND u.role = 'coach'
+        LIMIT 1
+      `).get(coachId);
+
+      if (!coach) return res.status(404).json({ error: 'Coach not found' });
+      res.json(coach);
+    } catch (error) {
+      console.error('Get coach error:', error);
+      res.status(500).json({ error: 'Failed to get coach' });
+    }
+  });
+
+  // Public: Get coach profile via recruiter share token (for shared context)
+  app.get('/api/recruiter-share-coach/:coachId', async (req, res) => {
+    try {
+      const { token } = req.query;
+      const coachId = parseInt(req.params.coachId, 10);
+
+      if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
+      if (!token) return res.status(400).json({ error: 'Share token is required' });
+
+      // Verify token is valid and not expired
+      const tokenHash = crypto.createHash('sha256').update(String(token).toLowerCase()).digest('hex');
+      const share = await db.prepare(`
+        SELECT s.id, s.coach_user_id, s.expires_at
+        FROM recruiter_player_shares s
+        WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP
+        LIMIT 1
+      `).get(tokenHash);
+
+      if (!share) return res.status(404).json({ error: 'Share link is invalid or expired' });
+
+      // Get coach details
+      const coach = await db.prepare(`
+        SELECT u.full_name, u.phone, u.email, u.profile_picture,
+          t.team_name, t.school_name, t.city, t.state
+        FROM users u
+        LEFT JOIN hs_teams t ON t.coach_id = u.id
+        WHERE u.id = ? AND u.role = 'coach'
+        LIMIT 1
+      `).get(share.coach_user_id);
+
+      if (!coach) return res.status(404).json({ error: 'Coach not found' });
+      res.json(coach);
+    } catch (error) {
+      console.error('Get coach via share error:', error);
+      res.status(500).json({ error: 'Failed to get coach' });
+    }
+  });
 });
 
 // Player: Accept a team invite
@@ -3226,19 +3309,20 @@ app.get('/api/admin/coaches', requireAdmin, async (req, res) => {
       WHERE u.role = 'coach'
       ORDER BY u.created_at DESC
     `).all();
-    res.json(coaches);
-  } catch (error) {
-    console.error('Admin list coaches error:', error);
-    res.status(500).json({ error: 'Failed to get coaches' });
-  }
-});
-
-// Admin: Update own profile
-// Admin: Get own profile
-app.get('/api/admin/profile', requireAdmin, async (req, res) => {
-  try {
-    const admin = await db.prepare('SELECT email, full_name, phone, organization, title, experience, bio, profile_picture, last_login_at FROM users WHERE id = ?').get(req.session.userId);
     if (!admin) return res.status(404).json({ error: 'Admin not found' });
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const share = await db.prepare(`
+          SELECT s.id, s.subject, s.message, s.recipient_email, s.expires_at, s.first_opened_at, s.open_count,
+            s.coach_user_id,
+            t.team_name, t.school_name, t.school_logo,
+            u.full_name AS coach_name
+          FROM recruiter_player_shares s
+          JOIN hs_teams t ON t.id = s.team_id
+          JOIN users u ON u.id = s.coach_user_id
+          WHERE s.token_hash = ?
+            AND s.expires_at > CURRENT_TIMESTAMP
+          LIMIT 1
+        `).get(tokenHash);
     res.json(admin);
   } catch (error) {
     console.error('Admin get own profile error:', error);
@@ -3252,6 +3336,7 @@ app.post('/api/admin/profile', requireAdmin, upload.fields([
   const files = req.files;
   try {
     await processUploadedFiles(req.session.userId, files);
+            coachUserId: share.coach_user_id || null
     const existingAdmin = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
     let profilePicFilename = existingAdmin?.profile_picture || null;
     if (files && files.profilePicture && files.profilePicture[0]) {
@@ -4179,19 +4264,19 @@ app.get('/api/player/colleges', requireAuth, async (req, res) => {
       is_favorite: interestMap[c.id]?.is_favorite || 0,
       has_offer: interestMap[c.id]?.has_offer || 0
     }));
-    res.json(result);
-  } catch (error) {
-    console.error('Player get colleges error:', error);
-    res.status(500).json({ error: 'Failed to get colleges' });
-  }
-});
-
-// Player: Toggle favorite on a college
-app.post('/api/player/colleges/:collegeId/favorite', requireAuth, async (req, res) => {
-  try {
-    const collegeId = parseInt(req.params.collegeId, 10);
-    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
+    // Coach: Get own profile
+    app.get('/api/coach/profile', requireCoach, async (req, res) => {
+      try {
+        const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ?').get(req.session.userId);
+        if (!coach) return res.status(404).json({ error: 'Coach not found' });
+        const team = await db.prepare('SELECT team_name, school_name, city, state FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+        res.json({ ...coach, team: team || {} });
+      } catch (error) {
+        console.error('Coach get profile error:', error);
+        res.status(500).json({ error: 'Failed to get profile' });
+      }
+    });
     if (!college) return res.status(404).json({ error: 'College not found' });
 
     const existing = await db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
