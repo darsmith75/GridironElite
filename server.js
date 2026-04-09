@@ -3057,7 +3057,7 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
 // Coach: Get own profile
 app.get('/api/coach/profile', requireCoach, async (req, res) => {
   try {
-    const coach = await db.prepare('SELECT email, full_name, phone, organization FROM users WHERE id = ?').get(req.session.userId);
+    const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ?').get(req.session.userId);
     if (!coach) return res.status(404).json({ error: 'Coach not found' });
     const team = await db.prepare('SELECT team_name, school_name, city, state FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
     res.json({ ...coach, team: team || {} });
@@ -3082,29 +3082,30 @@ app.post('/api/coach/profile', requireCoach, async (req, res) => {
     console.error('Coach update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
-  // Coach: Upload/update profile photo
-  app.post('/api/coach/profile/photo', requireCoach, upload.single('profilePicture'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'Profile picture file is required' });
-      }
+});
 
-      const coach = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
-
-      await processUploadedFiles(req.session.userId, { profilePicture: [req.file] });
-      const profilePicture = req.session.userId + '/' + req.file.filename;
-
-      if (coach?.profile_picture && coach.profile_picture !== profilePicture) {
-        await deleteUploadFile(coach.profile_picture);
-      }
-
-      await db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(profilePicture, req.session.userId);
-      res.json({ success: true, profilePicture });
-    } catch (error) {
-      console.error('Coach upload profile photo error:', error);
-      res.status(500).json({ error: error.message || 'Failed to upload profile photo' });
+// Coach: Upload/update profile photo
+app.post('/api/coach/profile/photo', requireCoach, upload.single('profilePicture'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Profile picture file is required' });
     }
-  });
+
+    const coach = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
+
+    await processUploadedFiles(req.session.userId, { profilePicture: [req.file] });
+    const profilePicture = req.session.userId + '/' + req.file.filename;
+
+    if (coach?.profile_picture && coach.profile_picture !== profilePicture) {
+      await deleteUploadFile(coach.profile_picture);
+    }
+
+    await db.prepare('UPDATE users SET profile_picture = ? WHERE id = ?').run(profilePicture, req.session.userId);
+    res.json({ success: true, profilePicture });
+  } catch (error) {
+    console.error('Coach upload profile photo error:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload profile photo' });
+  }
 });
 
 // Coach: Change password

@@ -6,6 +6,386 @@
   <title>Coach Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    .profile-edit-card,
+    .profile-photo-section {
+      background: white;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #c7d0da;
+      max-width: 640px;
+      margin: 0 auto 28px;
+    }
+    .profile-edit-card h2,
+    .profile-photo-section h2 {
+      margin: 0 0 20px;
+      color: #1e3c72;
+      font-size: 18px;
+    }
+    .profile-photo-section {
+      text-align: center;
+    }
+    .profile-photo-section h2 {
+      text-align: left;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+    .input-group { margin-bottom: 16px; }
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .input-group input, .input-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: #1e3c72;
+    }
+    #coachProfilePicture {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #c7d0da;
+      margin-bottom: 16px;
+    }
+    .file-input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .file-input-wrapper input[type="file"] {
+      padding: 10px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .save-btn {
+      padding: 11px 28px;
+      background: #1e3c72;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .save-btn:hover { background: #2a5298; }
+    .save-btn:disabled { background: #999; cursor: not-allowed; }
+    .form-msg {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      min-height: 18px;
+    }
+    .form-msg.success { color: #2e7d32; }
+    .form-msg.error { color: #c62828; }
+    .section-divider {
+      border: none;
+      border-top: 1px solid #e8edf5;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="coach-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="coach-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="profile-photo-section">
+        <h2>Profile Photo</h2>
+        <img id="coachProfilePicture" src="/uploads/default-profile.png" alt="Profile Picture">
+        <div class="file-input-wrapper">
+          <input type="file" id="coachProfilePictureInput" accept="image/*">
+        </div>
+        <button class="save-btn" id="savePhotoBtn" onclick="uploadPhoto()">Upload Photo</button>
+        <div class="form-msg" id="photoMsg"></div>
+      </div>
+
+      <div class="profile-edit-card">
+        <h2>Personal Information</h2>
+        <div class="form-row">
+          <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="fullName" placeholder="Your name">
+          </div>
+          <div class="input-group">
+            <label>Phone</label>
+            <input type="tel" id="phone" placeholder="(555) 555-5555">
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Email (read-only)</label>
+          <input type="email" id="emailDisplay" disabled style="background:#f8f9fa;color:#76849b;">
+        </div>
+        <hr class="section-divider">
+        <h2 style="margin:0 0 18px;">Team Information</h2>
+        <div class="form-row">
+          <div class="input-group">
+            <label>Team Name *</label>
+            <input type="text" id="teamName" placeholder="e.g. Eagles Varsity">
+          </div>
+          <div class="input-group">
+            <label>School Name</label>
+            <input type="text" id="schoolName" placeholder="e.g. Lincoln High School">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>City</label>
+            <input type="text" id="city" placeholder="City">
+          </div>
+          <div class="input-group">
+            <label>State</label>
+            <input type="text" id="state" placeholder="State" maxlength="2">
+          </div>
+        </div>
+        <button class="save-btn" id="saveProfileBtn" onclick="saveProfile()">Save Changes</button>
+        <div class="form-msg" id="profileMsg"></div>
+      </div>
+
+      <div class="profile-edit-card">
+        <h2>Change Password</h2>
+        <div class="input-group">
+          <label>Current Password</label>
+          <input type="password" id="currentPassword" placeholder="Enter current password">
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label>New Password</label>
+            <input type="password" id="newPassword" placeholder="At least 8 characters">
+          </div>
+          <div class="input-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirmPassword" placeholder="Repeat new password">
+          </div>
+        </div>
+        <button class="save-btn" id="changePassBtn" onclick="changePassword()">Update Password</button>
+        <div class="form-msg" id="passMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const US_STATE_CODES = new Set([
+      'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+      'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+      'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+    ]);
+
+    function normalizeState(value) {
+      const raw = String(value || '').trim().toUpperCase();
+      return US_STATE_CODES.has(raw) ? raw : '';
+    }
+
+    async function init() {
+      const user = await checkAuth('coach');
+      if (!user) return;
+      document.getElementById('emailDisplay').value = user.email || '';
+      await loadProfile();
+      await logPageView('coach_profile');
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/coach/profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('fullName').value = data.full_name || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('teamName').value = data.team?.team_name || '';
+        document.getElementById('schoolName').value = data.team?.school_name || '';
+        document.getElementById('city').value = data.team?.city || '';
+        document.getElementById('state').value = normalizeState(data.team?.state);
+        if (data.profile_picture) {
+          document.getElementById('coachProfilePicture').src = '/uploads/' + encodeURI(data.profile_picture);
+        }
+      } catch (_) {}
+    }
+
+    async function uploadPhoto() {
+      const input = document.getElementById('coachProfilePictureInput');
+      const msg = document.getElementById('photoMsg');
+      const btn = document.getElementById('savePhotoBtn');
+
+      if (!input || !input.files || !input.files[0]) {
+        msg.className = 'form-msg error';
+        msg.textContent = 'Please choose a photo first.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('profilePicture', input.files[0]);
+
+      btn.disabled = true;
+      msg.className = 'form-msg';
+      msg.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/api/coach/profile/photo', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          msg.className = 'form-msg error';
+          msg.textContent = data.error || 'Failed to upload photo.';
+          return;
+        }
+
+        msg.className = 'form-msg success';
+        msg.textContent = 'Photo uploaded successfully!';
+        input.value = '';
+        await loadProfile();
+      } catch (_) {
+        msg.className = 'form-msg error';
+        msg.textContent = 'Network error. Please try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function saveProfile() {
+      const btn = document.getElementById('saveProfileBtn');
+      const msgEl = document.getElementById('profileMsg');
+      const teamName = document.getElementById('teamName').value.trim();
+      if (!teamName) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'Team name is required.';
+        return;
+      }
+
+      btn.disabled = true;
+      msgEl.className = 'form-msg';
+      msgEl.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/coach/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: document.getElementById('fullName').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            teamName,
+            schoolName: document.getElementById('schoolName').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            state: normalizeState(document.getElementById('state').value)
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msgEl.className = 'form-msg success';
+          msgEl.textContent = 'Profile saved!';
+        } else {
+          msgEl.className = 'form-msg error';
+          msgEl.textContent = data.error || 'Failed to save';
+        }
+      } catch (_) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'Network error. Please try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function changePassword() {
+      const btn = document.getElementById('changePassBtn');
+      const msgEl = document.getElementById('passMsg');
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'All password fields are required.';
+        return;
+      }
+      if (newPassword.length < 8) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'New password must be at least 8 characters.';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'Passwords do not match.';
+        return;
+      }
+      btn.disabled = true;
+      msgEl.className = 'form-msg';
+      msgEl.textContent = 'Updating...';
+      try {
+        const res = await fetch('/api/coach/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msgEl.className = 'form-msg success';
+          msgEl.textContent = 'Password updated!';
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        } else {
+          msgEl.className = 'form-msg error';
+          msgEl.textContent = data.error || 'Failed to update password';
+        }
+      } catch (_) {
+        msgEl.className = 'form-msg error';
+        msgEl.textContent = 'Network error. Please try again.';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Profile</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
     .profile-edit-card {
       background: white;
       border-radius: 14px;
