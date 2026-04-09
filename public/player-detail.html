@@ -6,6 +6,12 @@
   <title>Player Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    .top-nav-menu {
+      visibility: hidden;
+    }
+    .top-nav-menu.nav-ready {
+      visibility: visible;
+    }
     .shared-logo-link {
       display: inline-flex;
       align-items: center;
@@ -93,6 +99,11 @@
         nav.innerHTML = homeMarkup;
       }
     }
+
+    function markTopNavReady() {
+      const nav = document.getElementById('topNavMenu');
+      if (nav) nav.classList.add('nav-ready');
+    }
     
     if (!playerId) {
       window.location.href = shareToken ? getRecruiterShareUrl() : 'agent-dashboard.html';
@@ -103,6 +114,7 @@
         // Shared-link mode intentionally ignores auth state to preserve recruiter flow.
         currentViewer = null;
         applyRecruiterShareTopNav();
+        markTopNavReady();
         loadPlayerDetail();
         return;
       }
@@ -122,6 +134,7 @@
           homeLink.href = '/';
         }
       }
+      markTopNavReady();
       loadPlayerDetail();
     })();
 
