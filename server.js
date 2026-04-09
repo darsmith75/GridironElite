@@ -3000,7 +3000,7 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const share = await db.prepare(`
       SELECT s.id, s.subject, s.message, s.recipient_email, s.expires_at, s.first_opened_at, s.open_count,
-        t.team_name, t.school_name,
+        t.team_name, t.school_name, t.school_logo,
         u.full_name AS coach_name
       FROM recruiter_player_shares s
       JOIN hs_teams t ON t.id = s.team_id
@@ -3039,6 +3039,7 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
         coachName: share.coach_name || null,
         teamName: share.team_name || null,
         schoolName: share.school_name || null,
+        schoolLogo: share.school_logo || null,
         expiresAt: share.expires_at,
         firstOpenedAt: share.first_opened_at,
         openCount: Number(share.open_count || 0) + 1

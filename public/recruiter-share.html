@@ -18,109 +18,150 @@
       padding: 26px 16px 36px;
     }
     .share-header {
-      background: #ffffff;
-      border: 1px solid #d8e2f0;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(10, 30, 60, 0.08);
-      padding: 18px 20px;
       margin-bottom: 16px;
     }
+    .share-team-banner {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 8px 22px rgba(30, 60, 114, 0.2);
+    }
+    .share-team-icon {
+      font-size: 44px;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+    }
+    .share-team-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+      padding: 4px;
+    }
+    .share-team-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .share-kicker {
+      margin: 0 0 4px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
     .share-title {
-      margin: 0 0 8px;
-      color: #153766;
+      margin: 0 0 4px;
       font-size: 26px;
       font-weight: 800;
       letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .share-subtitle {
+      font-size: 14px;
+      opacity: 0.85;
+      margin: 0;
     }
     .share-meta {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      font-size: 13px;
-      color: #4b5e78;
+      margin-top: 14px;
     }
     .share-pill {
-      background: #eef3fb;
-      border: 1px solid #d4deee;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.24);
       border-radius: 999px;
       padding: 5px 11px;
       font-weight: 600;
+      font-size: 13px;
+      color: #fff;
     }
     .share-message {
       margin-top: 12px;
-      padding: 11px 12px;
-      border: 1px solid #d3dcef;
-      border-radius: 10px;
-      background: #f8faff;
+      padding: 14px 16px;
+      border: 1px solid #d3deef;
+      border-radius: 12px;
+      background: #f7faff;
       font-size: 14px;
       color: #27354f;
       white-space: pre-wrap;
     }
     .players-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 12px;
       margin-top: 14px;
     }
-    .share-player-card {
-      background: #fff;
-      border: 1px solid #d8e2f0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(10, 30, 60, 0.05);
+    .share-card-link-wrap {
       display: flex;
       flex-direction: column;
-      min-height: 300px;
+      height: 100%;
     }
-    .share-player-photo {
+    .share-card-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      align-self: stretch;
       width: 100%;
-      aspect-ratio: 4 / 3;
-      object-fit: cover;
-      background: #e8eef8;
+      height: 48px;
+      padding: 0 12px;
+      box-sizing: border-box;
+      margin: 0;
+      background: #d3deef;
+      border-top: 1px solid #b7c6db;
+      flex-shrink: 0;
     }
-    .share-player-photo-empty {
-      width: 100%;
-      aspect-ratio: 4 / 3;
+    .share-player-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 160px;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #b7c6db;
+      background: #e4eaf4;
+      color: #1f3c68;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .share-player-link:hover {
+      background: #d8e2f0;
+    }
+    .share-empty-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #e8eef8;
-      color: #4f6587;
-      font-weight: 700;
-    }
-    .share-player-body {
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      flex: 1;
-    }
-    .share-player-name {
-      font-size: 17px;
-      margin: 0;
-      color: #16355f;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-    .share-player-line {
-      margin: 0;
-      font-size: 13px;
-      color: #425777;
-    }
-    .share-player-link {
-      margin-top: auto;
-      display: inline-block;
-      text-decoration: none;
-      background: #1e3c72;
-      color: #fff;
-      border-radius: 8px;
-      padding: 9px 11px;
-      font-size: 13px;
-      font-weight: 700;
-      text-align: center;
-    }
-    .share-player-link:hover {
-      background: #2a5298;
+      margin: 0 auto;
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(#e0e0e0, #e0e0e0) padding-box,
+                  linear-gradient(135deg, #d8dde3 0%, #b6bec8 32%, #8d97a3 58%, #c8cfd8 100%) border-box;
+      border: 4px solid transparent;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+      font-size: 12px;
+      color: #757575;
+      font-weight: 600;
+      z-index: 10;
     }
     .status-box {
       background: #fff;
@@ -140,6 +181,19 @@
       margin: 0;
       color: #465b7b;
     }
+    @media (max-width: 720px) {
+      .share-team-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 18px 16px;
+      }
+      .share-title {
+        white-space: normal;
+      }
+      .share-meta {
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -151,12 +205,19 @@
 
     <div id="contentBox" style="display:none;">
       <div class="share-header">
-        <h1 class="share-title" id="shareTitle">Shared Players</h1>
-        <div class="share-meta">
-          <span class="share-pill" id="coachNamePill"></span>
-          <span class="share-pill" id="teamNamePill"></span>
-          <span class="share-pill" id="countPill"></span>
-          <span class="share-pill" id="expiresPill"></span>
+        <div class="share-team-banner">
+          <div class="share-team-icon" id="shareTeamIcon">🏈</div>
+          <div class="share-team-text">
+            <p class="share-kicker">Recruiter Selection</p>
+            <h1 class="share-title" id="shareTitle">Shared Players</h1>
+            <p class="share-subtitle" id="shareSubtitle">Coach-curated player list</p>
+            <div class="share-meta">
+              <span class="share-pill" id="coachNamePill"></span>
+              <span class="share-pill" id="teamNamePill"></span>
+              <span class="share-pill" id="countPill"></span>
+              <span class="share-pill" id="expiresPill"></span>
+            </div>
+          </div>
         </div>
         <div id="shareMessage" class="share-message" style="display:none;"></div>
       </div>
@@ -204,10 +265,30 @@
       return raw;
     }
 
+    function hasVerifiedMetric(player) {
+      if (!player || !player.metric_videos) return false;
+      try {
+        const metricVideos = JSON.parse(player.metric_videos);
+        return Array.isArray(metricVideos) && metricVideos.some((video) => !!video?.is_verified);
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function renderTeamIcon(share) {
+      const iconWrap = document.getElementById('shareTeamIcon');
+      if (!iconWrap) return;
+      if (share && share.schoolLogo) {
+        iconWrap.innerHTML = '<img src="/uploads/' + escHtml(share.schoolLogo) + '" alt="School Logo">';
+      } else {
+        iconWrap.textContent = '🏈';
+      }
+    }
+
     function renderPlayers(players) {
       const grid = document.getElementById('playersGrid');
       grid.innerHTML = players.map((player) => {
-        const photo = player.profile_picture ? '/uploads/' + escHtml(player.profile_picture) : '';
+        const photo = player.profile_picture ? '/uploads/' + encodeURI(player.profile_picture) : '';
         const name = escHtml(player.full_name || 'Player');
         const position = escHtml(player.position || 'Position not set');
         const school = escHtml(player.high_school || 'School not set');
@@ -215,20 +296,37 @@
         const height = escHtml(formatHeightDisplay(player.height) || 'N/A');
         const weight = player.weight ? escHtml(String(player.weight) + ' lbs') : 'N/A';
         const gpa = player.gpa != null ? escHtml(String(player.gpa)) : 'N/A';
+        const hasVerifiedBadge = hasVerifiedMetric(player);
 
-        return '<div class="share-player-card">'
+        return '<div class="player-card-compact">'
+          + '<div class="share-card-link-wrap">'
+          + '<div class="player-card-header">'
           + (photo
-            ? '<img class="share-player-photo" src="' + photo + '" alt="' + name + '">'
-            : '<div class="share-player-photo-empty">No Photo</div>')
-          + '<div class="share-player-body">'
-          + '<h3 class="share-player-name">' + name + '</h3>'
-          + '<p class="share-player-line"><strong>' + position + '</strong></p>'
-          + '<p class="share-player-line">' + school + '</p>'
-          + '<p class="share-player-line">Class of ' + year + '</p>'
-          + '<p class="share-player-line">Height: ' + height + ' | Weight: ' + weight + '</p>'
-          + '<p class="share-player-line">GPA: ' + gpa + '</p>'
+            ? '<img src="' + photo + '" alt="' + name + '" class="player-card-photo">'
+            : '<div class="share-empty-photo">No Photo</div>')
+          + '</div>'
+          + '<div class="player-card-body">'
+          + '<div class="player-info-section">'
+          + '<h3>' + name + '</h3>'
+          + '<p>' + position + '</p>'
+          + '<p>' + school + '</p>'
+          + '<p>Class of ' + year + '</p>'
+          + '</div>'
+          + '<div class="player-stats-compact">'
+          + '<div class="stat-item"><div class="stat-label">Height</div><div class="stat-value">' + height + '</div></div>'
+          + '<div class="stat-item"><div class="stat-label">Weight</div><div class="stat-value">' + weight + '</div></div>'
+          + '<div class="stat-item"><div class="stat-label">GPA</div><div class="stat-value">' + gpa + '</div></div>'
+          + '<div class="stat-item" title="' + escHtml(hasVerifiedBadge ? 'This athlete has at least one third-party verified athletic metric' : 'No third-party verified athletic metrics yet') + '">'
+          + '<div class="stat-label">Verified</div>'
+          + '<div class="stat-value verified-athlete-tile ' + (hasVerifiedBadge ? '' : 'verified-athlete-tile-empty') + '">'
+          + (hasVerifiedBadge
+            ? '<img src="/images/logos/verified-athlete.svg" alt="Verified Athlete" class="verified-athlete-image">'
+            : 'Not Yet')
+          + '</div></div>'
+          + '</div></div>'
+          + '<div class="share-card-actions">'
           + '<a class="share-player-link" href="/player-detail.html?id=' + encodeURIComponent(player.user_id) + '">Open Full Profile</a>'
-          + '</div></div>';
+          + '</div></div></div>';
       }).join('');
     }
 
@@ -254,10 +352,13 @@
         const players = Array.isArray(data.players) ? data.players : [];
         const headline = share.subject || 'Shared Player Profiles';
         document.getElementById('shareTitle').textContent = headline;
+        document.getElementById('shareSubtitle').textContent = (share.teamName || 'Unknown Team')
+          + (share.schoolName ? ' • ' + share.schoolName : '');
         document.getElementById('coachNamePill').textContent = 'Coach: ' + (share.coachName || 'Unknown');
         document.getElementById('teamNamePill').textContent = 'Team: ' + (share.teamName || 'Unknown Team');
         document.getElementById('countPill').textContent = players.length + ' Player' + (players.length === 1 ? '' : 's');
         document.getElementById('expiresPill').textContent = 'Expires: ' + (share.expiresAt ? new Date(share.expiresAt).toLocaleString() : 'N/A');
+        renderTeamIcon(share);
 
         if (share.message) {
           const messageEl = document.getElementById('shareMessage');
