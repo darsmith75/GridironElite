@@ -2681,7 +2681,9 @@ async function sendRecruiterShareEmail({
     subject: safeSubject,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
-        <h2 style="color:#1e3a5f;margin:0 0 12px;">Player Profiles Shared With You</h2>
+        <div style="background:#1e3c72;border-radius:10px;padding:12px 14px;margin:0 0 12px;">
+          <h2 style="color:#ffffff;margin:0;">Player Profiles Shared With You</h2>
+        </div>
         <p><strong>${escapeHtmlEmail(coachName || 'A coach')}</strong> shared ${playerCount} player profile${playerCount === 1 ? '' : 's'} from <strong>${escapeHtmlEmail(teamName || 'their team')}</strong>${escapeHtmlEmail(displaySchool)}.</p>
         ${escapedMessage ? `<p style="background:#f5f8ff;border:1px solid #d9e4ff;border-radius:8px;padding:12px;white-space:pre-wrap;">${escapedMessage}</p>` : ''}
         <p style="margin:24px 0">
