@@ -3002,6 +3002,7 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const share = await db.prepare(`
       SELECT s.id, s.subject, s.message, s.recipient_email, s.expires_at, s.first_opened_at, s.open_count,
+        s.coach_user_id,
         t.team_name, t.school_name, t.school_logo,
         u.full_name AS coach_name
       FROM recruiter_player_shares s
@@ -3042,6 +3043,7 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
         teamName: share.team_name || null,
         schoolName: share.school_name || null,
         schoolLogo: share.school_logo || null,
+        coachUserId: share.coach_user_id || null,
         expiresAt: share.expires_at,
         firstOpenedAt: share.first_opened_at,
         openCount: Number(share.open_count || 0) + 1
@@ -3149,66 +3151,67 @@ app.get('/api/player/team-invites', requireAuth, async (req, res) => {
     console.error('Player get team invites error:', error);
     res.status(500).json({ error: 'Failed to get invites' });
   }
-  // Public: Get coach profile by ID
-  app.get('/api/coach/:id', async (req, res) => {
-    try {
-      const coachId = parseInt(req.params.id, 10);
-      if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
+});
 
-      const coach = await db.prepare(`
-        SELECT u.full_name, u.phone, u.email, u.profile_picture,
-          t.team_name, t.school_name, t.city, t.state
-        FROM users u
-        LEFT JOIN hs_teams t ON t.coach_id = u.id
-        WHERE u.id = ? AND u.role = 'coach'
-        LIMIT 1
-      `).get(coachId);
+// Public: Get coach profile by ID
+app.get('/api/coach/:id', async (req, res) => {
+  try {
+    const coachId = parseInt(req.params.id, 10);
+    if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
 
-      if (!coach) return res.status(404).json({ error: 'Coach not found' });
-      res.json(coach);
-    } catch (error) {
-      console.error('Get coach error:', error);
-      res.status(500).json({ error: 'Failed to get coach' });
-    }
-  });
+    const coach = await db.prepare(`
+      SELECT u.full_name, u.phone, u.email, u.profile_picture,
+        t.team_name, t.school_name, t.city, t.state
+      FROM users u
+      LEFT JOIN hs_teams t ON t.coach_id = u.id
+      WHERE u.id = ? AND u.role = 'coach'
+      LIMIT 1
+    `).get(coachId);
 
-  // Public: Get coach profile via recruiter share token (for shared context)
-  app.get('/api/recruiter-share-coach/:coachId', async (req, res) => {
-    try {
-      const { token } = req.query;
-      const coachId = parseInt(req.params.coachId, 10);
+    if (!coach) return res.status(404).json({ error: 'Coach not found' });
+    res.json(coach);
+  } catch (error) {
+    console.error('Get coach error:', error);
+    res.status(500).json({ error: 'Failed to get coach' });
+  }
+});
 
-      if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
-      if (!token) return res.status(400).json({ error: 'Share token is required' });
+// Public: Get coach profile via recruiter share token (for shared context)
+app.get('/api/recruiter-share-coach/:coachId', async (req, res) => {
+  try {
+    const { token } = req.query;
+    const coachId = parseInt(req.params.coachId, 10);
 
-      // Verify token is valid and not expired
-      const tokenHash = crypto.createHash('sha256').update(String(token).toLowerCase()).digest('hex');
-      const share = await db.prepare(`
-        SELECT s.id, s.coach_user_id, s.expires_at
-        FROM recruiter_player_shares s
-        WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP
-        LIMIT 1
-      `).get(tokenHash);
+    if (isNaN(coachId)) return res.status(400).json({ error: 'Invalid coach ID' });
+    if (!token) return res.status(400).json({ error: 'Share token is required' });
 
-      if (!share) return res.status(404).json({ error: 'Share link is invalid or expired' });
+    // Verify token is valid and not expired
+    const tokenHash = crypto.createHash('sha256').update(String(token).toLowerCase()).digest('hex');
+    const share = await db.prepare(`
+      SELECT s.id, s.coach_user_id, s.expires_at
+      FROM recruiter_player_shares s
+      WHERE s.token_hash = ? AND s.expires_at > CURRENT_TIMESTAMP
+      LIMIT 1
+    `).get(tokenHash);
 
-      // Get coach details
-      const coach = await db.prepare(`
-        SELECT u.full_name, u.phone, u.email, u.profile_picture,
-          t.team_name, t.school_name, t.city, t.state
-        FROM users u
-        LEFT JOIN hs_teams t ON t.coach_id = u.id
-        WHERE u.id = ? AND u.role = 'coach'
-        LIMIT 1
-      `).get(share.coach_user_id);
+    if (!share) return res.status(404).json({ error: 'Share link is invalid or expired' });
 
-      if (!coach) return res.status(404).json({ error: 'Coach not found' });
-      res.json(coach);
-    } catch (error) {
-      console.error('Get coach via share error:', error);
-      res.status(500).json({ error: 'Failed to get coach' });
-    }
-  });
+    // Get coach details
+    const coach = await db.prepare(`
+      SELECT u.full_name, u.phone, u.email, u.profile_picture,
+        t.team_name, t.school_name, t.city, t.state
+      FROM users u
+      LEFT JOIN hs_teams t ON t.coach_id = u.id
+      WHERE u.id = ? AND u.role = 'coach'
+      LIMIT 1
+    `).get(share.coach_user_id);
+
+    if (!coach) return res.status(404).json({ error: 'Coach not found' });
+    res.json(coach);
+  } catch (error) {
+    console.error('Get coach via share error:', error);
+    res.status(500).json({ error: 'Failed to get coach' });
+  }
 });
 
 // Player: Accept a team invite

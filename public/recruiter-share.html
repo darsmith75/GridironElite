@@ -412,7 +412,6 @@
         document.getElementById('shareTitle').textContent = headline;
         document.getElementById('shareSubtitle').textContent = (share.teamName || 'Unknown Team')
           + (share.schoolName ? ' • ' + share.schoolName : '');
-        document.getElementById('coachNamePill').textContent = 'Coach: ' + (share.coachName || 'Unknown');
         document.getElementById('teamNamePill').textContent = 'Team: ' + (share.teamName || 'Unknown Team');
         document.getElementById('countPill').textContent = players.length + ' Player' + (players.length === 1 ? '' : 's');
         document.getElementById('expiresPill').textContent = 'Expires: ' + (share.expiresAt ? new Date(share.expiresAt).toLocaleString() : 'N/A');
