@@ -227,6 +227,258 @@
     }
     .btn-cancel-invite:hover { background: #ffcdd2; }
 
+    /* Schools tab */
+    .coach-schools-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .followed-schools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .followed-school-card {
+      background: #fff;
+      border: 1px solid #c7d0da;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .followed-school-card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .followed-school-logo {
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #f4f7fb;
+      padding: 4px;
+    }
+    .followed-school-logo-placeholder {
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: #eef1f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+    .followed-school-info { flex: 1; min-width: 0; }
+    .followed-school-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e3c72;
+      margin: 0 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .followed-school-conf {
+      font-size: 12px;
+      color: #76849b;
+    }
+    .btn-browse-schools {
+      padding: 10px 18px;
+      background: #1e3c72;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-browse-schools:hover { background: #2a5298; }
+    /* Schools modal */
+    .coach-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 9999;
+      overflow-y: auto;
+    }
+    .coach-modal-box {
+      background: #fff;
+      border-radius: 14px;
+      margin: 40px auto;
+      width: min(860px, 96vw);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+      overflow: hidden;
+    }
+    .coach-modal-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .coach-modal-header h2 { margin: 0; font-size: 20px; color: #fff; }
+    .coach-modal-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+    .coach-modal-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 16px 24px;
+      border-bottom: 1px solid #e8edf5;
+      background: #f8faff;
+    }
+    .coach-modal-filters input,
+    .coach-modal-filters select {
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .coach-schools-grid {
+      padding: 16px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 12px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    /* School detail modal */
+    .detail-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      overflow-y: auto;
+    }
+    .detail-modal-box {
+      background: #fff;
+      border-radius: 14px;
+      margin: 40px auto;
+      width: min(720px, 96vw);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.24);
+      overflow: hidden;
+    }
+    .detail-modal-header {
+      background: url('/images/bluebackground.png') center/cover no-repeat;
+      color: #fff;
+      padding: 22px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .detail-modal-header h2 { margin: 0; font-size: 20px; color: #fff; }
+    .detail-modal-tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e8f5;
+      padding: 0 24px;
+      background: #f8faff;
+    }
+    .detail-modal-tab {
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #76849b;
+      cursor: pointer;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .detail-modal-tab.active {
+      color: #1e3c72;
+      border-bottom-color: #1e3c72;
+    }
+    .detail-modal-body { padding: 20px 24px; min-height: 200px; }
+    .school-detail-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .school-detail-form input {
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 13px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .school-detail-form input:focus { outline: none; border-color: #1e3c72; }
+    .school-detail-form .full-col { grid-column: 1 / -1; }
+    .contact-card {
+      border: 1px solid #e8edf5;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #f8faff;
+      margin-bottom: 10px;
+    }
+    .contact-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .contact-name { font-weight: 600; font-size: 14px; color: #1e3c72; }
+    .contact-title { font-size: 12px; color: #76849b; }
+    .contact-detail { font-size: 12px; color: #555; margin-top: 4px; }
+    .note-card {
+      border: 1px solid #e8edf5;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #f8faff;
+      margin-bottom: 10px;
+    }
+    .note-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .note-date { font-size: 11px; color: #76849b; }
+    .note-text { font-size: 13px; color: #333; line-height: 1.5; white-space: pre-wrap; }
+    .btn-sm-danger {
+      padding: 3px 10px;
+      background: #ffebee;
+      color: #c62828;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-sm-danger:hover { background: #ffcdd2; }
+    .btn-sm-edit {
+      padding: 3px 10px;
+      background: #e8edf5;
+      color: #1e3c72;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-sm-edit:hover { background: #d0daf0; }
     /* Roster */
     .roster-section {
       background: white;
@@ -646,6 +898,7 @@
       <!-- Coach tabs -->
       <div class="coach-tabs">
         <button class="coach-tab active" id="coachTab-roster" onclick="switchCoachTab('roster')">Team Roster</button>
+        <button class="coach-tab" id="coachTab-schools" onclick="switchCoachTab('schools')">🏫 Schools</button>
         <button class="coach-tab" id="coachTab-invites" onclick="switchCoachTab('invites')">
           Invites <span id="pendingInvitesBadge" class="pending-badge" style="display:none;"></span>
         </button>
@@ -794,6 +1047,21 @@
         </div>
       </div><!-- /.tab-coach-roster -->
 
+      <!-- Tab: Schools -->
+      <div id="tab-coach-schools" class="coach-tab-panel hidden">
+        <div class="roster-section">
+          <div class="coach-schools-header">
+            <div class="section-title" style="margin:0;">Followed Schools</div>
+            <button class="btn-browse-schools" onclick="openSchoolsBrowseModal()">🔍 Browse All Schools</button>
+          </div>
+          <div id="followedSchoolsGrid" class="followed-schools-grid">
+            <div style="grid-column:1/-1; text-align:center; padding:40px; color:#76849b;">
+              Loading schools...
+            </div>
+          </div>
+        </div>
+      </div><!-- /.tab-coach-schools -->
+
       <!-- Tab: Invites -->
       <div id="tab-coach-invites" class="coach-tab-panel hidden">
         <div class="coach-stats-row">
@@ -844,6 +1112,85 @@
 
     </div><!-- /.dashboard-container -->
   </div><!-- /.dashboard-wrapper -->
+
+  <!-- ============ schools Browse Modal ============ -->
+  <div id="coachSchoolsModal" class="coach-modal-overlay">
+    <div class="coach-modal-box">
+      <div class="coach-modal-header">
+        <h2>🏫 Browse Schools</h2>
+        <button class="coach-modal-close" onclick="closeSchoolsBrowseModal()">&times;</button>
+      </div>
+      <div class="coach-modal-filters">
+        <input type="text" id="coachSchoolSearch" placeholder="Search schools..." oninput="renderBrowseSchools()" style="flex:1; min-width:180px;">
+        <select id="coachSchoolConferenceFilter" onchange="renderBrowseSchools()" style="min-width:160px;">
+          <option value="">All Conferences</option>
+        </select>
+        <select id="coachSchoolStatusFilter" onchange="renderBrowseSchools()" style="min-width:140px;">
+          <option value="">All Schools</option>
+          <option value="followed">⭐ Following</option>
+        </select>
+      </div>
+      <div id="coachSchoolsGrid" class="coach-schools-grid"></div>
+    </div>
+  </div>
+
+  <!-- ============ School Detail Modal ============ -->
+  <div id="coachSchoolDetailModal" class="detail-modal-overlay">
+    <div class="detail-modal-box">
+      <div class="detail-modal-header">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div id="coachDetailLogo"></div>
+          <div>
+            <h2 id="coachDetailName" style="margin:0; font-size:20px; color:#fff;"></h2>
+            <span id="coachDetailConf" style="font-size:13px; color:rgba(255,255,255,0.85);"></span>
+          </div>
+        </div>
+        <button class="coach-modal-close" onclick="closeSchoolDetailModal()">&times;</button>
+      </div>
+      <div class="detail-modal-tabs">
+        <button class="detail-modal-tab active" id="coachDetailTabContacts" onclick="switchDetailTab('contacts')">👥 Contacts</button>
+        <button class="detail-modal-tab" id="coachDetailTabNotes" onclick="switchDetailTab('notes')">📝 Notes</button>
+      </div>
+      <div class="detail-modal-body">
+        <!-- Contacts panel -->
+        <div id="coachDetailPanelContacts">
+          <h3 style="margin:0 0 14px; font-size:15px; color:#1e3c72;">School Contacts</h3>
+          <div id="coachContactsList" style="margin-bottom:16px;"></div>
+          <details style="border:1px solid #e0e8f5; border-radius:10px; padding:12px 14px;">
+            <summary style="cursor:pointer; font-size:14px; font-weight:600; color:#1e3c72;">+ Add Contact</summary>
+            <div style="margin-top:12px;">
+              <div class="school-detail-form">
+                <input type="text" id="coachContactName" placeholder="Name *">
+                <input type="text" id="coachContactTitle" placeholder="Title / Role">
+                <input type="email" id="coachContactEmail" placeholder="Email" class="full-col">
+                <input type="tel" id="coachContactPhone" placeholder="Phone">
+                <div class="full-col" style="display:flex; justify-content:flex-end;">
+                  <button class="btn-invite" onclick="addCoachContact()">Add Contact</button>
+                </div>
+              </div>
+              <div id="coachContactMsg" style="min-height:16px; font-size:13px; font-weight:600;"></div>
+            </div>
+          </details>
+        </div>
+        <!-- Notes panel -->
+        <div id="coachDetailPanelNotes" style="display:none;">
+          <h3 style="margin:0 0 14px; font-size:15px; color:#1e3c72;">School Notes</h3>
+          <div id="coachNotesList" style="margin-bottom:16px;"></div>
+          <details style="border:1px solid #e0e8f5; border-radius:10px; padding:12px 14px;">
+            <summary style="cursor:pointer; font-size:14px; font-weight:600; color:#1e3c72;">+ Add Note</summary>
+            <div style="margin-top:12px;">
+              <input type="date" id="coachNoteDate" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+              <textarea id="coachNoteText" rows="4" placeholder="Write your notes about this school..." style="width:100%; padding:10px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; resize:vertical; box-sizing:border-box;"></textarea>
+              <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                <button class="btn-invite" onclick="addCoachNote()">Add Note</button>
+              </div>
+              <div id="coachNoteMsg" style="min-height:16px; font-size:13px; font-weight:600; margin-top:4px;"></div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
   <script>
@@ -1552,6 +1899,363 @@
       document.querySelectorAll('.coach-tab-panel').forEach((panel) => panel.classList.add('hidden'));
       document.getElementById('coachTab-' + tab).classList.add('active');
       document.getElementById('tab-coach-' + tab).classList.remove('hidden');
+      if (tab === 'schools') loadCoachSchools();
+    }
+
+    // ============ COACH SCHOOLS ============
+    let coachAllSchools = [];
+    let coachCurrentSchoolId = null;
+    let coachCurrentSchoolData = null;
+    let coachSchoolsLoaded = false;
+
+    function escC(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    async function loadCoachSchools() {
+      try {
+        const res = await fetch('/api/coach/colleges');
+        if (!res.ok) return;
+        coachAllSchools = await res.json();
+        coachSchoolsLoaded = true;
+        renderFollowedSchools();
+        populateConferenceFilter();
+      } catch (err) {
+        console.error('Failed to load coach schools:', err);
+      }
+    }
+
+    function populateConferenceFilter() {
+      const sel = document.getElementById('coachSchoolConferenceFilter');
+      if (!sel) return;
+      const conferences = [...new Set(coachAllSchools.map(c => c.conference).filter(Boolean))].sort();
+      sel.innerHTML = '<option value="">All Conferences</option>' +
+        conferences.map(conf => `<option value="${escC(conf)}">${escC(conf)}</option>`).join('');
+    }
+
+    function renderFollowedSchools() {
+      const grid = document.getElementById('followedSchoolsGrid');
+      if (!grid) return;
+      const followed = coachAllSchools.filter(s => s.is_followed);
+      if (followed.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:48px 20px; color:#76849b;">
+          <div style="font-size:40px; margin-bottom:12px;">🏫</div>
+          <div style="font-size:16px; font-weight:600; color:#1e3c72; margin-bottom:6px;">No followed schools yet</div>
+          <div>Click <strong>Browse All Schools</strong> to find and follow colleges.</div>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = followed.map(s => {
+        const logoHtml = s.logo
+          ? `<img class="followed-school-logo" src="/${escC(s.logo)}" alt="${escC(s.name)}">`
+          : `<div class="followed-school-logo-placeholder">🏫</div>`;
+        const conf = [s.conference, s.team].filter(Boolean).join(' · ');
+        return `<div class="followed-school-card" onclick="openCoachSchoolDetail(${s.id})">
+          ${logoHtml}
+          <div class="followed-school-info">
+            <div class="followed-school-name">${escC(s.name)}</div>
+            ${conf ? `<div class="followed-school-conf">${escC(conf)}</div>` : ''}
+          </div>
+          <div style="color:#1e3c72; font-size:20px;">›</div>
+        </div>`;
+      }).join('');
+    }
+
+    async function openSchoolsBrowseModal() {
+      if (!coachSchoolsLoaded) await loadCoachSchools();
+      document.getElementById('coachSchoolsModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      document.getElementById('coachSchoolSearch').value = '';
+      document.getElementById('coachSchoolStatusFilter').value = '';
+      renderBrowseSchools();
+    }
+
+    function closeSchoolsBrowseModal() {
+      document.getElementById('coachSchoolsModal').style.display = 'none';
+      document.body.style.overflow = '';
+      renderFollowedSchools();
+    }
+
+    function renderBrowseSchools() {
+      const search = document.getElementById('coachSchoolSearch').value.toLowerCase().trim();
+      const confFilter = document.getElementById('coachSchoolConferenceFilter').value;
+      const statusFilter = document.getElementById('coachSchoolStatusFilter').value;
+      let filtered = coachAllSchools;
+      if (confFilter) filtered = filtered.filter(c => c.conference === confFilter);
+      if (search) filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.team || '').toLowerCase().includes(search));
+      if (statusFilter === 'followed') filtered = filtered.filter(c => c.is_followed);
+
+      const grid = document.getElementById('coachSchoolsGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = '<p style="color:#999; text-align:center; padding:30px; grid-column:1/-1;">No schools found</p>';
+        return;
+      }
+      grid.innerHTML = filtered.map(c => {
+        const logoHtml = c.logo
+          ? `<img src="/${escC(c.logo)}" alt="${escC(c.name)}" style="width:52px; height:52px; object-fit:contain; border-radius:8px; flex-shrink:0;">`
+          : `<div style="width:52px; height:52px; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;">🏫</div>`;
+        const confBadge = c.conference
+          ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px;">${escC(c.conference)}</span>`
+          : '';
+        const teamBadge = c.team
+          ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; margin-left:4px;">${escC(c.team)}</span>`
+          : '';
+        const followActive = c.is_followed ? 'background:#e8f5e9; border-color:#28a745; color:#155724;' : '';
+        return `<div style="display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid #e8e8e8; border-radius:10px; background:#fff; transition:box-shadow 0.2s;"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+          ${logoHtml}
+          <div style="flex:1; min-width:0;">
+            <h4 style="margin:0 0 4px; font-size:14px; color:#333;">${escC(c.name)}</h4>
+            <div style="margin:4px 0 8px;">${confBadge}${teamBadge}</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button onclick="toggleCoachFollow(${c.id})" style="padding:5px 12px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s; ${followActive}">${c.is_followed ? '⭐ Following' : '☆ Follow'}</button>
+              <button onclick="openCoachSchoolDetail(${c.id})" style="padding:5px 12px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; background:#e8edf5; color:#1e3c72;">📝 Contacts & Notes</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function toggleCoachFollow(collegeId) {
+      try {
+        const res = await fetch(`/api/coach/colleges/${collegeId}/follow`, { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const school = coachAllSchools.find(s => s.id === collegeId);
+        if (school) school.is_followed = data.is_followed;
+        renderBrowseSchools();
+      } catch (err) {
+        console.error('Failed to toggle follow:', err);
+      }
+    }
+
+    async function openCoachSchoolDetail(collegeId) {
+      if (!coachSchoolsLoaded) await loadCoachSchools();
+      coachCurrentSchoolId = collegeId;
+      coachCurrentSchoolData = coachAllSchools.find(s => s.id === collegeId);
+      if (!coachCurrentSchoolData) return;
+
+      const logoEl = document.getElementById('coachDetailLogo');
+      if (coachCurrentSchoolData.logo) {
+        logoEl.innerHTML = `<img src="/${escC(coachCurrentSchoolData.logo)}" style="width:44px; height:44px; object-fit:contain; border-radius:8px; background:#fff; padding:3px;">`;
+      } else {
+        logoEl.innerHTML = `<div style="width:44px; height:44px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:22px;">🏫</div>`;
+      }
+      document.getElementById('coachDetailName').textContent = coachCurrentSchoolData.name;
+      document.getElementById('coachDetailConf').textContent = [coachCurrentSchoolData.conference, coachCurrentSchoolData.team].filter(Boolean).join(' · ');
+
+      document.getElementById('coachSchoolDetailModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      switchDetailTab('contacts');
+    }
+
+    function closeSchoolDetailModal() {
+      document.getElementById('coachSchoolDetailModal').style.display = 'none';
+      document.body.style.overflow = '';
+      coachCurrentSchoolId = null;
+      coachCurrentSchoolData = null;
+    }
+
+    function switchDetailTab(tab) {
+      const panelC = document.getElementById('coachDetailPanelContacts');
+      const panelN = document.getElementById('coachDetailPanelNotes');
+      const tabC = document.getElementById('coachDetailTabContacts');
+      const tabN = document.getElementById('coachDetailTabNotes');
+      panelC.style.display = tab === 'contacts' ? 'block' : 'none';
+      panelN.style.display = tab === 'notes' ? 'block' : 'none';
+      tabC.classList.toggle('active', tab === 'contacts');
+      tabN.classList.toggle('active', tab === 'notes');
+      if (tab === 'contacts') loadCoachContacts();
+      else loadCoachNotes();
+    }
+
+    // ---- Contacts ----
+    async function loadCoachContacts() {
+      const list = document.getElementById('coachContactsList');
+      list.innerHTML = '<div style="color:#999;font-size:13px;">Loading...</div>';
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/contacts`);
+        if (!res.ok) { list.innerHTML = '<div style="color:#c62828;font-size:13px;">Failed to load contacts.</div>'; return; }
+        const contacts = await res.json();
+        if (!contacts.length) {
+          list.innerHTML = '<div style="color:#999;font-size:13px;font-style:italic;">No contacts added yet.</div>';
+          return;
+        }
+        list.innerHTML = contacts.map(c => `
+          <div class="contact-card" id="contact-card-${c.id}">
+            <div class="contact-card-header">
+              <div>
+                <div class="contact-name">${escC(c.name)}</div>
+                ${c.title ? `<div class="contact-title">${escC(c.title)}</div>` : ''}
+                ${c.email ? `<div class="contact-detail">📧 ${escC(c.email)}</div>` : ''}
+                ${c.phone ? `<div class="contact-detail">📞 ${escC(c.phone)}</div>` : ''}
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn-sm-edit" onclick="editCoachContact(${c.id}, ${escC(JSON.stringify({name:c.name,title:c.title||'',email:c.email||'',phone:c.phone||''})).replace(/"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm-danger" onclick="deleteCoachContact(${c.id})">Delete</button>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        list.innerHTML = '<div style="color:#c62828;font-size:13px;">Failed to load contacts.</div>';
+      }
+    }
+
+    async function addCoachContact() {
+      const name = document.getElementById('coachContactName').value.trim();
+      const title = document.getElementById('coachContactTitle').value.trim();
+      const email = document.getElementById('coachContactEmail').value.trim();
+      const phone = document.getElementById('coachContactPhone').value.trim();
+      const msg = document.getElementById('coachContactMsg');
+      if (!name) { msg.style.color = '#c62828'; msg.textContent = 'Name is required.'; return; }
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/contacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, title, email, phone })
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); msg.style.color = '#c62828'; msg.textContent = d.error || 'Failed to add contact.'; return; }
+        msg.style.color = '#2e7d32'; msg.textContent = 'Contact added.';
+        document.getElementById('coachContactName').value = '';
+        document.getElementById('coachContactTitle').value = '';
+        document.getElementById('coachContactEmail').value = '';
+        document.getElementById('coachContactPhone').value = '';
+        loadCoachContacts();
+      } catch (err) {
+        msg.style.color = '#c62828'; msg.textContent = 'Network error.';
+      }
+    }
+
+    function editCoachContact(contactId, data) {
+      const card = document.getElementById(`contact-card-${contactId}`);
+      if (!card) return;
+      const d = typeof data === 'string' ? JSON.parse(data) : data;
+      card.innerHTML = `
+        <div class="school-detail-form">
+          <input type="text" id="editCName-${contactId}" value="${escC(d.name)}" placeholder="Name *">
+          <input type="text" id="editCTitle-${contactId}" value="${escC(d.title)}" placeholder="Title / Role">
+          <input type="email" id="editCEmail-${contactId}" value="${escC(d.email)}" placeholder="Email" class="full-col">
+          <input type="tel" id="editCPhone-${contactId}" value="${escC(d.phone)}" placeholder="Phone">
+          <div class="full-col" style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn-sm-edit" onclick="saveCoachContact(${contactId})">Save</button>
+            <button class="btn-sm-danger" onclick="loadCoachContacts()">Cancel</button>
+          </div>
+        </div>`;
+    }
+
+    async function saveCoachContact(contactId) {
+      const name = document.getElementById(`editCName-${contactId}`).value.trim();
+      const title = document.getElementById(`editCTitle-${contactId}`).value.trim();
+      const email = document.getElementById(`editCEmail-${contactId}`).value.trim();
+      const phone = document.getElementById(`editCPhone-${contactId}`).value.trim();
+      if (!name) { alert('Name is required.'); return; }
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/contacts/${contactId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, title, email, phone })
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Failed to save contact.'); return; }
+        loadCoachContacts();
+      } catch (err) { alert('Network error.'); }
+    }
+
+    async function deleteCoachContact(contactId) {
+      if (!confirm('Delete this contact?')) return;
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/contacts/${contactId}`, { method: 'DELETE' });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Failed to delete contact.'); return; }
+        loadCoachContacts();
+      } catch (err) { alert('Network error.'); }
+    }
+
+    // ---- Notes ----
+    async function loadCoachNotes() {
+      const list = document.getElementById('coachNotesList');
+      list.innerHTML = '<div style="color:#999;font-size:13px;">Loading...</div>';
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes`);
+        if (!res.ok) { list.innerHTML = '<div style="color:#c62828;font-size:13px;">Failed to load notes.</div>'; return; }
+        const notes = await res.json();
+        if (!notes.length) {
+          list.innerHTML = '<div style="color:#999;font-size:13px;font-style:italic;">No notes added yet.</div>';
+          return;
+        }
+        list.innerHTML = notes.map(n => `
+          <div class="note-card" id="note-card-${n.id}">
+            <div class="note-card-header">
+              <div class="note-date">${n.visit_date ? '📅 ' + escC(n.visit_date) : '📝 Note'}</div>
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn-sm-edit" onclick="editCoachNote(${n.id}, ${escC(JSON.stringify({note:n.note,visitDate:n.visit_date||''})).replace(/"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm-danger" onclick="deleteCoachNote(${n.id})">Delete</button>
+              </div>
+            </div>
+            <div class="note-text">${escC(n.note)}</div>
+          </div>`).join('');
+      } catch (err) {
+        list.innerHTML = '<div style="color:#c62828;font-size:13px;">Failed to load notes.</div>';
+      }
+    }
+
+    async function addCoachNote() {
+      const note = document.getElementById('coachNoteText').value.trim();
+      const visitDate = document.getElementById('coachNoteDate').value.trim();
+      const msg = document.getElementById('coachNoteMsg');
+      if (!note) { msg.style.color = '#c62828'; msg.textContent = 'Note text is required.'; return; }
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, visitDate })
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); msg.style.color = '#c62828'; msg.textContent = d.error || 'Failed to add note.'; return; }
+        msg.style.color = '#2e7d32'; msg.textContent = 'Note added.';
+        document.getElementById('coachNoteText').value = '';
+        document.getElementById('coachNoteDate').value = '';
+        loadCoachNotes();
+      } catch (err) {
+        msg.style.color = '#c62828'; msg.textContent = 'Network error.';
+      }
+    }
+
+    function editCoachNote(noteId, data) {
+      const card = document.getElementById(`note-card-${noteId}`);
+      if (!card) return;
+      const d = typeof data === 'string' ? JSON.parse(data) : data;
+      card.innerHTML = `
+        <input type="date" value="${escC(d.visitDate)}" id="editNDate-${noteId}" style="width:100%; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+        <textarea id="editNText-${noteId}" rows="4" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; resize:vertical; box-sizing:border-box;">${escC(d.note)}</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+          <button class="btn-sm-edit" onclick="saveCoachNote(${noteId})">Save</button>
+          <button class="btn-sm-danger" onclick="loadCoachNotes()">Cancel</button>
+        </div>`;
+    }
+
+    async function saveCoachNote(noteId) {
+      const note = document.getElementById(`editNText-${noteId}`).value.trim();
+      const visitDate = document.getElementById(`editNDate-${noteId}`).value.trim();
+      if (!note) { alert('Note text is required.'); return; }
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes/${noteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, visitDate })
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Failed to save note.'); return; }
+        loadCoachNotes();
+      } catch (err) { alert('Network error.'); }
+    }
+
+    async function deleteCoachNote(noteId) {
+      if (!confirm('Delete this note?')) return;
+      try {
+        const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes/${noteId}`, { method: 'DELETE' });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Failed to delete note.'); return; }
+        loadCoachNotes();
+      } catch (err) { alert('Network error.'); }
     }
 
     function renderInvites() {
