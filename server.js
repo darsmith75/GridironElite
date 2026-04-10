@@ -4267,19 +4267,19 @@ app.get('/api/player/colleges', requireAuth, async (req, res) => {
       is_favorite: interestMap[c.id]?.is_favorite || 0,
       has_offer: interestMap[c.id]?.has_offer || 0
     }));
+    res.json(result);
+  } catch (error) {
+    console.error('Get colleges error:', error);
+    res.status(500).json({ error: 'Failed to get colleges' });
+  }
+});
+
+// Player: Toggle favorite on a college
+app.post('/api/player/colleges/:collegeId/favorite', requireAuth, async (req, res) => {
+  try {
+    const collegeId = parseInt(req.params.collegeId, 10);
+    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
-    // Coach: Get own profile
-    app.get('/api/coach/profile', requireCoach, async (req, res) => {
-      try {
-        const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ?').get(req.session.userId);
-        if (!coach) return res.status(404).json({ error: 'Coach not found' });
-        const team = await db.prepare('SELECT team_name, school_name, city, state FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
-        res.json({ ...coach, team: team || {} });
-      } catch (error) {
-        console.error('Coach get profile error:', error);
-        res.status(500).json({ error: 'Failed to get profile' });
-      }
-    });
     if (!college) return res.status(404).json({ error: 'College not found' });
 
     const existing = await db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
