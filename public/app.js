@@ -352,3 +352,90 @@ async function logPageView(pageKey, metadata = {}) {
     });
   } catch (_) {}
 }
+
+function ensureGlobalFooterStyles() {
+  if (document.getElementById('siteFooterStyles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'siteFooterStyles';
+  style.textContent = `
+    .site-footer {
+      margin-top: 28px;
+      background: linear-gradient(135deg, #102543 0%, #17315f 100%);
+      color: rgba(255, 255, 255, 0.92);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 18px 24px 20px;
+    }
+    .site-footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .site-footer-copy {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+    }
+    .site-footer-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .site-footer-link {
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .site-footer-link:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 720px) {
+      .site-footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .site-footer-links {
+        gap: 12px;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function injectGlobalFooter() {
+  if (!document.body || document.body.classList.contains('login-body') || document.getElementById('siteFooter')) {
+    return;
+  }
+
+  ensureGlobalFooterStyles();
+
+  const year = new Date().getFullYear();
+  const footer = document.createElement('footer');
+  footer.id = 'siteFooter';
+  footer.className = 'site-footer';
+  footer.innerHTML = `
+    <div class="site-footer-inner">
+      <div class="site-footer-copy">Copyright ${year} Gridiron Elite. All rights reserved.</div>
+      <div class="site-footer-links">
+        <a class="site-footer-link" href="about-us.html">About Us</a>
+        <a class="site-footer-link" href="terms-of-use.html">Terms of Use</a>
+        <a class="site-footer-link" href="contact-support.html">Contact Us / Support</a>
+      </div>
+    </div>
+  `;
+
+  const wrapper = document.querySelector('.dashboard-wrapper');
+  if (wrapper) wrapper.appendChild(footer);
+  else document.body.appendChild(footer);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', injectGlobalFooter);
+} else {
+  injectGlobalFooter();
+}

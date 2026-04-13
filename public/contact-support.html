@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us / Support - Gridiron Elite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .info-page-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 16px 0;
+    }
+    .info-hero {
+      background: linear-gradient(135deg, #17315f 0%, #27549a 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 22px rgba(23, 49, 95, 0.22);
+      margin-bottom: 18px;
+    }
+    .info-hero h1 {
+      margin: 0 0 8px;
+      color: #fff;
+      font-size: 30px;
+    }
+    .info-hero p {
+      margin: 0;
+      max-width: 800px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .support-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .support-card {
+      background: #fff;
+      border: 1px solid #d6deea;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+    .support-card h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #1e3c72;
+    }
+    .support-card p,
+    .support-card li {
+      color: #42536c;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .support-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="Gridiron Elite" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="/" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="player-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+          <a href="/login" class="nav-link">Login</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="info-page-shell">
+        <section class="info-hero">
+          <h1>Contact Us / Support</h1>
+          <p>If you need help with your account, profile access, platform behavior, or organization setup, start with the most direct support path below.</p>
+        </section>
+
+        <div class="support-grid">
+          <article class="support-card">
+            <h2>Players</h2>
+            <ul>
+              <li>For recruiting profile issues, start with your coach, agent, or organization contact.</li>
+              <li>If you were invited to the platform, reply to the original invitation or onboarding thread for the fastest help.</li>
+            </ul>
+          </article>
+          <article class="support-card">
+            <h2>Coaches / Agents</h2>
+            <ul>
+              <li>Use your organization administrator or platform owner as the first support channel for setup, access, or operational issues.</li>
+              <li>Document the page, action, and expected result when reporting bugs to speed up troubleshooting.</li>
+            </ul>
+          </article>
+          <article class="support-card">
+            <h2>What To Include</h2>
+            <ul>
+              <li>Your role and account email</li>
+              <li>The page where the issue happened</li>
+              <li>What you expected to happen</li>
+              <li>What actually happened</li>
+              <li>Screenshots when helpful</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    async function initSupportPage() {
+      const user = await tryAuth();
+      if (user) applyRoleBasedTopNav(user);
+      else applyPublicTopNav();
+      logPageView('contact_support');
+    }
+    initSupportPage();
+  </script>
+</body>
+</html>
