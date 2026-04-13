@@ -602,10 +602,41 @@
       node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
     });
 
-    renderTimelineYear('freshman');
+    function mapGraduationYearToTimelineYear(graduationYear, nowDate) {
+      if (!Number.isInteger(graduationYear)) return null;
+      const now = nowDate || new Date();
+      const currentYear = now.getFullYear();
+      const month = now.getMonth(); // 0-based
+      // In fall (Jul+), the active graduating class shifts to next year.
+      const activeSeniorClass = month >= 6 ? currentYear + 1 : currentYear;
+      const diff = graduationYear - activeSeniorClass;
+      if (diff === 0) return 'senior';
+      if (diff === 1) return 'junior';
+      if (diff === 2) return 'sophomore';
+      if (diff === 3) return 'freshman';
+      return null;
+    }
 
-    checkAuth('player');
-    logPageView('player_resources');
+    async function initResourcesPage() {
+      const user = await checkAuth('player');
+      if (!user) return;
+
+      let initialTimelineYear = 'freshman';
+      try {
+        const res = await fetch('/api/player/profile');
+        if (res.ok) {
+          const profile = await res.json();
+          const gradYear = Number(profile && profile.graduation_year);
+          const mappedYear = mapGraduationYearToTimelineYear(gradYear, new Date());
+          if (mappedYear) initialTimelineYear = mappedYear;
+        }
+      } catch (_) {}
+
+      renderTimelineYear(initialTimelineYear);
+      logPageView('player_resources');
+    }
+
+    initResourcesPage();
   </script>
 </body>
 </html>
