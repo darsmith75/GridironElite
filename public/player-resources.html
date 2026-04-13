@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Resources</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .resources-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 8px 0 20px;
+    }
+    .resources-hero {
+      background: linear-gradient(135deg, #17315f 0%, #27549a 60%, #4f7cc6 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 26px 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(19, 40, 78, 0.28);
+    }
+    .resources-hero h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    .resources-hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 760px;
+    }
+    .resources-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .resources-tab {
+      border: 1px solid #c7d0da;
+      background: #f7faff;
+      color: #234170;
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .resources-tab:hover {
+      border-color: #9fb5d5;
+      background: #eef4ff;
+    }
+    .resources-tab.active {
+      background: #1e3c72;
+      border-color: #1e3c72;
+      color: #fff;
+      box-shadow: 0 5px 16px rgba(30, 60, 114, 0.28);
+    }
+    .resources-panel {
+      display: none;
+      background: #fff;
+      border: 1px solid #d5deea;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+    .resources-panel.active {
+      display: block;
+      animation: fadeInPanel 0.2s ease-out;
+    }
+    @keyframes fadeInPanel {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .resource-columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .resource-card {
+      border: 1px solid #e2e8f2;
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+      background: #fbfdff;
+    }
+    .resource-card h3 {
+      margin: 0 0 8px;
+      color: #1d3765;
+      font-size: 15px;
+    }
+    .resource-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #3d4e68;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .resource-card li + li {
+      margin-top: 5px;
+    }
+    .do-dont-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+    .do-card,
+    .dont-card {
+      border-radius: 12px;
+      border: 1px solid #dbe5f3;
+      padding: 16px;
+    }
+    .do-card {
+      background: #f3fbf4;
+      border-color: #cfe8d3;
+    }
+    .dont-card {
+      background: #fff5f5;
+      border-color: #f2d5d5;
+    }
+    .do-card h3,
+    .dont-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .do-card h3 { color: #1f6b35; }
+    .dont-card h3 { color: #a12727; }
+    .do-card ul,
+    .dont-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #364a67;
+    }
+    .do-card li + li,
+    .dont-card li + li { margin-top: 6px; }
+    @media (max-width: 720px) {
+      .resources-hero { padding: 20px; }
+      .resources-hero h1 { font-size: 23px; }
+      .resources-panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="player-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="player-resources.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Resources
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="resources-shell">
+        <section class="resources-hero">
+          <h1>Player Recruiting Resources</h1>
+          <p>Use this page as your personal recruiting playbook. Stay organized, evaluate schools smartly, and communicate like a serious prospect.</p>
+        </section>
+
+        <div class="resources-tabs">
+          <button class="resources-tab active" data-tab="timeline" type="button">Recruiting Timeline</button>
+          <button class="resources-tab" data-tab="considerations" type="button">School Considerations</button>
+          <button class="resources-tab" data-tab="dos-donts" type="button">Things To Do / Not To Do</button>
+        </div>
+
+        <section id="panel-timeline" class="resources-panel active">
+          <div class="resource-columns">
+            <article class="resource-card">
+              <h3>Freshman Year</h3>
+              <ul>
+                <li>Build strong grades from day one.</li>
+                <li>Learn proper lifting and movement mechanics.</li>
+                <li>Create and update your player profile basics.</li>
+                <li>Start collecting measurable stats and film clips.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Sophomore Year</h3>
+              <ul>
+                <li>Attend camps/combine events where your position is tested.</li>
+                <li>Keep highlight film short and role-specific.</li>
+                <li>Reach out to target programs with clear intro messages.</li>
+                <li>Track every school touchpoint in your notes.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Junior Year</h3>
+              <ul>
+                <li>Take SAT/ACT early enough to retest if needed.</li>
+                <li>Build your top school list and re-rank monthly.</li>
+                <li>Visit campuses and meet coaches when possible.</li>
+                <li>Ask direct questions about role fit and depth chart.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Senior Year</h3>
+              <ul>
+                <li>Stay consistent on academics, training, and communication.</li>
+                <li>Evaluate offers by long-term fit, not just hype.</li>
+                <li>Review financial aid and academic support carefully.</li>
+                <li>Make your commitment timeline intentional and informed.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="panel-considerations" class="resources-panel">
+          <div class="resource-columns">
+            <article class="resource-card">
+              <h3>Academic Fit</h3>
+              <ul>
+                <li>Major availability and transferability.</li>
+                <li>Academic support for athletes.</li>
+                <li>Graduation and career placement rates.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Football Opportunity</h3>
+              <ul>
+                <li>Depth chart and realistic path to playing time.</li>
+                <li>Scheme fit for your position and skillset.</li>
+                <li>Coaching staff stability and development history.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Environment & Lifestyle</h3>
+              <ul>
+                <li>Distance from home and support network.</li>
+                <li>Campus culture and athlete expectations.</li>
+                <li>City, weather, and day-to-day comfort.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3>Financial & Future</h3>
+              <ul>
+                <li>Scholarship details and out-of-pocket cost.</li>
+                <li>NIL opportunity and support structure.</li>
+                <li>Network value beyond football.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="panel-dos-donts" class="resources-panel">
+          <div class="do-dont-grid">
+            <article class="do-card">
+              <h3>Do</h3>
+              <ul>
+                <li>Reply to coaches promptly and professionally.</li>
+                <li>Keep film updated and easy to access.</li>
+                <li>Be honest about your grades, measurables, and goals.</li>
+                <li>Track contacts, meetings, and campus visits.</li>
+                <li>Ask smart questions about fit and development.</li>
+                <li>Thank coaches and staff after conversations/visits.</li>
+              </ul>
+            </article>
+            <article class="dont-card">
+              <h3>Do Not</h3>
+              <ul>
+                <li>Spam generic messages to every program.</li>
+                <li>Exaggerate numbers or post misleading film.</li>
+                <li>Ignore academics while chasing offers.</li>
+                <li>Ghost coaches after they invest time in you.</li>
+                <li>Make emotional decisions without comparing options.</li>
+                <li>Let social media damage your recruiting image.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    function activateResourcesTab(tabName) {
+      document.querySelectorAll('.resources-tab').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.resources-panel').forEach((panel) => {
+        panel.classList.toggle('active', panel.id === 'panel-' + tabName);
+      });
+    }
+
+    document.querySelectorAll('.resources-tab').forEach((btn) => {
+      btn.addEventListener('click', () => activateResourcesTab(btn.dataset.tab));
+    });
+
+    checkAuth('player');
+    logPageView('player_resources');
+  </script>
+</body>
+</html>
