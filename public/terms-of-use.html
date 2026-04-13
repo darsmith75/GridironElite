@@ -6,6 +6,12 @@
   <title>Terms of Use - Gridiron Elite</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    .top-nav-menu {
+      visibility: hidden;
+    }
+    .top-nav-menu.nav-ready {
+      visibility: visible;
+    }
     .info-page-shell {
       max-width: 1100px;
       margin: 0 auto;
@@ -115,9 +121,11 @@
   <script src="app.js"></script>
   <script>
     async function initTermsPage() {
+      const nav = document.querySelector('.top-nav-menu');
       const user = await tryAuth();
       if (user) applyRoleBasedTopNav(user);
       else applyPublicTopNav();
+      if (nav) nav.classList.add('nav-ready');
       logPageView('terms_of_use');
     }
     initTermsPage();
