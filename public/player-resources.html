@@ -138,7 +138,7 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(120px, 1fr));
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       padding: 10px 0;
     }
     .year-timeline::before {
@@ -210,6 +210,24 @@
       letter-spacing: 0.4px;
       text-transform: uppercase;
     }
+    .year-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      margin-top: 5px;
+      background: #e7effb;
+      color: #1e3c72;
+      font-size: 15px;
+      box-shadow: inset 0 0 0 1px #c9d9f3;
+    }
+    .year-node.active .year-icon {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+    }
     .year-title {
       font-size: 14px;
       color: #1e3c72;
@@ -221,6 +239,33 @@
       color: #43597d;
       margin-top: 4px;
       min-height: 18px;
+    }
+    .timeline-progress {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: #d9e4f3;
+      overflow: hidden;
+      margin: 0 6px 14px;
+    }
+    .timeline-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #40a9ff 0%, #7a89f8 33%, #9d6ef7 66%, #ff8f5c 100%);
+      transition: width 420ms cubic-bezier(0.2, 0.75, 0.25, 1);
+    }
+    .timeline-progress-labels {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 0 0 10px;
+      font-size: 11px;
+      color: #6e7f99;
+      font-weight: 700;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+      text-align: center;
     }
     .timeline-detail {
       border: 1px solid #d7e2f1;
@@ -302,6 +347,10 @@
       .year-timeline::before {
         display: none;
       }
+      .timeline-progress,
+      .timeline-progress-labels {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -352,24 +401,38 @@
           <div class="year-timeline" id="yearTimelineNodes">
             <button class="year-node active" data-year="freshman" type="button">
               <div class="year-label">Year 1</div>
+              <div class="year-icon" aria-hidden="true">📘</div>
               <div class="year-title">Freshman</div>
               <div class="year-focus">Build foundation</div>
             </button>
             <button class="year-node" data-year="sophomore" type="button">
               <div class="year-label">Year 2</div>
+              <div class="year-icon" aria-hidden="true">📣</div>
               <div class="year-title">Sophomore</div>
               <div class="year-focus">Gain exposure</div>
             </button>
             <button class="year-node" data-year="junior" type="button">
               <div class="year-label">Year 3</div>
+              <div class="year-icon" aria-hidden="true">📋</div>
               <div class="year-title">Junior</div>
               <div class="year-focus">Evaluate options</div>
             </button>
             <button class="year-node" data-year="senior" type="button">
               <div class="year-label">Year 4</div>
+              <div class="year-icon" aria-hidden="true">✅</div>
               <div class="year-title">Senior</div>
               <div class="year-focus">Choose your fit</div>
             </button>
+          </div>
+
+          <div class="timeline-progress" aria-hidden="true">
+            <div class="timeline-progress-fill" id="timelineProgressFill"></div>
+          </div>
+          <div class="timeline-progress-labels" aria-hidden="true">
+            <span>Freshman</span>
+            <span>Sophomore</span>
+            <span>Junior</span>
+            <span>Senior</span>
           </div>
 
           <div class="timeline-detail" id="timelineDetailCard">
@@ -452,6 +515,8 @@
 
   <script src="app.js"></script>
   <script>
+    const timelineYearOrder = ['freshman', 'sophomore', 'junior', 'senior'];
+
     const recruitingTimelineData = {
       freshman: {
         title: 'Freshman Year',
@@ -502,6 +567,12 @@
     function renderTimelineYear(yearKey) {
       const yearData = recruitingTimelineData[yearKey];
       if (!yearData) return;
+      const progressEl = document.getElementById('timelineProgressFill');
+      const idx = timelineYearOrder.indexOf(yearKey);
+      if (progressEl && idx >= 0) {
+        const pct = (idx / (timelineYearOrder.length - 1)) * 100;
+        progressEl.style.width = pct + '%';
+      }
       document.getElementById('timelineDetailTitle').textContent = yearData.title;
       document.getElementById('timelineDetailSubtitle').textContent = yearData.subtitle;
       document.getElementById('timelineDetailList').innerHTML = yearData.items
