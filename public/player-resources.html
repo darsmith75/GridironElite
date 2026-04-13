@@ -115,6 +115,117 @@
     .resource-card li + li {
       margin-top: 5px;
     }
+    .timeline-overview {
+      border: 1px solid #d6e2f2;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f7fbff 0%, #eef5ff 100%);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .timeline-overview h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: #1e3c72;
+    }
+    .timeline-overview p {
+      margin: 0;
+      font-size: 13px;
+      color: #3d4e68;
+      line-height: 1.55;
+    }
+    .year-timeline {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 10px 0;
+    }
+    .year-timeline::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      right: 14px;
+      height: 5px;
+      border-radius: 999px;
+      transform: translateY(-50%);
+      background: linear-gradient(90deg, #40a9ff 0%, #7a89f8 33%, #9d6ef7 66%, #ff8f5c 100%);
+      opacity: 0.45;
+      z-index: 0;
+    }
+    .year-node {
+      position: relative;
+      z-index: 1;
+      border: 1px solid #c9d4e6;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 10px 9px;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .year-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(39, 84, 154, 0.2);
+    }
+    .year-node.active {
+      border-color: #1e3c72;
+      box-shadow: 0 8px 22px rgba(30, 60, 114, 0.26);
+    }
+    .year-label {
+      font-size: 11px;
+      color: #6b7f9f;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .year-title {
+      font-size: 14px;
+      color: #1e3c72;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .year-focus {
+      font-size: 12px;
+      color: #43597d;
+      margin-top: 4px;
+      min-height: 18px;
+    }
+    .timeline-detail {
+      border: 1px solid #d7e2f1;
+      border-radius: 12px;
+      background: #fbfdff;
+      overflow: hidden;
+    }
+    .timeline-detail-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2f62b6 100%);
+      color: #fff;
+      padding: 14px 16px;
+    }
+    .timeline-detail-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #fff;
+    }
+    .timeline-detail-header p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .timeline-detail-body {
+      padding: 14px 16px 16px;
+    }
+    .timeline-detail-body ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #334563;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .timeline-detail-body li + li {
+      margin-top: 6px;
+    }
     .do-dont-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -155,6 +266,12 @@
       .resources-hero { padding: 20px; }
       .resources-hero h1 { font-size: 23px; }
       .resources-panel { padding: 16px; }
+      .year-timeline {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+      }
+      .year-timeline::before {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -197,43 +314,42 @@
         </div>
 
         <section id="panel-timeline" class="resources-panel active">
-          <div class="resource-columns">
-            <article class="resource-card">
-              <h3>Freshman Year</h3>
-              <ul>
-                <li>Build strong grades from day one.</li>
-                <li>Learn proper lifting and movement mechanics.</li>
-                <li>Create and update your player profile basics.</li>
-                <li>Start collecting measurable stats and film clips.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3>Sophomore Year</h3>
-              <ul>
-                <li>Attend camps/combine events where your position is tested.</li>
-                <li>Keep highlight film short and role-specific.</li>
-                <li>Reach out to target programs with clear intro messages.</li>
-                <li>Track every school touchpoint in your notes.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3>Junior Year</h3>
-              <ul>
-                <li>Take SAT/ACT early enough to retest if needed.</li>
-                <li>Build your top school list and re-rank monthly.</li>
-                <li>Visit campuses and meet coaches when possible.</li>
-                <li>Ask direct questions about role fit and depth chart.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3>Senior Year</h3>
-              <ul>
-                <li>Stay consistent on academics, training, and communication.</li>
-                <li>Evaluate offers by long-term fit, not just hype.</li>
-                <li>Review financial aid and academic support carefully.</li>
-                <li>Make your commitment timeline intentional and informed.</li>
-              </ul>
-            </article>
+          <div class="timeline-overview">
+            <h3>4-Year Recruiting Overview</h3>
+            <p>Think of recruiting as a long game: freshman year builds your foundation, sophomore year builds your visibility, junior year is your major decision-building window, and senior year is about closing strong and choosing the best long-term fit. Click each year below to see your priorities.</p>
+          </div>
+
+          <div class="year-timeline" id="yearTimelineNodes">
+            <button class="year-node active" data-year="freshman" type="button">
+              <div class="year-label">Year 1</div>
+              <div class="year-title">Freshman</div>
+              <div class="year-focus">Build foundation</div>
+            </button>
+            <button class="year-node" data-year="sophomore" type="button">
+              <div class="year-label">Year 2</div>
+              <div class="year-title">Sophomore</div>
+              <div class="year-focus">Gain exposure</div>
+            </button>
+            <button class="year-node" data-year="junior" type="button">
+              <div class="year-label">Year 3</div>
+              <div class="year-title">Junior</div>
+              <div class="year-focus">Evaluate options</div>
+            </button>
+            <button class="year-node" data-year="senior" type="button">
+              <div class="year-label">Year 4</div>
+              <div class="year-title">Senior</div>
+              <div class="year-focus">Choose your fit</div>
+            </button>
+          </div>
+
+          <div class="timeline-detail" id="timelineDetailCard">
+            <div class="timeline-detail-header">
+              <h3 id="timelineDetailTitle">Freshman Year</h3>
+              <p id="timelineDetailSubtitle">Foundation phase</p>
+            </div>
+            <div class="timeline-detail-body">
+              <ul id="timelineDetailList"></ul>
+            </div>
           </div>
         </section>
 
@@ -306,6 +422,66 @@
 
   <script src="app.js"></script>
   <script>
+    const recruitingTimelineData = {
+      freshman: {
+        title: 'Freshman Year',
+        subtitle: 'Foundation phase',
+        items: [
+          'Build strong grades from day one and meet with counselors early.',
+          'Develop proper lifting, speed, and mobility fundamentals.',
+          'Set up your player profile with accurate basics and contact info.',
+          'Start collecting game film and measurable stats after each season.',
+          'Learn how to communicate professionally with coaches and mentors.'
+        ]
+      },
+      sophomore: {
+        title: 'Sophomore Year',
+        subtitle: 'Exposure phase',
+        items: [
+          'Attend camps and combines where your position skills are tested.',
+          'Build focused highlight film that matches your true role.',
+          'Begin outreach to schools with concise intro messages and film links.',
+          'Track every school interaction so you can follow up consistently.',
+          'Keep academics steady as recruiting attention starts to increase.'
+        ]
+      },
+      junior: {
+        title: 'Junior Year',
+        subtitle: 'Decision-building phase',
+        items: [
+          'Take SAT/ACT early enough to improve scores if needed.',
+          'Create a serious target list and update your rankings monthly.',
+          'Visit campuses and ask direct football + academic fit questions.',
+          'Compare programs by development path, scheme, and opportunity.',
+          'Stay disciplined on training while managing higher communication volume.'
+        ]
+      },
+      senior: {
+        title: 'Senior Year',
+        subtitle: 'Commitment phase',
+        items: [
+          'Continue strong grades and avoid senior-year academic drop-off.',
+          'Evaluate offers using long-term fit, not just logo or hype.',
+          'Review scholarship terms, total costs, and support resources.',
+          'Keep communication respectful and timely with all programs.',
+          'Commit with confidence once you have a clear overall fit.'
+        ]
+      }
+    };
+
+    function renderTimelineYear(yearKey) {
+      const yearData = recruitingTimelineData[yearKey];
+      if (!yearData) return;
+      document.getElementById('timelineDetailTitle').textContent = yearData.title;
+      document.getElementById('timelineDetailSubtitle').textContent = yearData.subtitle;
+      document.getElementById('timelineDetailList').innerHTML = yearData.items
+        .map((item) => `<li>${item}</li>`)
+        .join('');
+      document.querySelectorAll('.year-node').forEach((node) => {
+        node.classList.toggle('active', node.dataset.year === yearKey);
+      });
+    }
+
     function activateResourcesTab(tabName) {
       document.querySelectorAll('.resources-tab').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -318,6 +494,12 @@
     document.querySelectorAll('.resources-tab').forEach((btn) => {
       btn.addEventListener('click', () => activateResourcesTab(btn.dataset.tab));
     });
+
+    document.querySelectorAll('.year-node').forEach((node) => {
+      node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
+    });
+
+    renderTimelineYear('freshman');
 
     checkAuth('player');
     logPageView('player_resources');
