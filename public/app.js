@@ -420,7 +420,7 @@ function injectGlobalFooter() {
   footer.className = 'site-footer';
   footer.innerHTML = `
     <div class="site-footer-inner">
-      <div class="site-footer-copy">Copyright ${year} Gridiron Elite. All rights reserved.</div>
+      <div class="site-footer-copy">Copyright ${year} Gridiron Athlete. All rights reserved.</div>
       <div class="site-footer-links">
         <a class="site-footer-link" href="about-us.html">About Us</a>
         <a class="site-footer-link" href="terms-of-use.html">Terms of Use</a>
