@@ -163,15 +163,45 @@
       padding: 10px 10px 9px;
       cursor: pointer;
       text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      color: #1e3c72;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
     }
     .year-node:hover {
       transform: translateY(-2px);
+      border-color: #8ea8ce;
+      background: #f3f8ff;
       box-shadow: 0 6px 18px rgba(39, 84, 154, 0.2);
     }
+    .year-node:focus-visible {
+      outline: 3px solid #8db6ff;
+      outline-offset: 2px;
+    }
     .year-node.active {
-      border-color: #1e3c72;
-      box-shadow: 0 8px 22px rgba(30, 60, 114, 0.26);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 22px rgba(30, 60, 114, 0.3);
+    }
+    .year-node.active[data-year="freshman"] {
+      background: linear-gradient(135deg, #1e80d8 0%, #3ca8ff 100%);
+    }
+    .year-node.active[data-year="sophomore"] {
+      background: linear-gradient(135deg, #5d63e6 0%, #8b84ff 100%);
+    }
+    .year-node.active[data-year="junior"] {
+      background: linear-gradient(135deg, #7a4ed9 0%, #b277ff 100%);
+    }
+    .year-node.active[data-year="senior"] {
+      background: linear-gradient(135deg, #de6a2f 0%, #ff9a4d 100%);
+    }
+    .year-node:hover .year-label,
+    .year-node:hover .year-title,
+    .year-node:hover .year-focus {
+      color: #1e3c72;
+    }
+    .year-node.active .year-label,
+    .year-node.active .year-title,
+    .year-node.active .year-focus {
+      color: #fff;
     }
     .year-label {
       font-size: 11px;
@@ -478,7 +508,9 @@
         .map((item) => `<li>${item}</li>`)
         .join('');
       document.querySelectorAll('.year-node').forEach((node) => {
-        node.classList.toggle('active', node.dataset.year === yearKey);
+        const isActive = node.dataset.year === yearKey;
+        node.classList.toggle('active', isActive);
+        node.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
     }
 
