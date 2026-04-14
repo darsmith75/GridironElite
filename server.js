@@ -1356,18 +1356,18 @@ async function sendVerificationEmail(toEmail, token, req) {
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: toEmail,
-    subject: 'Verify your Gridiron Elite account',
+    subject: 'Verify your Gridiron Athletes account',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
-        <h2 style="color:#1e3a5f">Welcome to Gridiron Elite!</h2>
+        <h2 style="color:#1e3a5f">Welcome to Gridiron Athletes!</h2>
         <p>Thanks for registering. Click the button below to verify your email address and activate your account.</p>
         <p style="margin:32px 0">
           <a href="${verifyUrl}" style="background:#2563eb;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px">Verify Email Address</a>
         </p>
-        <p style="color:#6b7280;font-size:13px">If you didn't create a Gridiron Elite account, you can safely ignore this email.</p>
+        <p style="color:#6b7280;font-size:13px">If you didn't create a Gridiron Athletes account, you can safely ignore this email.</p>
       </div>
     `,
-    text: `Welcome to Gridiron Elite!\n\nPlease verify your email address by visiting the link below:\n\n${verifyUrl}\n\nIf you didn't create an account, please ignore this email.`
+    text: `Welcome to Gridiron Athletes!\n\nPlease verify your email address by visiting the link below:\n\n${verifyUrl}\n\nIf you didn't create an account, please ignore this email.`
   });
 }
 
@@ -1386,7 +1386,7 @@ async function sendPasswordResetEmail(toEmail, token, req) {
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: toEmail,
-    subject: 'Reset your Gridiron Elite password',
+    subject: 'Reset your Gridiron Athletes password',
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
         <h2 style="color:#1e3a5f">Password reset request</h2>
@@ -2596,11 +2596,11 @@ async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, sc
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: toEmail,
-    subject: `You've been invited to join ${teamName} on Gridiron Elite`,
+    subject: `You've been invited to join ${teamName} on Gridiron Athletes`,
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:auto;padding:24px">
         <h2 style="color:#1e3a5f">Team Invitation</h2>
-        <p>${coachName || 'Your coach'} has invited you to join <strong>${teamName}</strong>${displaySchool} on Gridiron Elite.</p>
+        <p>${coachName || 'Your coach'} has invited you to join <strong>${teamName}</strong>${displaySchool} on Gridiron Athletes.</p>
         <p>Click the button below to accept the invitation and join the team.</p>
         <p style="margin:32px 0">
           <a href="${acceptUrl}" style="background:#2563eb;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:16px">Accept Invitation</a>
@@ -2609,7 +2609,7 @@ async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, sc
         <p style="color:#6b7280;font-size:13px">If you did not expect this invitation, you can safely ignore this email.</p>
       </div>
     `,
-    text: `${coachName || 'Your coach'} has invited you to join ${teamName}${displaySchool} on Gridiron Elite.\n\nAccept the invitation here:\n${acceptUrl}\n\nThis invitation expires in 7 days.`
+    text: `${coachName || 'Your coach'} has invited you to join ${teamName}${displaySchool} on Gridiron Athletes.\n\nAccept the invitation here:\n${acceptUrl}\n\nThis invitation expires in 7 days.`
   });
 }
 
@@ -4413,7 +4413,7 @@ app.post('/api/send-player-card', requireAuth, express.json({ limit: '10mb' }), 
       to: recipientEmail,
       subject: subject || `${safeName} - Player Card`,
       text: message || `Please see the attached player card for ${safeName}.`,
-      html: `<p>${message || `Please see the attached player card for ${safeName}.`}</p><p>Sent via Gridiron Elite</p>`,
+      html: `<p>${message || `Please see the attached player card for ${safeName}.`}</p><p>Sent via Gridiron Athletes</p>`,
       attachments: [{
         filename: `${safeName.replace(/\s+/g, '_')}_Player_Card.png`,
         content: base64Data,
