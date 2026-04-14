@@ -6,11 +6,22 @@
   <title>Football Agent Platform - Login</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    body.login-body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+    .login-container {
+      flex: 1 0 auto;
+      margin: 20px auto;
+    }
     .auth-page-footer {
       width: 100%;
       background: #102543;
       color: rgba(255, 255, 255, 0.92);
       padding: 16px 20px 18px;
+      margin-top: auto;
     }
     .auth-page-footer-inner {
       max-width: 1200px;
@@ -40,9 +51,6 @@
       text-decoration: underline;
     }
     @media (max-width: 768px) {
-      body.login-body {
-        display: block;
-      }
       .auth-page-footer-inner {
         flex-direction: column;
         align-items: flex-start;
