@@ -151,6 +151,12 @@ function getClientIp(req) {
   return String(rawIp || '').replace(/^::ffff:/, '').trim();
 }
 
+function normalizeHexColor(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return null;
+  return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
+}
+
 function supportContactRateKey(req) {
   const ip = getClientIp(req) || 'unknown';
   return `support:${ip}`;
@@ -2898,6 +2904,30 @@ app.post('/api/coach/team/logo', requireCoach, upload.single('schoolLogo'), asyn
   } catch (error) {
     console.error('Coach upload school logo error:', error);
     res.status(500).json({ error: error.message || 'Failed to upload school logo' });
+  }
+});
+
+// Coach: Save team banner gradient colors
+app.put('/api/coach/team/banner-colors', requireCoach, async (req, res) => {
+  try {
+    const startColor = normalizeHexColor(req.body?.startColor);
+    const endColor = normalizeHexColor(req.body?.endColor);
+
+    if (!startColor || !endColor) {
+      return res.status(400).json({ error: 'Valid startColor and endColor hex values are required.' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    await db.prepare(
+      'UPDATE hs_teams SET banner_color_start = ?, banner_color_end = ? WHERE id = ?'
+    ).run(startColor, endColor, team.id);
+
+    res.json({ success: true, bannerColorStart: startColor, bannerColorEnd: endColor });
+  } catch (error) {
+    console.error('Coach save banner colors error:', error);
+    res.status(500).json({ error: 'Failed to save banner colors' });
   }
 });
 

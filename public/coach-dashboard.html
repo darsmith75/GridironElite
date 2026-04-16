@@ -839,6 +839,46 @@
     }
     .customize-message.success { color: #2e7d32; }
     .customize-message.error { color: #c62828; }
+    .banner-colors-wrap {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #e8edf5;
+    }
+    .banner-colors-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .banner-color-control {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .banner-color-control label {
+      font-size: 12px;
+      color: #666;
+    }
+    .banner-color-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner-color-input-row input[type="color"] {
+      width: 44px;
+      height: 34px;
+      border: 1px solid #c7d0da;
+      border-radius: 7px;
+      padding: 2px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .banner-color-hex {
+      font-size: 12px;
+      color: #1e3c72;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      min-width: 76px;
+    }
     @media (max-width: 768px) {
       .roster-section {
         padding: 16px;
@@ -856,6 +896,7 @@
         margin-left: 0;
       }
       .customize-card { max-width: 100%; }
+      .banner-colors-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1093,7 +1134,7 @@
       <div id="tab-coach-customize" class="coach-tab-panel hidden">
         <div class="customize-card">
           <div class="section-title" style="margin:0 0 8px;">Customize Dashboard</div>
-          <p class="customize-help">Upload your school logo to replace the football icon in the team banner.</p>
+          <p class="customize-help">Upload your school logo and set school colors for the team banner gradient.</p>
 
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
             <div class="logo-preview-box" id="schoolLogoPreview">No Logo</div>
@@ -1106,6 +1147,30 @@
           <div style="margin-top:12px;display:flex;justify-content:flex-end;">
             <button class="btn-invite" id="saveSchoolLogoBtn" onclick="saveSchoolLogo()">Save Logo</button>
           </div>
+
+          <div class="banner-colors-wrap">
+            <div class="section-title" style="margin:0 0 8px; font-size:14px;">School Banner Gradient</div>
+            <div class="banner-colors-grid">
+              <div class="banner-color-control">
+                <label for="bannerColorStartInput">Gradient Start</label>
+                <div class="banner-color-input-row">
+                  <input type="color" id="bannerColorStartInput" value="#1e3c72" oninput="previewBannerColorsFromInputs()">
+                  <span id="bannerColorStartHex" class="banner-color-hex">#1e3c72</span>
+                </div>
+              </div>
+              <div class="banner-color-control">
+                <label for="bannerColorEndInput">Gradient End</label>
+                <div class="banner-color-input-row">
+                  <input type="color" id="bannerColorEndInput" value="#2a5298" oninput="previewBannerColorsFromInputs()">
+                  <span id="bannerColorEndHex" class="banner-color-hex">#2a5298</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+              <button class="btn-invite" id="saveBannerColorsBtn" onclick="saveBannerColors()">Save Banner Colors</button>
+            </div>
+          </div>
+
           <div class="customize-message" id="customizeMessage"></div>
         </div>
       </div><!-- /.tab-coach-customize -->
@@ -1195,6 +1260,8 @@
   <script src="app.js"></script>
   <script>
     const VIEW_MODE_STORAGE_KEY = 'coachDashboardViewMode';
+    const DEFAULT_BANNER_START_COLOR = '#1e3c72';
+    const DEFAULT_BANNER_END_COLOR = '#2a5298';
     let viewMode = getDefaultViewMode();
     let teamData = null;
     let rosterData = [];
@@ -1344,6 +1411,35 @@
       } catch (_) {}
     }
 
+    function normalizeHexColorClient(value) {
+      const raw = String(value || '').trim().toLowerCase();
+      return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
+    }
+
+    function getTeamBannerColors() {
+      const start = normalizeHexColorClient(teamData?.banner_color_start) || DEFAULT_BANNER_START_COLOR;
+      const end = normalizeHexColorClient(teamData?.banner_color_end) || DEFAULT_BANNER_END_COLOR;
+      return { start, end };
+    }
+
+    function applyTeamBannerGradient(startColor, endColor) {
+      const badge = document.getElementById('teamBadge');
+      if (!badge) return;
+      badge.style.background = `linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
+    }
+
+    function syncBannerColorControls(startColor, endColor) {
+      const startInput = document.getElementById('bannerColorStartInput');
+      const endInput = document.getElementById('bannerColorEndInput');
+      const startHex = document.getElementById('bannerColorStartHex');
+      const endHex = document.getElementById('bannerColorEndHex');
+
+      if (startInput) startInput.value = startColor;
+      if (endInput) endInput.value = endColor;
+      if (startHex) startHex.textContent = startColor;
+      if (endHex) endHex.textContent = endColor;
+    }
+
     function renderTeamBadge() {
       if (!teamData) return;
       document.getElementById('teamBadge').style.display = '';
@@ -1351,6 +1447,10 @@
       document.getElementById('schoolNameDisplay').textContent = teamData.school_name || '';
       const loc = [teamData.city, teamData.state].filter(Boolean).join(', ');
       document.getElementById('teamLocationDisplay').textContent = loc;
+
+      const colors = getTeamBannerColors();
+      applyTeamBannerGradient(colors.start, colors.end);
+      syncBannerColorControls(colors.start, colors.end);
 
       const iconWrap = document.getElementById('teamIconWrap');
       if (iconWrap) {
@@ -1362,6 +1462,61 @@
       }
 
       renderSchoolLogoPreview();
+    }
+
+    function previewBannerColorsFromInputs() {
+      const startInput = document.getElementById('bannerColorStartInput');
+      const endInput = document.getElementById('bannerColorEndInput');
+      const startHex = normalizeHexColorClient(startInput?.value) || DEFAULT_BANNER_START_COLOR;
+      const endHex = normalizeHexColorClient(endInput?.value) || DEFAULT_BANNER_END_COLOR;
+
+      applyTeamBannerGradient(startHex, endHex);
+      syncBannerColorControls(startHex, endHex);
+    }
+
+    async function saveBannerColors() {
+      const msg = document.getElementById('customizeMessage');
+      const btn = document.getElementById('saveBannerColorsBtn');
+      const startInput = document.getElementById('bannerColorStartInput');
+      const endInput = document.getElementById('bannerColorEndInput');
+      const startColor = normalizeHexColorClient(startInput?.value);
+      const endColor = normalizeHexColorClient(endInput?.value);
+
+      if (!startColor || !endColor) {
+        msg.className = 'customize-message error';
+        msg.textContent = 'Please choose valid colors for both gradient stops.';
+        return;
+      }
+
+      btn.disabled = true;
+      msg.className = 'customize-message';
+      msg.textContent = 'Saving banner colors...';
+
+      try {
+        const res = await fetch('/api/coach/team/banner-colors', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startColor, endColor })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          msg.className = 'customize-message error';
+          msg.textContent = data.error || 'Failed to save banner colors.';
+          return;
+        }
+
+        teamData = teamData || {};
+        teamData.banner_color_start = data.bannerColorStart || startColor;
+        teamData.banner_color_end = data.bannerColorEnd || endColor;
+        previewBannerColorsFromInputs();
+        msg.className = 'customize-message success';
+        msg.textContent = 'Banner colors updated successfully.';
+      } catch (_) {
+        msg.className = 'customize-message error';
+        msg.textContent = 'Network error while saving banner colors.';
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function renderSchoolLogoPreview(previewSrc) {
