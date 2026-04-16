@@ -6,6 +6,63 @@
   <title>Coach Profile</title>
   <link rel="stylesheet" href="styles.css">
   <style>
+    .team-banner {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .team-banner .team-icon {
+      font-size: 40px;
+      line-height: 1;
+      flex-shrink: 0;
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .team-banner .team-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #fff;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+
+    .team-banner .team-text { flex: 1; min-width: 0; }
+
+    .team-banner .team-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .team-banner .school-name {
+      font-size: 14px;
+      opacity: 0.86;
+    }
+
+    .team-banner .team-location {
+      font-size: 12px;
+      opacity: 0.72;
+      margin-top: 2px;
+    }
+
     .coach-profile-photo-section {
       min-height: 280px;
       display: flex;
@@ -16,6 +73,17 @@
 
     .coach-profile-photo-section h3 {
       margin-top: 0;
+    }
+
+    @media (max-width: 768px) {
+      .team-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .team-banner .team-name {
+        white-space: normal;
+      }
     }
   </style>
 </head>
@@ -44,6 +112,15 @@
     </header>
 
     <div class="dashboard-container">
+      <div id="teamBadge" class="team-banner" style="display:none;">
+        <div class="team-icon" id="teamIconWrap">🏈</div>
+        <div class="team-text">
+          <div class="team-name" id="teamNameDisplay"></div>
+          <div class="school-name" id="schoolNameDisplay"></div>
+          <div class="team-location" id="teamLocationDisplay"></div>
+        </div>
+      </div>
+
       <div class="profile-page-container">
         <div class="profile-section">
           <h2 class="section-title-small">COACH PROFILE</h2>
@@ -115,6 +192,8 @@
   <script src="app.js"></script>
   <script>
     checkAuth('coach');
+    const DEFAULT_BANNER_START_COLOR = '#1e3c72';
+    const DEFAULT_BANNER_END_COLOR = '#2a5298';
 
     const US_STATE_CODES = new Set([
       'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
@@ -137,6 +216,35 @@
         img.src = DEFAULT_PROFILE_AVATAR;
       };
       img.src = src || DEFAULT_PROFILE_AVATAR;
+    }
+
+    function normalizeHexColorClient(value) {
+      const raw = String(value || '').trim().toLowerCase();
+      return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
+    }
+
+    function renderTeamBanner(team) {
+      const badge = document.getElementById('teamBadge');
+      if (!badge) return;
+
+      const startColor = normalizeHexColorClient(team?.banner_color_start) || DEFAULT_BANNER_START_COLOR;
+      const endColor = normalizeHexColorClient(team?.banner_color_end) || DEFAULT_BANNER_END_COLOR;
+      badge.style.background = `linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
+
+      document.getElementById('teamNameDisplay').textContent = team?.team_name || 'My Team';
+      document.getElementById('schoolNameDisplay').textContent = team?.school_name || '';
+      document.getElementById('teamLocationDisplay').textContent = [team?.city, team?.state].filter(Boolean).join(', ');
+
+      const iconWrap = document.getElementById('teamIconWrap');
+      if (iconWrap) {
+        if (team?.school_logo) {
+          iconWrap.innerHTML = '<img src="/uploads/' + escHtml(team.school_logo) + '" alt="School Logo">';
+        } else {
+          iconWrap.textContent = '🏈';
+        }
+      }
+
+      badge.style.display = '';
     }
 
     document.getElementById('coachProfilePictureInput').addEventListener('change', function () {
@@ -162,6 +270,7 @@
         document.getElementById('coachSchoolName').value = data.team?.school_name || '';
         document.getElementById('coachCity').value = data.team?.city || '';
         document.getElementById('coachState').value = normalizeState(data.team?.state);
+        renderTeamBanner(data.team || {});
 
         setCoachProfileImage(data.profile_picture ? '/uploads/' + data.profile_picture : DEFAULT_PROFILE_AVATAR);
       } catch (error) {
