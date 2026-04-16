@@ -66,6 +66,7 @@ const AD_SLOT_KEYS = new Set(AD_SLOT_CONFIG.map(item => item.key));
 const aiGenerateRateTracker = new Map();
 const agentPlayersRateTracker = new Map();
 const agentPlayersResponseCache = new Map();
+const supportContactRateTracker = new Map();
 
 function parseQueryNumber(value) {
   if (value === undefined || value === null || String(value).trim() === '') return null;
@@ -148,6 +149,50 @@ function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   const rawIp = forwarded ? String(forwarded).split(',')[0].trim() : (req.ip || req.socket?.remoteAddress || '');
   return String(rawIp || '').replace(/^::ffff:/, '').trim();
+}
+
+function supportContactRateKey(req) {
+  const ip = getClientIp(req) || 'unknown';
+  return `support:${ip}`;
+}
+
+function isSupportContactRateLimited(req) {
+  const windowMs = parseInt(process.env.SUPPORT_CONTACT_RATE_WINDOW_MS || '600000', 10);
+  const maxPerWindow = parseInt(process.env.SUPPORT_CONTACT_RATE_LIMIT || '5', 10);
+  const now = Date.now();
+  const key = supportContactRateKey(req);
+  const entry = supportContactRateTracker.get(key) || { stamps: [] };
+  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
+  if (entry.stamps.length >= maxPerWindow) {
+    supportContactRateTracker.set(key, entry);
+    return true;
+  }
+  entry.stamps.push(now);
+  supportContactRateTracker.set(key, entry);
+
+  if (supportContactRateTracker.size > 2000) {
+    const cutoff = now - (windowMs * 2);
+    for (const [trackerKey, trackerEntry] of supportContactRateTracker.entries()) {
+      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
+        supportContactRateTracker.delete(trackerKey);
+      }
+    }
+  }
+
+  return false;
+}
+
+function isLikelyValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+function escapeHtmlEmail(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 async function logSiteTrafficEvent({
@@ -1401,6 +1446,53 @@ async function sendPasswordResetEmail(toEmail, token, req) {
   });
 }
 
+async function sendSupportContactEmail({ name, email, subject, message, req }) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
+    }
+  });
+
+  const toAddress = process.env.SUPPORT_CONTACT_TO || 'nextupinfootball@gmail.com';
+  const safeName = escapeHtmlEmail(name);
+  const safeEmail = escapeHtmlEmail(email);
+  const safeSubject = escapeHtmlEmail(subject);
+  const safeMessage = escapeHtmlEmail(message).replace(/\n/g, '<br/>');
+  const ip = getClientIp(req) || 'unknown';
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: toAddress,
+    replyTo: email,
+    subject: `[Gridiron Support] ${subject}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:680px;margin:auto;padding:20px">
+        <h2 style="color:#1e3a5f;margin:0 0 12px;">New Contact Support Submission</h2>
+        <p style="margin:0 0 6px;"><strong>Name:</strong> ${safeName}</p>
+        <p style="margin:0 0 6px;"><strong>Email:</strong> ${safeEmail}</p>
+        <p style="margin:0 0 6px;"><strong>Subject:</strong> ${safeSubject}</p>
+        <p style="margin:0 0 16px;"><strong>IP:</strong> ${escapeHtmlEmail(ip)}</p>
+        <div style="border:1px solid #d6deea;border-radius:10px;padding:14px;background:#f8fafc;">
+          <p style="margin:0;white-space:pre-wrap;line-height:1.55;">${safeMessage}</p>
+        </div>
+      </div>
+    `,
+    text: [
+      'New Contact Support Submission',
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Subject: ${subject}`,
+      `IP: ${ip}`,
+      '',
+      message
+    ].join('\n')
+  });
+}
+
 // Register
 app.post('/api/register', async (req, res) => {
   const { email, password, role, fullName } = req.body;
@@ -1482,6 +1574,40 @@ app.post('/api/forgot-password', async (req, res) => {
   } catch (error) {
     console.error('Forgot password error:', error);
     return res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+app.post('/api/support/contact', async (req, res) => {
+  try {
+    if (isSupportContactRateLimited(req)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again in a few minutes.' });
+    }
+
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim();
+    const subject = String(req.body?.subject || '').trim();
+    const message = String(req.body?.message || '').trim();
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'Name, email, subject, and message are required.' });
+    }
+    if (name.length > 120 || email.length > 180 || subject.length > 200 || message.length > 4000) {
+      return res.status(400).json({ error: 'One or more fields are too long.' });
+    }
+    if (!isLikelyValidEmail(email)) {
+      return res.status(400).json({ error: 'Please provide a valid email address.' });
+    }
+
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('Support contact email disabled: SMTP_USER or SMTP_PASS not configured');
+      return res.status(503).json({ error: 'Email service is temporarily unavailable.' });
+    }
+
+    await sendSupportContactEmail({ name, email, subject, message, req });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Support contact send error:', error);
+    res.status(500).json({ error: 'Failed to send message. Please try again.' });
   }
 });
 

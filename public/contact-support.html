@@ -63,6 +63,96 @@
       margin: 0;
       padding-left: 18px;
     }
+    .contact-form-card {
+      margin-top: 16px;
+      background: #fff;
+      border: 1px solid #d6deea;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+    .contact-form-card h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      color: #1e3c72;
+    }
+    .contact-form-card p {
+      margin: 0 0 16px;
+      color: #42536c;
+      font-size: 14px;
+    }
+    .contact-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .contact-form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .contact-form-field-full {
+      grid-column: 1 / -1;
+    }
+    .contact-form-field label {
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .contact-form-field input,
+    .contact-form-field textarea {
+      width: 100%;
+      border: 1px solid #c9d5e5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: #2f3e55;
+      font-family: inherit;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .contact-form-field textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+    .contact-submit-row {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .contact-submit-btn {
+      background: #17315f;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .contact-submit-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .contact-status {
+      font-size: 13px;
+      color: #42536c;
+      min-height: 20px;
+    }
+    .contact-status.error {
+      color: #b91c1c;
+    }
+    .contact-status.success {
+      color: #166534;
+    }
+    @media (max-width: 700px) {
+      .contact-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -126,17 +216,104 @@
             </ul>
           </article>
         </div>
+
+        <section class="contact-form-card">
+          <h2>Email Support</h2>
+          <p>Send a support message directly to our inbox. We will follow up at the email address you provide.</p>
+          <form id="supportContactForm">
+            <div class="contact-form-grid">
+              <div class="contact-form-field">
+                <label for="supportName">Name</label>
+                <input id="supportName" name="name" type="text" maxlength="120" required>
+              </div>
+              <div class="contact-form-field">
+                <label for="supportEmail">Email Address</label>
+                <input id="supportEmail" name="email" type="email" maxlength="180" required>
+              </div>
+              <div class="contact-form-field contact-form-field-full">
+                <label for="supportSubject">Subject</label>
+                <input id="supportSubject" name="subject" type="text" maxlength="200" required>
+              </div>
+              <div class="contact-form-field contact-form-field-full">
+                <label for="supportMessage">Message</label>
+                <textarea id="supportMessage" name="message" maxlength="4000" required></textarea>
+              </div>
+            </div>
+            <div class="contact-submit-row">
+              <button id="supportSubmitBtn" type="submit" class="contact-submit-btn">Send Email</button>
+              <div id="supportStatus" class="contact-status" aria-live="polite"></div>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   </div>
 
   <script src="app.js"></script>
   <script>
+    async function submitSupportContactForm(event) {
+      event.preventDefault();
+      const form = document.getElementById('supportContactForm');
+      const submitBtn = document.getElementById('supportSubmitBtn');
+      const statusEl = document.getElementById('supportStatus');
+
+      const formData = new FormData(form);
+      const payload = {
+        name: String(formData.get('name') || '').trim(),
+        email: String(formData.get('email') || '').trim(),
+        subject: String(formData.get('subject') || '').trim(),
+        message: String(formData.get('message') || '').trim()
+      };
+
+      if (!payload.name || !payload.email || !payload.subject || !payload.message) {
+        statusEl.textContent = 'Please complete all fields.';
+        statusEl.className = 'contact-status error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Sending your message...';
+      statusEl.className = 'contact-status';
+
+      try {
+        const response = await fetch('/api/support/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          statusEl.textContent = result.error || 'Failed to send message.';
+          statusEl.className = 'contact-status error';
+          return;
+        }
+
+        statusEl.textContent = 'Your message has been sent. Thank you.';
+        statusEl.className = 'contact-status success';
+        form.reset();
+      } catch (error) {
+        statusEl.textContent = 'Network error. Please try again.';
+        statusEl.className = 'contact-status error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
     async function initSupportPage() {
       const nav = document.querySelector('.top-nav-menu');
       const user = await tryAuth();
       if (user) applyRoleBasedTopNav(user);
       else applyPublicTopNav();
+      const emailInput = document.getElementById('supportEmail');
+      if (user && emailInput && user.email) {
+        emailInput.value = user.email;
+      }
+
+      const form = document.getElementById('supportContactForm');
+      if (form) {
+        form.addEventListener('submit', submitSupportContactForm);
+      }
+
       if (nav) nav.classList.add('nav-ready');
       logPageView('contact_support');
     }
