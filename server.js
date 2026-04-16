@@ -4286,7 +4286,7 @@ app.get('/api/player/top-schools', requireAuth, async (req, res) => {
       WHERE r.user_id = ?
       GROUP BY c.id, c.name, c.logo, c.conference, c.team
       ORDER BY avg_rating DESC, rated_categories DESC
-      LIMIT 10
+      LIMIT 5
     `).all(req.session.userId);
     res.json(rows);
   } catch (error) {
