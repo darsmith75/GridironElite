@@ -891,6 +891,27 @@
       letter-spacing: 0.3px;
       min-width: 76px;
     }
+    .banner-toggle-row {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #d9e2ef;
+      border-radius: 10px;
+      background: #f8fbff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #3c4f6a;
+    }
+    .banner-toggle-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+    body.use-banner-gradient-cards .roster-section .player-card-header {
+      background: linear-gradient(135deg, var(--coach-banner-start, #1e3c72) 0%, var(--coach-banner-end, #2a5298) 100%);
+    }
     @media (max-width: 768px) {
       .roster-section {
         padding: 16px;
@@ -1178,6 +1199,10 @@
                 </div>
               </div>
             </div>
+            <div class="banner-toggle-row">
+              <input type="checkbox" id="useBannerGradientCardsToggle" onchange="previewBannerColorsFromInputs()">
+              <label for="useBannerGradientCardsToggle" style="cursor:pointer;">Use this same gradient behind player profile photos on roster cards</label>
+            </div>
             <div style="margin-top:12px;display:flex;justify-content:flex-end;">
               <button class="btn-invite" id="saveBannerColorsBtn" onclick="saveBannerColors()">Save Banner Colors</button>
             </div>
@@ -1434,22 +1459,34 @@
       return { start, end };
     }
 
+    function isPlayerCardGradientEnabled() {
+      return !!teamData?.use_banner_gradient_cards;
+    }
+
+    function applyPlayerCardGradientTheme(startColor, endColor, enabled) {
+      document.documentElement.style.setProperty('--coach-banner-start', startColor);
+      document.documentElement.style.setProperty('--coach-banner-end', endColor);
+      document.body.classList.toggle('use-banner-gradient-cards', !!enabled);
+    }
+
     function applyTeamBannerGradient(startColor, endColor) {
       const badge = document.getElementById('teamBadge');
       if (!badge) return;
       badge.style.background = `linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
     }
 
-    function syncBannerColorControls(startColor, endColor) {
+    function syncBannerColorControls(startColor, endColor, useForPlayerCards) {
       const startInput = document.getElementById('bannerColorStartInput');
       const endInput = document.getElementById('bannerColorEndInput');
       const startHex = document.getElementById('bannerColorStartHex');
       const endHex = document.getElementById('bannerColorEndHex');
+      const useToggle = document.getElementById('useBannerGradientCardsToggle');
 
       if (startInput) startInput.value = startColor;
       if (endInput) endInput.value = endColor;
       if (startHex) startHex.textContent = startColor;
       if (endHex) endHex.textContent = endColor;
+      if (useToggle) useToggle.checked = !!useForPlayerCards;
     }
 
     function renderTeamBadge() {
@@ -1462,7 +1499,9 @@
 
       const colors = getTeamBannerColors();
       applyTeamBannerGradient(colors.start, colors.end);
-      syncBannerColorControls(colors.start, colors.end);
+      const useForPlayerCards = isPlayerCardGradientEnabled();
+      syncBannerColorControls(colors.start, colors.end, useForPlayerCards);
+      applyPlayerCardGradientTheme(colors.start, colors.end, useForPlayerCards);
 
       const iconWrap = document.getElementById('teamIconWrap');
       if (iconWrap) {
@@ -1479,11 +1518,14 @@
     function previewBannerColorsFromInputs() {
       const startInput = document.getElementById('bannerColorStartInput');
       const endInput = document.getElementById('bannerColorEndInput');
+      const useToggle = document.getElementById('useBannerGradientCardsToggle');
       const startHex = normalizeHexColorClient(startInput?.value) || DEFAULT_BANNER_START_COLOR;
       const endHex = normalizeHexColorClient(endInput?.value) || DEFAULT_BANNER_END_COLOR;
+      const useForPlayerCards = !!useToggle?.checked;
 
       applyTeamBannerGradient(startHex, endHex);
-      syncBannerColorControls(startHex, endHex);
+      syncBannerColorControls(startHex, endHex, useForPlayerCards);
+      applyPlayerCardGradientTheme(startHex, endHex, useForPlayerCards);
     }
 
     async function saveBannerColors() {
@@ -1491,8 +1533,10 @@
       const btn = document.getElementById('saveBannerColorsBtn');
       const startInput = document.getElementById('bannerColorStartInput');
       const endInput = document.getElementById('bannerColorEndInput');
+      const useToggle = document.getElementById('useBannerGradientCardsToggle');
       const startColor = normalizeHexColorClient(startInput?.value);
       const endColor = normalizeHexColorClient(endInput?.value);
+      const applyToPlayerCards = !!useToggle?.checked;
 
       if (!startColor || !endColor) {
         msg.className = 'customize-message error';
@@ -1508,7 +1552,7 @@
         const res = await fetch('/api/coach/team/banner-colors', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ startColor, endColor })
+          body: JSON.stringify({ startColor, endColor, applyToPlayerCards })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -1520,9 +1564,10 @@
         teamData = teamData || {};
         teamData.banner_color_start = data.bannerColorStart || startColor;
         teamData.banner_color_end = data.bannerColorEnd || endColor;
+        teamData.use_banner_gradient_cards = data.useBannerGradientCards === true;
         previewBannerColorsFromInputs();
         msg.className = 'customize-message success';
-        msg.textContent = 'Banner colors updated successfully.';
+        msg.textContent = 'Banner settings updated successfully.';
       } catch (_) {
         msg.className = 'customize-message error';
         msg.textContent = 'Network error while saving banner colors.';

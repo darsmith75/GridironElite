@@ -332,6 +332,7 @@ const createTablesSQL = `
     school_logo VARCHAR(255),
     banner_color_start VARCHAR(7),
     banner_color_end VARCHAR(7),
+    use_banner_gradient_cards BOOLEAN NOT NULL DEFAULT FALSE,
     city VARCHAR(100),
     state VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -433,6 +434,7 @@ const alterTablesSQL = `
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS school_logo VARCHAR(255);
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_color_start VARCHAR(7);
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_color_end VARCHAR(7);
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS use_banner_gradient_cards BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
   ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('player', 'agent', 'admin', 'coach'));
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;

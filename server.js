@@ -2912,6 +2912,7 @@ app.put('/api/coach/team/banner-colors', requireCoach, async (req, res) => {
   try {
     const startColor = normalizeHexColor(req.body?.startColor);
     const endColor = normalizeHexColor(req.body?.endColor);
+    const applyToPlayerCards = req.body?.applyToPlayerCards === true || req.body?.applyToPlayerCards === 'true' || req.body?.applyToPlayerCards === 1;
 
     if (!startColor || !endColor) {
       return res.status(400).json({ error: 'Valid startColor and endColor hex values are required.' });
@@ -2921,10 +2922,15 @@ app.put('/api/coach/team/banner-colors', requireCoach, async (req, res) => {
     if (!team) return res.status(404).json({ error: 'Team not found' });
 
     await db.prepare(
-      'UPDATE hs_teams SET banner_color_start = ?, banner_color_end = ? WHERE id = ?'
-    ).run(startColor, endColor, team.id);
+      'UPDATE hs_teams SET banner_color_start = ?, banner_color_end = ?, use_banner_gradient_cards = ? WHERE id = ?'
+    ).run(startColor, endColor, applyToPlayerCards, team.id);
 
-    res.json({ success: true, bannerColorStart: startColor, bannerColorEnd: endColor });
+    res.json({
+      success: true,
+      bannerColorStart: startColor,
+      bannerColorEnd: endColor,
+      useBannerGradientCards: applyToPlayerCards
+    });
   } catch (error) {
     console.error('Coach save banner colors error:', error);
     res.status(500).json({ error: 'Failed to save banner colors' });
