@@ -303,6 +303,96 @@
         .replace(/'/g, '&#39;');
     }
 
+      async function renderCoachComments(player) {
+        const section = document.getElementById('coachCommentsSection');
+        const list = document.getElementById('coachCommentsList');
+        const form = document.getElementById('coachCommentForm');
+        const deleteBtn = document.getElementById('deleteCoachCommentBtn');
+        const input = document.getElementById('coachCommentInput');
+
+        const comments = player.coach_comments || [];
+        const isCoach = currentViewer && currentViewer.role === 'coach';
+
+        // Build the public display list
+        if (comments.length > 0) {
+          list.innerHTML = comments.map(c => `
+            <div style="padding:14px 16px; background:#f8f9fa; border-radius:10px; border:1px solid #c7d0da; margin-bottom:10px;">
+              <div style="font-size:13px; font-weight:600; color:#1e3c72; margin-bottom:6px;">
+                ${escapeHtml(c.coach_name)}
+                <span style="font-weight:400; color:#76849b; margin-left:8px;">&mdash; ${escapeHtml(c.team_name || '')}${c.school_name ? ' &bull; ' + escapeHtml(c.school_name) : ''}</span>
+              </div>
+              <div style="font-size:14px; color:#2c3e50; white-space:pre-wrap;">${escapeHtml(c.comment)}</div>
+              <div style="font-size:11px; color:#76849b; margin-top:6px;">${new Date(c.updated_at).toLocaleDateString()}</div>
+            </div>
+          `).join('');
+          section.style.display = '';
+        } else if (isCoach) {
+          list.innerHTML = '';
+          section.style.display = '';
+        } else {
+          section.style.display = 'none';
+          return;
+        }
+
+        // If viewer is a coach, fetch their own comment to pre-populate the edit form
+        if (isCoach) {
+          form.style.display = '';
+          try {
+            const res = await fetch(`/api/coach/players/${playerId}/comment`);
+            if (res.ok) {
+              const myComment = await res.json();
+              if (myComment && myComment.comment) {
+                input.value = myComment.comment;
+                deleteBtn.style.display = '';
+              } else {
+                input.value = '';
+                deleteBtn.style.display = 'none';
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      async function saveCoachComment() {
+        const input = document.getElementById('coachCommentInput');
+        const status = document.getElementById('coachCommentStatus');
+        const text = input.value.trim();
+        if (!text) { status.textContent = 'Please enter a comment.'; status.style.color = '#e74c3c'; return; }
+        status.textContent = 'Saving...'; status.style.color = '#76849b';
+        try {
+          const res = await fetch(`/api/coach/players/${playerId}/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment: text })
+          });
+          const data = await res.json();
+          if (!res.ok) { status.textContent = data.error || 'Failed to save.'; status.style.color = '#e74c3c'; return; }
+          status.textContent = 'Saved!'; status.style.color = '#28a745';
+          document.getElementById('deleteCoachCommentBtn').style.display = '';
+          setTimeout(() => { status.textContent = ''; }, 2000);
+        } catch (err) {
+          status.textContent = 'Error saving comment.'; status.style.color = '#e74c3c';
+        }
+      }
+
+      async function deleteCoachComment() {
+        if (!confirm('Delete your comment on this player?')) return;
+        const status = document.getElementById('coachCommentStatus');
+        status.textContent = 'Deleting...'; status.style.color = '#76849b';
+        try {
+          const res = await fetch(`/api/coach/players/${playerId}/comment`, { method: 'DELETE' });
+          const data = await res.json();
+          if (!res.ok) { status.textContent = data.error || 'Failed to delete.'; status.style.color = '#e74c3c'; return; }
+          document.getElementById('coachCommentInput').value = '';
+          document.getElementById('deleteCoachCommentBtn').style.display = 'none';
+          document.getElementById('coachCommentsList').innerHTML = '';
+          status.textContent = 'Comment deleted.'; status.style.color = '#28a745';
+          setTimeout(() => { status.textContent = ''; }, 2000);
+        } catch (err) {
+          status.textContent = 'Error deleting comment.'; status.style.color = '#e74c3c';
+        }
+      }
+
     async function loadPlayerDetail() {
       const res = await fetch(`/api/agent/player/${playerId}`, {
         cache: 'no-store',
@@ -508,6 +598,19 @@
               </div>
             </div>
           ` : ''}
+
+            <div id="coachCommentsSection" style="display:none;" class="profile-section">
+              <h2 class="section-title-small">COACH'S COMMENT</h2>
+              <div id="coachCommentsList"></div>
+              <div id="coachCommentForm" style="display:none; margin-top:14px;">
+                <textarea id="coachCommentInput" rows="4" maxlength="2000" placeholder="Write your comment about this player..." style="width:100%; box-sizing:border-box; padding:10px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; resize:vertical;"></textarea>
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                  <button onclick="saveCoachComment()" class="message-btn" style="min-width:110px;">Save Comment</button>
+                  <button id="deleteCoachCommentBtn" onclick="deleteCoachComment()" class="message-btn" style="background:#e74c3c; min-width:110px; display:none;">Delete Comment</button>
+                </div>
+                <div id="coachCommentStatus" style="margin-top:6px; font-size:13px; color:#28a745;"></div>
+              </div>
+            </div>
         </div>
       `;
 
@@ -517,6 +620,8 @@
       if (currentViewer) {
         checkFavoriteStatus();
       }
+
+        renderCoachComments(player);
 
       if (!currentViewer) {
         applyReadOnlyDetailMode();

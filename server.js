@@ -159,7 +159,19 @@ async function logSiteTrafficEvent({
   role = null,
   metadata = {}
 }) {
-  try {
+    const coachComments = await db.prepare(`
+      SELECT cpc.comment, cpc.updated_at,
+             u.full_name AS coach_name,
+             t.team_name, t.school_name
+      FROM coach_player_comments cpc
+      JOIN users u ON u.id = cpc.coach_id
+      JOIN hs_teams t ON t.coach_id = cpc.coach_id
+      WHERE cpc.player_id = ?
+      ORDER BY cpc.updated_at DESC
+    `).all(req.params.id);
+    player.coach_comments = coachComments;
+
+    await enrichPlayerProfile(player);
     await db.prepare(`
       INSERT INTO site_traffic_events (
         event_type, path, method, user_id, role, ip_address, user_agent, referer, metadata_json
@@ -2225,9 +2237,22 @@ app.get('/api/agent/player/:id', async (req, res) => {
     }
   });
   
-  await enrichPlayerProfile(player);
+    const coachComments = await db.prepare(`
+      SELECT cpc.comment, cpc.updated_at,
+             u.full_name AS coach_name,
+             t.team_name, t.school_name
+      FROM coach_player_comments cpc
+      JOIN users u ON u.id = cpc.coach_id
+      JOIN hs_teams t ON t.coach_id = cpc.coach_id
+      WHERE cpc.player_id = ?
+      ORDER BY cpc.updated_at DESC
+    `).all(req.params.id);
+    player.coach_comments = coachComments;
+
+    await enrichPlayerProfile(player);
   res.json(player);
 });
+
 
 // Agent: Get agent profile
 app.get('/api/agent/profile', requireAuth, async (req, res) => {
@@ -2799,7 +2824,74 @@ app.delete('/api/coach/team/roster/:playerId', requireCoach, async (req, res) =>
   }
 });
 
-// Coach: Send invite to a player by email
+  // Coach: Upsert a comment on a player's profile (player must be on coach's team)
+  // Coach: Get own comment for a player
+  app.get('/api/coach/players/:playerId/comment', requireCoach, async (req, res) => {
+    try {
+      const playerId = parseInt(req.params.playerId, 10);
+      if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+      const row = await db.prepare('SELECT comment, updated_at FROM coach_player_comments WHERE coach_id = ? AND player_id = ?').get(req.session.userId, playerId);
+      res.json(row || null);
+    } catch (error) {
+      console.error('Coach get comment error:', error);
+      res.status(500).json({ error: 'Failed to get comment' });
+    }
+  });
+
+    // Coach: Upsert a comment on a player's profile (player must be on coach's team)
+  app.post('/api/coach/players/:playerId/comment', requireCoach, async (req, res) => {
+    try {
+      const playerId = parseInt(req.params.playerId, 10);
+      if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+      const { comment } = req.body;
+      if (!comment || typeof comment !== 'string' || !comment.trim()) {
+        return res.status(400).json({ error: 'Comment text is required' });
+      }
+      const trimmed = comment.trim();
+      if (trimmed.length > 2000) return res.status(400).json({ error: 'Comment must be 2000 characters or fewer' });
+
+      const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+      if (!team) return res.status(403).json({ error: 'No team found for this coach' });
+
+      const onTeam = await db.prepare('SELECT id FROM team_players WHERE team_id = ? AND player_id = ?').get(team.id, playerId);
+      if (!onTeam) return res.status(403).json({ error: 'Player is not on your team' });
+
+      await db.prepare(`
+        INSERT INTO coach_player_comments (coach_id, player_id, comment, updated_at)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT (coach_id, player_id) DO UPDATE
+          SET comment = EXCLUDED.comment, updated_at = CURRENT_TIMESTAMP
+      `).run(req.session.userId, playerId, trimmed);
+
+      const saved = await db.prepare('SELECT * FROM coach_player_comments WHERE coach_id = ? AND player_id = ?').get(req.session.userId, playerId);
+      res.json(saved);
+    } catch (error) {
+      console.error('Coach upsert comment error:', error);
+      res.status(500).json({ error: 'Failed to save comment' });
+    }
+  });
+
+  // Coach: Delete own comment on a player's profile
+  app.delete('/api/coach/players/:playerId/comment', requireCoach, async (req, res) => {
+    try {
+      const playerId = parseInt(req.params.playerId, 10);
+      if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+
+      const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+      if (!team) return res.status(403).json({ error: 'No team found for this coach' });
+
+      const onTeam = await db.prepare('SELECT id FROM team_players WHERE team_id = ? AND player_id = ?').get(team.id, playerId);
+      if (!onTeam) return res.status(403).json({ error: 'Player is not on your team' });
+
+      await db.prepare('DELETE FROM coach_player_comments WHERE coach_id = ? AND player_id = ?').run(req.session.userId, playerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Coach delete comment error:', error);
+      res.status(500).json({ error: 'Failed to delete comment' });
+    }
+  });
+
+  // Coach: Send invite to a player by email
 app.post('/api/coach/invite', requireCoach, async (req, res) => {
   try {
     const { playerEmail } = req.body;

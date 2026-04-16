@@ -384,6 +384,20 @@ const createTablesSQL = `
     FOREIGN KEY (share_id) REFERENCES recruiter_player_shares(id) ON DELETE CASCADE,
     FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS coach_player_comments (
+    id SERIAL PRIMARY KEY,
+    coach_id INTEGER NOT NULL,
+    player_id INTEGER NOT NULL,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(coach_id, player_id),
+    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+    CREATE INDEX IF NOT EXISTS idx_coach_player_comments_coach ON coach_player_comments(coach_id);
+    CREATE INDEX IF NOT EXISTS idx_coach_player_comments_player ON coach_player_comments(player_id);
 `;
 
 const alterTablesSQL = `
