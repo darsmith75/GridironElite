@@ -4984,7 +4984,7 @@ app.post('/api/ai/player/:playerUserId/rating/generate', requireAuth, async (req
       return res.status(400).json({ error: 'Invalid player ID' });
     }
 
-    if (isAiGenerationRateLimited()) {
+    if (req.session.role !== 'admin' && isAiGenerationRateLimited(req.session.userId, playerUserId)) {
       return res.status(429).json({ error: 'Rate limit reached. Try again shortly.' });
     }
 
@@ -5010,15 +5010,13 @@ app.post('/api/ai/player/:playerUserId/rating/generate', requireAuth, async (req
       });
     }
 
-    setAiGenerationRateLimit();
-
     const result = await generatePlayerRating({ player: sourceBundle });
 
     const scoresJson = JSON.stringify(result.categories);
 
     await db.prepare(`
       INSERT INTO ai_player_ratings (player_user_id, source_hash, overall_score, scores_json, model_name, updated_at)
-      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      VALUES (?, ?, ?, ?::jsonb, ?, CURRENT_TIMESTAMP)
       ON CONFLICT (player_user_id) DO UPDATE SET
         source_hash = EXCLUDED.source_hash,
         overall_score = EXCLUDED.overall_score,
