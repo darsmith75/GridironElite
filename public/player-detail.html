@@ -303,6 +303,93 @@
         .replace(/'/g, '&#39;');
     }
 
+      function getRatingColor(score) {
+        if (score >= 85) return '#1a9e5c';
+        if (score >= 70) return '#27ae60';
+        if (score >= 55) return '#f39c12';
+        if (score >= 40) return '#e67e22';
+        return '#e74c3c';
+      }
+
+      function getRatingLabel(score) {
+        if (score >= 85) return 'Elite';
+        if (score >= 70) return 'Above Avg';
+        if (score >= 55) return 'Average';
+        if (score >= 40) return 'Below Avg';
+        return 'Developing';
+      }
+
+      function buildRatingMeter(label, score, description) {
+        const color = getRatingColor(score);
+        return `
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px;">
+              <span style="font-size:13px; font-weight:600; color:#1e3c72;">${escapeHtml(label)}</span>
+              <span style="font-size:13px; font-weight:700; color:${color};">${score} <span style="font-weight:400; font-size:11px; color:#7a8a9e;">${getRatingLabel(score)}</span></span>
+            </div>
+            <div style="background:#e8edf2; border-radius:6px; height:10px; overflow:hidden;">
+              <div style="width:${score}%; background:${color}; height:100%; border-radius:6px; transition:width 0.6s ease;"></div>
+            </div>
+            ${description ? `<p style="margin:5px 0 0; font-size:12px; color:#7a8a9e; line-height:1.4;">${escapeHtml(description)}</p>` : ''}
+          </div>`;
+      }
+
+      function renderRatingData(data) {
+        const overallColor = getRatingColor(data.overallScore);
+        const overallLabel = getRatingLabel(data.overallScore);
+        const categoriesHtml = (data.categories || []).map(c => buildRatingMeter(c.name, c.score, c.description)).join('');
+        return `
+          <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+            <div style="text-align:center; min-width:90px;">
+              <div style="width:88px; height:88px; border-radius:50%; background:${overallColor}; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 6px;">
+                <span style="font-size:28px; font-weight:800; color:#fff; line-height:1;">${data.overallScore}</span>
+                <span style="font-size:9px; font-weight:600; color:rgba(255,255,255,0.85); letter-spacing:0.5px; text-transform:uppercase;">Overall</span>
+              </div>
+              <span style="font-size:12px; font-weight:600; color:${overallColor};">${overallLabel}</span>
+            </div>
+            <div style="flex:1; min-width:220px;">${categoriesHtml}</div>
+          </div>
+          <p style="margin:12px 0 0; font-size:11px; color:#b0b8c5;">AI-generated estimate based on reported metrics. Not an official recruiting evaluation.</p>`;
+      }
+
+      async function loadPlayerRating(playerUserId) {
+        try {
+          const res = await fetch(`/api/ai/player/${playerUserId}/rating`);
+          if (res.ok) {
+            const data = await res.json();
+            document.getElementById('aiRatingContent').innerHTML = renderRatingData(data);
+            document.getElementById('generateRatingBtn').textContent = 'Refresh Rating';
+          }
+        } catch (e) {
+          // No rating yet — keep default message
+        }
+      }
+
+      async function generateRating() {
+        const btn = document.getElementById('generateRatingBtn');
+        const content = document.getElementById('aiRatingContent');
+        if (!currentPlayerData) return;
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        content.innerHTML = '<p style="color:#7a8a9e; font-size:13px; margin:0;">Analyzing player data...</p>';
+        try {
+          const res = await fetch(`/api/ai/player/${currentPlayerData.user_id}/rating/generate`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok) {
+            content.innerHTML = `<p style="color:#e74c3c; font-size:13px; margin:0;">${escapeHtml(data.error || 'Failed to generate rating.')}</p>`;
+            btn.textContent = 'Try Again';
+            btn.disabled = false;
+            return;
+          }
+          content.innerHTML = renderRatingData(data);
+          btn.textContent = 'Refresh Rating';
+        } catch (e) {
+          content.innerHTML = '<p style="color:#e74c3c; font-size:13px; margin:0;">An error occurred. Please try again.</p>';
+          btn.textContent = 'Try Again';
+        }
+        btn.disabled = false;
+      }
+
       async function renderCoachComments(player) {
         const section = document.getElementById('coachCommentsSection');
         const list = document.getElementById('coachCommentsList');
@@ -454,6 +541,15 @@
               <p class="bio-text">${player.bio}</p>
             </div>
           ` : ''}
+
+          <!-- AI Player Rating -->
+          <div id="aiRatingSection" class="profile-section">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+              <h2 class="section-title-small" style="margin-bottom:0;">PLAYER RATING</h2>
+              <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
+            </div>
+            <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>
+          </div>
 
           <!-- Athletic Metrics Grid -->
           <div class="profile-section">
@@ -622,6 +718,7 @@
       }
 
         renderCoachComments(player);
+        loadPlayerRating(player.user_id);
 
       if (!currentViewer) {
         applyReadOnlyDetailMode();

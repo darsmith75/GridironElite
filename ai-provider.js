@@ -318,10 +318,84 @@ async function generateBioAssistance({ mode, currentBio, profileContext }) {
   };
 }
 
+const RATING_CATEGORIES = ['Speed', 'Strength', 'Athleticism', 'Upside'];
+
+function buildRatingPrompt(player) {
+  const system = [
+    'You are a football recruiting analyst evaluating high school player potential.',
+    'Use only the supplied player data to assign scores.',
+    'Consider position-specific expectations for all physical metrics.',
+    'Do not invent data. If a metric is missing, factor that into the score accordingly.',
+    'Return strict JSON only with keys: overall_score, categories.',
+    'overall_score is an integer 0-100.',
+    'categories is an array of exactly 4 objects, each with: name (string), score (integer 0-100), description (string, max 20 words).',
+    'Category names must be exactly: Speed, Strength, Athleticism, Upside.',
+    'Speed: based on 40-yard dash, shuttle_5_10_5, l_drill relative to position.',
+    'Strength: based on bench_press, squat, power_clean relative to position and body weight.',
+    'Athleticism: based on vertical_jump, broad_jump, single_leg_squat, height, weight, position profile.',
+    'Upside: based on graduation year (later year = more time to develop = higher upside), GPA, overall profile completeness.'
+  ].join(' ');
+
+  const user = [
+    'Rate this football player. Return JSON only.',
+    'Player data:',
+    JSON.stringify(player)
+  ].join('\n');
+
+  return { system, user };
+}
+
+async function generatePlayerRating({ player }) {
+  const provider = String(process.env.AI_PROVIDER || 'openai').toLowerCase();
+  const defaultModelName = provider === 'gemini' || provider === 'google'
+    ? 'gemini-2.5-flash'
+    : 'gpt-4.1-mini';
+  const modelName = process.env.AI_MODEL_RATING || process.env.AI_MODEL_SUMMARY || defaultModelName;
+  const timeoutMs = parseInt(process.env.AI_TIMEOUT_MS || '10000', 10);
+  const maxTokens = parseInt(process.env.AI_MAX_TOKENS_RATING || '300', 10);
+  const temperature = Number(process.env.AI_TEMPERATURE_RATING || '0.2');
+
+  const prompt = buildRatingPrompt(player);
+  const raw = await callOpenAiLikeApi({
+    system: prompt.system,
+    user: prompt.user,
+    modelName,
+    timeoutMs,
+    maxTokens,
+    temperature
+  });
+
+  const rawJson = extractJsonObject(raw);
+  if (!rawJson) {
+    throw new Error('Model did not return a JSON object for rating');
+  }
+
+  const parsed = JSON.parse(rawJson);
+
+  const overallScore = Math.min(100, Math.max(0, Math.round(Number(parsed.overall_score))));
+  if (!Number.isFinite(overallScore)) {
+    throw new Error('Model returned invalid overall_score');
+  }
+
+  if (!Array.isArray(parsed.categories) || parsed.categories.length === 0) {
+    throw new Error('Model returned invalid categories');
+  }
+
+  const categories = RATING_CATEGORIES.map(name => {
+    const found = parsed.categories.find(c => String(c.name || '').trim().toLowerCase() === name.toLowerCase());
+    const score = found ? Math.min(100, Math.max(0, Math.round(Number(found.score)))) : 50;
+    const description = String(found?.description || '').trim().slice(0, 120);
+    return { name, score, description };
+  });
+
+  return { modelName, overallScore, categories };
+}
+
 module.exports = {
   PROMPT_VERSION,
   normalizeAudience,
   buildSourceHash,
   generateScoutingSummary,
-  generateBioAssistance
+  generateBioAssistance,
+  generatePlayerRating
 };

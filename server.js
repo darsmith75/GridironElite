@@ -28,7 +28,7 @@ const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
 const db = require('./database');
 const { b2Enabled, uploadToB2, deleteFromB2, deleteFromB2Prefix, getB2Url, checkB2Health } = require('./backblaze');
-const { PROMPT_VERSION, normalizeAudience, buildSourceHash, generateScoutingSummary, generateBioAssistance } = require('./ai-provider');
+const { PROMPT_VERSION, normalizeAudience, buildSourceHash, generateScoutingSummary, generateBioAssistance, generatePlayerRating } = require('./ai-provider');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -4941,6 +4941,109 @@ app.post('/api/ai/player/:playerUserId/summary/:summaryId/feedback', requireAuth
   } catch (error) {
     console.error('AI summary feedback error:', error);
     res.status(500).json({ error: 'Failed to submit summary feedback' });
+  }
+});
+
+// AI: Get cached player rating
+app.get('/api/ai/player/:playerUserId/rating', async (req, res) => {
+  try {
+    const playerUserId = parseAiPlayerId(req.params.playerUserId);
+    if (!playerUserId) {
+      return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    const row = await db.prepare(
+      'SELECT overall_score, scores_json, model_name, updated_at FROM ai_player_ratings WHERE player_user_id = ?'
+    ).get(playerUserId);
+
+    if (!row) {
+      return res.status(404).json({ error: 'No rating found' });
+    }
+
+    res.json({
+      overallScore: row.overall_score,
+      categories: typeof row.scores_json === 'string' ? JSON.parse(row.scores_json) : row.scores_json,
+      modelName: row.model_name,
+      updatedAt: row.updated_at
+    });
+  } catch (error) {
+    console.error('AI rating fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch rating' });
+  }
+});
+
+// AI: Generate (or regenerate) player rating
+app.post('/api/ai/player/:playerUserId/rating/generate', requireAuth, async (req, res) => {
+  try {
+    if (!isAiGenerationEnabled()) {
+      return res.status(503).json({ error: 'AI features are not enabled' });
+    }
+
+    const playerUserId = parseAiPlayerId(req.params.playerUserId);
+    if (!playerUserId) {
+      return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    if (isAiGenerationRateLimited()) {
+      return res.status(429).json({ error: 'Rate limit reached. Try again shortly.' });
+    }
+
+    const sourceBundle = await loadPlayerSummarySourceBundle(playerUserId);
+    if (!sourceBundle) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const sourceHash = buildSourceHash(sourceBundle);
+
+    // Return cached rating if data hasn't changed
+    const existing = await db.prepare(
+      'SELECT overall_score, scores_json, model_name, updated_at FROM ai_player_ratings WHERE player_user_id = ? AND source_hash = ?'
+    ).get(playerUserId, sourceHash);
+
+    if (existing) {
+      return res.json({
+        overallScore: existing.overall_score,
+        categories: typeof existing.scores_json === 'string' ? JSON.parse(existing.scores_json) : existing.scores_json,
+        modelName: existing.model_name,
+        updatedAt: existing.updated_at,
+        cached: true
+      });
+    }
+
+    setAiGenerationRateLimit();
+
+    const result = await generatePlayerRating({ player: sourceBundle });
+
+    const scoresJson = JSON.stringify(result.categories);
+
+    await db.prepare(`
+      INSERT INTO ai_player_ratings (player_user_id, source_hash, overall_score, scores_json, model_name, updated_at)
+      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (player_user_id) DO UPDATE SET
+        source_hash = EXCLUDED.source_hash,
+        overall_score = EXCLUDED.overall_score,
+        scores_json = EXCLUDED.scores_json,
+        model_name = EXCLUDED.model_name,
+        updated_at = EXCLUDED.updated_at
+    `).run(playerUserId, sourceHash, result.overallScore, scoresJson, result.modelName);
+
+    await logAiEvent({
+      eventType: 'rating_generated',
+      actorUserId: req.session.userId,
+      playerUserId,
+      summaryId: null,
+      metadata: { modelName: result.modelName, overallScore: result.overallScore }
+    });
+
+    res.json({
+      overallScore: result.overallScore,
+      categories: result.categories,
+      modelName: result.modelName,
+      cached: false
+    });
+  } catch (error) {
+    console.error('AI rating generate error:', error);
+    res.status(500).json({ error: 'Failed to generate rating' });
   }
 });
 

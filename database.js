@@ -396,8 +396,21 @@ const createTablesSQL = `
     FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS ai_player_ratings (
+    id SERIAL PRIMARY KEY,
+    player_user_id INTEGER NOT NULL UNIQUE,
+    source_hash VARCHAR(64) NOT NULL,
+    overall_score INTEGER NOT NULL,
+    scores_json JSONB NOT NULL,
+    model_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
     CREATE INDEX IF NOT EXISTS idx_coach_player_comments_coach ON coach_player_comments(coach_id);
     CREATE INDEX IF NOT EXISTS idx_coach_player_comments_player ON coach_player_comments(player_id);
+  CREATE INDEX IF NOT EXISTS idx_ai_player_ratings_player ON ai_player_ratings(player_user_id);
 `;
 
 const alterTablesSQL = `
