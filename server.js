@@ -159,19 +159,7 @@ async function logSiteTrafficEvent({
   role = null,
   metadata = {}
 }) {
-    const coachComments = await db.prepare(`
-      SELECT cpc.comment, cpc.updated_at,
-             u.full_name AS coach_name,
-             t.team_name, t.school_name
-      FROM coach_player_comments cpc
-      JOIN users u ON u.id = cpc.coach_id
-      JOIN hs_teams t ON t.coach_id = cpc.coach_id
-      WHERE cpc.player_id = ?
-      ORDER BY cpc.updated_at DESC
-    `).all(req.params.id);
-    player.coach_comments = coachComments;
-
-    await enrichPlayerProfile(player);
+  try {
     await db.prepare(`
       INSERT INTO site_traffic_events (
         event_type, path, method, user_id, role, ip_address, user_agent, referer, metadata_json
