@@ -382,6 +382,42 @@
     .btn-ghost:hover {
       background: #f4f7fb;
     }
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .pagination-info {
+      font-size: 13px;
+      color: #76849b;
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .page-btn {
+      padding: 6px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 6px;
+      background: #fff;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .page-btn:hover:not(:disabled) { background: #f4f7fb; }
+    .page-btn:disabled { color: #b0b8c4; cursor: default; }
+    .page-btn.active {
+      background: #1e3c72;
+      color: #fff;
+      border-color: #1e3c72;
+    }
     .ad-slot-admin-grid {
       display: grid;
       gap: 14px;
@@ -548,6 +584,10 @@
             </thead>
             <tbody id="usersTableBody"></tbody>
           </table>
+        </div>
+        <div class="pagination-bar" id="usersPaginationBar" style="display:none;">
+          <div class="pagination-info" id="usersPaginationInfo"></div>
+          <div class="pagination-controls" id="usersPaginationControls"></div>
         </div>
       </div>
       </div>
@@ -860,6 +900,8 @@
     let allUsers = [];
     let metricTipConfig = [];
     let metricTips = {};
+    const USERS_PAGE_SIZE = 50;
+    let usersCurrentPage = 1;
     let schoolRatingCategories = [];
     let adSlotConfig = [];
     let adSlots = {};
@@ -1113,6 +1155,104 @@
       }).join('');
     }
 
+    function renderUsers() {
+      const search = document.getElementById('userSearch').value.toLowerCase().trim();
+      const roleFilter = document.getElementById('roleFilter').value;
+
+      let filtered = allUsers;
+      if (roleFilter) filtered = filtered.filter(u => u.role === roleFilter);
+      if (search) {
+        filtered = filtered.filter(u => {
+          const text = [u.email, u.full_name, u.player_name].filter(Boolean).join(' ').toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      const tbody = document.getElementById('usersTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#999; padding:30px;">No users found</td></tr>';
+        renderUsersPagination(0, 0);
+        return;
+      }
+
+      const totalPages = Math.ceil(filtered.length / USERS_PAGE_SIZE);
+      if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
+      const start = (usersCurrentPage - 1) * USERS_PAGE_SIZE;
+      const pageUsers = filtered.slice(start, start + USERS_PAGE_SIZE);
+
+      tbody.innerHTML = pageUsers.map(u => {
+        const name = u.player_name || u.full_name || '-';
+        const details = u.role === 'player'
+          ? [u.position, u.high_school, u.graduation_year ? 'Class of ' + u.graduation_year : '', u.gpa ? 'GPA: ' + u.gpa : ''].filter(Boolean).join(' &middot; ')
+          : (u.organization || '-');
+        const lastLogin = formatDateTime(u.last_login_at);
+        const date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+        return `<tr>
+          <td>${u.id}</td>
+          <td>${escapeHtml(name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td><span class="role-badge ${u.role}">${u.role === 'player' ? 'Athlete' : u.role}</span></td>
+          <td>${details || '-'}</td>
+          <td>${lastLogin}</td>
+          <td>${date}</td>
+          <td class="actions-cell">
+            <div class="user-actions">
+              <button class="action-btn edit" onclick="openEditModal(${u.id})">Edit</button>
+              <button class="action-btn reset" onclick="openResetModal(${u.id}, '${escapeHtml(name)}')">Password</button>
+              <button class="action-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(name)}')">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      renderUsersPagination(filtered.length, totalPages);
+    }
+
+    function renderUsersPagination(total, totalPages) {
+      const bar = document.getElementById('usersPaginationBar');
+      const info = document.getElementById('usersPaginationInfo');
+      const controls = document.getElementById('usersPaginationControls');
+
+      if (total === 0 || totalPages <= 1) {
+        bar.style.display = total > 0 ? 'flex' : 'none';
+        info.textContent = total > 0 ? `${total} user${total !== 1 ? 's' : ''}` : '';
+        controls.innerHTML = '';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      const start = (usersCurrentPage - 1) * USERS_PAGE_SIZE + 1;
+      const end = Math.min(usersCurrentPage * USERS_PAGE_SIZE, total);
+      info.textContent = `${start}–${end} of ${total} users`;
+
+      // Build page buttons: always show first, last, current ±2, with ellipsis
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= usersCurrentPage - 2 && i <= usersCurrentPage + 2)) {
+          pages.push(i);
+        } else if (pages[pages.length - 1] !== '…') {
+          pages.push('…');
+        }
+      }
+
+      let html = `<button class="page-btn" onclick="goUsersPage(${usersCurrentPage - 1})" ${usersCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+      pages.forEach(p => {
+        if (p === '…') {
+          html += `<span style="padding:0 4px;color:#76849b;">…</span>`;
+        } else {
+          html += `<button class="page-btn${p === usersCurrentPage ? ' active' : ''}" onclick="goUsersPage(${p})">${p}</button>`;
+        }
+      });
+      html += `<button class="page-btn" onclick="goUsersPage(${usersCurrentPage + 1})" ${usersCurrentPage === totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+      controls.innerHTML = html;
+    }
+
+    function goUsersPage(page) {
+      usersCurrentPage = page;
+      renderUsers();
+      document.getElementById('tab-users').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
       const div = document.createElement('div');
@@ -1121,8 +1261,8 @@
     }
 
     // Search and filter listeners
-    document.getElementById('userSearch').addEventListener('input', renderUsers);
-    document.getElementById('roleFilter').addEventListener('change', renderUsers);
+    document.getElementById('userSearch').addEventListener('input', () => { usersCurrentPage = 1; renderUsers(); });
+    document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; renderUsers(); });
 
     // Edit Modal
     async function openEditModal(userId) {
