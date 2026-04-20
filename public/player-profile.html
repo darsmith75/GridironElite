@@ -3136,7 +3136,8 @@
         });
         if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save note'); return; }
         cancelNoteForm();
-        loadNotes();
+         await loadNotes();
+         if (isVisit) await loadPlayerProfile();
       } catch (err) { console.error('Save note error:', err); alert('Failed to save note'); }
     }
 
