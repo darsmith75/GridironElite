@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Athletic Metrics</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .metrics-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 8px 0 20px;
+    }
+    .metrics-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .metrics-back-link:hover {
+      text-decoration: underline;
+    }
+    .metrics-hero {
+      background: linear-gradient(135deg, #17315f 0%, #27549a 60%, #4f7cc6 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 26px 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(19, 40, 78, 0.28);
+    }
+    .metrics-hero h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+      color: #fff;
+    }
+    .metrics-hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 760px;
+    }
+    .metrics-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .metrics-tab {
+      border: 1px solid #c7d0da;
+      background: #f7faff;
+      color: #234170;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .metrics-tab:hover {
+      border-color: #9fb5d5;
+      background: #eef4ff;
+    }
+    .metrics-tab.active {
+      background: #1e3c72;
+      border-color: #1e3c72;
+      color: #fff;
+      box-shadow: 0 5px 16px rgba(30, 60, 114, 0.28);
+    }
+    .metrics-panel {
+      background: #fff;
+      border: 1px solid #d5deea;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+    .metric-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .metric-title-row h2 {
+      margin: 0;
+      color: #1e3c72;
+      font-size: 22px;
+    }
+    .metric-value-pill {
+      background: #e8edf5;
+      border: 1px solid #c7d0da;
+      border-radius: 999px;
+      color: #1e3c72;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 12px;
+    }
+    .metric-help-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .metric-help-card {
+      border: 1px solid #dbe5f3;
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 12px;
+    }
+    .metric-help-card h3 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      color: #1e3c72;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    .metric-help-card p {
+      margin: 0;
+      color: #364a67;
+      font-size: 13px;
+      line-height: 1.52;
+    }
+    .metric-video-box {
+      margin-top: 12px;
+      border: 1px dashed #c7d0da;
+      border-radius: 10px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+    .metric-video-box video {
+      width: 100%;
+      max-height: 320px;
+      border-radius: 8px;
+      background: #000;
+    }
+    .metric-video-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #5a6d8a;
+      font-weight: 600;
+    }
+    @media (max-width: 720px) {
+      .metrics-hero {
+        padding: 20px;
+      }
+      .metrics-hero h1 {
+        font-size: 23px;
+      }
+      .metrics-panel {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="player-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="metrics-shell">
+        <a href="player-profile.html" class="metrics-back-link">Back to My Profile</a>
+        <section class="metrics-hero">
+          <h1>Athletic Metrics</h1>
+          <p>Review each metric in one place. Use the tabs to inspect your current value and focus on where to improve next.</p>
+        </section>
+
+        <div id="metricsTabs" class="metrics-tabs"></div>
+
+        <section class="metrics-panel">
+          <div class="metric-title-row">
+            <h2 id="metricTitle">Metric</h2>
+            <span class="metric-value-pill" id="metricValue">No value yet</span>
+          </div>
+          <div class="metric-help-grid">
+            <article class="metric-help-card">
+              <h3>Why It Matters</h3>
+              <p id="metricWhy">This metric helps coaches compare athletic readiness and projection.</p>
+            </article>
+            <article class="metric-help-card">
+              <h3>How To Improve</h3>
+              <p id="metricHow">Use consistent training, quality recovery, and repeat testing with good form.</p>
+            </article>
+          </div>
+          <div class="metric-video-box" id="metricVideoBox" style="display:none;">
+            <video id="metricVideo" controls></video>
+            <div class="metric-video-note" id="metricVideoNote"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const METRICS = [
+      {
+        key: 'forty_yard_dash',
+        label: '40-Yard Dash',
+        suffix: 's',
+        why: 'Explosiveness and top-end speed are critical for almost every position group.',
+        how: 'Prioritize sprint mechanics, resisted starts, and full recovery between max-effort reps.'
+      },
+      {
+        key: 'vertical_jump',
+        label: 'Vertical Jump',
+        suffix: '"',
+        why: 'Vertical power reflects lower-body force production and elastic athleticism.',
+        how: 'Use jump progressions, loaded strength work, and low-volume high-quality plyometrics.'
+      },
+      {
+        key: 'bench_press',
+        label: 'Bench Press',
+        suffix: ' lbs',
+        why: 'Upper-body strength supports blocking, shedding, and strike power at contact.',
+        how: 'Build pressing strength with progressive overload and include shoulder-stability work.'
+      },
+      {
+        key: 'squat',
+        label: 'Squat',
+        suffix: ' lbs',
+        why: 'Squat strength is a key base for force, acceleration, and total-body power transfer.',
+        how: 'Focus on range of motion, trunk control, and gradual load progression week to week.'
+      },
+      {
+        key: 'shuttle_5_10_5',
+        label: '5-10-5 Shuttle',
+        suffix: 's',
+        why: 'Change-of-direction speed shows how quickly you can decelerate and re-accelerate.',
+        how: 'Train decel mechanics, hip turn efficiency, and short-area reactive footwork.'
+      },
+      {
+        key: 'l_drill',
+        label: 'L-Drill',
+        suffix: 's',
+        why: 'The L-Drill tests body control through multiple directional transitions under speed.',
+        how: 'Drill posture through turns, ankle stiffness, and consistent cone-line technique.'
+      },
+      {
+        key: 'broad_jump',
+        label: 'Broad Jump',
+        suffix: '"',
+        why: 'Horizontal power indicates how effectively you project force for acceleration.',
+        how: 'Pair posterior-chain strength with horizontal jump and landing-control progressions.'
+      },
+      {
+        key: 'power_clean',
+        label: 'Power Clean',
+        suffix: ' lbs',
+        why: 'Power clean output is a strong proxy for explosive triple-extension ability.',
+        how: 'Develop clean technique first, then add load while maintaining speed and bar path.'
+      },
+      {
+        key: 'single_leg_squat',
+        label: 'Single Leg Squat',
+        suffix: ' lbs',
+        why: 'Single-leg strength supports balance, force production, and injury-risk reduction.',
+        how: 'Build unilateral strength with tempo work, knee control, and stable hip positioning.'
+      }
+    ];
+
+    let currentMetricKey = METRICS[0].key;
+    let profile = null;
+    let metricVideoMap = {};
+
+    function formatBroadJumpFeetInches(totalInchesValue) {
+      const total = Number(totalInchesValue);
+      if (!Number.isFinite(total) || total <= 0) return '';
+      const feet = Math.floor(total / 12);
+      const inches = Number((total - (feet * 12)).toFixed(1));
+      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+      return feet + "' " + inchesText + '"';
+    }
+
+    function getMetricVideoMap(playerProfile) {
+      const map = {};
+      if (!playerProfile || !playerProfile.metric_videos) return map;
+      try {
+        const list = JSON.parse(playerProfile.metric_videos);
+        list.forEach((item) => {
+          if (item && item.metric_key) {
+            map[item.metric_key] = item;
+          }
+        });
+      } catch (_) {}
+      return map;
+    }
+
+    function renderMetricTabs() {
+      const tabsEl = document.getElementById('metricsTabs');
+      tabsEl.innerHTML = METRICS.map((metric) => {
+        const active = metric.key === currentMetricKey ? ' active' : '';
+        return '<button class="metrics-tab' + active + '" type="button" data-key="' + metric.key + '">' + metric.label + '</button>';
+      }).join('');
+
+      tabsEl.querySelectorAll('.metrics-tab').forEach((button) => {
+        button.addEventListener('click', () => {
+          currentMetricKey = button.dataset.key;
+          renderMetricTabs();
+          renderMetricPanel();
+        });
+      });
+    }
+
+    function renderMetricPanel() {
+      const metric = METRICS.find((item) => item.key === currentMetricKey);
+      if (!metric) return;
+
+      document.getElementById('metricTitle').textContent = metric.label;
+      document.getElementById('metricWhy').textContent = metric.why;
+      document.getElementById('metricHow').textContent = metric.how;
+
+      const rawValue = profile ? profile[metric.key] : null;
+      let valueText = 'No value yet';
+      if (rawValue) {
+        if (metric.key === 'broad_jump') {
+          valueText = formatBroadJumpFeetInches(rawValue) || (String(rawValue) + metric.suffix);
+        } else {
+          valueText = String(rawValue) + metric.suffix;
+        }
+      }
+      document.getElementById('metricValue').textContent = valueText;
+
+      const videoBox = document.getElementById('metricVideoBox');
+      const videoEl = document.getElementById('metricVideo');
+      const videoNoteEl = document.getElementById('metricVideoNote');
+      const media = metricVideoMap[metric.key] || null;
+      if (media && media.video_filename) {
+        videoBox.style.display = '';
+        videoEl.src = '/uploads/' + media.video_filename;
+        videoNoteEl.textContent = media.is_verified ? ('Verified by ' + (media.verified_by || 'third party')) : 'Video uploaded (not verified)';
+      } else {
+        videoBox.style.display = 'none';
+        videoEl.removeAttribute('src');
+        videoEl.load();
+        videoNoteEl.textContent = '';
+      }
+    }
+
+    async function initMetricPage() {
+      const user = await checkAuth('player');
+      if (!user) return;
+
+      try {
+        const res = await fetch('/api/player/profile');
+        if (res.ok) {
+          profile = await res.json();
+          metricVideoMap = getMetricVideoMap(profile);
+        }
+      } catch (_) {
+        profile = null;
+        metricVideoMap = {};
+      }
+
+      renderMetricTabs();
+      renderMetricPanel();
+      logPageView('player_metrics');
+    }
+
+    initMetricPage();
+  </script>
+</body>
+</html>
