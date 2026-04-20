@@ -1452,7 +1452,23 @@
       tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
       try {
         const res = await fetch('/api/admin/coaches');
-        if (!res.ok) throw new Error('Failed to load');
+        if (!res.ok) {
+          let errorMessage = `Failed to load (${res.status})`;
+          try {
+            const errorData = await res.json();
+            if (errorData && errorData.error) {
+              errorMessage = `${errorMessage}: ${errorData.error}`;
+            }
+          } catch (_) {
+            try {
+              const errorText = await res.text();
+              if (errorText) errorMessage = `${errorMessage}: ${errorText.slice(0, 200)}`;
+            } catch (_) {
+              // Ignore body parsing errors and fall back to status only.
+            }
+          }
+          throw new Error(errorMessage);
+        }
         const coaches = await res.json();
         if (!coaches.length) {
           tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">No coaches yet.</td></tr>';
