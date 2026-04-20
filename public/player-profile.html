@@ -1143,7 +1143,7 @@
               <h2 class="section-title-small">COLLEGE OFFERS</h2>
               <div class="college-offers-grid-profile" data-college-group="offers">
                 ${offers.map(offer => `
-                  <div class="college-logo-card" style="position:relative; cursor:grab;"
+                     <div class="college-logo-card" style="position:relative; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center;"
                        data-college-id="${offer.id}"
                        draggable="true"
                        onmouseenter="showOfferTooltip(event, ${offer.id})"
@@ -1153,9 +1153,10 @@
                       ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
-                    <div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center;">
-                      ${(Number(offer.visit_count) || 0)} ${(Number(offer.visit_count) || 0) === 1 ? 'visit' : 'visits'}
-                    </div>
+                    ${(Number(offer.visit_count) || 0) > 0
+                      ? `<div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center; white-space:nowrap;">visits: ${Number(offer.visit_count) || 0}</div>`
+                      : ''
+                    }
                   </div>
                 `).join('')}
               </div>
@@ -1174,7 +1175,7 @@
               <h2 class="section-title-small">COLLEGE FAVORITES</h2>
               <div class="college-offers-grid-profile" data-college-group="favorites">
                 ${favorites.map(fav => `
-                  <div class="college-logo-card" style="position:relative; cursor:grab;"
+                     <div class="college-logo-card" style="position:relative; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center;"
                        data-college-id="${fav.id}"
                        draggable="true"
                        onmouseenter="showOfferTooltip(event, ${fav.id})"
@@ -1184,9 +1185,10 @@
                       ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
-                    <div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center;">
-                      ${(Number(fav.visit_count) || 0)} ${(Number(fav.visit_count) || 0) === 1 ? 'visit' : 'visits'}
-                    </div>
+                    ${(Number(fav.visit_count) || 0) > 0
+                      ? `<div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center; white-space:nowrap;">visits: ${Number(fav.visit_count) || 0}</div>`
+                      : ''
+                    }
                   </div>
                 `).join('')}
               </div>
