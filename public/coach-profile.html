@@ -218,6 +218,14 @@
       img.src = src || DEFAULT_PROFILE_AVATAR;
     }
 
+    function resolveCoachProfileImageSrc(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:')) return raw;
+      const normalized = raw.replace(/^\/+/, '').replace(/^uploads\//i, '');
+      return '/uploads/' + encodeURI(normalized);
+    }
+
     function normalizeHexColorClient(value) {
       const raw = String(value || '').trim().toLowerCase();
       return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
@@ -252,7 +260,7 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function (e) {
-        document.getElementById('coachProfilePicture').src = e.target.result;
+        setCoachProfileImage(e.target.result);
       };
       reader.readAsDataURL(file);
     });
@@ -272,7 +280,7 @@
         document.getElementById('coachState').value = normalizeState(data.team?.state);
         renderTeamBanner(data.team || {});
 
-        setCoachProfileImage(data.profile_picture ? '/uploads/' + data.profile_picture : DEFAULT_PROFILE_AVATAR);
+        setCoachProfileImage(resolveCoachProfileImageSrc(data.profile_picture || data.profilePicture));
       } catch (error) {
         console.error('Error loading coach profile:', error);
         setCoachProfileImage(DEFAULT_PROFILE_AVATAR);
