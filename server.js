@@ -3325,9 +3325,17 @@ app.get('/api/recruiter-share/:token', async (req, res) => {
 // Coach: Get own profile
 app.get('/api/coach/profile', requireCoach, async (req, res) => {
   try {
-    const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ?').get(req.session.userId);
+    let targetCoachId = req.session.userId;
+    if (req.session.role === 'admin' && req.query.coachId) {
+      const parsedCoachId = parseInt(req.query.coachId, 10);
+      if (!Number.isNaN(parsedCoachId)) {
+        targetCoachId = parsedCoachId;
+      }
+    }
+
+    const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ? AND role = ?').get(targetCoachId, 'coach');
     if (!coach) return res.status(404).json({ error: 'Coach not found' });
-    const team = await db.prepare('SELECT team_name, school_name, city, state, school_logo, banner_color_start, banner_color_end FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    const team = await db.prepare('SELECT team_name, school_name, city, state, school_logo, banner_color_start, banner_color_end FROM hs_teams WHERE coach_id = ?').get(targetCoachId);
     res.json({ ...coach, team: team || {} });
   } catch (error) {
     console.error('Coach get profile error:', error);

@@ -194,6 +194,7 @@
     checkAuth('coach');
     const DEFAULT_BANNER_START_COLOR = '#1e3c72';
     const DEFAULT_BANNER_END_COLOR = '#2a5298';
+    const coachIdQueryParam = new URLSearchParams(window.location.search).get('coachId') || new URLSearchParams(window.location.search).get('id');
 
     const US_STATE_CODES = new Set([
       'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
@@ -222,7 +223,10 @@
       const raw = String(value || '').trim();
       if (!raw) return '';
       if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:')) return raw;
-      const normalized = raw.replace(/^\/+/, '').replace(/^uploads\//i, '');
+      const normalized = raw
+        .replace(/\\+/g, '/')
+        .replace(/^\.?\/+/, '')
+        .replace(/^uploads\//i, '');
       return '/uploads/' + encodeURI(normalized);
     }
 
@@ -267,7 +271,8 @@
 
     async function loadCoachProfile() {
       try {
-        const res = await fetch('/api/coach/profile');
+        const query = coachIdQueryParam ? ('?coachId=' + encodeURIComponent(coachIdQueryParam)) : '';
+        const res = await fetch('/api/coach/profile' + query);
         if (!res.ok) return;
 
         const data = await res.json();
