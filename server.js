@@ -3784,24 +3784,10 @@ app.get('/api/admin/coaches', requireAdmin, async (req, res) => {
       WHERE u.role = 'coach'
       ORDER BY u.created_at DESC
     `).all();
-    if (!admin) return res.status(404).json({ error: 'Admin not found' });
-        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-        const share = await db.prepare(`
-          SELECT s.id, s.subject, s.message, s.recipient_email, s.expires_at, s.first_opened_at, s.open_count,
-            s.coach_user_id,
-            t.team_name, t.school_name, t.school_logo,
-            u.full_name AS coach_name
-          FROM recruiter_player_shares s
-          JOIN hs_teams t ON t.id = s.team_id
-          JOIN users u ON u.id = s.coach_user_id
-          WHERE s.token_hash = ?
-            AND s.expires_at > CURRENT_TIMESTAMP
-          LIMIT 1
-        `).get(tokenHash);
-    res.json(admin);
+    res.json(coaches);
   } catch (error) {
-    console.error('Admin get own profile error:', error);
-    res.status(500).json({ error: 'Failed to get profile' });
+    console.error('Admin get coaches error:', error);
+    res.status(500).json({ error: 'Failed to get coaches' });
   }
 });
 app.post('/api/admin/profile', requireAdmin, upload.fields([
