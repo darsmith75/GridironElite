@@ -500,6 +500,10 @@
         </div>
         <div style="margin-bottom:16px;">
           <input type="text" id="noteSearchFilter" placeholder="Search notes..." oninput="filterNotes()" style="width:100%; padding:8px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; box-sizing:border-box;">
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" id="noteFilterVisitsBtn" onclick="toggleNoteTypeFilter('visits')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Visits</button>
+            <button type="button" id="noteFilterGeneralBtn" onclick="toggleNoteTypeFilter('general')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Notes</button>
+          </div>
         </div>
         <!-- Add Note Form (hidden by default) -->
         <div id="addNoteForm" style="display:none; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; padding:16px; margin-bottom:16px;">
@@ -2991,6 +2995,29 @@
 
     // ---- NOTES ----
     let currentSchoolNotes = [];
+    let noteFilterShowVisits = true;
+    let noteFilterShowGeneral = true;
+
+    function renderNoteFilterButtons() {
+      const visitsBtn = document.getElementById('noteFilterVisitsBtn');
+      const generalBtn = document.getElementById('noteFilterGeneralBtn');
+      if (!visitsBtn || !generalBtn) return;
+
+      visitsBtn.style.background = noteFilterShowVisits ? '#1e3c72' : '#fff';
+      visitsBtn.style.color = noteFilterShowVisits ? '#fff' : '#1e3c72';
+      generalBtn.style.background = noteFilterShowGeneral ? '#1e3c72' : '#fff';
+      generalBtn.style.color = noteFilterShowGeneral ? '#fff' : '#1e3c72';
+    }
+
+    function toggleNoteTypeFilter(type) {
+      if (type === 'visits') {
+        noteFilterShowVisits = !noteFilterShowVisits;
+      } else if (type === 'general') {
+        noteFilterShowGeneral = !noteFilterShowGeneral;
+      }
+      renderNoteFilterButtons();
+      filterNotes();
+    }
 
     async function loadNotes() {
       try {
@@ -2998,27 +3025,34 @@
         if (!res.ok) return;
         currentSchoolNotes = await res.json();
         document.getElementById('noteSearchFilter').value = '';
+        noteFilterShowVisits = true;
+        noteFilterShowGeneral = true;
+        renderNoteFilterButtons();
         renderNotes(currentSchoolNotes);
       } catch (err) { console.error('Failed to load notes:', err); }
     }
 
     function filterNotes() {
       const query = document.getElementById('noteSearchFilter').value.toLowerCase().trim();
-      if (!query) {
-        renderNotes(currentSchoolNotes);
-        return;
-      }
-      const filtered = currentSchoolNotes.filter(n =>
-        n.note.toLowerCase().includes(query) ||
-        (n.visit_date && n.visit_date.toLowerCase().includes(query))
-      );
-      renderNotes(filtered);
+      const filtered = currentSchoolNotes.filter(n => {
+        const isVisit = !!n.visit_date;
+        if (isVisit && !noteFilterShowVisits) return false;
+        if (!isVisit && !noteFilterShowGeneral) return false;
+        if (!query) return true;
+        return n.note.toLowerCase().includes(query) ||
+          (n.visit_date && n.visit_date.toLowerCase().includes(query));
+      });
+      renderNotes(filtered, true);
     }
 
-    function renderNotes(notes) {
+    function renderNotes(notes, isFiltered = false) {
       const el = document.getElementById('notesList');
       if (notes.length === 0) {
-        el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No notes yet. Click "+ Add Note" to record your thoughts about this school.</p>';
+        if (isFiltered && currentSchoolNotes.length > 0) {
+          el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No matching entries for your current Visits/Notes filters and search.</p>';
+        } else {
+          el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No notes yet. Click "+ Add Note" to record your thoughts about this school.</p>';
+        }
         return;
       }
       el.innerHTML = notes.map(n => {
