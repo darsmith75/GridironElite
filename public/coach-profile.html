@@ -192,6 +192,14 @@
   <script src="app.js"></script>
   <script>
     checkAuth('coach');
+    
+    function escHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+    
     const DEFAULT_BANNER_START_COLOR = '#1e3c72';
     const DEFAULT_BANNER_END_COLOR = '#2a5298';
     const coachIdQueryParam = new URLSearchParams(window.location.search).get('coachId') || new URLSearchParams(window.location.search).get('id');
@@ -223,8 +231,10 @@
       const raw = String(value || '').trim();
       if (!raw) return '';
       if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:')) return raw;
-      const normalized = raw
-        .replace(/\\+/g, '/')
+      const slashFixed = raw.replace(/\\+/g, '/');
+      const uploadsIdx = slashFixed.toLowerCase().indexOf('uploads/');
+      const fromUploads = uploadsIdx >= 0 ? slashFixed.slice(uploadsIdx + 'uploads/'.length) : slashFixed;
+      const normalized = fromUploads
         .replace(/^\.?\/+/, '')
         .replace(/^uploads\//i, '');
       return '/uploads/' + encodeURI(normalized);
@@ -273,7 +283,10 @@
       try {
         const query = coachIdQueryParam ? ('?coachId=' + encodeURIComponent(coachIdQueryParam)) : '';
         const res = await fetch('/api/coach/profile' + query);
-        if (!res.ok) return;
+        if (!res.ok) {
+          setCoachProfileImage(DEFAULT_PROFILE_AVATAR);
+          return;
+        }
 
         const data = await res.json();
         document.getElementById('coachFullName').value = data.full_name || '';
@@ -285,7 +298,15 @@
         document.getElementById('coachState').value = normalizeState(data.team?.state);
         renderTeamBanner(data.team || {});
 
-        setCoachProfileImage(resolveCoachProfileImageSrc(data.profile_picture || data.profilePicture));
+        let photoValue = data.profile_picture || data.profilePicture || '';
+        if (!photoValue && coachIdQueryParam) {
+          const coachRes = await fetch('/api/coach/' + encodeURIComponent(coachIdQueryParam));
+          if (coachRes.ok) {
+            const coachData = await coachRes.json();
+            photoValue = coachData.profile_picture || '';
+          }
+        }
+        setCoachProfileImage(resolveCoachProfileImageSrc(photoValue));
       } catch (error) {
         console.error('Error loading coach profile:', error);
         setCoachProfileImage(DEFAULT_PROFILE_AVATAR);
