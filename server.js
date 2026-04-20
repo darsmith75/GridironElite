@@ -1364,8 +1364,32 @@ async function enrichPlayerProfile(profile) {
     db.prepare('SELECT id, url, title FROM player_video_links WHERE user_id = ? ORDER BY id').all(playerId),
     db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId),
     db.prepare('SELECT metric_key, video_filename, is_verified, verified_by FROM player_metric_videos WHERE user_id = ? ORDER BY id').all(playerId),
-    db.prepare('SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.has_offer = 1 ORDER BY c.name').all(playerId),
-    db.prepare('SELECT c.id, c.name, c.logo, c.conference, c.team FROM player_school_interests psi JOIN colleges c ON psi.college_id = c.id WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL) ORDER BY c.name').all(playerId),
+    db.prepare(`
+      SELECT c.id, c.name, c.logo, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
+      FROM player_school_interests psi
+      JOIN colleges c ON psi.college_id = c.id
+      LEFT JOIN (
+        SELECT college_id, COUNT(*) AS visit_count
+        FROM school_notes
+        WHERE user_id = ? AND visit_date IS NOT NULL AND TRIM(visit_date) <> ''
+        GROUP BY college_id
+      ) vc ON vc.college_id = c.id
+      WHERE psi.user_id = ? AND psi.has_offer = 1
+      ORDER BY c.name
+    `).all(playerId, playerId),
+    db.prepare(`
+      SELECT c.id, c.name, c.logo, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
+      FROM player_school_interests psi
+      JOIN colleges c ON psi.college_id = c.id
+      LEFT JOIN (
+        SELECT college_id, COUNT(*) AS visit_count
+        FROM school_notes
+        WHERE user_id = ? AND visit_date IS NOT NULL AND TRIM(visit_date) <> ''
+        GROUP BY college_id
+      ) vc ON vc.college_id = c.id
+      WHERE psi.user_id = ? AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL)
+      ORDER BY c.name
+    `).all(playerId, playerId),
     db.prepare('SELECT role, name, email, phone FROM player_contacts WHERE user_id = ?').all(playerId),
   ]);
 

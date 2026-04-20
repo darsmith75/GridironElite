@@ -424,7 +424,7 @@
       <!-- Tabs -->
       <div style="display:flex; border-bottom:2px solid #c7d0da; background:#f8f9fa;">
         <button id="tabContacts" onclick="switchDetailTab('contacts')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">👥 Contacts</button>
-        <button id="tabNotes" onclick="switchDetailTab('notes')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">📝 Notes</button>
+        <button id="tabNotes" onclick="switchDetailTab('notes')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">📝 Visit Log &amp; Notes</button>
         <button id="tabRatings" onclick="switchDetailTab('ratings')" style="flex:1; padding:14px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:3px solid transparent; transition:all 0.2s;">⭐ Ratings</button>
       </div>
 
@@ -495,7 +495,7 @@
       <!-- Notes Panel -->
       <div id="panelNotes" style="padding:24px 30px; display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="margin:0; color:#333; font-size:16px;">Notes &amp; Visit Log</h3>
+          <h3 style="margin:0; color:#333; font-size:16px;">Visit Log &amp; Notes</h3>
           <button onclick="showAddNoteForm()" style="padding:8px 16px; background:#1e3c72; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">+ Add Note</button>
         </div>
         <div style="margin-bottom:16px;">
@@ -505,8 +505,12 @@
         <div id="addNoteForm" style="display:none; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; padding:16px; margin-bottom:16px;">
           <h4 style="margin:0 0 12px; color:#333; font-size:14px;" id="noteFormTitle">Add New Note</h4>
           <input type="hidden" id="editNoteId">
-          <div style="margin-bottom:10px;">
-            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Visit Date (optional — leave blank for general notes)</label>
+          <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="noteIsVisit" onchange="handleVisitToggleChange()" style="width:16px; height:16px; cursor:pointer;">
+            <label for="noteIsVisit" style="font-size:13px; color:#333; cursor:pointer;">This entry was a visit</label>
+          </div>
+          <div id="noteVisitDateWrap" style="margin-bottom:10px; display:none;">
+            <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Visit Date *</label>
             <input type="date" id="noteVisitDate" style="padding:8px 12px; border:1px solid #c7d0da; border-radius:6px; font-size:14px;">
           </div>
           <div style="margin-bottom:12px;">
@@ -1149,6 +1153,9 @@
                       ? `<img src="/${offer.logo}" alt="${offer.name || 'College Offer'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
+                    <div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center;">
+                      ${(Number(offer.visit_count) || 0)} ${(Number(offer.visit_count) || 0) === 1 ? 'visit' : 'visits'}
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -1177,6 +1184,9 @@
                       ? `<img src="/${fav.logo}" alt="${fav.name || 'College'}" class="college-logo-img" draggable="false">`
                       : `<div style="width:60px;height:60px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;">🏫</div>`
                     }
+                    <div style="margin-top:6px; font-size:11px; color:#76849b; text-align:center;">
+                      ${(Number(fav.visit_count) || 0)} ${(Number(fav.visit_count) || 0) === 1 ? 'visit' : 'visits'}
+                    </div>
                   </div>
                 `).join('')}
               </div>
@@ -3031,20 +3041,36 @@
 
     function showAddNoteForm() {
       document.getElementById('editNoteId').value = '';
+      document.getElementById('noteIsVisit').checked = false;
       document.getElementById('noteVisitDate').value = '';
       document.getElementById('noteText').value = '';
       document.getElementById('noteFormTitle').textContent = 'Add New Note';
+      handleVisitToggleChange();
       document.getElementById('addNoteForm').style.display = 'block';
       document.getElementById('noteText').focus();
     }
 
     function editNote(id, visitDate, note) {
       document.getElementById('editNoteId').value = id;
-      document.getElementById('noteVisitDate').value = visitDate;
+      const hasVisit = !!visitDate;
+      document.getElementById('noteIsVisit').checked = hasVisit;
+      document.getElementById('noteVisitDate').value = visitDate || '';
       document.getElementById('noteText').value = note;
       document.getElementById('noteFormTitle').textContent = 'Edit Note';
+      handleVisitToggleChange();
       document.getElementById('addNoteForm').style.display = 'block';
       document.getElementById('noteText').focus();
+    }
+
+    function handleVisitToggleChange() {
+      const isVisit = document.getElementById('noteIsVisit').checked;
+      const dateWrap = document.getElementById('noteVisitDateWrap');
+      const dateInput = document.getElementById('noteVisitDate');
+      if (!dateWrap || !dateInput) return;
+      dateWrap.style.display = isVisit ? 'block' : 'none';
+      if (!isVisit) {
+        dateInput.value = '';
+      }
     }
 
     function cancelNoteForm() {
@@ -3053,10 +3079,13 @@
 
     async function saveNote() {
       const note = document.getElementById('noteText').value.trim();
+      const isVisit = document.getElementById('noteIsVisit').checked;
       const visitDate = document.getElementById('noteVisitDate').value;
+      const visitDateToSave = isVisit ? visitDate : null;
       const editId = document.getElementById('editNoteId').value;
 
       if (!note) { alert('Note text is required'); return; }
+      if (isVisit && !visitDate) { alert('Please select a visit date for visit entries.'); return; }
 
       try {
         const url = editId
@@ -3066,7 +3095,7 @@
         const res = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate })
+          body: JSON.stringify({ note, visitDate: visitDateToSave })
         });
         if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save note'); return; }
         cancelNoteForm();
