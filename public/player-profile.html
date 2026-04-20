@@ -3137,7 +3137,7 @@
         if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save note'); return; }
         cancelNoteForm();
          await loadNotes();
-         if (isVisit) await loadPlayerProfile();
+        await loadPlayerProfile();
       } catch (err) { console.error('Save note error:', err); alert('Failed to save note'); }
     }
 
@@ -3145,7 +3145,10 @@
       if (!confirm('Delete this note?')) return;
       try {
         const res = await fetch(`/api/player/colleges/${currentSchoolId}/notes/${noteId}`, { method: 'DELETE' });
-        if (res.ok) loadNotes();
+        if (res.ok) {
+          await loadNotes();
+          await loadPlayerProfile();
+        }
         else alert('Failed to delete note');
       } catch (err) { console.error('Delete note error:', err); }
     }
