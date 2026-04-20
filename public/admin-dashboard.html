@@ -167,6 +167,10 @@
       text-align: center;
       white-space: nowrap;
       line-height: 1.2;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .actions-cell { white-space: nowrap; }
     .user-actions {
@@ -182,6 +186,8 @@
     .action-btn.delete:hover { background: #ffcdd2; }
     .action-btn.reset { background: #fff3e0; color: #e65100; }
     .action-btn.reset:hover { background: #ffe0b2; }
+    .action-btn.view { background: #e8f5e9; color: #2e7d32; }
+    .action-btn.view:hover { background: #c8e6c9; }
 
     /* Tab styles */
     .admin-tabs {
@@ -681,6 +687,12 @@
             <h2 style="margin:0;">High School Coaches</h2>
             <button class="btn-save" onclick="loadCoaches()">Refresh</button>
           </div>
+          <div class="admin-toolbar">
+            <input type="text" id="coachSearch" placeholder="Search by coach, email, team, school, city, or state...">
+            <select id="coachStateFilter">
+              <option value="">All States</option>
+            </select>
+          </div>
           <div style="overflow-x: auto;">
             <table class="admin-table">
               <thead>
@@ -695,10 +707,15 @@
                   <th>Pending Invites</th>
                   <th>Last Login</th>
                   <th>Joined</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="coachesTableBody"></tbody>
             </table>
+          </div>
+          <div class="pagination-bar" id="coachesPaginationBar" style="display:none;">
+            <div class="pagination-info" id="coachesPaginationInfo"></div>
+            <div class="pagination-controls" id="coachesPaginationControls"></div>
           </div>
         </div>
       </div>
@@ -902,6 +919,9 @@
     let metricTips = {};
     const USERS_PAGE_SIZE = 50;
     let usersCurrentPage = 1;
+    let allCoaches = [];
+    const COACHES_PAGE_SIZE = 25;
+    let coachesCurrentPage = 1;
     let schoolRatingCategories = [];
     let adSlotConfig = [];
     let adSlots = {};
@@ -1263,6 +1283,8 @@
     // Search and filter listeners
     document.getElementById('userSearch').addEventListener('input', () => { usersCurrentPage = 1; renderUsers(); });
     document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; renderUsers(); });
+    document.getElementById('coachSearch').addEventListener('input', () => { coachesCurrentPage = 1; renderCoaches(); });
+    document.getElementById('coachStateFilter').addEventListener('change', () => { coachesCurrentPage = 1; renderCoaches(); });
 
     // Edit Modal
     async function openEditModal(userId) {
@@ -1449,7 +1471,7 @@
 
     async function loadCoaches() {
       const tbody = document.getElementById('coachesTableBody');
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
       try {
         const res = await fetch('/api/admin/coaches');
         if (!res.ok) {
@@ -1469,35 +1491,132 @@
           }
           throw new Error(errorMessage);
         }
-        const coaches = await res.json();
-        if (!coaches.length) {
-          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">No coaches yet.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = coaches.map(c => {
-          const name = escapeHtml(c.full_name || c.email || '—');
-          const email = escapeHtml(c.email || '—');
-          const team = escapeHtml(c.team_name || '—');
-          const school = escapeHtml(c.school_name || '—');
-          const loc = [c.city, c.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
-          const lastLogin = formatDateTime(c.last_login_at);
-          const joined = c.created_at ? new Date(c.created_at).toLocaleDateString() : '—';
-          return `<tr>
-            <td>${c.id}</td>
-            <td><strong>${name}</strong></td>
-            <td>${email}</td>
-            <td>${team}</td>
-            <td>${school}</td>
-            <td>${loc}</td>
-            <td style="text-align:center;">${c.roster_count || 0}</td>
-            <td style="text-align:center;">${c.pending_invites || 0}</td>
-            <td>${lastLogin}</td>
-            <td>${joined}</td>
-          </tr>`;
-        }).join('');
+        allCoaches = await res.json();
+        populateCoachStateFilter(allCoaches);
+        renderCoaches();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#c62828;padding:24px;">Failed to load coaches: ${escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:#c62828;padding:24px;">Failed to load coaches: ${escapeHtml(err.message)}</td></tr>`;
+        renderCoachesPagination(0, 0);
       }
+    }
+
+    function populateCoachStateFilter(coaches) {
+      const select = document.getElementById('coachStateFilter');
+      if (!select) return;
+      const currentValue = select.value;
+      const states = Array.from(new Set((coaches || [])
+        .map(c => String(c.state || '').trim().toUpperCase())
+        .filter(Boolean))).sort();
+      select.innerHTML = '<option value="">All States</option>'
+        + states.map(state => `<option value="${escapeHtml(state)}">${escapeHtml(state)}</option>`).join('');
+      if (states.includes(currentValue)) select.value = currentValue;
+    }
+
+    function renderCoaches() {
+      const tbody = document.getElementById('coachesTableBody');
+      const search = document.getElementById('coachSearch').value.toLowerCase().trim();
+      const stateFilter = document.getElementById('coachStateFilter').value;
+
+      let filtered = allCoaches;
+      if (stateFilter) {
+        filtered = filtered.filter(c => String(c.state || '').trim().toUpperCase() === stateFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(c => {
+          const text = [c.full_name, c.email, c.team_name, c.school_name, c.city, c.state]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999; padding:30px;">No coaches found</td></tr>';
+        renderCoachesPagination(0, 0);
+        return;
+      }
+
+      const totalPages = Math.ceil(filtered.length / COACHES_PAGE_SIZE);
+      if (coachesCurrentPage > totalPages) coachesCurrentPage = totalPages;
+      const start = (coachesCurrentPage - 1) * COACHES_PAGE_SIZE;
+      const pageCoaches = filtered.slice(start, start + COACHES_PAGE_SIZE);
+
+      tbody.innerHTML = pageCoaches.map(c => {
+        const name = escapeHtml(c.full_name || c.email || '—');
+        const email = escapeHtml(c.email || '—');
+        const team = escapeHtml(c.team_name || '—');
+        const school = escapeHtml(c.school_name || '—');
+        const loc = [c.city, c.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
+        const lastLogin = formatDateTime(c.last_login_at);
+        const joined = c.created_at ? new Date(c.created_at).toLocaleDateString() : '—';
+        const adminProfileHref = `coach-profile.html?coachId=${encodeURIComponent(c.id)}`;
+        const publicDetailHref = `coach-detail.html?id=${encodeURIComponent(c.id)}`;
+        return `<tr>
+          <td>${c.id}</td>
+          <td><strong>${name}</strong></td>
+          <td>${email}</td>
+          <td>${team}</td>
+          <td>${school}</td>
+          <td>${loc}</td>
+          <td style="text-align:center;">${c.roster_count || 0}</td>
+          <td style="text-align:center;">${c.pending_invites || 0}</td>
+          <td>${lastLogin}</td>
+          <td>${joined}</td>
+          <td class="actions-cell">
+            <div class="user-actions">
+              <a class="action-btn edit" href="${adminProfileHref}">Edit Profile</a>
+              <a class="action-btn view" href="${publicDetailHref}">Public View</a>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      renderCoachesPagination(filtered.length, totalPages);
+    }
+
+    function renderCoachesPagination(total, totalPages) {
+      const bar = document.getElementById('coachesPaginationBar');
+      const info = document.getElementById('coachesPaginationInfo');
+      const controls = document.getElementById('coachesPaginationControls');
+
+      if (total === 0 || totalPages <= 1) {
+        bar.style.display = total > 0 ? 'flex' : 'none';
+        info.textContent = total > 0 ? `${total} coach${total !== 1 ? 'es' : ''}` : '';
+        controls.innerHTML = '';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      const start = (coachesCurrentPage - 1) * COACHES_PAGE_SIZE + 1;
+      const end = Math.min(coachesCurrentPage * COACHES_PAGE_SIZE, total);
+      info.textContent = `${start}–${end} of ${total} coaches`;
+
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= coachesCurrentPage - 2 && i <= coachesCurrentPage + 2)) {
+          pages.push(i);
+        } else if (pages[pages.length - 1] !== '…') {
+          pages.push('…');
+        }
+      }
+
+      let html = `<button class="page-btn" onclick="goCoachesPage(${coachesCurrentPage - 1})" ${coachesCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+      pages.forEach(p => {
+        if (p === '…') {
+          html += `<span style="padding:0 4px;color:#76849b;">…</span>`;
+        } else {
+          html += `<button class="page-btn${p === coachesCurrentPage ? ' active' : ''}" onclick="goCoachesPage(${p})">${p}</button>`;
+        }
+      });
+      html += `<button class="page-btn" onclick="goCoachesPage(${coachesCurrentPage + 1})" ${coachesCurrentPage === totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+      controls.innerHTML = html;
+    }
+
+    function goCoachesPage(page) {
+      coachesCurrentPage = page;
+      renderCoaches();
+      document.getElementById('tab-coaches').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function formatDateTime(value) {
