@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "seed": "node seed-data.js"
+    "seed": "node seed-data.js",
+    "test:account-delete": "node scripts/test-player-account-delete.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1009.0",

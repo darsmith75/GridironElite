@@ -1150,6 +1150,94 @@ async function deleteOwnedPlayerMetricVideo(playerId, metricKey) {
   return true;
 }
 
+async function deletePlayerAccountAndAssociatedData(playerId) {
+  const user = await db.prepare('SELECT id, email, role, profile_picture FROM users WHERE id = ?').get(playerId);
+  if (!user) {
+    return { deleted: false, reason: 'not-found' };
+  }
+  if (user.role !== 'player') {
+    return { deleted: false, reason: 'forbidden-role' };
+  }
+
+  const mediaFiles = new Set();
+  if (user.profile_picture) {
+    mediaFiles.add(user.profile_picture);
+  }
+
+  const profileMedia = await db.prepare(
+    'SELECT profile_picture, card_photo, report_card_image FROM player_profiles WHERE user_id = ?'
+  ).get(playerId);
+  ['profile_picture', 'card_photo', 'report_card_image'].forEach(key => {
+    if (profileMedia?.[key]) mediaFiles.add(profileMedia[key]);
+  });
+
+  const [videos, images, metricVideos] = await Promise.all([
+    db.prepare('SELECT filename FROM player_videos WHERE user_id = ?').all(playerId),
+    db.prepare('SELECT filename FROM player_images WHERE user_id = ?').all(playerId),
+    db.prepare('SELECT video_filename FROM player_metric_videos WHERE user_id = ?').all(playerId)
+  ]);
+
+  videos.forEach(row => row?.filename && mediaFiles.add(row.filename));
+  images.forEach(row => row?.filename && mediaFiles.add(row.filename));
+  metricVideos.forEach(row => row?.video_filename && mediaFiles.add(row.video_filename));
+
+  const client = await db.pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(
+      'DELETE FROM team_invites WHERE player_user_id = $1 OR LOWER(player_email) = LOWER($2)',
+      [playerId, user.email]
+    );
+    await client.query('DELETE FROM ai_events WHERE actor_user_id = $1 OR player_user_id = $1', [playerId]);
+    await client.query('DELETE FROM site_traffic_events WHERE user_id = $1', [playerId]);
+
+    const deleteUserResult = await client.query(
+      'DELETE FROM users WHERE id = $1 AND role = $2 RETURNING id',
+      [playerId, 'player']
+    );
+
+    if ((deleteUserResult.rowCount || 0) !== 1) {
+      await client.query('ROLLBACK');
+      return { deleted: false, reason: 'delete-failed' };
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+
+  for (const filename of mediaFiles) {
+    try {
+      await deleteUploadFile(filename);
+    } catch (error) {
+      console.error(`Player account delete: failed to delete media "${filename}":`, error?.message || error);
+    }
+  }
+
+  const userPrefix = String(playerId).trim();
+  if (userPrefix) {
+    if (b2Enabled) {
+      try {
+        await deleteFromB2Prefix(`uploads/${userPrefix}/`);
+      } catch (error) {
+        console.error('Player account delete: B2 prefix delete failed:', error?.message || error);
+      }
+    }
+
+    try {
+      fs.rmSync(path.join('uploads', userPrefix), { recursive: true, force: true });
+    } catch (error) {
+      console.error('Player account delete: local uploads cleanup failed:', error?.message || error);
+    }
+  }
+
+  return { deleted: true };
+}
+
 // Guard against accidental double-submit of the same profile upload payload.
 const recentProfileUploadSignatures = new Map();
 function buildProfileUploadSignature(userId, reqBody, reqFiles) {
@@ -1719,6 +1807,59 @@ app.get('/api/user', requireAuth, async (req, res) => {
   const user = await db.prepare('SELECT id, email, role FROM users WHERE id = ?').get(req.session.userId);
   res.json(user);
 });
+
+async function handleDeletePlayerAccount(req, res) {
+  if (req.session.role !== 'player') {
+    return res.status(403).json({ error: 'Only athletes can delete this account' });
+  }
+
+  const confirmationText = String(req.body?.confirmation || '').trim();
+  if (confirmationText !== 'DELETE MY ACCOUNT') {
+    return res.status(400).json({ error: 'Confirmation text did not match' });
+  }
+
+  const deletingUser = await db.prepare('SELECT id, email FROM users WHERE id = ?').get(req.session.userId);
+  if (!deletingUser) {
+    return res.status(404).json({ error: 'Athlete account not found' });
+  }
+
+  try {
+    const result = await deletePlayerAccountAndAssociatedData(req.session.userId);
+    if (!result.deleted) {
+      if (result.reason === 'not-found') {
+        return res.status(404).json({ error: 'Athlete account not found' });
+      }
+      if (result.reason === 'forbidden-role') {
+        return res.status(403).json({ error: 'Only athletes can delete this account' });
+      }
+      return res.status(500).json({ error: 'Failed to delete athlete account' });
+    }
+
+    await logSiteTrafficEvent({
+      req,
+      eventType: 'player_account_deleted',
+      path: '/player-profile',
+      method: 'POST',
+      userId: null,
+      role: 'player',
+      metadata: {
+        deletedUserId: deletingUser.id,
+        deletedEmail: deletingUser.email,
+        initiatedBy: 'self-service',
+        confirmation: 'DELETE MY ACCOUNT'
+      }
+    });
+
+    await new Promise(resolve => req.session.destroy(() => resolve()));
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete athlete account error:', error);
+    return res.status(500).json({ error: 'Failed to delete athlete account' });
+  }
+}
+
+app.post('/api/player/account/delete', requireAuth, handleDeletePlayerAccount);
+app.delete('/api/player/account', requireAuth, handleDeletePlayerAccount);
 
 // Get player profile
 app.get('/api/player/profile', requireAuth, async (req, res) => {

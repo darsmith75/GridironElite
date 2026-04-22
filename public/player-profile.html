@@ -358,6 +358,21 @@
           </div>
 
           <button type="submit" class="submit-btn">Save Profile</button>
+          <div style="margin-top:18px;border:1px solid #ffc5c5;background:#fff4f4;border-radius:10px;padding:14px 16px;">
+            <h3 style="margin:0 0 8px 0;color:#9f1f1f;font-size:16px;">Danger Zone</h3>
+            <p style="margin:0 0 10px 0;color:#7b2f2f;font-size:13px;line-height:1.45;">
+              Deleting your athlete account will permanently remove your profile and all associated data, including photos, videos, contacts, school favorites, offers, notes, and ratings.
+            </p>
+            <button
+              type="button"
+              id="deleteAthleteAccountBtn"
+              onclick="confirmDeleteAthleteAccount()"
+              style="padding:10px 14px;background:#b91c1c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
+            >
+              Delete Athlete Account
+            </button>
+            <div id="deleteAthleteAccountStatus" style="margin-top:8px;font-size:13px;font-weight:600;color:#9f1f1f;"></div>
+          </div>
           <div id="profileSaveStatus" class="upload-status" aria-live="polite"></div>
           <div id="profileResultBanner" class="profile-result-banner" aria-live="polite"></div>
         </form>
@@ -367,6 +382,37 @@
     </div>
     <!-- end #profileEditMode -->
 
+    </div>
+  </div>
+
+  <div id="deleteAthleteAccountModal" style="display:none;position:fixed;inset:0;background:rgba(13,18,28,0.68);z-index:11000;align-items:center;justify-content:center;padding:20px;">
+    <div style="width:min(560px,100%);background:#ffffff;border:1px solid #ffd6d6;border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,0.26);overflow:hidden;">
+      <div style="padding:18px 20px;background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;">
+        <h3 style="margin:0;font-size:20px;color:#fff;">Delete Athlete Account</h3>
+        <p style="margin:8px 0 0 0;font-size:13px;color:rgba(255,255,255,0.92);line-height:1.4;">This action is permanent and cannot be undone.</p>
+      </div>
+      <div style="padding:16px 20px 18px;">
+        <p style="margin:0 0 10px 0;color:#3f2b2b;font-size:13px;line-height:1.45;">
+          Deleting your athlete account permanently removes your profile and all athlete-associated data, including photos, videos, contacts, school favorites, offers, notes, and ratings.
+        </p>
+        <label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;font-size:13px;color:#4a3535;">
+          <input type="checkbox" id="deleteAthleteAckCheckbox" style="margin-top:2px;">
+          <span>I understand this deletion is permanent.</span>
+        </label>
+        <label for="deleteAthleteConfirmInput" style="display:block;margin:12px 0 6px;font-size:12px;color:#6b3a3a;font-weight:700;">Type DELETE MY ACCOUNT to confirm</label>
+        <input
+          id="deleteAthleteConfirmInput"
+          type="text"
+          autocomplete="off"
+          placeholder="DELETE MY ACCOUNT"
+          style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #f3b6b6;border-radius:8px;font-size:13px;"
+        >
+        <div id="deleteAthleteModalStatus" style="min-height:18px;margin-top:10px;font-size:13px;font-weight:600;color:#9f1f1f;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap;">
+          <button type="button" onclick="closeDeleteAthleteAccountModal()" style="padding:9px 14px;background:#fff;border:1px solid #d7c0c0;color:#4f3b3b;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Cancel</button>
+          <button type="button" id="deleteAthleteModalConfirmBtn" onclick="submitDeleteAthleteAccountFromModal()" disabled style="padding:9px 14px;background:#b91c1c;border:none;color:#fff;border-radius:8px;cursor:not-allowed;font-size:13px;font-weight:700;opacity:0.55;">Delete Everything</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2049,6 +2095,128 @@
         alert('Failed to delete video link');
       }
     }
+
+    const DELETE_ACCOUNT_CONFIRMATION_TEXT = 'DELETE MY ACCOUNT';
+    let isDeletingAthleteAccount = false;
+
+    function setDeleteAthleteModalButtonState() {
+      const checkbox = document.getElementById('deleteAthleteAckCheckbox');
+      const input = document.getElementById('deleteAthleteConfirmInput');
+      const confirmBtn = document.getElementById('deleteAthleteModalConfirmBtn');
+      if (!checkbox || !input || !confirmBtn) return;
+
+      const canDelete = checkbox.checked && input.value.trim() === DELETE_ACCOUNT_CONFIRMATION_TEXT && !isDeletingAthleteAccount;
+      confirmBtn.disabled = !canDelete;
+      confirmBtn.style.opacity = canDelete ? '1' : '0.55';
+      confirmBtn.style.cursor = canDelete ? 'pointer' : 'not-allowed';
+    }
+
+    function openDeleteAthleteAccountModal() {
+      const modal = document.getElementById('deleteAthleteAccountModal');
+      const checkbox = document.getElementById('deleteAthleteAckCheckbox');
+      const input = document.getElementById('deleteAthleteConfirmInput');
+      const modalStatus = document.getElementById('deleteAthleteModalStatus');
+      if (!modal || !checkbox || !input || !modalStatus) return;
+
+      checkbox.checked = false;
+      input.value = '';
+      modalStatus.textContent = '';
+      modal.style.display = 'flex';
+      setDeleteAthleteModalButtonState();
+      input.focus();
+    }
+
+    function closeDeleteAthleteAccountModal() {
+      if (isDeletingAthleteAccount) return;
+      const modal = document.getElementById('deleteAthleteAccountModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+    }
+
+    function confirmDeleteAthleteAccount() {
+      if (isDeletingAthleteAccount) return;
+      openDeleteAthleteAccountModal();
+    }
+
+    async function submitDeleteAthleteAccountFromModal() {
+      if (isDeletingAthleteAccount) return;
+
+      const pageStatus = document.getElementById('deleteAthleteAccountStatus');
+      const modalStatus = document.getElementById('deleteAthleteModalStatus');
+      const pageButton = document.getElementById('deleteAthleteAccountBtn');
+      const modalConfirmBtn = document.getElementById('deleteAthleteModalConfirmBtn');
+      const modalCancelBtn = document.querySelector('#deleteAthleteAccountModal button[onclick="closeDeleteAthleteAccountModal()"]');
+      const modalInput = document.getElementById('deleteAthleteConfirmInput');
+      const modalCheckbox = document.getElementById('deleteAthleteAckCheckbox');
+
+      isDeletingAthleteAccount = true;
+      if (pageButton) {
+        pageButton.disabled = true;
+        pageButton.textContent = 'Deleting Account...';
+      }
+      if (modalConfirmBtn) {
+        modalConfirmBtn.disabled = true;
+        modalConfirmBtn.style.opacity = '0.7';
+        modalConfirmBtn.style.cursor = 'not-allowed';
+      }
+      if (modalCancelBtn) modalCancelBtn.disabled = true;
+      if (modalInput) modalInput.disabled = true;
+      if (modalCheckbox) modalCheckbox.disabled = true;
+      if (pageStatus) {
+        pageStatus.style.color = '#9f1f1f';
+        pageStatus.textContent = 'Deleting your account and all associated athlete data...';
+      }
+      if (modalStatus) {
+        modalStatus.style.color = '#9f1f1f';
+        modalStatus.textContent = 'Deleting your account...';
+      }
+
+      try {
+        const res = await fetch('/api/player/account/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirmation: DELETE_ACCOUNT_CONFIRMATION_TEXT })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to delete athlete account');
+        }
+
+        window.location.href = '/';
+      } catch (error) {
+        const message = error?.message || 'Failed to delete athlete account';
+        if (pageStatus) {
+          pageStatus.style.color = '#b91c1c';
+          pageStatus.textContent = message;
+        }
+        if (modalStatus) {
+          modalStatus.style.color = '#b91c1c';
+          modalStatus.textContent = message;
+        }
+
+        isDeletingAthleteAccount = false;
+        if (pageButton) {
+          pageButton.disabled = false;
+          pageButton.textContent = 'Delete Athlete Account';
+        }
+        if (modalConfirmBtn) {
+          modalConfirmBtn.disabled = false;
+        }
+        if (modalCancelBtn) modalCancelBtn.disabled = false;
+        if (modalInput) modalInput.disabled = false;
+        if (modalCheckbox) modalCheckbox.disabled = false;
+        setDeleteAthleteModalButtonState();
+      }
+    }
+
+    document.getElementById('deleteAthleteAckCheckbox')?.addEventListener('change', setDeleteAthleteModalButtonState);
+    document.getElementById('deleteAthleteConfirmInput')?.addEventListener('input', setDeleteAthleteModalButtonState);
+    document.getElementById('deleteAthleteAccountModal')?.addEventListener('click', (event) => {
+      if (event.target?.id === 'deleteAthleteAccountModal') {
+        closeDeleteAthleteAccountModal();
+      }
+    });
 
     let isSavingProfile = false;
     document.getElementById('profileForm').addEventListener('submit', async (e) => {
