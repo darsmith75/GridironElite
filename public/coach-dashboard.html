@@ -1926,8 +1926,8 @@
           <div onclick="viewPlayer(${p.user_id})" style="cursor: pointer;">
             <div class="player-card-header">
               ${profilePicture
-                ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-card-photo">`
-                : '<div class="player-card-photo no-photo">No Photo</div>'}
+                ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-card-photo" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">`
+                : '<img src="/images/silhouette-avatar.svg" alt="No Photo" class="player-card-photo silhouette-photo">'}
             </div>
             <div class="player-card-body">
               <div class="player-info-section">
@@ -1985,8 +1985,8 @@
           </div>
           <div class="player-list-photo">
             ${profilePicture
-              ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-list-img">`
-              : '<div class="player-list-img no-photo-list">No Photo</div>'}
+              ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-list-img" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">`
+              : '<img src="/images/silhouette-avatar.svg" alt="No Photo" class="player-list-img silhouette-photo">'}
           </div>
           <div class="player-list-info" onclick="viewPlayer(${p.user_id})" style="cursor:pointer;">
             <div class="player-list-name">${escapedName}</div>

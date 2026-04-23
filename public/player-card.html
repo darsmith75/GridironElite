@@ -962,21 +962,31 @@
       
       // Player Image - use card_photo if available, otherwise fall back to profile_picture
       const photoToUse = player.card_photo || player.profile_picture;
+      const playerImgContainer = document.getElementById('playerImageContainer');
+      const silhouetteUrl = '/images/silhouette-avatar.svg';
       if (photoToUse) {
-        const container = document.getElementById('playerImageContainer');
         const imgUrl = `/api/upload-proxy?path=${encodeURIComponent(photoToUse)}`;
-        container.style.backgroundImage = `url('${imgUrl}')`;
+        playerImgContainer.style.backgroundImage = `url('${imgUrl}')`;
         
-        // Detect aspect ratio to choose sizing mode
+        // Detect aspect ratio to choose sizing mode; fall back to silhouette on error
         const testImg = new Image();
         testImg.onload = function() {
           const aspectRatio = this.naturalWidth / this.naturalHeight;
           if (aspectRatio > 1.5 || aspectRatio < 0.6) {
-            container.style.backgroundSize = 'contain';
-            container.style.backgroundPosition = 'center';
+            playerImgContainer.style.backgroundSize = 'contain';
+            playerImgContainer.style.backgroundPosition = 'center';
           }
         };
+        testImg.onerror = function() {
+          playerImgContainer.style.backgroundImage = `url('${silhouetteUrl}')`;
+          playerImgContainer.style.backgroundSize = 'contain';
+          playerImgContainer.style.backgroundPosition = 'center';
+        };
         testImg.src = imgUrl;
+      } else {
+        playerImgContainer.style.backgroundImage = `url('${silhouetteUrl}')`;
+        playerImgContainer.style.backgroundSize = 'contain';
+        playerImgContainer.style.backgroundPosition = 'center';
       }
       
       // GPA Badge - always show

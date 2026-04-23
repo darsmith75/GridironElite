@@ -166,7 +166,7 @@
 
     function renderCoachDetail(coach) {
       const detail = document.getElementById('coachDetail');
-      const photo = coach.profile_picture ? '/uploads/' + encodeURI(coach.profile_picture) : '/uploads/default-profile.png';
+      const photo = coach.profile_picture ? '/uploads/' + encodeURI(coach.profile_picture) : '/images/silhouette-avatar.svg';
       const name = escHtml(coach.full_name || 'Coach');
       const teamName = escHtml(coach.team_name || 'Team Not Set');
       const schoolName = escHtml(coach.school_name || '');
@@ -177,7 +177,7 @@
 
       let html = '<div class="coach-card">';
       html += '<div class="coach-header">'
-        + '<img src="' + photo + '" alt="' + name + '" class="coach-photo">'
+        + '<img src="' + photo + '" alt="' + name + '" class="coach-photo" onerror="this.onerror=null;this.src=\'/images/silhouette-avatar.svg\';">'
         + '<h1>' + name + '</h1>'
         + '<p class="coach-title">' + teamName + (schoolName ? ' at ' + schoolName : '') + '</p>'
         + '</div>';

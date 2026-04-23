@@ -849,6 +849,12 @@ label {
   z-index: 10;
 }
 
+.player-card-photo.silhouette-photo {
+  border: 4px solid transparent;
+  background: linear-gradient(#eef2f7, #eef2f7) padding-box,
+              linear-gradient(135deg, #d8dde3 0%, #b6bec8 32%, #8d97a3 58%, #c8cfd8 100%) border-box;
+}
+
 .player-card-photo.no-photo {
   background: linear-gradient(#e0e0e0, #e0e0e0) padding-box,
               linear-gradient(135deg, #d8dde3 0%, #b6bec8 32%, #8d97a3 58%, #c8cfd8 100%) border-box;
@@ -3797,9 +3803,18 @@ textarea {
 .player-list-img {
   width: 100%;
   height: 100%;
+  display: block;
   object-fit: cover;
+  border-radius: 50%;
+  box-sizing: border-box;
   border: 2px solid transparent;
   background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #d8dde3 0%, #b6bec8 32%, #8d97a3 58%, #c8cfd8 100%) border-box;
+}
+
+.player-list-img.silhouette-photo {
+  border: 2px solid transparent;
+  background: linear-gradient(#eef2f7, #eef2f7) padding-box,
               linear-gradient(135deg, #d8dde3 0%, #b6bec8 32%, #8d97a3 58%, #c8cfd8 100%) border-box;
 }
 
