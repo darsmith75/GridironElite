@@ -275,17 +275,20 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
 
       const isVerified = !!data[config.verifiedField];
       const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
+      const recordedAtRaw = (data[config.recordedAtField] || '').trim();
+      const recordedAt = recordedAtRaw || null;
 
       await db.prepare(`
-        INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, updated_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, recorded_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (user_id, metric_key)
         DO UPDATE SET
           video_filename = EXCLUDED.video_filename,
           is_verified = EXCLUDED.is_verified,
           verified_by = EXCLUDED.verified_by,
+          recorded_at = EXCLUDED.recorded_at,
           updated_at = CURRENT_TIMESTAMP
-      `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy);
+      `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy, recordedAt);
     }
 
     const updated = await db.prepare('SELECT gpa, vertical_jump FROM player_profiles WHERE user_id = ?').get(req.session.userId);
@@ -338,24 +341,28 @@ router.post('/player/metric-video', requireAuth, playerProfileUploadMiddleware, 
 
     const isVerified = !!data[config.verifiedField];
     const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
+    const recordedAtRaw = (data[config.recordedAtField] || '').trim();
+    const recordedAt = recordedAtRaw || null;
 
     await db.prepare(`
-      INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, updated_at)
-      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, recorded_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT (user_id, metric_key)
       DO UPDATE SET
         video_filename = EXCLUDED.video_filename,
         is_verified = EXCLUDED.is_verified,
         verified_by = EXCLUDED.verified_by,
+        recorded_at = EXCLUDED.recorded_at,
         updated_at = CURRENT_TIMESTAMP
-    `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy);
+    `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy, recordedAt);
 
     res.json({
       success: true,
       metricKey: config.key,
       videoFilename: resolvedFilename,
       isVerified,
-      verifiedBy
+      verifiedBy,
+      recordedAt
     });
   } catch (error) {
     console.error('Metric proof upload error:', error);

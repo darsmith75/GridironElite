@@ -43,7 +43,7 @@ async function enrichPlayerProfile(profile) {
     db.prepare('SELECT filename FROM player_videos WHERE user_id = ? ORDER BY id').all(playerId),
     db.prepare('SELECT id, url, title FROM player_video_links WHERE user_id = ? ORDER BY id').all(playerId),
     db.prepare('SELECT filename FROM player_images WHERE user_id = ? ORDER BY id').all(playerId),
-    db.prepare('SELECT metric_key, video_filename, is_verified, verified_by FROM player_metric_videos WHERE user_id = ? ORDER BY id').all(playerId),
+    db.prepare('SELECT metric_key, video_filename, is_verified, verified_by, recorded_at FROM player_metric_videos WHERE user_id = ? ORDER BY id').all(playerId),
     db.prepare(`
       SELECT c.id, c.name, c.logo, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
       FROM player_school_interests psi

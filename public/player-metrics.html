@@ -350,7 +350,12 @@
       if (media && media.video_filename) {
         videoBox.style.display = '';
         videoEl.src = '/uploads/' + media.video_filename;
-        videoNoteEl.textContent = media.is_verified ? ('Verified by ' + (media.verified_by || 'third party')) : 'Video uploaded (not verified)';
+        let noteText = media.is_verified ? ('Verified by ' + (media.verified_by || 'third party')) : 'Video uploaded (not verified)';
+        if (media.recorded_at) {
+          const dateStr = new Date(media.recorded_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+          noteText += ' \u2022 Recorded ' + dateStr;
+        }
+        videoNoteEl.textContent = noteText;
       } else {
         videoBox.style.display = 'none';
         videoEl.removeAttribute('src');

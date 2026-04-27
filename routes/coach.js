@@ -207,6 +207,85 @@ router.delete('/coach/players/:playerId/comment', requireCoach, async (req, res)
   }
 });
 
+// Coach: Get own rating for a player
+router.get('/coach/players/:playerId/rating', requireCoach, async (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId, 10);
+    if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+    const row = await db.prepare('SELECT overall_score, scores_json, rater_name, updated_at FROM coach_player_ratings WHERE coach_id = ? AND player_id = ?').get(req.session.userId, playerId);
+    res.json(row || null);
+  } catch (error) {
+    console.error('Coach get rating error:', error);
+    res.status(500).json({ error: 'Failed to get rating' });
+  }
+});
+
+// Coach: Upsert a rating for a player (player must be on team)
+router.post('/coach/players/:playerId/rating', requireCoach, async (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId, 10);
+    if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+
+    const { overallScore, scoresJson } = req.body;
+    if (typeof overallScore !== 'number' || overallScore < 0 || overallScore > 100) {
+      return res.status(400).json({ error: 'overallScore must be a number between 0 and 100' });
+    }
+    if (!Array.isArray(scoresJson) || scoresJson.length === 0) {
+      return res.status(400).json({ error: 'scoresJson must be a non-empty array' });
+    }
+    for (const cat of scoresJson) {
+      if (!cat.name || typeof cat.score !== 'number' || cat.score < 0 || cat.score > 100) {
+        return res.status(400).json({ error: 'Each category must have a name and score (0–100)' });
+      }
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(403).json({ error: 'No team found for this coach' });
+
+    const onTeam = await db.prepare('SELECT id FROM team_players WHERE team_id = ? AND player_id = ?').get(team.id, playerId);
+    if (!onTeam) return res.status(403).json({ error: 'Player is not on your team' });
+
+    const coachUser = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
+    const raterName = coachUser ? coachUser.full_name : null;
+
+    await db.prepare(`
+      INSERT INTO coach_player_ratings (coach_id, player_id, overall_score, scores_json, rater_name, updated_at)
+      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (coach_id, player_id) DO UPDATE
+        SET overall_score = EXCLUDED.overall_score,
+            scores_json = EXCLUDED.scores_json,
+            rater_name = EXCLUDED.rater_name,
+            updated_at = CURRENT_TIMESTAMP
+    `).run(req.session.userId, playerId, overallScore, JSON.stringify(scoresJson), raterName);
+
+    const saved = await db.prepare('SELECT overall_score, scores_json, rater_name, updated_at FROM coach_player_ratings WHERE coach_id = ? AND player_id = ?').get(req.session.userId, playerId);
+    res.json(saved);
+  } catch (error) {
+    console.error('Coach upsert rating error:', error);
+    res.status(500).json({ error: 'Failed to save rating' });
+  }
+});
+
+// Coach: Delete own rating for a player
+router.delete('/coach/players/:playerId/rating', requireCoach, async (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId, 10);
+    if (isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(403).json({ error: 'No team found for this coach' });
+
+    const onTeam = await db.prepare('SELECT id FROM team_players WHERE team_id = ? AND player_id = ?').get(team.id, playerId);
+    if (!onTeam) return res.status(403).json({ error: 'Player is not on your team' });
+
+    await db.prepare('DELETE FROM coach_player_ratings WHERE coach_id = ? AND player_id = ?').run(req.session.userId, playerId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach delete rating error:', error);
+    res.status(500).json({ error: 'Failed to delete rating' });
+  }
+});
+
 // Coach: Send invite to a player by email
 router.post('/coach/invite', requireCoach, async (req, res) => {
   try {

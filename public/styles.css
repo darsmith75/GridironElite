@@ -3016,6 +3016,33 @@ textarea {
   visibility: hidden;
 }
 
+.metric-recorded-date {
+  margin-top: 3px;
+  font-size: 10px;
+  color: #9aa5b4;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+.metric-proof-date-label {
+  display: block;
+  font-size: 12px;
+  color: #76849b;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.metric-proof-date {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #c7d0da;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #2c3e50;
+  background: #fff;
+  box-sizing: border-box;
+}
+
 .metric-verified-star {
   color: #f59e0b;
   font-size: 12px;
@@ -3718,6 +3745,101 @@ textarea {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   background: #ebebeb;
+}
+
+/* ─── Player Rating Tabs ────────────────────────────────────────────────────── */
+
+.rating-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e0e6ef;
+  margin-bottom: 18px;
+}
+
+.rating-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #76849b;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.18s, border-color 0.18s, background 0.18s;
+  letter-spacing: 0.3px;
+}
+
+.rating-tab-btn:hover {
+  color: #1e3c72;
+  background: #f0f4fa;
+}
+
+.rating-tab-btn.active {
+  color: #1e3c72;
+  border-bottom-color: #1e3c72;
+  background: #f0f4fa;
+}
+
+.rating-tab-content {
+  animation: tabFadeIn 0.18s ease;
+}
+
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rating-save-btn {
+  background: #1e3c72;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.4px;
+  transition: background 0.18s, transform 0.15s;
+}
+
+.rating-save-btn:hover {
+  background: #2a52a0;
+  transform: translateY(-1px);
+}
+
+.rating-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rating-delete-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.4px;
+  transition: background 0.18s;
+}
+
+.rating-delete-btn:hover {
+  background: #c0392b;
+}
+
+.rating-status-msg {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rating-tab-content { animation: none; }
+  .rating-save-btn:hover { transform: none; }
 }
 
 /* Favorite Button on Detail Page */

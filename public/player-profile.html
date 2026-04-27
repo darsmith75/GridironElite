@@ -177,54 +177,72 @@
                   <input type="file" name="metricVideoFortyYardDash" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedFortyYardDash"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByFortyYardDash" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtFortyYardDash" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Vertical Jump Video:</label>
                   <input type="file" name="metricVideoVerticalJump" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedVerticalJump"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByVerticalJump" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtVerticalJump" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Bench Press Video:</label>
                   <input type="file" name="metricVideoBenchPress" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedBenchPress"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByBenchPress" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtBenchPress" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Squat Video:</label>
                   <input type="file" name="metricVideoSquat" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedSquat"> Verified by third party</label>
                   <input type="text" name="metricVerifiedBySquat" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtSquat" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>5-10-5 Shuttle Video:</label>
                   <input type="file" name="metricVideoShuttle5105" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedShuttle5105"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByShuttle5105" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtShuttle5105" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>L-Drill Video:</label>
                   <input type="file" name="metricVideoLDrill" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedLDrill"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByLDrill" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtLDrill" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Broad Jump Video:</label>
                   <input type="file" name="metricVideoBroadJump" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedBroadJump"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByBroadJump" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtBroadJump" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Power Clean Video:</label>
                   <input type="file" name="metricVideoPowerClean" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedPowerClean"> Verified by third party</label>
                   <input type="text" name="metricVerifiedByPowerClean" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtPowerClean" class="metric-proof-date">
                 </div>
                 <div class="metric-proof-item">
                   <label>Single Leg Squat Video:</label>
                   <input type="file" name="metricVideoSingleLegSquat" accept="video/*">
                   <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedSingleLegSquat"> Verified by third party</label>
                   <input type="text" name="metricVerifiedBySingleLegSquat" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtSingleLegSquat" class="metric-proof-date">
                 </div>
               </div>
             </div>
@@ -681,15 +699,15 @@
       return d.innerHTML;
     }
     const METRIC_DEFINITIONS = [
-      { key: 'forty_yard_dash', fieldName: 'fortyYardDash', label: '40-Yard Dash', suffix: 's', videoField: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash' },
-      { key: 'vertical_jump', fieldName: 'verticalJump', label: 'Vertical Jump', suffix: '"', videoField: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump' },
-      { key: 'bench_press', fieldName: 'benchPress', label: 'Bench Press', suffix: ' lbs', videoField: 'metricVideoBenchPress', verifiedField: 'metricVerifiedBenchPress', verifiedByField: 'metricVerifiedByBenchPress' },
-      { key: 'squat', fieldName: 'squat', label: 'Squat', suffix: ' lbs', videoField: 'metricVideoSquat', verifiedField: 'metricVerifiedSquat', verifiedByField: 'metricVerifiedBySquat' },
-      { key: 'shuttle_5_10_5', fieldName: 'shuttle5105', label: '5-10-5 Shuttle', suffix: 's', videoField: 'metricVideoShuttle5105', verifiedField: 'metricVerifiedShuttle5105', verifiedByField: 'metricVerifiedByShuttle5105' },
-      { key: 'l_drill', fieldName: 'lDrill', label: 'L-Drill', suffix: 's', videoField: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill' },
-      { key: 'broad_jump', fieldName: 'broadJump', label: 'Broad Jump', suffix: '"', videoField: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump' },
-      { key: 'power_clean', fieldName: 'powerClean', label: 'Power Clean', suffix: ' lbs', videoField: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean' },
-      { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat' }
+      { key: 'forty_yard_dash', fieldName: 'fortyYardDash', label: '40-Yard Dash', suffix: 's', videoField: 'metricVideoFortyYardDash', verifiedField: 'metricVerifiedFortyYardDash', verifiedByField: 'metricVerifiedByFortyYardDash', recordedAtField: 'metricRecordedAtFortyYardDash' },
+      { key: 'vertical_jump', fieldName: 'verticalJump', label: 'Vertical Jump', suffix: '"', videoField: 'metricVideoVerticalJump', verifiedField: 'metricVerifiedVerticalJump', verifiedByField: 'metricVerifiedByVerticalJump', recordedAtField: 'metricRecordedAtVerticalJump' },
+      { key: 'bench_press', fieldName: 'benchPress', label: 'Bench Press', suffix: ' lbs', videoField: 'metricVideoBenchPress', verifiedField: 'metricVerifiedBenchPress', verifiedByField: 'metricVerifiedByBenchPress', recordedAtField: 'metricRecordedAtBenchPress' },
+      { key: 'squat', fieldName: 'squat', label: 'Squat', suffix: ' lbs', videoField: 'metricVideoSquat', verifiedField: 'metricVerifiedSquat', verifiedByField: 'metricVerifiedBySquat', recordedAtField: 'metricRecordedAtSquat' },
+      { key: 'shuttle_5_10_5', fieldName: 'shuttle5105', label: '5-10-5 Shuttle', suffix: 's', videoField: 'metricVideoShuttle5105', verifiedField: 'metricVerifiedShuttle5105', verifiedByField: 'metricVerifiedByShuttle5105', recordedAtField: 'metricRecordedAtShuttle5105' },
+      { key: 'l_drill', fieldName: 'lDrill', label: 'L-Drill', suffix: 's', videoField: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill', recordedAtField: 'metricRecordedAtLDrill' },
+      { key: 'broad_jump', fieldName: 'broadJump', label: 'Broad Jump', suffix: '"', videoField: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump', recordedAtField: 'metricRecordedAtBroadJump' },
+      { key: 'power_clean', fieldName: 'powerClean', label: 'Power Clean', suffix: ' lbs', videoField: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean', recordedAtField: 'metricRecordedAtPowerClean' },
+      { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' }
     ];
 
     initGraduationYearPicker();
@@ -735,7 +753,8 @@
         metric,
         file,
         isVerified: !!verifiedInput?.checked,
-        verifiedBy: (verifiedByInput?.value || '').trim()
+        verifiedBy: (verifiedByInput?.value || '').trim(),
+        recordedAt: (document.querySelector(`[name="${metric.recordedAtField}"]`)?.value || '').trim()
       };
 
       pendingMetricUploadByKey.set(metric.key, payload);
@@ -774,9 +793,11 @@
 
       const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
       const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+      const recordedAtInput = document.querySelector(`[name="${metric.recordedAtField}"]`);
       const fileInput = document.querySelector(`input[type="file"][name="${metric.videoField}"]`);
       const isVerified = payload ? !!payload.isVerified : !!verifiedInput?.checked;
       const verifiedBy = payload ? (payload.verifiedBy || '') : (verifiedByInput?.value || '');
+      const recordedAt = payload ? (payload.recordedAt || '') : (recordedAtInput?.value || '');
 
       const formData = new FormData();
       formData.append(metric.videoField, file);
@@ -786,6 +807,9 @@
       }
       if (verifiedBy) {
         formData.append(metric.verifiedByField, verifiedBy);
+      }
+      if (recordedAt) {
+        formData.append(metric.recordedAtField, recordedAt);
       }
 
       metricUploadInProgress.add(metric.key);
@@ -1841,11 +1865,15 @@
           const media = metricVideoMapForFields[metric.key] || null;
           const verifiedInput = document.querySelector(`[name="${metric.verifiedField}"]`);
           const verifiedByInput = document.querySelector(`[name="${metric.verifiedByField}"]`);
+          const recordedAtInput = document.querySelector(`[name="${metric.recordedAtField}"]`);
           if (verifiedInput) {
             verifiedInput.checked = !!(media && media.is_verified);
           }
           if (verifiedByInput) {
             verifiedByInput.value = media?.verified_by || '';
+          }
+          if (recordedAtInput) {
+            recordedAtInput.value = media?.recorded_at ? media.recorded_at.split('T')[0] : '';
           }
         });
       }
