@@ -146,6 +146,30 @@
       color: #5a6d8a;
       font-weight: 600;
     }
+    .metric-yt-box {
+      margin-top: 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+      padding-top: 56.25%;
+    }
+    .metric-yt-box iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .metric-yt-label {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #5a6d8a;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
     @media (max-width: 720px) {
       .metrics-hero {
         padding: 20px;
@@ -207,6 +231,15 @@
           <div class="metric-video-box" id="metricVideoBox" style="display:none;">
             <video id="metricVideo" controls></video>
             <div class="metric-video-note" id="metricVideoNote"></div>
+          </div>
+          <div id="metricYtSection" style="display:none;">
+            <div class="metric-yt-box">
+              <iframe id="metricYtFrame" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            </div>
+            <div class="metric-yt-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              Instructional Video
+            </div>
           </div>
         </section>
       </div>
@@ -284,6 +317,7 @@
     let currentMetricKey = METRICS[0].key;
     let profile = null;
     let metricVideoMap = {};
+    let metricYoutubeUrls = {};
 
     function formatBroadJumpFeetInches(totalInchesValue) {
       const total = Number(totalInchesValue);
@@ -306,6 +340,26 @@
         });
       } catch (_) {}
       return map;
+    }
+
+    function getYoutubeEmbedUrl(url) {
+      if (!url) return '';
+      try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.replace(/^www\./, '');
+        if (host === 'youtube.com') {
+          const videoId = parsed.searchParams.get('v');
+          if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+            return 'https://www.youtube.com/embed/' + videoId;
+          }
+        } else if (host === 'youtu.be') {
+          const videoId = parsed.pathname.slice(1).split('/')[0];
+          if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+            return 'https://www.youtube.com/embed/' + videoId;
+          }
+        }
+      } catch (_) {}
+      return '';
     }
 
     function renderMetricTabs() {
@@ -362,6 +416,17 @@
         videoEl.load();
         videoNoteEl.textContent = '';
       }
+
+      const ytSection = document.getElementById('metricYtSection');
+      const ytFrame = document.getElementById('metricYtFrame');
+      const embedUrl = getYoutubeEmbedUrl(metricYoutubeUrls[metric.key] || '');
+      if (embedUrl) {
+        ytFrame.src = embedUrl;
+        ytSection.style.display = '';
+      } else {
+        ytFrame.src = '';
+        ytSection.style.display = 'none';
+      }
     }
 
     async function initMetricPage() {
@@ -377,6 +442,16 @@
       } catch (_) {
         profile = null;
         metricVideoMap = {};
+      }
+
+      try {
+        const tipRes = await fetch('/api/player/metric-pro-tips');
+        if (tipRes.ok) {
+          const tipData = await tipRes.json();
+          metricYoutubeUrls = tipData.youtube_urls || {};
+        }
+      } catch (_) {
+        metricYoutubeUrls = {};
       }
 
       renderMetricTabs();

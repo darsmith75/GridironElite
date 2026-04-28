@@ -476,6 +476,7 @@ const alterTablesSQL = `
   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0;
   DROP TABLE IF EXISTS messages;
+  ALTER TABLE metric_pro_tips ADD COLUMN IF NOT EXISTS youtube_url TEXT;
 `;
 
 const createIndexesSQL = `

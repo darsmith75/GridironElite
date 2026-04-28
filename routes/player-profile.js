@@ -3,7 +3,7 @@ const db = require('../database');
 const { requireAuth } = require('../middleware/auth');
 const { METRIC_VIDEO_CONFIG, METRIC_TIP_CONFIG } = require('../utils/constants');
 const { logSiteTrafficEvent } = require('../utils/helpers');
-const { getMergedMetricTipsForPlayer, getMetricTipsMap } = require('../utils/ai-helpers');
+const { getMergedMetricTipsForPlayer, getMetricTipsMap, getMetricYoutubeUrlsMap } = require('../utils/ai-helpers');
 const {
   PROFILE_UPLOAD_FIELD_MAX_COUNTS,
   MAX_HIGHLIGHT_VIDEO_BYTES,
@@ -104,13 +104,14 @@ router.get('/player/profile', requireAuth, async (req, res) => {
 // Player: Get pro tips for athletic metrics
 router.get('/player/metric-pro-tips', requireAuth, async (req, res) => {
   try {
+    const youtube_urls = await getMetricYoutubeUrlsMap();
     if (req.session.role === 'player') {
       const tips = await getMergedMetricTipsForPlayer(req.session.userId);
-      return res.json({ tips: tips.merged, metrics: METRIC_TIP_CONFIG });
+      return res.json({ tips: tips.merged, youtube_urls, metrics: METRIC_TIP_CONFIG });
     }
 
     const tips = await getMetricTipsMap();
-    res.json({ tips, metrics: METRIC_TIP_CONFIG });
+    res.json({ tips, youtube_urls, metrics: METRIC_TIP_CONFIG });
   } catch (error) {
     console.error('Player get metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to load metric tips' });

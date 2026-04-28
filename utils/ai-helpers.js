@@ -199,6 +199,20 @@ async function getMetricTipsMap() {
   return map;
 }
 
+async function getMetricYoutubeUrlsMap() {
+  const rows = await db.prepare('SELECT metric_key, youtube_url FROM metric_pro_tips').all();
+  const map = {};
+  for (const item of METRIC_TIP_CONFIG) {
+    map[item.key] = '';
+  }
+  rows.forEach(row => {
+    if (row.metric_key in map) {
+      map[row.metric_key] = row.youtube_url || '';
+    }
+  });
+  return map;
+}
+
 async function getPlayerMetricTipOverridesMap(playerUserId) {
   const rows = await db.prepare(
     'SELECT metric_key, tip_text FROM player_metric_pro_tips WHERE player_user_id = ?'
@@ -240,6 +254,7 @@ module.exports = {
   getCachedAiSummary,
   saveAiSummary,
   getMetricTipsMap,
+  getMetricYoutubeUrlsMap,
   getPlayerMetricTipOverridesMap,
   getMergedMetricTipsForPlayer
 };

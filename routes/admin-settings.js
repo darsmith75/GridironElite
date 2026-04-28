@@ -3,15 +3,29 @@ const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { METRIC_TIP_CONFIG, METRIC_TIP_KEYS, AD_SLOT_CONFIG, AD_SLOT_KEYS } = require('../utils/constants');
 const { getAdSlotsMap } = require('../utils/helpers');
-const { getMetricTipsMap } = require('../utils/ai-helpers');
+const { getMetricTipsMap, getMetricYoutubeUrlsMap } = require('../utils/ai-helpers');
 
 const router = express.Router();
+
+function sanitizeYoutubeUrl(url) {
+  const raw = (url || '').toString().trim();
+  if (!raw) return '';
+  try {
+    const parsed = new URL(raw);
+    const host = parsed.hostname.replace(/^www\./, '');
+    if (host === 'youtube.com' || host === 'youtu.be') {
+      return raw;
+    }
+  } catch (_) {}
+  return '';
+}
 
 // Admin: Get all metric pro tips
 router.get('/admin/metric-pro-tips', requireAdmin, async (req, res) => {
   try {
     const tips = await getMetricTipsMap();
-    res.json({ tips, metrics: METRIC_TIP_CONFIG });
+    const youtube_urls = await getMetricYoutubeUrlsMap();
+    res.json({ tips, youtube_urls, metrics: METRIC_TIP_CONFIG });
   } catch (error) {
     console.error('Admin get metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to get metric tips' });
@@ -22,6 +36,7 @@ router.get('/admin/metric-pro-tips', requireAdmin, async (req, res) => {
 router.put('/admin/metric-pro-tips', requireAdmin, async (req, res) => {
   try {
     const incomingTips = req.body?.tips;
+    const incomingYoutubeUrls = req.body?.youtube_urls;
     if (!incomingTips || typeof incomingTips !== 'object') {
       return res.status(400).json({ error: 'Invalid tips payload' });
     }
@@ -29,19 +44,22 @@ router.put('/admin/metric-pro-tips', requireAdmin, async (req, res) => {
     for (const [metricKey, tipValue] of Object.entries(incomingTips)) {
       if (!METRIC_TIP_KEYS.has(metricKey)) continue;
       const tipText = (tipValue || '').toString().trim();
+      const youtubeUrl = sanitizeYoutubeUrl((incomingYoutubeUrls && incomingYoutubeUrls[metricKey]) || '');
       await db.prepare(`
-        INSERT INTO metric_pro_tips (metric_key, tip_text, updated_by_user_id, updated_at)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO metric_pro_tips (metric_key, tip_text, youtube_url, updated_by_user_id, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT (metric_key)
         DO UPDATE SET
           tip_text = EXCLUDED.tip_text,
+          youtube_url = EXCLUDED.youtube_url,
           updated_by_user_id = EXCLUDED.updated_by_user_id,
           updated_at = CURRENT_TIMESTAMP
-      `).run(metricKey, tipText, req.session.userId);
+      `).run(metricKey, tipText, youtubeUrl, req.session.userId);
     }
 
     const tips = await getMetricTipsMap();
-    res.json({ success: true, tips });
+    const youtube_urls = await getMetricYoutubeUrlsMap();
+    res.json({ success: true, tips, youtube_urls });
   } catch (error) {
     console.error('Admin save metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to save metric tips' });
