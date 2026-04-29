@@ -1039,12 +1039,15 @@
     let metricYoutubeUrls = {};
     const USERS_PAGE_SIZE = 50;
     let usersCurrentPage = 1;
+    let usersPagination = { page: 1, limit: USERS_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
     let allCoaches = [];
     const COACHES_PAGE_SIZE = 25;
     let coachesCurrentPage = 1;
+    let coachesPagination = { page: 1, limit: COACHES_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
     let allTeams = [];
     const TEAMS_PAGE_SIZE = 25;
     let teamsCurrentPage = 1;
+    let teamsPagination = { page: 1, limit: TEAMS_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
     let schoolRatingCategories = [];
     let adSlotConfig = [];
     let adSlots = {};
@@ -1246,84 +1249,38 @@
       }
     }
 
-    async function loadUsers() {
-      const res = await fetch('/api/admin/users');
+    async function loadUsers(page = usersCurrentPage) {
+      const search = document.getElementById('userSearch').value.trim();
+      const role = document.getElementById('roleFilter').value;
+      const params = new URLSearchParams({ page: String(page), limit: String(USERS_PAGE_SIZE) });
+      if (search) params.set('search', search);
+      if (role) params.set('role', role);
+
+      const res = await fetch('/api/admin/users?' + params.toString());
       if (!res.ok) return;
-      allUsers = await res.json();
+      const payload = await res.json();
+      allUsers = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : []);
+      usersPagination = payload?.pagination || {
+        page,
+        limit: USERS_PAGE_SIZE,
+        total: allUsers.length,
+        totalPages: 1,
+        hasPrev: false,
+        hasNext: false
+      };
+      usersCurrentPage = usersPagination.page || page;
       renderUsers();
     }
 
     function renderUsers() {
-      const search = document.getElementById('userSearch').value.toLowerCase().trim();
-      const roleFilter = document.getElementById('roleFilter').value;
-
-      let filtered = allUsers;
-      if (roleFilter) filtered = filtered.filter(u => u.role === roleFilter);
-      if (search) {
-        filtered = filtered.filter(u => {
-          const text = [u.email, u.full_name, u.player_name].filter(Boolean).join(' ').toLowerCase();
-          return text.includes(search);
-        });
-      }
-
       const tbody = document.getElementById('usersTableBody');
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#999; padding:30px;">No users found</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(u => {
-        const name = u.player_name || u.full_name || '-';
-        const details = u.role === 'player'
-          ? [u.position, u.high_school, u.graduation_year ? 'Class of ' + u.graduation_year : '', u.gpa ? 'GPA: ' + u.gpa : ''].filter(Boolean).join(' &middot; ')
-          : (u.organization || '-');
-        const lastLogin = formatDateTime(u.last_login_at);
-        const date = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
-        return `<tr>
-          <td>${u.id}</td>
-          <td>${escapeHtml(name)}</td>
-          <td>${escapeHtml(u.email)}</td>
-          <td><span class="role-badge ${u.role}">${u.role === 'player' ? 'Athlete' : u.role}</span></td>
-          <td>${details || '-'}</td>
-          <td>${lastLogin}</td>
-          <td>${date}</td>
-          <td class="actions-cell">
-            <div class="user-actions">
-              <button class="action-btn edit" onclick="openEditModal(${u.id})">Edit</button>
-              <button class="action-btn reset" onclick="openResetModal(${u.id}, '${escapeHtml(name)}')">Password</button>
-              <button class="action-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(name)}')">Delete</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
-    }
-
-    function renderUsers() {
-      const search = document.getElementById('userSearch').value.toLowerCase().trim();
-      const roleFilter = document.getElementById('roleFilter').value;
-
-      let filtered = allUsers;
-      if (roleFilter) filtered = filtered.filter(u => u.role === roleFilter);
-      if (search) {
-        filtered = filtered.filter(u => {
-          const text = [u.email, u.full_name, u.player_name].filter(Boolean).join(' ').toLowerCase();
-          return text.includes(search);
-        });
-      }
-
-      const tbody = document.getElementById('usersTableBody');
-      if (filtered.length === 0) {
+      if (allUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#999; padding:30px;">No users found</td></tr>';
         renderUsersPagination(0, 0);
         return;
       }
 
-      const totalPages = Math.ceil(filtered.length / USERS_PAGE_SIZE);
-      if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
-      const start = (usersCurrentPage - 1) * USERS_PAGE_SIZE;
-      const pageUsers = filtered.slice(start, start + USERS_PAGE_SIZE);
-
-      tbody.innerHTML = pageUsers.map(u => {
+      tbody.innerHTML = allUsers.map(u => {
         const name = u.player_name || u.full_name || '-';
         const details = u.role === 'player'
           ? [u.position, u.high_school, u.graduation_year ? 'Class of ' + u.graduation_year : '', u.gpa ? 'GPA: ' + u.gpa : ''].filter(Boolean).join(' &middot; ')
@@ -1348,7 +1305,7 @@
         </tr>`;
       }).join('');
 
-      renderUsersPagination(filtered.length, totalPages);
+      renderUsersPagination(usersPagination.total || allUsers.length, usersPagination.totalPages || 1);
     }
 
     function renderUsersPagination(total, totalPages) {
@@ -1391,8 +1348,10 @@
     }
 
     function goUsersPage(page) {
+      const totalPages = usersPagination.totalPages || 1;
+      if (page < 1 || page > totalPages) return;
       usersCurrentPage = page;
-      renderUsers();
+      loadUsers(page);
       document.getElementById('tab-users').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -1404,12 +1363,12 @@
     }
 
     // Search and filter listeners
-    document.getElementById('userSearch').addEventListener('input', () => { usersCurrentPage = 1; renderUsers(); });
-    document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; renderUsers(); });
-    document.getElementById('coachSearch').addEventListener('input', () => { coachesCurrentPage = 1; renderCoaches(); });
-    document.getElementById('coachStateFilter').addEventListener('change', () => { coachesCurrentPage = 1; renderCoaches(); });
-    document.getElementById('teamSearch').addEventListener('input', () => { teamsCurrentPage = 1; renderTeams(); });
-    document.getElementById('teamStateFilter').addEventListener('change', () => { teamsCurrentPage = 1; renderTeams(); });
+    document.getElementById('userSearch').addEventListener('input', () => { usersCurrentPage = 1; loadUsers(1); });
+    document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; loadUsers(1); });
+    document.getElementById('coachSearch').addEventListener('input', () => { coachesCurrentPage = 1; loadCoaches(1); });
+    document.getElementById('coachStateFilter').addEventListener('change', () => { coachesCurrentPage = 1; loadCoaches(1); });
+    document.getElementById('teamSearch').addEventListener('input', () => { teamsCurrentPage = 1; loadTeams(1); });
+    document.getElementById('teamStateFilter').addEventListener('change', () => { teamsCurrentPage = 1; loadTeams(1); });
 
     // Edit Modal
     async function openEditModal(userId) {
@@ -1595,11 +1554,17 @@
       if (tab === 'teams') loadTeams();
     }
 
-    async function loadCoaches() {
+    async function loadCoaches(page = coachesCurrentPage) {
       const tbody = document.getElementById('coachesTableBody');
       tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
       try {
-        const res = await fetch('/api/admin/coaches');
+        const search = document.getElementById('coachSearch').value.trim();
+        const state = document.getElementById('coachStateFilter').value;
+        const params = new URLSearchParams({ page: String(page), limit: String(COACHES_PAGE_SIZE) });
+        if (search) params.set('search', search);
+        if (state) params.set('state', state);
+
+        const res = await fetch('/api/admin/coaches?' + params.toString());
         if (!res.ok) {
           let errorMessage = `Failed to load (${res.status})`;
           try {
@@ -1617,8 +1582,20 @@
           }
           throw new Error(errorMessage);
         }
-        allCoaches = await res.json();
-        populateCoachStateFilter(allCoaches);
+        const payload = await res.json();
+        allCoaches = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : []);
+        coachesPagination = payload?.pagination || {
+          page,
+          limit: COACHES_PAGE_SIZE,
+          total: allCoaches.length,
+          totalPages: 1,
+          hasPrev: false,
+          hasNext: false
+        };
+        coachesCurrentPage = coachesPagination.page || page;
+        if (document.getElementById('coachStateFilter').options.length <= 1) {
+          populateCoachStateFilter(allCoaches);
+        }
         renderCoaches();
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:#c62828;padding:24px;">Failed to load coaches: ${escapeHtml(err.message)}</td></tr>`;
@@ -1640,35 +1617,13 @@
 
     function renderCoaches() {
       const tbody = document.getElementById('coachesTableBody');
-      const search = document.getElementById('coachSearch').value.toLowerCase().trim();
-      const stateFilter = document.getElementById('coachStateFilter').value;
-
-      let filtered = allCoaches;
-      if (stateFilter) {
-        filtered = filtered.filter(c => String(c.state || '').trim().toUpperCase() === stateFilter);
-      }
-      if (search) {
-        filtered = filtered.filter(c => {
-          const text = [c.full_name, c.email, c.team_name, c.school_name, c.city, c.state]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-          return text.includes(search);
-        });
-      }
-
-      if (filtered.length === 0) {
+      if (allCoaches.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#999; padding:30px;">No coaches found</td></tr>';
         renderCoachesPagination(0, 0);
         return;
       }
 
-      const totalPages = Math.ceil(filtered.length / COACHES_PAGE_SIZE);
-      if (coachesCurrentPage > totalPages) coachesCurrentPage = totalPages;
-      const start = (coachesCurrentPage - 1) * COACHES_PAGE_SIZE;
-      const pageCoaches = filtered.slice(start, start + COACHES_PAGE_SIZE);
-
-      tbody.innerHTML = pageCoaches.map(c => {
+      tbody.innerHTML = allCoaches.map(c => {
         const name = escapeHtml(c.full_name || c.email || '—');
         const email = escapeHtml(c.email || '—');
         const team = escapeHtml(c.team_name || '—');
@@ -1698,7 +1653,7 @@
         </tr>`;
       }).join('');
 
-      renderCoachesPagination(filtered.length, totalPages);
+      renderCoachesPagination(coachesPagination.total || allCoaches.length, coachesPagination.totalPages || 1);
     }
 
     function renderCoachesPagination(total, totalPages) {
@@ -1740,8 +1695,10 @@
     }
 
     function goCoachesPage(page) {
+      const totalPages = coachesPagination.totalPages || 1;
+      if (page < 1 || page > totalPages) return;
       coachesCurrentPage = page;
-      renderCoaches();
+      loadCoaches(page);
       document.getElementById('tab-coaches').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -2008,14 +1965,32 @@
     }
 
     // Teams Management
-    async function loadTeams() {
+    async function loadTeams(page = teamsCurrentPage) {
       const tbody = document.getElementById('teamsTableBody');
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
       try {
-        const res = await fetch('/api/admin/teams');
+        const search = document.getElementById('teamSearch').value.trim();
+        const state = document.getElementById('teamStateFilter').value;
+        const params = new URLSearchParams({ page: String(page), limit: String(TEAMS_PAGE_SIZE) });
+        if (search) params.set('search', search);
+        if (state) params.set('state', state);
+
+        const res = await fetch('/api/admin/teams?' + params.toString());
         if (!res.ok) throw new Error(`Failed to load (${res.status})`);
-        allTeams = await res.json();
-        populateTeamStateFilter(allTeams);
+        const payload = await res.json();
+        allTeams = Array.isArray(payload) ? payload : (Array.isArray(payload.items) ? payload.items : []);
+        teamsPagination = payload?.pagination || {
+          page,
+          limit: TEAMS_PAGE_SIZE,
+          total: allTeams.length,
+          totalPages: 1,
+          hasPrev: false,
+          hasNext: false
+        };
+        teamsCurrentPage = teamsPagination.page || page;
+        if (document.getElementById('teamStateFilter').options.length <= 1) {
+          populateTeamStateFilter(allTeams);
+        }
         renderTeams();
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#c62828;padding:24px;">Failed to load teams: ${escapeHtml(err.message)}</td></tr>`;
@@ -2037,33 +2012,13 @@
 
     function renderTeams() {
       const tbody = document.getElementById('teamsTableBody');
-      const search = document.getElementById('teamSearch').value.toLowerCase().trim();
-      const stateFilter = document.getElementById('teamStateFilter').value;
-
-      let filtered = allTeams;
-      if (stateFilter) {
-        filtered = filtered.filter(t => String(t.state || '').trim().toUpperCase() === stateFilter);
-      }
-      if (search) {
-        filtered = filtered.filter(t => {
-          const text = [t.team_name, t.school_name, t.city, t.state, t.coach_name, t.coach_email]
-            .filter(Boolean).join(' ').toLowerCase();
-          return text.includes(search);
-        });
-      }
-
-      if (filtered.length === 0) {
+      if (allTeams.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999; padding:30px;">No teams found</td></tr>';
         renderTeamsPagination(0, 0);
         return;
       }
 
-      const totalPages = Math.ceil(filtered.length / TEAMS_PAGE_SIZE);
-      if (teamsCurrentPage > totalPages) teamsCurrentPage = totalPages;
-      const start = (teamsCurrentPage - 1) * TEAMS_PAGE_SIZE;
-      const pageTeams = filtered.slice(start, start + TEAMS_PAGE_SIZE);
-
-      tbody.innerHTML = pageTeams.map(t => {
+      tbody.innerHTML = allTeams.map(t => {
         const teamName = escapeHtml(t.team_name || '—');
         const school = escapeHtml(t.school_name || '—');
         const loc = [t.city, t.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
@@ -2087,7 +2042,7 @@
         </tr>`;
       }).join('');
 
-      renderTeamsPagination(filtered.length, totalPages);
+      renderTeamsPagination(teamsPagination.total || allTeams.length, teamsPagination.totalPages || 1);
     }
 
     function renderTeamsPagination(total, totalPages) {
@@ -2129,8 +2084,10 @@
     }
 
     function goTeamsPage(page) {
+      const totalPages = teamsPagination.totalPages || 1;
+      if (page < 1 || page > totalPages) return;
       teamsCurrentPage = page;
-      renderTeams();
+      loadTeams(page);
       document.getElementById('tab-teams').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 

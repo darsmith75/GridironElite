@@ -703,6 +703,46 @@ async function exec(sql) {
   }
 }
 
+// Run a transaction on a single dedicated connection.
+// Usage: const result = await db.withTransaction(async (tx) => {
+//   await tx.prepare('INSERT ...').run(val1, val2);
+//   return something;
+// });
+async function withTransaction(fn) {
+  const client = await pool.connect();
+  const tx = {
+    query: (sql, params = []) => client.query(normalizeSql(sql), params),
+    prepare: (sql) => ({
+      async get(...params) {
+        const result = await client.query(normalizeSql(sql), params);
+        return result.rows[0];
+      },
+      async all(...params) {
+        const result = await client.query(normalizeSql(sql), params);
+        return result.rows;
+      },
+      async run(...params) {
+        const result = await client.query(normalizeSql(sql), params);
+        return {
+          changes: result.rowCount,
+          lastInsertRowid: result.rows[0]?.inserted_id
+        };
+      }
+    })
+  };
+  try {
+    await client.query('BEGIN');
+    const result = await fn(tx);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 async function initialize() {
   await exec(createTablesSQL);
   await exec(alterTablesSQL);
@@ -759,6 +799,7 @@ module.exports = {
   prepare,
   query,
   exec,
+  withTransaction,
   initialize,
   close,
   pool

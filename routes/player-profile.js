@@ -391,16 +391,6 @@ router.delete('/player/profile-picture', requireAuth, async (req, res) => {
   }
 });
 
-router.delete('/player/report-card', requireAuth, async (req, res) => {
-  try {
-    await clearPlayerProfileFile(req.session.userId, 'report_card_image');
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete report card image error:', error);
-    res.status(500).json({ error: 'Failed to delete report card image' });
-  }
-});
-
 router.post('/player/report-card/delete', requireAuth, async (req, res) => {
   try {
     await clearPlayerProfileFile(req.session.userId, 'report_card_image');
@@ -408,21 +398,6 @@ router.post('/player/report-card/delete', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Delete report card image error:', error);
     res.status(500).json({ error: 'Failed to delete report card image' });
-  }
-});
-
-router.delete('/player/video', requireAuth, async (req, res) => {
-  try {
-    const filename = req.query.filename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete video error:', error);
-    res.status(500).json({ error: 'Failed to delete video' });
   }
 });
 
@@ -471,37 +446,6 @@ router.delete('/player/metric-video', requireAuth, async (req, res) => {
   }
 });
 
-router.delete('/player/video/:filename', requireAuth, async (req, res) => {
-  try {
-    const filename = req.query.filename || req.params.filename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete video error:', error);
-    res.status(500).json({ error: 'Failed to delete video' });
-  }
-});
-
-router.delete('/player/video/*', requireAuth, async (req, res) => {
-  try {
-    const wildcardFilename = req.params[0];
-    const filename = req.query.filename || wildcardFilename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_videos', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Video file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete video error:', error);
-    res.status(500).json({ error: 'Failed to delete video' });
-  }
-});
-
 router.post('/player/video-link', requireAuth, async (req, res) => {
   try {
     const { url, title } = req.body;
@@ -533,55 +477,9 @@ router.delete('/player/video-link/:id', requireAuth, async (req, res) => {
   }
 });
 
-router.delete('/player/image', requireAuth, async (req, res) => {
-  try {
-    const filename = req.query.filename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete image error:', error);
-    res.status(500).json({ error: 'Failed to delete image' });
-  }
-});
-
 router.post('/player/image/delete', requireAuth, async (req, res) => {
   try {
     const filename = req.body?.filename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete image error:', error);
-    res.status(500).json({ error: 'Failed to delete image' });
-  }
-});
-
-router.delete('/player/image/:filename', requireAuth, async (req, res) => {
-  try {
-    const filename = req.query.filename || req.params.filename;
-    if (!filename) return res.status(400).json({ error: 'Filename is required' });
-
-    const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);
-    if (!deleted) return res.status(404).json({ error: 'Image file not found in storage' });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete image error:', error);
-    res.status(500).json({ error: 'Failed to delete image' });
-  }
-});
-
-router.delete('/player/image/*', requireAuth, async (req, res) => {
-  try {
-    const wildcardFilename = req.params[0];
-    const filename = req.query.filename || wildcardFilename;
     if (!filename) return res.status(400).json({ error: 'Filename is required' });
 
     const deleted = await deleteOwnedPlayerMedia('player_images', req.session.userId, filename);

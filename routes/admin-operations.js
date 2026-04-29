@@ -1,7 +1,10 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { getPendingB2DeleteQueueSnapshot, processPendingB2DeleteQueue } = require('../utils/b2-queue');
+const { collegeLogoUpload } = require('../utils/upload');
 
 const router = express.Router();
 
@@ -132,6 +135,102 @@ router.post('/admin/b2-delete-queue/flush', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin flush B2 delete queue error:', error);
     res.status(500).json({ error: 'Failed to flush B2 delete queue' });
+  }
+});
+
+// ─── College CRUD ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/colleges
+router.get('/admin/colleges', requireAdmin, async (req, res) => {
+  try {
+    const colleges = await db.prepare(
+      'SELECT id, name, website_url, conference, team, logo FROM colleges ORDER BY name ASC'
+    ).all();
+    res.json(colleges);
+  } catch (error) {
+    console.error('Admin get colleges error:', error);
+    res.status(500).json({ error: 'Failed to get colleges' });
+  }
+});
+
+// POST /api/admin/colleges
+router.post('/admin/colleges', requireAdmin, collegeLogoUpload.single('logo'), async (req, res) => {
+  try {
+    const name = (req.body.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'College name is required' });
+
+    const websiteUrl = (req.body.website_url || '').trim() || null;
+    const conference = (req.body.conference || '').trim() || null;
+    const team = (req.body.team || '').trim() || null;
+    const logo = req.file ? path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/') : null;
+
+    const result = await db.prepare(
+      'INSERT INTO colleges (name, website_url, conference, team, logo) VALUES (?, ?, ?, ?, ?)'
+    ).run(name, websiteUrl, conference, team, logo);
+
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('Admin add college error:', error);
+    res.status(500).json({ error: 'Failed to add college' });
+  }
+});
+
+// PUT /api/admin/colleges/:id
+router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo'), async (req, res) => {
+  try {
+    const collegeId = parseInt(req.params.id, 10);
+    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
+
+    const existing = await db.prepare('SELECT id, logo FROM colleges WHERE id = ?').get(collegeId);
+    if (!existing) return res.status(404).json({ error: 'College not found' });
+
+    const name = (req.body.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'College name is required' });
+
+    const websiteUrl = (req.body.website_url || '').trim() || null;
+    const conference = (req.body.conference || '').trim() || null;
+    const team = (req.body.team || '').trim() || null;
+
+    let logo = existing.logo;
+    if (req.file) {
+      // Delete old logo from disk if present
+      if (existing.logo) {
+        const oldPath = path.resolve(existing.logo);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+      logo = path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/');
+    }
+
+    await db.prepare(
+      'UPDATE colleges SET name = ?, website_url = ?, conference = ?, team = ?, logo = ? WHERE id = ?'
+    ).run(name, websiteUrl, conference, team, logo, collegeId);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin update college error:', error);
+    res.status(500).json({ error: 'Failed to update college' });
+  }
+});
+
+// DELETE /api/admin/colleges/:id
+router.delete('/admin/colleges/:id', requireAdmin, async (req, res) => {
+  try {
+    const collegeId = parseInt(req.params.id, 10);
+    if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
+
+    const existing = await db.prepare('SELECT id, logo FROM colleges WHERE id = ?').get(collegeId);
+    if (!existing) return res.status(404).json({ error: 'College not found' });
+
+    if (existing.logo) {
+      const logoPath = path.resolve(existing.logo);
+      if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+    }
+
+    await db.prepare('DELETE FROM colleges WHERE id = ?').run(collegeId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Admin delete college error:', error);
+    res.status(500).json({ error: 'Failed to delete college' });
   }
 });
 

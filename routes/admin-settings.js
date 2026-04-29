@@ -130,68 +130,66 @@ router.put('/admin/school-rating-categories', requireAdmin, async (req, res) => 
   }
 
   try {
-    await db.query('BEGIN');
+    await db.withTransaction(async (tx) => {
+      const existingRows = await tx.prepare('SELECT id FROM school_rating_categories').all();
+      const existingIds = new Set(existingRows.map(row => Number(row.id)));
+      const keptIds = [];
 
-    const existingRows = await db.prepare('SELECT id FROM school_rating_categories').all();
-    const existingIds = new Set(existingRows.map(row => Number(row.id)));
-    const keptIds = [];
-
-    for (const item of normalizedCategories) {
-      if (item.id && existingIds.has(item.id)) {
-        await db.prepare(`
-          UPDATE school_rating_categories
-          SET category_name = ?,
-            what_to_rate = ?,
-            why_it_matters = ?,
-            sort_order = ?,
-            is_active = ?,
-            updated_by_user_id = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(
-          item.categoryName,
-          item.whatToRate,
-          item.whyItMatters,
-          item.sortOrder,
-          item.isActive,
-          req.session.userId,
-          item.id
-        );
-        keptIds.push(item.id);
-      } else {
-        const inserted = await db.prepare(`
-          INSERT INTO school_rating_categories (
-            category_name,
-            what_to_rate,
-            why_it_matters,
-            sort_order,
-            is_active,
-            updated_by_user_id,
-            updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        `).run(
-          item.categoryName,
-          item.whatToRate,
-          item.whyItMatters,
-          item.sortOrder,
-          item.isActive,
-          req.session.userId
-        );
-        if (inserted?.lastInsertRowid) {
-          keptIds.push(Number(inserted.lastInsertRowid));
+      for (const item of normalizedCategories) {
+        if (item.id && existingIds.has(item.id)) {
+          await tx.prepare(`
+            UPDATE school_rating_categories
+            SET category_name = ?,
+              what_to_rate = ?,
+              why_it_matters = ?,
+              sort_order = ?,
+              is_active = ?,
+              updated_by_user_id = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).run(
+            item.categoryName,
+            item.whatToRate,
+            item.whyItMatters,
+            item.sortOrder,
+            item.isActive,
+            req.session.userId,
+            item.id
+          );
+          keptIds.push(item.id);
+        } else {
+          const inserted = await tx.prepare(`
+            INSERT INTO school_rating_categories (
+              category_name,
+              what_to_rate,
+              why_it_matters,
+              sort_order,
+              is_active,
+              updated_by_user_id,
+              updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          `).run(
+            item.categoryName,
+            item.whatToRate,
+            item.whyItMatters,
+            item.sortOrder,
+            item.isActive,
+            req.session.userId
+          );
+          if (inserted?.lastInsertRowid) {
+            keptIds.push(Number(inserted.lastInsertRowid));
+          }
         }
       }
-    }
 
-    if (keptIds.length > 0) {
-      const placeholders = keptIds.map(() => '?').join(', ');
-      await db.prepare(`DELETE FROM school_rating_categories WHERE id NOT IN (${placeholders})`).run(...keptIds);
-    } else {
-      await db.prepare('DELETE FROM school_rating_categories').run();
-    }
-
-    await db.query('COMMIT');
+      if (keptIds.length > 0) {
+        const placeholders = keptIds.map(() => '?').join(', ');
+        await tx.prepare(`DELETE FROM school_rating_categories WHERE id NOT IN (${placeholders})`).run(...keptIds);
+      } else {
+        await tx.prepare('DELETE FROM school_rating_categories').run();
+      }
+    });
 
     const categories = await db.prepare(`
       SELECT id, category_name, what_to_rate, why_it_matters, sort_order, is_active, updated_at
@@ -212,7 +210,6 @@ router.put('/admin/school-rating-categories', requireAdmin, async (req, res) => 
       }))
     });
   } catch (error) {
-    try { await db.query('ROLLBACK'); } catch (_) {}
     console.error('Admin save school rating categories error:', error);
     res.status(500).json({ error: 'Failed to save school rating categories' });
   }

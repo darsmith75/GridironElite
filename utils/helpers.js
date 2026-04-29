@@ -26,6 +26,31 @@ function getClientIp(req) {
   return String(rawIp || '').replace(/^::ffff:/, '').trim();
 }
 
+function getPublicAppUrl(req) {
+  const configured = String(process.env.APP_URL || process.env.PUBLIC_BASE_URL || '').trim();
+  const configuredSanitized = configured.replace(/\/$/, '');
+  const isConfiguredLocal = /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(configuredSanitized);
+
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '').split(',')[0].trim();
+  const forwardedHost = String(req?.headers?.['x-forwarded-host'] || '').split(',')[0].trim();
+  const host = forwardedHost || req?.get?.('host') || req?.headers?.host;
+  const protocol = forwardedProto || req?.protocol || 'https';
+
+  if (configuredSanitized && !isConfiguredLocal) {
+    return configuredSanitized;
+  }
+
+  if (host) {
+    return `${protocol}://${host}`.replace(/\/$/, '');
+  }
+
+  if (configuredSanitized) {
+    return configuredSanitized;
+  }
+
+  return 'https://gridironathletes.com';
+}
+
 function normalizeHexColor(value) {
   const raw = String(value || '').trim().toLowerCase();
   if (!raw) return null;
@@ -275,6 +300,7 @@ module.exports = {
   authForgotPasswordRateTracker,
   parseQueryNumber,
   getClientIp,
+  getPublicAppUrl,
   normalizeHexColor,
   isLikelyValidEmail,
   getAgentPlayersRateKey,

@@ -170,35 +170,55 @@ router.post('/reset-password', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-  if (isLoginRateLimited(req)) {
-    return res.status(429).json({ error: 'Too many login attempts. Please wait a few minutes and try again.' });
+  try {
+    if (isLoginRateLimited(req)) {
+      return res.status(429).json({ error: 'Too many login attempts. Please wait a few minutes and try again.' });
+    }
+
+    const { email, password } = req.body;
+    let user;
+    try {
+      user = await db.prepare(
+        'SELECT id, email, password AS password_hash, role, is_active, email_verified FROM users WHERE email = ?'
+      ).get(email);
+    } catch (queryError) {
+      // Backward compatibility for environments where is_active has not been migrated yet.
+      if (!/is_active/i.test(String(queryError?.message || ''))) throw queryError;
+      user = await db.prepare(
+        'SELECT id, email, password AS password_hash, role, email_verified FROM users WHERE email = ?'
+      ).get(email);
+    }
+
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (user.is_active === false) {
+      return res.status(403).json({ error: 'Account is disabled' });
+    }
+
+    if (!user.email_verified) {
+      return res.status(403).json({ error: 'Please verify your email address before logging in. Check your inbox for the verification link.' });
+    }
+
+    await db.prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP, login_count = COALESCE(login_count, 0) + 1 WHERE id = ?').run(user.id);
+
+    req.session.userId = user.id;
+    req.session.role = user.role;
+    await logSiteTrafficEvent({
+      req,
+      eventType: 'login',
+      path: '/login',
+      method: 'POST',
+      userId: user.id,
+      role: user.role,
+      metadata: { email: user.email }
+    });
+    res.json({ success: true, role: user.role });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ error: 'Login failed. Please try again.' });
   }
-
-  const { email, password } = req.body;
-  const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  if (!user.email_verified) {
-    return res.status(403).json({ error: 'Please verify your email address before logging in. Check your inbox for the verification link.' });
-  }
-
-  await db.prepare('UPDATE users SET last_login_at = CURRENT_TIMESTAMP, login_count = COALESCE(login_count, 0) + 1 WHERE id = ?').run(user.id);
-
-  req.session.userId = user.id;
-  req.session.role = user.role;
-  await logSiteTrafficEvent({
-    req,
-    eventType: 'login',
-    path: '/login',
-    method: 'POST',
-    userId: user.id,
-    role: user.role,
-    metadata: { email: user.email }
-  });
-  res.json({ success: true, role: user.role });
 });
 
 // Logout

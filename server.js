@@ -12,6 +12,7 @@ process.emitWarning = function patchedEmitWarning(warning, ...args) {
 
 try { require('dotenv').config(); } catch (_) {}
 
+const compression = require('compression');
 const express = require('express');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
@@ -27,16 +28,38 @@ const { safeUploadPath, normalizeUploadFilename } = require('./utils/upload');
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
+// Fail fast if critical environment variables are missing.
+if (!process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET environment variable is not set. Set it to a long random string before starting the server.');
+  process.exit(1);
+}
+
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
+
+// Compress all text-based responses (JSON, HTML, CSS, JS).
+app.use(compression());
 
 // Create uploads directory
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 if (!fs.existsSync(path.join('images', 'collegelogos'))) fs.mkdirSync(path.join('images', 'collegelogos'), { recursive: true });
 
-// Migrate existing flat uploads into per-user folders
+// Migrate existing flat uploads into per-user folders.
+// Guard: skip entirely if no un-migrated filenames remain (no '/' in path).
 async function migrateUploads() {
   try {
+    const [pp, pv, pi, pmv] = await Promise.all([
+      db.prepare("SELECT 1 FROM player_profiles WHERE (profile_picture IS NOT NULL AND profile_picture NOT LIKE '%/%') OR (card_photo IS NOT NULL AND card_photo NOT LIKE '%/%') OR (report_card_image IS NOT NULL AND report_card_image NOT LIKE '%/%') LIMIT 1").get(),
+      db.prepare("SELECT 1 FROM player_videos WHERE filename NOT LIKE '%/%' LIMIT 1").get(),
+      db.prepare("SELECT 1 FROM player_images WHERE filename NOT LIKE '%/%' LIMIT 1").get(),
+      db.prepare("SELECT 1 FROM player_metric_videos WHERE video_filename IS NOT NULL AND video_filename NOT LIKE '%/%' LIMIT 1").get(),
+    ]);
+
+    if (!pp && !pv && !pi && !pmv) {
+      console.log('Upload migration: nothing to migrate, skipping.');
+      return;
+    }
+
     // Migrate profile_picture, card_photo, and report_card_image
     const profiles = await db.prepare('SELECT user_id, profile_picture, card_photo, report_card_image FROM player_profiles').all();
     for (const p of profiles) {
@@ -106,25 +129,7 @@ async function migrateUploads() {
   }
 }
 
-// Guard against accidental double-submit of the same profile upload payload.
-const recentProfileUploadSignatures = new Map();
-function buildProfileUploadSignature(userId, reqBody, reqFiles) {
-  const fileEntries = Object.entries(reqFiles || {})
-    .flatMap(([field, files]) => (files || []).map(f => `${field}:${f.originalname}:${f.size}:${f.mimetype}`))
-    .sort();
 
-  const bodyFields = [
-    reqBody.fullName || '',
-    reqBody.highSchool || '',
-    reqBody.position || '',
-    reqBody.graduationYear || '',
-    reqBody.gpa || ''
-  ].join('|');
-
-  return `${userId}|${bodyFields}|${fileEntries.join('|')}`;
-}
-
-app.set('trust proxy', 1);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -206,7 +211,7 @@ app.use(session({
     tableName: 'user_sessions',
     createTableIfMissing: true
   }),
-  secret: process.env.SESSION_SECRET || 'football-agent-secret-key',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   proxy: true,

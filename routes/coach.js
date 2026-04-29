@@ -3,12 +3,11 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../database');
 const { requireCoach } = require('../middleware/auth');
-const { requireAuth } = require('../middleware/auth');
 const { enrichPlayerProfile } = require('../utils/enrich-player');
 const { upload, processUploadedFiles } = require('../utils/upload');
 const { deleteUploadFile } = require('../utils/file-mgmt');
 const { normalizeHexColor, getPublicAppUrl } = require('../utils/helpers');
-const { getPublicAppUrl: _getPublicAppUrl, sendTeamInviteEmail, sendRecruiterShareEmail } = require('../utils/email');
+const { sendTeamInviteEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -49,7 +48,14 @@ router.get('/coach/team', requireCoach, async (req, res) => {
     if (req.session.role === 'admin' && req.query.coachId) {
       coachId = parseInt(req.query.coachId, 10);
     }
-    const team = await db.prepare('SELECT * FROM hs_teams WHERE coach_id = ?').get(coachId);
+    const team = await db.prepare(`
+      SELECT id, coach_id, team_name, school_name, school_logo, school_overview,
+             team_website, twitter_url, instagram_url, facebook_url, youtube_url, tiktok_url,
+             banner_color_start, banner_color_end, use_banner_gradient_cards,
+             city, state, created_at
+      FROM hs_teams
+      WHERE coach_id = ?
+    `).get(coachId);
     if (!team) return res.status(404).json({ error: 'Team not found' });
     const coach = await db.prepare('SELECT full_name, email, phone FROM users WHERE id = ?').get(coachId);
     res.json({ ...team, coach });
@@ -463,9 +469,7 @@ router.get('/coach/team/roster', requireCoach, async (req, res) => {
       WHERE tp.team_id = ?
       ORDER BY pp.full_name ASC
     `).all(team.id);
-    for (const p of players) {
-      await enrichPlayerProfile(p);
-    }
+    await Promise.all(players.map(p => enrichPlayerProfile(p)));
     res.json(players);
   } catch (error) {
     console.error('Coach get roster error:', error);
@@ -645,7 +649,7 @@ router.post('/coach/invite', requireCoach, async (req, res) => {
     }
     const normalizedEmail = playerEmail.trim().toLowerCase();
 
-    const team = await db.prepare('SELECT * FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    const team = await db.prepare('SELECT id, team_name, school_name FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
     if (!team) return res.status(404).json({ error: 'Team not found' });
 
     // Prevent duplicate pending invites to the same email for the same team
@@ -780,10 +784,8 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
     const tokenHash = crypto.createHash('sha256').update(shareToken).digest('hex');
     const recipientEmailsStored = normalizedRecipients.join(', ').substring(0, 254);
 
-    let shareId;
-    await db.query('BEGIN');
-    try {
-      const insertedShare = await db.prepare(`
+    const shareId = await db.withTransaction(async (tx) => {
+      const insertedShare = await tx.prepare(`
         INSERT INTO recruiter_player_shares (
           coach_user_id, team_id, recipient_email, token_hash, subject, message, expires_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -796,19 +798,16 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
         emailMessage || null,
         expiresAt.toISOString()
       );
-      shareId = insertedShare.lastInsertRowid;
+      const newShareId = insertedShare.lastInsertRowid;
       for (const playerId of selectedPlayerIds) {
-        await db.prepare(
+        await tx.prepare(
           'INSERT INTO recruiter_player_share_items (share_id, player_user_id) VALUES (?, ?)'
-        ).run(shareId, playerId);
+        ).run(newShareId, playerId);
       }
-      await db.query('COMMIT');
-    } catch (txError) {
-      await db.query('ROLLBACK');
-      throw txError;
-    }
+      return newShareId;
+    });
 
-    const appUrl = _getPublicAppUrl(req);
+    const appUrl = getPublicAppUrl(req);
     const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
 
     res.json({
@@ -890,7 +889,7 @@ router.post('/coach/profile/photo', requireCoach, upload.single('profilePicture'
 // Coach: Change password
 router.post('/coach/change-password', requireCoach, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  const coach = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+  const coach = await db.prepare('SELECT password FROM users WHERE id = ?').get(req.session.userId);
   if (!coach || !(await bcrypt.compare(currentPassword, coach.password))) {
     return res.status(400).json({ error: 'Current password is incorrect' });
   }

@@ -1,6 +1,5 @@
 const express = require('express');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const db = require('../database');
 const { requireAuth } = require('../middleware/auth');
 const { getAdSlotsMap, logSiteTrafficEvent } = require('../utils/helpers');
@@ -242,55 +241,5 @@ router.get('/coach/:id', async (req, res) => {
   }
 });
 
-// Send player card image via email
-router.post('/send-player-card', requireAuth, express.json({ limit: '10mb' }), async (req, res) => {
-  try {
-    const { recipientEmail, subject, message, imageData, playerName } = req.body;
-
-    if (!recipientEmail || !imageData) {
-      return res.status(400).json({ error: 'Recipient email and image are required' });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(recipientEmail)) {
-      return res.status(400).json({ error: 'Invalid email address' });
-    }
-
-    const sender = await db.prepare('SELECT email, full_name FROM users WHERE id = ?').get(req.session.userId);
-
-    const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER || '',
-        pass: process.env.SMTP_PASS || ''
-      }
-    });
-
-    const safeName = (playerName || 'Player').replace(/[^a-zA-Z0-9_ ]/g, '');
-
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || sender.email,
-      to: recipientEmail,
-      subject: subject || `${safeName} - Player Card`,
-      text: message || `Please see the attached player card for ${safeName}.`,
-      html: `<p>${message || `Please see the attached player card for ${safeName}.`}</p><p>Sent via Gridiron Athletes</p>`,
-      attachments: [{
-        filename: `${safeName.replace(/\s+/g, '_')}_Player_Card.png`,
-        content: base64Data,
-        encoding: 'base64',
-        cid: 'playercard'
-      }]
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Email send error:', error);
-    res.status(500).json({ error: 'Failed to send email. Please check SMTP configuration.' });
-  }
-});
 
 module.exports = router;

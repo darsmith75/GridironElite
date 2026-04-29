@@ -4,9 +4,54 @@ const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
+function parsePagination(query) {
+  const rawPage = parseInt(query?.page, 10);
+  const rawLimit = parseInt(query?.limit, 10);
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 200) : 50;
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+
 // Admin: List all coaches with team info
 router.get('/admin/coaches', requireAdmin, async (req, res) => {
   try {
+    const { page, limit, offset } = parsePagination(req.query);
+    const search = String(req.query?.search || '').trim();
+    const state = String(req.query?.state || '').trim().toUpperCase();
+
+    const whereParts = ["u.role = 'coach'"];
+    const whereParams = [];
+
+    if (state) {
+      whereParts.push("UPPER(COALESCE(ht.state, '')) = ?");
+      whereParams.push(state);
+    }
+
+    if (search) {
+      const likeSearch = `%${search}%`;
+      whereParts.push(`(
+        LOWER(COALESCE(u.full_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(u.email, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.team_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.school_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.city, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.state, '')) LIKE LOWER(?)
+      )`);
+      whereParams.push(likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch);
+    }
+
+    const whereSql = `WHERE ${whereParts.join(' AND ')}`;
+
+    const totals = await db.prepare(`
+      SELECT COUNT(*)::int AS count
+      FROM users u
+      LEFT JOIN hs_teams ht ON ht.coach_id = u.id
+      ${whereSql}
+    `).get(...whereParams);
+    const total = totals?.count || 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
     const coaches = await db.prepare(`
       SELECT u.id, u.email, u.full_name, u.phone, u.created_at, u.last_login_at, u.login_count,
         ht.id AS team_id, ht.team_name, ht.school_name, ht.city, ht.state,
@@ -14,10 +59,22 @@ router.get('/admin/coaches', requireAdmin, async (req, res) => {
         (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
       FROM users u
       LEFT JOIN hs_teams ht ON ht.coach_id = u.id
-      WHERE u.role = 'coach'
+      ${whereSql}
       ORDER BY u.created_at DESC
-    `).all();
-    res.json(coaches);
+      LIMIT ? OFFSET ?
+    `).all(...whereParams, limit, offset);
+
+    res.json({
+      items: coaches,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPrev: page > 1,
+        hasNext: page < totalPages
+      }
+    });
   } catch (error) {
     console.error('Admin get coaches error:', error);
     res.status(500).json({ error: 'Failed to get coaches' });
@@ -27,6 +84,42 @@ router.get('/admin/coaches', requireAdmin, async (req, res) => {
 // Admin: List all teams
 router.get('/admin/teams', requireAdmin, async (req, res) => {
   try {
+    const { page, limit, offset } = parsePagination(req.query);
+    const search = String(req.query?.search || '').trim();
+    const state = String(req.query?.state || '').trim().toUpperCase();
+
+    const whereParts = [];
+    const whereParams = [];
+
+    if (state) {
+      whereParts.push("UPPER(COALESCE(ht.state, '')) = ?");
+      whereParams.push(state);
+    }
+
+    if (search) {
+      const likeSearch = `%${search}%`;
+      whereParts.push(`(
+        LOWER(COALESCE(ht.team_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.school_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.city, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(ht.state, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(u.full_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(u.email, '')) LIKE LOWER(?)
+      )`);
+      whereParams.push(likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch);
+    }
+
+    const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+    const totals = await db.prepare(`
+      SELECT COUNT(*)::int AS count
+      FROM hs_teams ht
+      JOIN users u ON u.id = ht.coach_id
+      ${whereSql}
+    `).get(...whereParams);
+    const total = totals?.count || 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
     const teams = await db.prepare(`
       SELECT ht.id, ht.team_name, ht.school_name, ht.city, ht.state, ht.school_logo,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards, ht.created_at,
@@ -35,9 +128,22 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
         (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
       FROM hs_teams ht
       JOIN users u ON u.id = ht.coach_id
+      ${whereSql}
       ORDER BY ht.created_at DESC
-    `).all();
-    res.json(teams);
+      LIMIT ? OFFSET ?
+    `).all(...whereParams, limit, offset);
+
+    res.json({
+      items: teams,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPrev: page > 1,
+        hasNext: page < totalPages
+      }
+    });
   } catch (error) {
     console.error('Admin get teams error:', error);
     res.status(500).json({ error: 'Failed to get teams' });

@@ -98,27 +98,37 @@ async function login() {
   clearAuthMessage();
   const email = document.getElementById('loginEmail').value;
   const password = document.getElementById('loginPassword').value;
-  
-  const res = await fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  
-  const data = await res.json();
-  
-  if (res.ok) {
-    if (data.role === 'player') {
-      window.location.href = 'player-profile.html';
-    } else if (data.role === 'admin') {
-      window.location.href = 'admin-dashboard.html';
-    } else if (data.role === 'coach') {
-      window.location.href = 'coach-dashboard.html';
-    } else {
-      window.location.href = 'agent-dashboard.html';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (_) {
+      data = {};
     }
-  } else {
-    setAuthMessage(data.error || 'Login failed', 'error');
+
+    if (res.ok) {
+      if (data.role === 'player') {
+        window.location.href = 'player-profile.html';
+      } else if (data.role === 'admin') {
+        window.location.href = 'admin-dashboard.html';
+      } else if (data.role === 'coach') {
+        window.location.href = 'coach-dashboard.html';
+      } else {
+        window.location.href = 'agent-dashboard.html';
+      }
+    } else {
+      setAuthMessage(data.error || 'Login failed', 'error');
+    }
+  } catch (error) {
+    console.error('Login request failed:', error);
+    setAuthMessage('Unable to reach the server. Please try again.', 'error');
   }
 }
 

@@ -11,6 +11,15 @@ const { enrichPlayerProfile } = require('../utils/enrich-player');
 
 const router = express.Router();
 
+function parsePagination(query) {
+  const rawPage = parseInt(query?.page, 10);
+  const rawLimit = parseInt(query?.limit, 10);
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 200) : 50;
+  const offset = (page - 1) * limit;
+  return { page, limit, offset };
+}
+
 // Admin: Update own profile
 router.post('/admin/profile', requireAdmin, upload.fields([
   { name: 'profilePicture', maxCount: 1 }
@@ -42,14 +51,61 @@ router.post('/admin/profile', requireAdmin, upload.fields([
 // Admin: Get all users
 router.get('/admin/users', requireAdmin, async (req, res) => {
   try {
+    const { page, limit, offset } = parsePagination(req.query);
+    const search = String(req.query?.search || '').trim();
+    const role = String(req.query?.role || '').trim().toLowerCase();
+    const allowedRoles = ['player', 'agent', 'admin', 'coach'];
+
+    const whereParts = [];
+    const whereParams = [];
+
+    if (allowedRoles.includes(role)) {
+      whereParts.push('u.role = ?');
+      whereParams.push(role);
+    }
+
+    if (search) {
+      const likeSearch = `%${search}%`;
+      whereParts.push(`(
+        LOWER(u.email) LIKE LOWER(?)
+        OR LOWER(COALESCE(u.full_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(pp.full_name, '')) LIKE LOWER(?)
+      )`);
+      whereParams.push(likeSearch, likeSearch, likeSearch);
+    }
+
+    const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+    const totals = await db.prepare(`
+      SELECT COUNT(*)::int AS count
+      FROM users u
+      LEFT JOIN player_profiles pp ON u.id = pp.user_id
+      ${whereSql}
+    `).get(...whereParams);
+    const total = totals?.count || 0;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
     const users = await db.prepare(`
       SELECT u.id, u.email, u.role, u.full_name, u.phone, u.organization, u.created_at, u.last_login_at, u.login_count,
         pp.full_name as player_name, pp.high_school, pp.position, pp.graduation_year, pp.gpa
       FROM users u
       LEFT JOIN player_profiles pp ON u.id = pp.user_id
+      ${whereSql}
       ORDER BY u.created_at DESC
-    `).all();
-    res.json(users);
+      LIMIT ? OFFSET ?
+    `).all(...whereParams, limit, offset);
+
+    res.json({
+      items: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPrev: page > 1,
+        hasNext: page < totalPages
+      }
+    });
   } catch (error) {
     console.error('Admin get users error:', error);
     res.status(500).json({ error: 'Failed to get users' });

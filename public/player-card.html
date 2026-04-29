@@ -699,11 +699,11 @@
           <label style="display: block; color: #ccc; margin-bottom: 5px; font-size: 14px;">Message</label>
           <textarea id="emailMessage" rows="3" placeholder="Optional message..." style="width: 100%; padding: 10px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: white; font-size: 14px; resize: vertical; box-sizing: border-box;"></textarea>
         </div>
-        <p style="color: #94a3b8; font-size: 12px; margin: 0;">The player card image will be attached to the email.</p>
+        <p style="color: #94a3b8; font-size: 12px; margin: 0;">This opens your default email app. Export the card image first if you want to attach it.</p>
       </div>
       <div class="preview-footer">
         <button onclick="closeEmailModal()" class="preview-cancel-btn">Cancel</button>
-        <button onclick="sendPlayerCardEmail()" id="sendEmailBtn" class="preview-export-btn" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">Send Email</button>
+        <button onclick="sendPlayerCardEmail()" id="sendEmailBtn" class="preview-export-btn" style="background: linear-gradient(135deg, #1e3c72, #2a5298);">Open Email Draft</button>
       </div>
     </div>
   </div>
@@ -1069,15 +1069,6 @@
       });
     }
 
-    function blobToDataUrl(blob) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Unable to read image data'));
-        reader.readAsDataURL(blob);
-      });
-    }
-
     async function renderPlayerCardCanvas() {
       const cardElement = document.getElementById('playerCard');
 
@@ -1202,7 +1193,7 @@
     function openEmailModal() {
       const playerName = document.getElementById('playerName').textContent;
       document.getElementById('emailSubject').value = `${playerName} - Player Card`;
-      document.getElementById('emailMessage').value = `Please see the attached player card for ${playerName}.`;
+      document.getElementById('emailMessage').value = `Please see ${playerName}'s player card.`;
       document.getElementById('emailTo').value = '';
       document.getElementById('emailModal').style.display = 'flex';
       document.getElementById('emailTo').focus();
@@ -1223,35 +1214,35 @@
         return;
       }
 
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recipientEmail)) {
+        alert('Please enter a valid recipient email address.');
+        return;
+      }
+
       try {
         btn.disabled = true;
-        btn.textContent = '⏳ Sending...';
+        btn.textContent = '⏳ Opening...';
 
-        // Generate the card image
-        const canvas = await renderPlayerCardCanvas();
-        const imageBlob = await canvasToBlob(canvas);
-        const imageData = await blobToDataUrl(imageBlob);
-        const playerName = document.getElementById('playerName').textContent;
+        const playerName = document.getElementById('playerName').textContent || 'Player';
+        const playerCardUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+        const bodyLines = [
+          message || `Please see ${playerName}'s player card details below.`,
+          '',
+          `Player Card: ${playerCardUrl}`,
+          '',
+          'Tip: Use the Export button on the card page to download the image and attach it in your email client.'
+        ];
 
-        const res = await fetch('/api/send-player-card', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipientEmail, subject, message, imageData, playerName })
-        });
-
-        if (res.ok) {
-          alert('Player card sent successfully!');
-          closeEmailModal();
-        } else {
-          const data = await res.json();
-          alert(data.error || 'Failed to send email.');
-        }
+        const mailto = `mailto:${encodeURIComponent(recipientEmail)}?subject=${encodeURIComponent(subject || `${playerName} - Player Card`)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+        window.location.href = mailto;
+        closeEmailModal();
       } catch (error) {
-        console.error('Error sending email:', error);
-        alert('Failed to send email. Please try again.');
+        console.error('Error opening mail client:', error);
+        alert('Unable to open your email client. Please try again.');
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Send Email';
+        btn.textContent = 'Open Email Draft';
       }
     }
 

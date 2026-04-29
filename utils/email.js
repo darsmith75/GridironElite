@@ -1,34 +1,5 @@
 const nodemailer = require('nodemailer');
-const { getClientIp } = require('./helpers');
-
-// ---------------------------------------------------------------------------
-// URL & HTML helpers
-// ---------------------------------------------------------------------------
-
-function getPublicAppUrl(req) {
-  const configured = String(process.env.APP_URL || process.env.PUBLIC_BASE_URL || '').trim();
-  const configuredSanitized = configured.replace(/\/$/, '');
-  const isConfiguredLocal = /localhost|127\.0\.0\.1|0\.0\.0\.0/i.test(configuredSanitized);
-
-  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '').split(',')[0].trim();
-  const forwardedHost = String(req?.headers?.['x-forwarded-host'] || '').split(',')[0].trim();
-  const host = forwardedHost || req?.get?.('host') || req?.headers?.host;
-  const protocol = forwardedProto || req?.protocol || 'https';
-
-  if (configuredSanitized && !isConfiguredLocal) {
-    return configuredSanitized;
-  }
-
-  if (host) {
-    return `${protocol}://${host}`.replace(/\/$/, '');
-  }
-
-  if (configuredSanitized) {
-    return configuredSanitized;
-  }
-
-  return 'https://gridironathletes.com';
-}
+const { getClientIp, getPublicAppUrl } = require('./helpers');
 
 function escapeHtmlEmail(text) {
   return String(text || '')
@@ -166,52 +137,11 @@ async function sendTeamInviteEmail(toEmail, inviteToken, coachName, teamName, sc
   });
 }
 
-async function sendRecruiterShareEmail({
-  toEmail,
-  shareToken,
-  coachName,
-  teamName,
-  schoolName,
-  subject,
-  message,
-  playerCount,
-  expiresAt,
-  appUrl
-}) {
-  const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
-  const transporter = createTransporter();
-  const safeSubject = String(subject || '').trim() || `${teamName || 'Team'} Player Profiles`;
-  const displaySchool = schoolName ? ` (${schoolName})` : '';
-  const escapedMessage = escapeHtmlEmail(message || '').trim();
-  const expiresText = new Date(expiresAt).toLocaleString();
-
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to: toEmail,
-    subject: safeSubject,
-    html: `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">
-        <div style="background:#1e3c72;border-radius:10px;padding:12px 14px;margin:0 0 12px;">
-          <h2 style="color:#ffffff;margin:0;">Player Profiles Shared With You</h2>
-        </div>
-        <p><strong>${escapeHtmlEmail(coachName || 'A coach')}</strong> shared ${playerCount} player profile${playerCount === 1 ? '' : 's'} from <strong>${escapeHtmlEmail(teamName || 'their team')}</strong>${escapeHtmlEmail(displaySchool)}.</p>
-        ${escapedMessage ? `<p style="background:#f5f8ff;border:1px solid #d9e4ff;border-radius:8px;padding:12px;white-space:pre-wrap;">${escapedMessage}</p>` : ''}
-        <p style="margin:24px 0">
-          <a href="${shareUrl}" style="background:#1e3c72;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">View Shared Players</a>
-        </p>
-        <p style="font-size:12px;color:#6b7280;">This secure link expires on ${escapeHtmlEmail(expiresText)}.</p>
-      </div>
-    `,
-    text: `${coachName || 'A coach'} shared ${playerCount} player profile${playerCount === 1 ? '' : 's'} from ${teamName || 'their team'}${displaySchool}.\n\n${message ? `${message}\n\n` : ''}Open this secure link: ${shareUrl}\n\nThis link expires on ${expiresText}.`
-  });
-}
 
 module.exports = {
-  getPublicAppUrl,
   escapeHtmlEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendSupportContactEmail,
-  sendTeamInviteEmail,
-  sendRecruiterShareEmail
+  sendTeamInviteEmail
 };
