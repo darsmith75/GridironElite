@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teams – Gridiron Athletes</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .teams-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .teams-page-header h1 {
+      margin: 0;
+      color: #1e3c72;
+      font-size: 26px;
+    }
+    .teams-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .teams-toolbar input,
+    .teams-toolbar select {
+      padding: 10px 14px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .teams-toolbar input { flex: 1; min-width: 220px; }
+    .teams-count {
+      font-size: 13px;
+      color: #76849b;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .teams-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .team-card {
+      background: #fff;
+      border: 1px solid #c7d0da;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      transition: box-shadow 0.2s, transform 0.15s;
+      cursor: default;
+    }
+    .team-card:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+    .team-card-banner {
+      height: 72px;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .team-card-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.92);
+      padding: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .team-card-logo-placeholder {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+    .team-card-body {
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .team-card-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .team-card-school {
+      font-size: 13px;
+      color: #425066;
+      margin: 0;
+    }
+    .team-card-location {
+      font-size: 12px;
+      color: #76849b;
+    }
+    .team-card-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .team-meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f0f4fa;
+      color: #425066;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .team-card-coach {
+      font-size: 12px;
+      color: #76849b;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #eef2f7;
+    }
+    .team-card-coach strong {
+      color: #425066;
+    }
+    .team-card-footer {
+      padding: 10px 16px;
+      background: #f8faff;
+      border-top: 1px solid #eef2f7;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-view-coach {
+      padding: 7px 14px;
+      background: #1e3c72;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.2s;
+    }
+    .btn-view-coach:hover { background: #2a5298; }
+    .teams-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #76849b;
+    }
+    .teams-empty .empty-icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+    .teams-empty h3 {
+      margin: 0 0 8px;
+      color: #425066;
+    }
+    .teams-loading {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: #76849b;
+      font-size: 15px;
+    }
+    @media (max-width: 600px) {
+      .teams-grid { grid-template-columns: 1fr; }
+      .teams-page-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="teams.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Teams
+          </a>
+          <a href="player-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+          <a href="/login" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="21" y1="12" x2="3" y2="12"/></svg>
+            Login
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="teams-page-header">
+        <h1>High School Teams</h1>
+        <span class="teams-count" id="teamsCount"></span>
+      </div>
+
+      <div class="teams-toolbar">
+        <input type="text" id="teamsSearch" placeholder="Search by team name, school, city, or state...">
+        <select id="teamsStateFilter">
+          <option value="">All States</option>
+        </select>
+      </div>
+
+      <div class="teams-grid" id="teamsGrid">
+        <div class="teams-loading">Loading teams…</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let allTeams = [];
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    async function initTeamsPage() {
+      const nav = document.querySelector('.top-nav-menu');
+      const user = await tryAuth();
+      if (user) applyRoleBasedTopNav(user);
+      else applyPublicTopNav();
+      if (nav) nav.classList.add('nav-ready');
+      logPageView('teams');
+      await loadTeams();
+    }
+
+    async function loadTeams() {
+      try {
+        const res = await fetch('/api/teams');
+        if (!res.ok) throw new Error('Failed to load teams');
+        allTeams = await res.json();
+        populateStateFilter(allTeams);
+        renderTeams();
+      } catch (err) {
+        document.getElementById('teamsGrid').innerHTML =
+          '<div class="teams-empty"><div class="empty-icon">⚠️</div><h3>Could not load teams</h3><p>' + escapeHtml(err.message) + '</p></div>';
+        document.getElementById('teamsCount').textContent = '';
+      }
+    }
+
+    function populateStateFilter(teams) {
+      const select = document.getElementById('teamsStateFilter');
+      const states = Array.from(new Set(
+        teams.map(t => String(t.state || '').trim().toUpperCase()).filter(Boolean)
+      )).sort();
+      select.innerHTML = '<option value="">All States</option>'
+        + states.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    }
+
+    function renderTeams() {
+      const search = document.getElementById('teamsSearch').value.toLowerCase().trim();
+      const stateFilter = document.getElementById('teamsStateFilter').value;
+      const grid = document.getElementById('teamsGrid');
+      const countEl = document.getElementById('teamsCount');
+
+      let filtered = allTeams;
+      if (stateFilter) {
+        filtered = filtered.filter(t => String(t.state || '').trim().toUpperCase() === stateFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(t => {
+          const text = [t.team_name, t.school_name, t.city, t.state]
+            .filter(Boolean).join(' ').toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      countEl.textContent = filtered.length === allTeams.length
+        ? `${allTeams.length} team${allTeams.length !== 1 ? 's' : ''}`
+        : `${filtered.length} of ${allTeams.length} team${allTeams.length !== 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="teams-empty">
+          <div class="empty-icon">🏈</div>
+          <h3>No teams found</h3>
+          <p>Try adjusting your search or filter.</p>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(t => buildTeamCard(t)).join('');
+    }
+
+    function buildTeamCard(t) {
+      const bannerStart = t.banner_color_start || '#1e3c72';
+      const bannerEnd = t.banner_color_end || '#2a5298';
+      const useGradient = !!t.use_banner_gradient_cards;
+      const bannerStyle = useGradient
+        ? `background: linear-gradient(135deg, ${escapeHtml(bannerStart)} 0%, ${escapeHtml(bannerEnd)} 100%);`
+        : `background: linear-gradient(135deg, ${escapeHtml(bannerStart)} 0%, ${escapeHtml(bannerEnd)} 100%);`;
+
+      const logoHtml = t.school_logo
+        ? `<img src="/uploads/${encodeURI(t.school_logo)}" alt="${escapeHtml(t.team_name)}" class="team-card-logo" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+           <div class="team-card-logo-placeholder" style="display:none;">🏈</div>`
+        : `<div class="team-card-logo-placeholder">🏈</div>`;
+
+      const location = [t.city, t.state].filter(Boolean).map(escapeHtml).join(', ');
+
+      return `<div class="team-card">
+        <div class="team-card-banner" style="${bannerStyle}">
+          ${logoHtml}
+        </div>
+        <div class="team-card-body">
+          <h3 class="team-card-name">${escapeHtml(t.team_name)}</h3>
+          ${t.school_name ? `<p class="team-card-school">${escapeHtml(t.school_name)}</p>` : ''}
+          ${location ? `<div class="team-card-location">📍 ${location}</div>` : ''}
+          <div class="team-card-meta">
+            <span class="team-meta-pill">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+              ${Number(t.roster_count || 0)} player${Number(t.roster_count || 0) !== 1 ? 's' : ''}
+            </span>
+          </div>
+          ${t.coach_name ? `<div class="team-card-coach">Coach: <strong>${escapeHtml(t.coach_name)}</strong></div>` : ''}
+        </div>
+        <div class="team-card-footer">
+          <a href="team-detail.html?id=${encodeURIComponent(t.id)}" class="btn-view-coach">
+            View Team
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+      </div>`;
+    }
+
+    document.getElementById('teamsSearch').addEventListener('input', renderTeams);
+    document.getElementById('teamsStateFilter').addEventListener('change', renderTeams);
+
+    initTeamsPage();
+  </script>
+</body>
+</html>

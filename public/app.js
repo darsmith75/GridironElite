@@ -169,6 +169,32 @@ function getProfilePathForRole(role) {
   return 'agent-profile.html';
 }
 
+function ensureTeamsLink(nav) {
+  let teamsLink = findTopNavLinkByLabel(nav, 'Teams');
+  if (teamsLink) {
+    teamsLink.href = 'teams.html';
+    teamsLink.style.display = '';
+    return;
+  }
+
+  teamsLink = document.createElement('a');
+  teamsLink.className = 'nav-link';
+  teamsLink.href = 'teams.html';
+  teamsLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Teams';
+
+  const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
+  if (profileLink && profileLink.parentNode) {
+    profileLink.insertAdjacentElement('beforebegin', teamsLink);
+  } else {
+    const signOutLink = findTopNavLinkByLabel(nav, 'Sign out');
+    if (signOutLink && signOutLink.parentNode) {
+      signOutLink.insertAdjacentElement('beforebegin', teamsLink);
+    } else {
+      nav.appendChild(teamsLink);
+    }
+  }
+}
+
 function ensureDashboardLink(nav, shouldShow) {
   let dashboardLink = findTopNavLinkByLabel(nav, 'Dashboard');
 
@@ -217,6 +243,7 @@ function applyRoleBasedTopNav(user) {
   const loginLink = findTopNavLinkByLabel(nav, 'Login');
   if (loginLink) loginLink.style.display = 'none';
 
+  ensureTeamsLink(nav);
   ensureDashboardLink(nav, user.role === 'admin');
 }
 

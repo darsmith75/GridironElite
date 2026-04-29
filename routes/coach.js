@@ -12,6 +12,35 @@ const { getPublicAppUrl: _getPublicAppUrl, sendTeamInviteEmail, sendRecruiterSha
 
 const router = express.Router();
 
+function trimOrNull(value) {
+  const trimmed = String(value || '').trim();
+  return trimmed ? trimmed : null;
+}
+
+function parseSortOrder(value) {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function parseBooleanFlag(value) {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
+function normalizePublicUrl(value) {
+  const trimmed = trimOrNull(value);
+  if (!trimmed) return null;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null;
+    }
+    return parsed.toString();
+  } catch (_) {
+    return null;
+  }
+}
+
 // Coach: Get own team info
 router.get('/coach/team', requireCoach, async (req, res) => {
   try {
@@ -101,6 +130,323 @@ router.put('/coach/team/banner-colors', requireCoach, async (req, res) => {
   } catch (error) {
     console.error('Coach save banner colors error:', error);
     res.status(500).json({ error: 'Failed to save banner colors' });
+  }
+});
+
+// Coach: Update public team page details (overview + social links)
+router.put('/coach/team/public-profile', requireCoach, async (req, res) => {
+  try {
+    const rawLinks = {
+      teamWebsite: req.body?.teamWebsite,
+      twitterUrl: req.body?.twitterUrl,
+      instagramUrl: req.body?.instagramUrl,
+      facebookUrl: req.body?.facebookUrl,
+      youtubeUrl: req.body?.youtubeUrl,
+      tiktokUrl: req.body?.tiktokUrl
+    };
+
+    const normalizedLinks = Object.fromEntries(
+      Object.entries(rawLinks).map(([key, value]) => [key, normalizePublicUrl(value)])
+    );
+
+    const invalidField = Object.entries(rawLinks).find(([key, value]) => trimOrNull(value) && !normalizedLinks[key]);
+    if (invalidField) {
+      return res.status(400).json({ error: 'Public links must be valid http or https URLs' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    await db.prepare(`
+      UPDATE hs_teams
+      SET school_overview = ?,
+          team_website = ?,
+          twitter_url = ?,
+          instagram_url = ?,
+          facebook_url = ?,
+          youtube_url = ?,
+          tiktok_url = ?
+      WHERE id = ?
+    `).run(
+      trimOrNull(req.body?.schoolOverview),
+      normalizedLinks.teamWebsite,
+      normalizedLinks.twitterUrl,
+      normalizedLinks.instagramUrl,
+      normalizedLinks.facebookUrl,
+      normalizedLinks.youtubeUrl,
+      normalizedLinks.tiktokUrl,
+      team.id
+    );
+
+    const updated = await db.prepare(`
+      SELECT school_overview, team_website, twitter_url, instagram_url, facebook_url, youtube_url, tiktok_url
+      FROM hs_teams
+      WHERE id = ?
+    `).get(team.id);
+
+    res.json({ success: true, profile: updated || {} });
+  } catch (error) {
+    console.error('Coach update team public profile error:', error);
+    res.status(500).json({ error: 'Failed to update public team profile' });
+  }
+});
+
+// Coach: List schedule items for own team
+router.get('/coach/team/schedule', requireCoach, async (req, res) => {
+  try {
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const items = await db.prepare(`
+      SELECT id, opponent_name, event_date, event_time, location, is_home, notes, sort_order, created_at, updated_at
+      FROM team_schedules
+      WHERE team_id = ?
+      ORDER BY COALESCE(event_date, DATE '2999-12-31') ASC, sort_order ASC, id ASC
+    `).all(team.id);
+
+    res.json(items);
+  } catch (error) {
+    console.error('Coach get team schedule error:', error);
+    res.status(500).json({ error: 'Failed to load team schedule' });
+  }
+});
+
+// Coach: Create schedule item
+router.post('/coach/team/schedule', requireCoach, async (req, res) => {
+  try {
+    const opponentName = trimOrNull(req.body?.opponentName);
+    if (!opponentName) {
+      return res.status(400).json({ error: 'Opponent name is required' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const result = await db.prepare(`
+      INSERT INTO team_schedules (team_id, opponent_name, event_date, event_time, location, is_home, notes, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      team.id,
+      opponentName,
+      trimOrNull(req.body?.eventDate),
+      trimOrNull(req.body?.eventTime),
+      trimOrNull(req.body?.location),
+      parseBooleanFlag(req.body?.isHome),
+      trimOrNull(req.body?.notes),
+      parseSortOrder(req.body?.sortOrder)
+    );
+
+    const created = await db.prepare(`
+      SELECT id, opponent_name, event_date, event_time, location, is_home, notes, sort_order, created_at, updated_at
+      FROM team_schedules
+      WHERE id = ?
+    `).get(result.lastInsertRowid);
+
+    res.status(201).json(created);
+  } catch (error) {
+    console.error('Coach create team schedule error:', error);
+    res.status(500).json({ error: 'Failed to create schedule item' });
+  }
+});
+
+// Coach: Update schedule item
+router.put('/coach/team/schedule/:id', requireCoach, async (req, res) => {
+  try {
+    const scheduleId = parseInt(req.params.id, 10);
+    if (Number.isNaN(scheduleId)) return res.status(400).json({ error: 'Invalid schedule ID' });
+
+    const opponentName = trimOrNull(req.body?.opponentName);
+    if (!opponentName) {
+      return res.status(400).json({ error: 'Opponent name is required' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const existing = await db.prepare('SELECT id FROM team_schedules WHERE id = ? AND team_id = ?').get(scheduleId, team.id);
+    if (!existing) return res.status(404).json({ error: 'Schedule item not found' });
+
+    await db.prepare(`
+      UPDATE team_schedules
+      SET opponent_name = ?,
+          event_date = ?,
+          event_time = ?,
+          location = ?,
+          is_home = ?,
+          notes = ?,
+          sort_order = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      opponentName,
+      trimOrNull(req.body?.eventDate),
+      trimOrNull(req.body?.eventTime),
+      trimOrNull(req.body?.location),
+      parseBooleanFlag(req.body?.isHome),
+      trimOrNull(req.body?.notes),
+      parseSortOrder(req.body?.sortOrder),
+      scheduleId
+    );
+
+    const updated = await db.prepare(`
+      SELECT id, opponent_name, event_date, event_time, location, is_home, notes, sort_order, created_at, updated_at
+      FROM team_schedules
+      WHERE id = ?
+    `).get(scheduleId);
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Coach update team schedule error:', error);
+    res.status(500).json({ error: 'Failed to update schedule item' });
+  }
+});
+
+// Coach: Delete schedule item
+router.delete('/coach/team/schedule/:id', requireCoach, async (req, res) => {
+  try {
+    const scheduleId = parseInt(req.params.id, 10);
+    if (Number.isNaN(scheduleId)) return res.status(400).json({ error: 'Invalid schedule ID' });
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const existing = await db.prepare('SELECT id FROM team_schedules WHERE id = ? AND team_id = ?').get(scheduleId, team.id);
+    if (!existing) return res.status(404).json({ error: 'Schedule item not found' });
+
+    await db.prepare('DELETE FROM team_schedules WHERE id = ?').run(scheduleId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach delete team schedule error:', error);
+    res.status(500).json({ error: 'Failed to delete schedule item' });
+  }
+});
+
+// Coach: List staff members for own team
+router.get('/coach/team/staff', requireCoach, async (req, res) => {
+  try {
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const items = await db.prepare(`
+      SELECT id, full_name, role_title, bio, email, phone, sort_order, created_at, updated_at
+      FROM team_staff_members
+      WHERE team_id = ?
+      ORDER BY sort_order ASC, full_name ASC, id ASC
+    `).all(team.id);
+
+    res.json(items);
+  } catch (error) {
+    console.error('Coach get team staff error:', error);
+    res.status(500).json({ error: 'Failed to load team staff' });
+  }
+});
+
+// Coach: Create staff member
+router.post('/coach/team/staff', requireCoach, async (req, res) => {
+  try {
+    const fullName = trimOrNull(req.body?.fullName);
+    const roleTitle = trimOrNull(req.body?.roleTitle);
+    if (!fullName || !roleTitle) {
+      return res.status(400).json({ error: 'Staff name and role are required' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const result = await db.prepare(`
+      INSERT INTO team_staff_members (team_id, full_name, role_title, bio, email, phone, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      team.id,
+      fullName,
+      roleTitle,
+      trimOrNull(req.body?.bio),
+      trimOrNull(req.body?.email),
+      trimOrNull(req.body?.phone),
+      parseSortOrder(req.body?.sortOrder)
+    );
+
+    const created = await db.prepare(`
+      SELECT id, full_name, role_title, bio, email, phone, sort_order, created_at, updated_at
+      FROM team_staff_members
+      WHERE id = ?
+    `).get(result.lastInsertRowid);
+
+    res.status(201).json(created);
+  } catch (error) {
+    console.error('Coach create team staff error:', error);
+    res.status(500).json({ error: 'Failed to create staff member' });
+  }
+});
+
+// Coach: Update staff member
+router.put('/coach/team/staff/:id', requireCoach, async (req, res) => {
+  try {
+    const staffId = parseInt(req.params.id, 10);
+    if (Number.isNaN(staffId)) return res.status(400).json({ error: 'Invalid staff ID' });
+
+    const fullName = trimOrNull(req.body?.fullName);
+    const roleTitle = trimOrNull(req.body?.roleTitle);
+    if (!fullName || !roleTitle) {
+      return res.status(400).json({ error: 'Staff name and role are required' });
+    }
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const existing = await db.prepare('SELECT id FROM team_staff_members WHERE id = ? AND team_id = ?').get(staffId, team.id);
+    if (!existing) return res.status(404).json({ error: 'Staff member not found' });
+
+    await db.prepare(`
+      UPDATE team_staff_members
+      SET full_name = ?,
+          role_title = ?,
+          bio = ?,
+          email = ?,
+          phone = ?,
+          sort_order = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      fullName,
+      roleTitle,
+      trimOrNull(req.body?.bio),
+      trimOrNull(req.body?.email),
+      trimOrNull(req.body?.phone),
+      parseSortOrder(req.body?.sortOrder),
+      staffId
+    );
+
+    const updated = await db.prepare(`
+      SELECT id, full_name, role_title, bio, email, phone, sort_order, created_at, updated_at
+      FROM team_staff_members
+      WHERE id = ?
+    `).get(staffId);
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Coach update team staff error:', error);
+    res.status(500).json({ error: 'Failed to update staff member' });
+  }
+});
+
+// Coach: Delete staff member
+router.delete('/coach/team/staff/:id', requireCoach, async (req, res) => {
+  try {
+    const staffId = parseInt(req.params.id, 10);
+    if (Number.isNaN(staffId)) return res.status(400).json({ error: 'Invalid staff ID' });
+
+    const team = await db.prepare('SELECT id FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const existing = await db.prepare('SELECT id FROM team_staff_members WHERE id = ? AND team_id = ?').get(staffId, team.id);
+    if (!existing) return res.status(404).json({ error: 'Staff member not found' });
+
+    await db.prepare('DELETE FROM team_staff_members WHERE id = ?').run(staffId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Coach delete team staff error:', error);
+    res.status(500).json({ error: 'Failed to delete staff member' });
   }
 });
 
@@ -374,13 +720,31 @@ router.delete('/coach/invites/:id', requireCoach, async (req, res) => {
 router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
   try {
     const recruiterEmail = String(req.body?.recruiterEmail || '').trim().toLowerCase();
+    const recipientEmailsRaw = Array.isArray(req.body?.recipientEmails) ? req.body.recipientEmails : [];
     const playerUserIdsRaw = Array.isArray(req.body?.playerUserIds) ? req.body.playerUserIds : [];
     const emailSubject = String(req.body?.subject || '').trim();
     const emailMessage = String(req.body?.message || '').trim().slice(0, 5000);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(recruiterEmail)) {
-      return res.status(400).json({ error: 'Valid recruiter email is required' });
+    const normalizedRecipients = [...new Set(
+      [
+        ...recipientEmailsRaw,
+        recruiterEmail
+      ]
+        .map((value) => String(value || '').trim().toLowerCase())
+        .filter(Boolean)
+    )];
+
+    if (normalizedRecipients.length === 0) {
+      return res.status(400).json({ error: 'At least one recipient email is required' });
+    }
+
+    if (!normalizedRecipients.every((email) => emailRegex.test(email))) {
+      return res.status(400).json({ error: 'One or more recipient emails are invalid' });
+    }
+
+    if (normalizedRecipients.length > 50) {
+      return res.status(400).json({ error: 'You can send to up to 50 recipients at once' });
     }
 
     const selectedPlayerIds = [...new Set(
@@ -409,12 +773,15 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
       return res.status(400).json({ error: 'One or more selected players are not on your roster' });
     }
 
-    const shareToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(shareToken).digest('hex');
     const expiresAt = new Date(Date.now() + (14 * 24 * 60 * 60 * 1000));
 
-    await db.query('BEGIN');
+    // Single token shared with all recipients.
+    const shareToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(shareToken).digest('hex');
+    const recipientEmailsStored = normalizedRecipients.join(', ').substring(0, 254);
+
     let shareId;
+    await db.query('BEGIN');
     try {
       const insertedShare = await db.prepare(`
         INSERT INTO recruiter_player_shares (
@@ -423,13 +790,12 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
       `).run(
         req.session.userId,
         team.id,
-        recruiterEmail,
+        recipientEmailsStored,
         tokenHash,
         emailSubject || null,
         emailMessage || null,
         expiresAt.toISOString()
       );
-
       shareId = insertedShare.lastInsertRowid;
       for (const playerId of selectedPlayerIds) {
         await db.prepare(
@@ -442,34 +808,15 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
       throw txError;
     }
 
-    const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
     const appUrl = _getPublicAppUrl(req);
     const shareUrl = `${appUrl}/recruiter-share.html?token=${encodeURIComponent(shareToken)}`;
 
-    let emailSent = true;
-    try {
-      await sendRecruiterShareEmail({
-        toEmail: recruiterEmail,
-        shareToken,
-        coachName: coach?.full_name,
-        teamName: team.team_name,
-        schoolName: team.school_name,
-        subject: emailSubject,
-        message: emailMessage,
-        playerCount: selectedPlayerIds.length,
-        expiresAt,
-        appUrl
-      });
-    } catch (emailError) {
-      emailSent = false;
-      console.error('Failed to send recruiter share email:', emailError.message || emailError);
-    }
-
     res.json({
       success: true,
-      shareId,
+      shareCount: 1,
+      shareIds: [shareId],
       shareUrl,
-      emailSent,
+      firstShareUrl: shareUrl,
       expiresAt: expiresAt.toISOString()
     });
   } catch (error) {
@@ -558,6 +905,25 @@ router.post('/coach/change-password', requireCoach, async (req, res) => {
 });
 
 // ======== Coach College Routes ========
+
+// Coach: Get all saved school contacts
+router.get('/coach/contacts', requireCoach, async (req, res) => {
+  try {
+    const contacts = await db.prepare(`
+      SELECT sc.id, sc.college_id, sc.name, sc.title, sc.email, sc.phone,
+        sc.twitter_handle, sc.instagram_handle,
+        c.name AS college_name, c.conference
+      FROM school_contacts sc
+      JOIN colleges c ON c.id = sc.college_id
+      WHERE sc.user_id = ?
+      ORDER BY c.name ASC, sc.name ASC
+    `).all(req.session.userId);
+    res.json(contacts);
+  } catch (error) {
+    console.error('Coach get contacts error:', error);
+    res.status(500).json({ error: 'Failed to get contacts' });
+  }
+});
 
 // Coach: Get all colleges with followed status
 router.get('/coach/colleges', requireCoach, async (req, res) => {

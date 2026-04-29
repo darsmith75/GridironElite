@@ -103,12 +103,36 @@
       text-decoration: none;
       display: inline-flex;
       align-items: center;
+      gap: 8px;
       color: #fff;
-      transition: background 0.2s;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
     }
     .share-pill-link:hover {
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.32);
+      background: rgba(255,255,255,0.24);
+      border-color: rgba(255,255,255,0.46);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.3) inset;
+      transform: translateY(-1px);
+    }
+    .share-pill-link:focus-visible {
+      outline: 2px solid rgba(255,255,255,0.95);
+      outline-offset: 2px;
+    }
+    .share-pill-link-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .share-pill-link .link-icon {
+      width: 14px;
+      height: 14px;
+      opacity: 0.95;
+    }
+    .share-pill-link .view-hint {
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
     .share-message {
       margin-top: 12px;
@@ -419,14 +443,18 @@
         }
         renderPlayers(players);
         const coachPill = document.getElementById('coachNamePill');
-        coachPill.textContent = 'Coach: ' + (share.coachName || 'Unknown');
+        const coachName = escHtml(share.coachName || 'Unknown');
         if (share.coachUserId) {
           const coachUrl = 'coach-detail.html?id=' + encodeURIComponent(share.coachUserId) + '&shareToken=' + encodeURIComponent(shareToken || '');
           coachPill.href = coachUrl;
           coachPill.className = 'share-pill share-pill-link';
+          coachPill.innerHTML = '<span class="share-pill-link-text">Coach: ' + coachName + '<span class="view-hint">View Profile</span></span>'
+            + '<svg class="link-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M8 7h9v9"></path></svg>';
+          coachPill.setAttribute('title', 'Open coach profile');
         } else {
           coachPill.href = '#';
           coachPill.className = 'share-pill';
+          coachPill.textContent = 'Coach: ' + (share.coachName || 'Unknown');
         }
       } catch (_) {
         renderError('Network error while loading shared players.');

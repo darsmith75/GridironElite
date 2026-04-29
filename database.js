@@ -331,6 +331,13 @@ const createTablesSQL = `
     team_name VARCHAR(255) NOT NULL,
     school_name VARCHAR(255),
     school_logo VARCHAR(255),
+    school_overview TEXT,
+    team_website TEXT,
+    twitter_url TEXT,
+    instagram_url TEXT,
+    facebook_url TEXT,
+    youtube_url TEXT,
+    tiktok_url TEXT,
     banner_color_start VARCHAR(7),
     banner_color_end VARCHAR(7),
     use_banner_gradient_cards BOOLEAN NOT NULL DEFAULT FALSE,
@@ -338,6 +345,35 @@ const createTablesSQL = `
     state VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS team_schedules (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    opponent_name VARCHAR(255) NOT NULL,
+    event_date DATE,
+    event_time VARCHAR(50),
+    location VARCHAR(255),
+    is_home BOOLEAN NOT NULL DEFAULT FALSE,
+    notes TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS team_staff_members (
+    id SERIAL PRIMARY KEY,
+    team_id INTEGER NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    role_title VARCHAR(255) NOT NULL,
+    bio TEXT,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES hs_teams(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS team_invites (
@@ -464,6 +500,13 @@ const alterTablesSQL = `
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_instagram BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS school_logo VARCHAR(255);
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS school_overview TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS team_website TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS twitter_url TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS instagram_url TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS facebook_url TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS tiktok_url TEXT;
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_color_start VARCHAR(7);
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_color_end VARCHAR(7);
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS use_banner_gradient_cards BOOLEAN NOT NULL DEFAULT FALSE;
@@ -515,6 +558,9 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_ai_events_created_at ON ai_events(created_at);
   CREATE INDEX IF NOT EXISTS idx_ai_events_player ON ai_events(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_hs_teams_coach ON hs_teams(coach_id);
+  CREATE INDEX IF NOT EXISTS idx_team_schedules_team ON team_schedules(team_id);
+  CREATE INDEX IF NOT EXISTS idx_team_schedules_date ON team_schedules(event_date);
+  CREATE INDEX IF NOT EXISTS idx_team_staff_members_team ON team_staff_members(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_invites_team ON team_invites(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_invites_email ON team_invites(player_email);
   CREATE INDEX IF NOT EXISTS idx_team_invites_player ON team_invites(player_user_id);

@@ -535,41 +535,37 @@
       border: 1px solid #d3deef;
       background: #f7faff;
       border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 14px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
     }
     .share-toolbar-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 0;
       flex-wrap: wrap;
     }
     .share-selection-count {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
       font-size: 13px;
       font-weight: 700;
       color: #1e3c72;
     }
     .share-toolbar-grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr auto auto;
+      display: flex;
       gap: 8px;
       align-items: center;
-    }
-    .share-toolbar-grid input {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #c7d0da;
-      border-radius: 8px;
-      padding: 9px 10px;
-      font-size: 13px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
     }
     .share-btn {
       border: none;
       border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
+      padding: 8px 12px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
@@ -588,13 +584,60 @@
       color: #2a3f66;
     }
     .share-toolbar-message {
-      min-height: 18px;
-      margin-top: 8px;
+      min-height: 0;
+      margin-top: 0;
       font-size: 13px;
       font-weight: 600;
     }
+    .share-toolbar-message:empty {
+      display: none;
+    }
+    .share-toolbar-message:not(:empty) {
+      display: block;
+      min-height: 18px;
+      margin-top: 4px;
+    }
     .share-toolbar-message.success { color: #2e7d32; }
     .share-toolbar-message.error { color: #c62828; }
+    .share-modal-recipients {
+      border: 1px solid #d3deef;
+      border-radius: 10px;
+      padding: 10px;
+      background: #f8fbff;
+      min-height: 70px;
+      max-height: 200px;
+      overflow: auto;
+    }
+    .share-modal-contact-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 6px;
+      border-bottom: 1px solid #e7eef8;
+      font-size: 13px;
+      color: #2a3f66;
+    }
+    .share-modal-contact-row:last-child {
+      border-bottom: none;
+    }
+    .share-modal-contact-meta {
+      color: #76849b;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .share-modal-summary {
+      font-size: 12px;
+      color: #55657d;
+      margin-top: 6px;
+    }
+    .share-modal-message {
+      margin-top: 10px;
+      min-height: 18px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .share-modal-message.success { color: #2e7d32; }
+    .share-modal-message.error { color: #c62828; }
     .player-share-checkbox-wrap {
       position: absolute;
       top: 10px;
@@ -909,6 +952,123 @@
       margin: 0;
       cursor: pointer;
     }
+    .team-page-manager {
+      display: grid;
+      gap: 18px;
+    }
+    .team-page-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #c7d0da;
+    }
+    .team-page-help {
+      margin: 0 0 14px;
+      color: #76849b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .team-page-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .team-page-form-grid .full-col {
+      grid-column: 1 / -1;
+    }
+    .team-page-field label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .team-page-field input,
+    .team-page-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fff;
+    }
+    .team-page-field textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .team-page-field input:focus,
+    .team-page-field textarea:focus {
+      outline: none;
+      border-color: #1e3c72;
+    }
+    .team-page-form-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .team-page-message {
+      margin-top: 10px;
+      min-height: 18px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .team-page-message.success { color: #2e7d32; }
+    .team-page-message.error { color: #c62828; }
+    .team-record-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .team-record-card {
+      border: 1px solid #e0e8f5;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #f8fbff;
+    }
+    .team-record-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .team-record-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e3c72;
+      margin: 0;
+    }
+    .team-record-subtitle {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #76849b;
+    }
+    .team-record-body {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #425066;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .team-record-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .team-record-empty {
+      padding: 18px;
+      border: 1px dashed #c7d0da;
+      border-radius: 12px;
+      text-align: center;
+      color: #76849b;
+      font-size: 13px;
+      background: #fbfdff;
+      margin-top: 16px;
+    }
     body.use-banner-gradient-cards .roster-section .player-card-header {
       background: linear-gradient(135deg, var(--coach-banner-start, #1e3c72) 0%, var(--coach-banner-end, #2a5298) 100%);
     }
@@ -917,7 +1077,10 @@
         padding: 16px;
       }
       .share-toolbar-grid {
-        grid-template-columns: 1fr;
+        justify-content: flex-start;
+      }
+      .share-toolbar-top {
+        align-items: flex-start;
       }
       .roster-section .players-grid {
         grid-template-columns: 1fr;
@@ -930,6 +1093,7 @@
       }
       .customize-card { max-width: 100%; }
       .banner-colors-grid { grid-template-columns: 1fr; }
+      .team-page-form-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -944,6 +1108,10 @@
           <a href="coach-dashboard.html" class="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
             Home
+          </a>
+          <a href="teams.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Teams
           </a>
           <a href="coach-profile.html" class="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
@@ -977,6 +1145,7 @@
           Invites <span id="pendingInvitesBadge" class="pending-badge" style="display:none;"></span>
         </button>
         <button class="coach-tab" id="coachTab-customize" onclick="switchCoachTab('customize')">Customize</button>
+        <button class="coach-tab" id="coachTab-teampage" onclick="switchCoachTab('teampage')">Team Page</button>
       </div>
 
       <!-- Tab: Team Roster -->
@@ -987,12 +1156,10 @@
           <div class="share-toolbar">
             <div class="share-toolbar-top">
               <div class="share-selection-count" id="shareSelectionCount">0 players selected</div>
-            </div>
-            <div class="share-toolbar-grid">
-              <input type="email" id="shareRecruiterEmail" placeholder="Recruiter email (required)">
-              <input type="text" id="shareEmailSubject" placeholder="Email subject (optional)">
-              <button class="share-btn share-btn-secondary" type="button" onclick="clearSelectedPlayers()">Clear Selection</button>
-              <button class="share-btn share-btn-primary" id="sendSelectedPlayersBtn" type="button" onclick="sendSelectedPlayersToRecruiter()" disabled>Send Selected Players</button>
+              <div class="share-toolbar-grid">
+                <button class="share-btn share-btn-secondary" type="button" onclick="clearSelectedPlayers()">Clear Selection</button>
+                <button class="share-btn share-btn-primary" id="sendSelectedPlayersBtn" type="button" onclick="sendSelectedPlayersToRecruiter()" disabled>Send Selected Players</button>
+              </div>
             </div>
             <div class="share-toolbar-message" id="sharePlayersMessage"></div>
           </div>
@@ -1212,8 +1379,174 @@
         </div>
       </div><!-- /.tab-coach-customize -->
 
+      <!-- Tab: Team Page -->
+      <div id="tab-coach-teampage" class="coach-tab-panel hidden">
+        <div class="team-page-manager">
+          <div class="team-page-card">
+            <div class="section-title" style="margin:0 0 8px;">Public Team Profile</div>
+            <p class="team-page-help">This information appears on the public team page when someone clicks View Team.</p>
+            <div class="team-page-form-grid">
+              <div class="team-page-field full-col">
+                <label for="teamPageOverview">School Overview</label>
+                <textarea id="teamPageOverview" placeholder="Tell visitors about the school, football program, community, culture, or facilities."></textarea>
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageWebsite">School Website</label>
+                <input type="url" id="teamPageWebsite" placeholder="https://example.org/athletics">
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageTwitter">X / Twitter</label>
+                <input type="url" id="teamPageTwitter" placeholder="https://x.com/yourteam">
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageInstagram">Instagram</label>
+                <input type="url" id="teamPageInstagram" placeholder="https://instagram.com/yourteam">
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageFacebook">Facebook</label>
+                <input type="url" id="teamPageFacebook" placeholder="https://facebook.com/yourteam">
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageYouTube">YouTube</label>
+                <input type="url" id="teamPageYouTube" placeholder="https://youtube.com/@yourteam">
+              </div>
+              <div class="team-page-field">
+                <label for="teamPageTikTok">TikTok</label>
+                <input type="url" id="teamPageTikTok" placeholder="https://tiktok.com/@yourteam">
+              </div>
+            </div>
+            <div class="team-page-form-actions">
+              <button class="btn-invite" type="button" onclick="saveTeamPublicProfile()">Save Team Profile</button>
+            </div>
+            <div class="team-page-message" id="teamPageProfileMessage"></div>
+          </div>
+
+          <div class="team-page-card">
+            <div class="section-title" style="margin:0 0 8px;">Schedule</div>
+            <p class="team-page-help">Add upcoming games, camps, or events to the public team page.</p>
+            <input type="hidden" id="teamScheduleId">
+            <div class="team-page-form-grid">
+              <div class="team-page-field">
+                <label for="teamScheduleOpponent">Opponent or Event</label>
+                <input type="text" id="teamScheduleOpponent" placeholder="Westview Wildcats">
+              </div>
+              <div class="team-page-field">
+                <label for="teamScheduleDate">Date</label>
+                <input type="date" id="teamScheduleDate">
+              </div>
+              <div class="team-page-field">
+                <label for="teamScheduleTime">Time</label>
+                <input type="text" id="teamScheduleTime" placeholder="7:00 PM">
+              </div>
+              <div class="team-page-field">
+                <label for="teamScheduleLocation">Location</label>
+                <input type="text" id="teamScheduleLocation" placeholder="Memorial Stadium">
+              </div>
+              <div class="team-page-field">
+                <label for="teamScheduleSortOrder">Sort Order</label>
+                <input type="number" id="teamScheduleSortOrder" value="0">
+              </div>
+              <div class="team-page-field" style="display:flex;align-items:flex-end;">
+                <label style="display:flex;align-items:center;gap:10px;margin:0;color:#425066;font-size:13px;">
+                  <input type="checkbox" id="teamScheduleHome" style="width:16px;height:16px;"> Home game / event
+                </label>
+              </div>
+              <div class="team-page-field full-col">
+                <label for="teamScheduleNotes">Notes</label>
+                <textarea id="teamScheduleNotes" placeholder="Optional notes like theme night, playoff round, or special instructions."></textarea>
+              </div>
+            </div>
+            <div class="team-page-form-actions">
+              <button class="btn-cancel" type="button" onclick="resetScheduleForm()">Clear</button>
+              <button class="btn-invite" type="button" onclick="saveScheduleItem()">Save Schedule Item</button>
+            </div>
+            <div class="team-page-message" id="teamScheduleMessage"></div>
+            <div class="team-record-list" id="teamScheduleList"></div>
+          </div>
+
+          <div class="team-page-card">
+            <div class="section-title" style="margin:0 0 8px;">Staff</div>
+            <p class="team-page-help">List assistant coaches, coordinators, trainers, and other public-facing staff.</p>
+            <input type="hidden" id="teamStaffId">
+            <div class="team-page-form-grid">
+              <div class="team-page-field">
+                <label for="teamStaffName">Full Name</label>
+                <input type="text" id="teamStaffName" placeholder="Jordan Smith">
+              </div>
+              <div class="team-page-field">
+                <label for="teamStaffRole">Role</label>
+                <input type="text" id="teamStaffRole" placeholder="Defensive Coordinator">
+              </div>
+              <div class="team-page-field">
+                <label for="teamStaffEmail">Email</label>
+                <input type="email" id="teamStaffEmail" placeholder="coach@example.org">
+              </div>
+              <div class="team-page-field">
+                <label for="teamStaffPhone">Phone</label>
+                <input type="text" id="teamStaffPhone" placeholder="(555) 555-5555">
+              </div>
+              <div class="team-page-field">
+                <label for="teamStaffSortOrder">Sort Order</label>
+                <input type="number" id="teamStaffSortOrder" value="0">
+              </div>
+              <div class="team-page-field full-col">
+                <label for="teamStaffBio">Bio</label>
+                <textarea id="teamStaffBio" placeholder="Short bio or responsibilities for this staff member."></textarea>
+              </div>
+            </div>
+            <div class="team-page-form-actions">
+              <button class="btn-cancel" type="button" onclick="resetStaffForm()">Clear</button>
+              <button class="btn-invite" type="button" onclick="saveStaffMember()">Save Staff Member</button>
+            </div>
+            <div class="team-page-message" id="teamStaffMessage"></div>
+            <div class="team-record-list" id="teamStaffList"></div>
+          </div>
+        </div>
+      </div><!-- /.tab-coach-teampage -->
+
     </div><!-- /.dashboard-container -->
   </div><!-- /.dashboard-wrapper -->
+
+  <div id="sharePlayersModal" class="coach-modal-overlay" style="display:none;">
+    <div class="coach-modal-box" style="max-width:860px;">
+      <div class="coach-modal-header">
+        <h2>Share Selected Players</h2>
+        <button class="coach-modal-close" onclick="closeSendPlayersModal()">&times;</button>
+      </div>
+      <div style="padding:16px 24px; border-bottom:1px solid #e8edf5; background:#f8faff;">
+        <div style="font-size:13px; color:#55657d; margin-bottom:10px;" id="shareModalSelectedPlayersCount">0 players selected</div>
+        <div style="display:grid; grid-template-columns:1fr 220px; gap:10px;">
+          <input type="text" id="shareContactSearch" placeholder="Filter contacts by name, school, or email" oninput="renderShareContacts()" style="padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px;">
+          <select id="shareContactCollegeFilter" onchange="renderShareContacts()" style="padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px;">
+            <option value="">All Schools</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:16px 24px; max-height:68vh; overflow:auto;">
+        <div style="font-size:12px; color:#666; margin-bottom:6px;">School Contacts</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+          <button class="share-btn share-btn-secondary" type="button" style="padding:6px 10px; font-size:12px;" onclick="selectVisibleShareContacts()">Select All Visible</button>
+          <button class="share-btn share-btn-secondary" type="button" style="padding:6px 10px; font-size:12px;" onclick="clearSelectedShareContacts()">Clear Selected Contacts</button>
+        </div>
+        <div id="shareModalContactsList" class="share-modal-recipients"></div>
+        <div class="share-modal-summary" id="shareModalContactsSummary"></div>
+
+        <div style="margin-top:14px; font-size:12px; color:#666; margin-bottom:6px;">Additional Emails (comma, space, or newline separated)</div>
+        <textarea id="shareManualEmails" rows="3" oninput="renderShareContacts()" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+
+        <div style="margin-top:14px; display:grid; gap:10px;">
+          <input type="text" id="shareComposeSubject" placeholder="Email subject (optional)" style="padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px;">
+          <textarea id="shareComposeMessage" rows="4" placeholder="Message to include in email (optional)" style="width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+        </div>
+
+        <div class="share-modal-message" id="shareModalMessage"></div>
+      </div>
+      <div style="padding:14px 24px; border-top:1px solid #e8edf5; display:flex; justify-content:flex-end; gap:8px;">
+        <button class="share-btn share-btn-secondary" type="button" onclick="closeSendPlayersModal()">Cancel</button>
+        <button class="share-btn share-btn-primary" id="shareModalSendBtn" type="button" onclick="submitSendPlayersModal()">Send Players</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ schools Browse Modal ============ -->
   <div id="coachSchoolsModal" class="coach-modal-overlay">
@@ -1348,6 +1681,11 @@
     let invitesData = [];
     let favoriteIds = [];
     let selectedPlayerIds = new Set();
+    let shareContactsData = [];
+    let shareContactsLoaded = false;
+    let selectedShareContactIds = new Set();
+    let teamScheduleData = [];
+    let teamStaffData = [];
 
     async function init() {
       const user = await checkAuth('coach');
@@ -1367,7 +1705,7 @@
       setupRosterFilterListeners();
       window.addEventListener('resize', handleResponsiveViewResize);
 
-      await Promise.all([loadTeam(), loadFavoriteIds(), loadRoster(), loadInvites()]);
+      await Promise.all([loadTeam(), loadFavoriteIds(), loadRoster(), loadInvites(), loadTeamSchedule(), loadTeamStaff()]);
       await logPageView('coach_dashboard');
     }
 
@@ -1488,7 +1826,56 @@
         if (!res.ok) return;
         teamData = await res.json();
         renderTeamBadge();
+        populateTeamPageForm();
       } catch (_) {}
+    }
+
+    function populateTeamPageForm() {
+      if (!teamData) return;
+      document.getElementById('teamPageOverview').value = teamData.school_overview || '';
+      document.getElementById('teamPageWebsite').value = teamData.team_website || '';
+      document.getElementById('teamPageTwitter').value = teamData.twitter_url || '';
+      document.getElementById('teamPageInstagram').value = teamData.instagram_url || '';
+      document.getElementById('teamPageFacebook').value = teamData.facebook_url || '';
+      document.getElementById('teamPageYouTube').value = teamData.youtube_url || '';
+      document.getElementById('teamPageTikTok').value = teamData.tiktok_url || '';
+    }
+
+    function setTeamPageMessage(elementId, type, text) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.className = `team-page-message${type ? ' ' + type : ''}`;
+      el.textContent = text || '';
+    }
+
+    async function saveTeamPublicProfile() {
+      setTeamPageMessage('teamPageProfileMessage', '', 'Saving team profile...');
+      try {
+        const res = await fetch('/api/coach/team/public-profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            schoolOverview: document.getElementById('teamPageOverview').value.trim(),
+            teamWebsite: document.getElementById('teamPageWebsite').value.trim(),
+            twitterUrl: document.getElementById('teamPageTwitter').value.trim(),
+            instagramUrl: document.getElementById('teamPageInstagram').value.trim(),
+            facebookUrl: document.getElementById('teamPageFacebook').value.trim(),
+            youtubeUrl: document.getElementById('teamPageYouTube').value.trim(),
+            tiktokUrl: document.getElementById('teamPageTikTok').value.trim()
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setTeamPageMessage('teamPageProfileMessage', 'error', data.error || 'Failed to save team profile.');
+          return;
+        }
+
+        teamData = { ...(teamData || {}), ...(data.profile || {}) };
+        populateTeamPageForm();
+        setTeamPageMessage('teamPageProfileMessage', 'success', 'Public team profile saved.');
+      } catch (_) {
+        setTeamPageMessage('teamPageProfileMessage', 'error', 'Network error while saving team profile.');
+      }
     }
 
     function normalizeHexColorClient(value) {
@@ -1741,54 +2128,196 @@
     }
 
     async function sendSelectedPlayersToRecruiter() {
-      const messageEl = document.getElementById('sharePlayersMessage');
-      const sendBtn = document.getElementById('sendSelectedPlayersBtn');
-      const recruiterEmail = String(document.getElementById('shareRecruiterEmail')?.value || '').trim();
-      const subject = String(document.getElementById('shareEmailSubject')?.value || '').trim();
-      const playerUserIds = [...selectedPlayerIds];
+      openSendPlayersModal();
+    }
 
-      if (!recruiterEmail) {
-        messageEl.className = 'share-toolbar-message error';
-        messageEl.textContent = 'Recruiter email is required.';
-        return;
+    async function loadShareContacts(forceReload = false) {
+      if (shareContactsLoaded && !forceReload) return;
+      const res = await fetch('/api/coach/contacts');
+      if (!res.ok) throw new Error('Failed to load school contacts');
+      const contacts = await res.json();
+      shareContactsData = (Array.isArray(contacts) ? contacts : []).filter(c => c && c.email);
+      shareContactsLoaded = true;
+      const filterEl = document.getElementById('shareContactCollegeFilter');
+      const schools = [...new Set(shareContactsData.map(c => c.college_name).filter(Boolean))].sort();
+      filterEl.innerHTML = '<option value="">All Schools</option>' + schools.map(name => `<option value="${escHtml(name)}">${escHtml(name)}</option>`).join('');
+    }
+
+    function getSelectedShareContactEmails() {
+      return shareContactsData
+        .filter(c => selectedShareContactIds.has(Number(c.id)))
+        .map(c => String(c.email || '').trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    function parseManualEmails() {
+      const raw = String(document.getElementById('shareManualEmails')?.value || '');
+      return raw
+        .split(/[\s,;]+/)
+        .map(v => v.trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    function buildRecipientEmails() {
+      const emails = [...new Set([...getSelectedShareContactEmails(), ...parseManualEmails()])];
+      return emails;
+    }
+
+    function setShareModalMessage(type, text) {
+      const el = document.getElementById('shareModalMessage');
+      if (!el) return;
+      el.className = `share-modal-message${type ? ' ' + type : ''}`;
+      el.textContent = text || '';
+    }
+
+    function getFilteredShareContacts() {
+      const search = String(document.getElementById('shareContactSearch')?.value || '').trim().toLowerCase();
+      const schoolFilter = String(document.getElementById('shareContactCollegeFilter')?.value || '');
+
+      let filtered = shareContactsData;
+      if (schoolFilter) filtered = filtered.filter(c => String(c.college_name || '') === schoolFilter);
+      if (search) {
+        filtered = filtered.filter(c => [c.name, c.email, c.title, c.college_name, c.conference]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(search));
+      }
+      return filtered;
+    }
+
+    function renderShareContacts() {
+      const list = document.getElementById('shareModalContactsList');
+      const summary = document.getElementById('shareModalContactsSummary');
+      if (!list || !summary) return;
+
+      const filtered = getFilteredShareContacts();
+
+      if (!filtered.length) {
+        list.innerHTML = '<div style="color:#76849b; font-size:13px; padding:8px;">No contacts match your filters.</div>';
+      } else {
+        list.innerHTML = filtered.map(c => {
+          const checked = selectedShareContactIds.has(Number(c.id)) ? 'checked' : '';
+          return `<label class="share-modal-contact-row">
+            <input type="checkbox" ${checked} onchange="toggleShareContact(${Number(c.id)}, this.checked)">
+            <div>
+              <div><strong>${escHtml(c.name || 'Contact')}</strong> &lt;${escHtml(c.email)}&gt;</div>
+              <div class="share-modal-contact-meta">${escHtml(c.title || 'No title')} • ${escHtml(c.college_name || 'Unknown School')}${c.conference ? ' • ' + escHtml(c.conference) : ''}</div>
+            </div>
+          </label>`;
+        }).join('');
       }
 
-      if (!playerUserIds.length) {
+      const selectedCount = selectedShareContactIds.size;
+      const manualCount = parseManualEmails().length;
+      summary.textContent = `${selectedCount} contact${selectedCount === 1 ? '' : 's'} selected` + (manualCount ? ` • ${manualCount} manual email${manualCount === 1 ? '' : 's'}` : '');
+    }
+
+    function selectVisibleShareContacts() {
+      const filtered = getFilteredShareContacts();
+      filtered.forEach(c => selectedShareContactIds.add(Number(c.id)));
+      renderShareContacts();
+    }
+
+    function clearSelectedShareContacts() {
+      selectedShareContactIds.clear();
+      renderShareContacts();
+    }
+
+    function toggleShareContact(contactId, checked) {
+      const id = Number(contactId);
+      if (checked) selectedShareContactIds.add(id);
+      else selectedShareContactIds.delete(id);
+      renderShareContacts();
+    }
+
+    async function openSendPlayersModal() {
+      const messageEl = document.getElementById('sharePlayersMessage');
+      if (!selectedPlayerIds.size) {
         messageEl.className = 'share-toolbar-message error';
         messageEl.textContent = 'Select at least one player.';
         return;
       }
 
-      sendBtn.disabled = true;
-      messageEl.className = 'share-toolbar-message';
-      messageEl.textContent = 'Sending player share email...';
+      document.getElementById('shareModalSelectedPlayersCount').textContent = `${selectedPlayerIds.size} player${selectedPlayerIds.size === 1 ? '' : 's'} selected`;
+      if (!document.getElementById('shareComposeSubject').value.trim()) {
+        const defaultTeam = String(teamData?.team_name || 'Team').trim();
+        document.getElementById('shareComposeSubject').value = `${defaultTeam} Player Profiles`;
+      }
+
+      setShareModalMessage('', '');
+      document.getElementById('sharePlayersModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+
+      try {
+        await loadShareContacts();
+        renderShareContacts();
+      } catch (error) {
+        setShareModalMessage('error', error.message || 'Failed to load contacts.');
+      }
+    }
+
+    function closeSendPlayersModal() {
+      document.getElementById('sharePlayersModal').style.display = 'none';
+      document.body.style.overflow = '';
+      setShareModalMessage('', '');
+    }
+
+    async function submitSendPlayersModal() {
+      const toolbarMessage = document.getElementById('sharePlayersMessage');
+      const modalSendBtn = document.getElementById('shareModalSendBtn');
+      const recipients = buildRecipientEmails();
+      const subject = String(document.getElementById('shareComposeSubject')?.value || '').trim();
+      const message = String(document.getElementById('shareComposeMessage')?.value || '').trim();
+      const playerUserIds = [...selectedPlayerIds];
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!recipients.length) {
+        setShareModalMessage('error', 'Add at least one recipient email or select contacts.');
+        return;
+      }
+
+      if (!recipients.every(email => emailRegex.test(email))) {
+        setShareModalMessage('error', 'One or more recipient emails are invalid.');
+        return;
+      }
+
+      modalSendBtn.disabled = true;
+      setShareModalMessage('', 'Preparing share links...');
 
       try {
         const res = await fetch('/api/coach/recruiter-shares', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recruiterEmail, subject, playerUserIds })
+          body: JSON.stringify({ recipientEmails: recipients, subject, message, playerUserIds })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          messageEl.className = 'share-toolbar-message error';
-          messageEl.textContent = data.error || 'Failed to send shared player link.';
+          setShareModalMessage('error', data.error || 'Failed to create shared player links.');
           return;
         }
 
-        const emailNote = data.emailSent === false
-          ? ' Share was created but email delivery failed; copy and send the link manually.'
-          : '';
-        const successText = `Share sent successfully.${emailNote}`;
-        if (data.shareUrl) {
-          try { await navigator.clipboard.writeText(data.shareUrl); } catch (_) {}
+        // Build one mailto draft addressed to all recipients with a single shared link.
+        const singleShareUrl = data.shareUrl || data.firstShareUrl || '';
+        const lines = [];
+        if (message) { lines.push(message); lines.push(''); }
+        if (singleShareUrl) {
+          lines.push('View the shared player profiles here:');
+          lines.push(singleShareUrl);
         }
-        messageEl.className = 'share-toolbar-message success';
-        messageEl.textContent = successText;
+        const body = lines.join('\n');
+        const to = recipients.join('; ');
+        const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject || 'Player Profiles')}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailto;
+
+        toolbarMessage.className = 'share-toolbar-message success';
+        toolbarMessage.textContent = `Your email app is opening for ${recipients.length} recipient${recipients.length === 1 ? '' : 's'}. Review and send from your mail client.`;
+
+        closeSendPlayersModal();
       } catch (_) {
-        messageEl.className = 'share-toolbar-message error';
-        messageEl.textContent = 'Network error while sending share.';
+        setShareModalMessage('error', 'Network error while creating share links.');
       } finally {
+        modalSendBtn.disabled = false;
         updateShareSelectionUI();
       }
     }
@@ -2147,6 +2676,240 @@
         }
         renderInvites();
       } catch (_) {}
+    }
+
+    async function loadTeamSchedule() {
+      try {
+        const res = await fetch('/api/coach/team/schedule');
+        if (!res.ok) return;
+        teamScheduleData = await res.json();
+        renderTeamScheduleList();
+      } catch (_) {}
+    }
+
+    function formatTeamScheduleDate(value) {
+      if (!value) return 'Date TBD';
+      const raw = String(value).trim();
+      const datePart = raw.includes('T') ? raw.slice(0, 10) : raw;
+      const parsed = new Date(datePart + 'T12:00:00');
+      if (Number.isNaN(parsed.getTime())) return value;
+      return parsed.toLocaleDateString();
+    }
+
+    function resetScheduleForm() {
+      document.getElementById('teamScheduleId').value = '';
+      document.getElementById('teamScheduleOpponent').value = '';
+      document.getElementById('teamScheduleDate').value = '';
+      document.getElementById('teamScheduleTime').value = '';
+      document.getElementById('teamScheduleLocation').value = '';
+      document.getElementById('teamScheduleSortOrder').value = '0';
+      document.getElementById('teamScheduleHome').checked = false;
+      document.getElementById('teamScheduleNotes').value = '';
+      setTeamPageMessage('teamScheduleMessage', '', '');
+    }
+
+    function renderTeamScheduleList() {
+      const container = document.getElementById('teamScheduleList');
+      if (!container) return;
+      if (!teamScheduleData.length) {
+        container.innerHTML = '<div class="team-record-empty">No schedule items yet.</div>';
+        return;
+      }
+      container.innerHTML = teamScheduleData.map(item => `
+        <div class="team-record-card">
+          <div class="team-record-head">
+            <div>
+              <div class="team-record-title">${escHtml(item.opponent_name || 'Opponent')}</div>
+              <div class="team-record-subtitle">${escHtml(formatTeamScheduleDate(item.event_date))} • ${escHtml(item.event_time || 'Time TBD')} • ${item.is_home ? 'Home' : 'Away'}${item.location ? ' • ' + escHtml(item.location) : ''}</div>
+            </div>
+            <div class="team-record-actions">
+              <button class="btn-sm-edit" type="button" onclick="editScheduleItem(${item.id})">Edit</button>
+              <button class="btn-sm-danger" type="button" onclick="deleteScheduleItem(${item.id})">Delete</button>
+            </div>
+          </div>
+          ${item.notes ? `<div class="team-record-body">${escHtml(item.notes)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function editScheduleItem(id) {
+      const item = teamScheduleData.find(entry => Number(entry.id) === Number(id));
+      if (!item) return;
+      const rawDate = String(item.event_date || '');
+      const datePart = rawDate.includes('T') ? rawDate.slice(0, 10) : rawDate;
+      document.getElementById('teamScheduleId').value = item.id;
+      document.getElementById('teamScheduleOpponent').value = item.opponent_name || '';
+      document.getElementById('teamScheduleDate').value = datePart || '';
+      document.getElementById('teamScheduleTime').value = item.event_time || '';
+      document.getElementById('teamScheduleLocation').value = item.location || '';
+      document.getElementById('teamScheduleSortOrder').value = item.sort_order || 0;
+      document.getElementById('teamScheduleHome').checked = !!item.is_home;
+      document.getElementById('teamScheduleNotes').value = item.notes || '';
+      setTeamPageMessage('teamScheduleMessage', '', 'Editing schedule item.');
+    }
+
+    async function saveScheduleItem() {
+      const id = document.getElementById('teamScheduleId').value;
+      const payload = {
+        opponentName: document.getElementById('teamScheduleOpponent').value.trim(),
+        eventDate: document.getElementById('teamScheduleDate').value,
+        eventTime: document.getElementById('teamScheduleTime').value.trim(),
+        location: document.getElementById('teamScheduleLocation').value.trim(),
+        sortOrder: document.getElementById('teamScheduleSortOrder').value,
+        isHome: document.getElementById('teamScheduleHome').checked,
+        notes: document.getElementById('teamScheduleNotes').value.trim()
+      };
+
+      if (!payload.opponentName) {
+        setTeamPageMessage('teamScheduleMessage', 'error', 'Opponent or event name is required.');
+        return;
+      }
+
+      setTeamPageMessage('teamScheduleMessage', '', 'Saving schedule item...');
+      try {
+        const res = await fetch(id ? `/api/coach/team/schedule/${id}` : '/api/coach/team/schedule', {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setTeamPageMessage('teamScheduleMessage', 'error', data.error || 'Failed to save schedule item.');
+          return;
+        }
+        await loadTeamSchedule();
+        resetScheduleForm();
+        setTeamPageMessage('teamScheduleMessage', 'success', 'Schedule item saved.');
+      } catch (_) {
+        setTeamPageMessage('teamScheduleMessage', 'error', 'Network error while saving schedule item.');
+      }
+    }
+
+    async function deleteScheduleItem(id) {
+      if (!confirm('Delete this schedule item?')) return;
+      try {
+        const res = await fetch(`/api/coach/team/schedule/${id}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setTeamPageMessage('teamScheduleMessage', 'error', data.error || 'Failed to delete schedule item.');
+          return;
+        }
+        await loadTeamSchedule();
+        if (String(document.getElementById('teamScheduleId').value) === String(id)) resetScheduleForm();
+        setTeamPageMessage('teamScheduleMessage', 'success', 'Schedule item deleted.');
+      } catch (_) {
+        setTeamPageMessage('teamScheduleMessage', 'error', 'Network error while deleting schedule item.');
+      }
+    }
+
+    async function loadTeamStaff() {
+      try {
+        const res = await fetch('/api/coach/team/staff');
+        if (!res.ok) return;
+        teamStaffData = await res.json();
+        renderTeamStaffList();
+      } catch (_) {}
+    }
+
+    function resetStaffForm() {
+      document.getElementById('teamStaffId').value = '';
+      document.getElementById('teamStaffName').value = '';
+      document.getElementById('teamStaffRole').value = '';
+      document.getElementById('teamStaffEmail').value = '';
+      document.getElementById('teamStaffPhone').value = '';
+      document.getElementById('teamStaffSortOrder').value = '0';
+      document.getElementById('teamStaffBio').value = '';
+      setTeamPageMessage('teamStaffMessage', '', '');
+    }
+
+    function renderTeamStaffList() {
+      const container = document.getElementById('teamStaffList');
+      if (!container) return;
+      if (!teamStaffData.length) {
+        container.innerHTML = '<div class="team-record-empty">No staff members listed yet.</div>';
+        return;
+      }
+      container.innerHTML = teamStaffData.map(member => `
+        <div class="team-record-card">
+          <div class="team-record-head">
+            <div>
+              <div class="team-record-title">${escHtml(member.full_name || 'Staff Member')}</div>
+              <div class="team-record-subtitle">${escHtml(member.role_title || 'Role')}${member.email ? ' • ' + escHtml(member.email) : ''}${member.phone ? ' • ' + escHtml(member.phone) : ''}</div>
+            </div>
+            <div class="team-record-actions">
+              <button class="btn-sm-edit" type="button" onclick="editStaffMember(${member.id})">Edit</button>
+              <button class="btn-sm-danger" type="button" onclick="deleteStaffMember(${member.id})">Delete</button>
+            </div>
+          </div>
+          ${member.bio ? `<div class="team-record-body">${escHtml(member.bio)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function editStaffMember(id) {
+      const member = teamStaffData.find(entry => Number(entry.id) === Number(id));
+      if (!member) return;
+      document.getElementById('teamStaffId').value = member.id;
+      document.getElementById('teamStaffName').value = member.full_name || '';
+      document.getElementById('teamStaffRole').value = member.role_title || '';
+      document.getElementById('teamStaffEmail').value = member.email || '';
+      document.getElementById('teamStaffPhone').value = member.phone || '';
+      document.getElementById('teamStaffSortOrder').value = member.sort_order || 0;
+      document.getElementById('teamStaffBio').value = member.bio || '';
+      setTeamPageMessage('teamStaffMessage', '', 'Editing staff member.');
+    }
+
+    async function saveStaffMember() {
+      const id = document.getElementById('teamStaffId').value;
+      const payload = {
+        fullName: document.getElementById('teamStaffName').value.trim(),
+        roleTitle: document.getElementById('teamStaffRole').value.trim(),
+        email: document.getElementById('teamStaffEmail').value.trim(),
+        phone: document.getElementById('teamStaffPhone').value.trim(),
+        sortOrder: document.getElementById('teamStaffSortOrder').value,
+        bio: document.getElementById('teamStaffBio').value.trim()
+      };
+
+      if (!payload.fullName || !payload.roleTitle) {
+        setTeamPageMessage('teamStaffMessage', 'error', 'Staff name and role are required.');
+        return;
+      }
+
+      setTeamPageMessage('teamStaffMessage', '', 'Saving staff member...');
+      try {
+        const res = await fetch(id ? `/api/coach/team/staff/${id}` : '/api/coach/team/staff', {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setTeamPageMessage('teamStaffMessage', 'error', data.error || 'Failed to save staff member.');
+          return;
+        }
+        await loadTeamStaff();
+        resetStaffForm();
+        setTeamPageMessage('teamStaffMessage', 'success', 'Staff member saved.');
+      } catch (_) {
+        setTeamPageMessage('teamStaffMessage', 'error', 'Network error while saving staff member.');
+      }
+    }
+
+    async function deleteStaffMember(id) {
+      if (!confirm('Delete this staff member?')) return;
+      try {
+        const res = await fetch(`/api/coach/team/staff/${id}`, { method: 'DELETE' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setTeamPageMessage('teamStaffMessage', 'error', data.error || 'Failed to delete staff member.');
+          return;
+        }
+        await loadTeamStaff();
+        if (String(document.getElementById('teamStaffId').value) === String(id)) resetStaffForm();
+        setTeamPageMessage('teamStaffMessage', 'success', 'Staff member deleted.');
+      } catch (_) {
+        setTeamPageMessage('teamStaffMessage', 'error', 'Network error while deleting staff member.');
+      }
     }
 
     function switchCoachTab(tab) {

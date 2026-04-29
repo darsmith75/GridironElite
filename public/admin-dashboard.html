@@ -520,6 +520,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
             Dashboard
            </a>
+           <a href="teams.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Teams
+           </a>
            <a href="admin-profile.html" class="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
             My Profile
@@ -572,6 +576,7 @@
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchTab('users')">User Management</button>
         <button class="admin-tab" onclick="switchTab('coaches')">Coaches</button>
+        <button class="admin-tab" onclick="switchTab('teams')">Teams</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
         <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
         <button class="admin-tab" onclick="switchTab('school-ratings')">School Ratings</button>
@@ -737,6 +742,44 @@
           <div class="pagination-bar" id="coachesPaginationBar" style="display:none;">
             <div class="pagination-info" id="coachesPaginationInfo"></div>
             <div class="pagination-controls" id="coachesPaginationControls"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teams Tab -->
+      <div class="tab-panel" id="tab-teams">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">High School Teams</h2>
+            <button class="add-college-btn" onclick="openAddTeamModal()">+ Add Team</button>
+          </div>
+          <div class="admin-toolbar">
+            <input type="text" id="teamSearch" placeholder="Search by team name, school, city, state, or coach...">
+            <select id="teamStateFilter">
+              <option value="">All States</option>
+            </select>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Team Name</th>
+                  <th>School</th>
+                  <th>Location</th>
+                  <th>Coach</th>
+                  <th>Roster</th>
+                  <th>Pending Invites</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="teamsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="teamsPaginationBar" style="display:none;">
+            <div class="pagination-info" id="teamsPaginationInfo"></div>
+            <div class="pagination-controls" id="teamsPaginationControls"></div>
           </div>
         </div>
       </div>
@@ -930,6 +973,61 @@
     </div>
   </div>
 
+  <!-- Team Add/Edit Modal -->
+  <div class="modal-overlay" id="teamModal">
+    <div class="modal">
+      <h3 id="teamModalTitle">Add Team</h3>
+      <input type="hidden" id="teamId">
+      <div class="input-group" id="teamCoachGroup">
+        <label>Coach *</label>
+        <select id="teamCoachSelect">
+          <option value="">-- Select Coach --</option>
+        </select>
+        <div id="teamCoachReadonly" style="display:none; padding:10px 12px; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; font-size:14px; color:#333;"></div>
+      </div>
+      <div class="input-group">
+        <label>Team Name *</label>
+        <input type="text" id="teamName" placeholder="e.g. Westview Warriors">
+      </div>
+      <div class="input-group">
+        <label>School Name</label>
+        <input type="text" id="teamSchoolName" placeholder="e.g. Westview High School">
+      </div>
+      <div class="input-group">
+        <label>City</label>
+        <input type="text" id="teamCity">
+      </div>
+      <div class="input-group">
+        <label>State</label>
+        <input type="text" id="teamState" placeholder="e.g. CA" maxlength="50">
+      </div>
+      <div class="input-group">
+        <label>Banner Color Start</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="color" id="teamBannerStart" value="#1e3c72" style="width:48px; height:38px; padding:2px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer;">
+          <input type="text" id="teamBannerStartHex" placeholder="#1e3c72" maxlength="7" style="flex:1;">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Banner Color End</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="color" id="teamBannerEnd" value="#2a5298" style="width:48px; height:38px; padding:2px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer;">
+          <input type="text" id="teamBannerEndHex" placeholder="#2a5298" maxlength="7" style="flex:1;">
+        </div>
+      </div>
+      <div class="input-group">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="teamUseGradient" style="width:16px; height:16px;">
+          Use Gradient on Player Cards
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('teamModal')">Cancel</button>
+        <button class="btn-save" onclick="saveTeam()">Save Team</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     checkAuth('admin');
@@ -944,6 +1042,9 @@
     let allCoaches = [];
     const COACHES_PAGE_SIZE = 25;
     let coachesCurrentPage = 1;
+    let allTeams = [];
+    const TEAMS_PAGE_SIZE = 25;
+    let teamsCurrentPage = 1;
     let schoolRatingCategories = [];
     let adSlotConfig = [];
     let adSlots = {};
@@ -1307,6 +1408,8 @@
     document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; renderUsers(); });
     document.getElementById('coachSearch').addEventListener('input', () => { coachesCurrentPage = 1; renderCoaches(); });
     document.getElementById('coachStateFilter').addEventListener('change', () => { coachesCurrentPage = 1; renderCoaches(); });
+    document.getElementById('teamSearch').addEventListener('input', () => { teamsCurrentPage = 1; renderTeams(); });
+    document.getElementById('teamStateFilter').addEventListener('change', () => { teamsCurrentPage = 1; renderTeams(); });
 
     // Edit Modal
     async function openEditModal(userId) {
@@ -1489,6 +1592,7 @@
       if (tab === 'school-ratings') loadSchoolRatingCategories();
       if (tab === 'ads') loadAdSlotsConfig();
       if (tab === 'coaches') loadCoaches();
+      if (tab === 'teams') loadTeams();
     }
 
     async function loadCoaches() {
@@ -1902,6 +2006,261 @@
         if (status) status.textContent = 'Failed to save ad slots.';
       }
     }
+
+    // Teams Management
+    async function loadTeams() {
+      const tbody = document.getElementById('teamsTableBody');
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
+      try {
+        const res = await fetch('/api/admin/teams');
+        if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+        allTeams = await res.json();
+        populateTeamStateFilter(allTeams);
+        renderTeams();
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#c62828;padding:24px;">Failed to load teams: ${escapeHtml(err.message)}</td></tr>`;
+        renderTeamsPagination(0, 0);
+      }
+    }
+
+    function populateTeamStateFilter(teams) {
+      const select = document.getElementById('teamStateFilter');
+      if (!select) return;
+      const currentValue = select.value;
+      const states = Array.from(new Set((teams || [])
+        .map(t => String(t.state || '').trim().toUpperCase())
+        .filter(Boolean))).sort();
+      select.innerHTML = '<option value="">All States</option>'
+        + states.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      if (states.includes(currentValue)) select.value = currentValue;
+    }
+
+    function renderTeams() {
+      const tbody = document.getElementById('teamsTableBody');
+      const search = document.getElementById('teamSearch').value.toLowerCase().trim();
+      const stateFilter = document.getElementById('teamStateFilter').value;
+
+      let filtered = allTeams;
+      if (stateFilter) {
+        filtered = filtered.filter(t => String(t.state || '').trim().toUpperCase() === stateFilter);
+      }
+      if (search) {
+        filtered = filtered.filter(t => {
+          const text = [t.team_name, t.school_name, t.city, t.state, t.coach_name, t.coach_email]
+            .filter(Boolean).join(' ').toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999; padding:30px;">No teams found</td></tr>';
+        renderTeamsPagination(0, 0);
+        return;
+      }
+
+      const totalPages = Math.ceil(filtered.length / TEAMS_PAGE_SIZE);
+      if (teamsCurrentPage > totalPages) teamsCurrentPage = totalPages;
+      const start = (teamsCurrentPage - 1) * TEAMS_PAGE_SIZE;
+      const pageTeams = filtered.slice(start, start + TEAMS_PAGE_SIZE);
+
+      tbody.innerHTML = pageTeams.map(t => {
+        const teamName = escapeHtml(t.team_name || '—');
+        const school = escapeHtml(t.school_name || '—');
+        const loc = [t.city, t.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
+        const coach = escapeHtml(t.coach_name || t.coach_email || '—');
+        const created = t.created_at ? new Date(t.created_at).toLocaleDateString() : '—';
+        return `<tr>
+          <td>${t.id}</td>
+          <td><strong>${teamName}</strong></td>
+          <td>${school}</td>
+          <td>${loc}</td>
+          <td>${coach}</td>
+          <td style="text-align:center;">${t.roster_count || 0}</td>
+          <td style="text-align:center;">${t.pending_invites || 0}</td>
+          <td>${created}</td>
+          <td class="actions-cell">
+            <div class="user-actions">
+              <button class="action-btn edit" onclick="openEditTeamModal(${t.id})">Edit</button>
+              <button class="action-btn delete" onclick="deleteTeam(${t.id}, '${teamName.replace(/'/g, "\\'")}')">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      renderTeamsPagination(filtered.length, totalPages);
+    }
+
+    function renderTeamsPagination(total, totalPages) {
+      const bar = document.getElementById('teamsPaginationBar');
+      const info = document.getElementById('teamsPaginationInfo');
+      const controls = document.getElementById('teamsPaginationControls');
+
+      if (total === 0 || totalPages <= 1) {
+        bar.style.display = total > 0 ? 'flex' : 'none';
+        info.textContent = total > 0 ? `${total} team${total !== 1 ? 's' : ''}` : '';
+        controls.innerHTML = '';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      const start = (teamsCurrentPage - 1) * TEAMS_PAGE_SIZE + 1;
+      const end = Math.min(teamsCurrentPage * TEAMS_PAGE_SIZE, total);
+      info.textContent = `${start}–${end} of ${total} teams`;
+
+      const pages = [];
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= teamsCurrentPage - 2 && i <= teamsCurrentPage + 2)) {
+          pages.push(i);
+        } else if (pages[pages.length - 1] !== '…') {
+          pages.push('…');
+        }
+      }
+
+      let html = `<button class="page-btn" onclick="goTeamsPage(${teamsCurrentPage - 1})" ${teamsCurrentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+      pages.forEach(p => {
+        if (p === '…') {
+          html += `<span style="padding:0 4px;color:#76849b;">…</span>`;
+        } else {
+          html += `<button class="page-btn${p === teamsCurrentPage ? ' active' : ''}" onclick="goTeamsPage(${p})">${p}</button>`;
+        }
+      });
+      html += `<button class="page-btn" onclick="goTeamsPage(${teamsCurrentPage + 1})" ${teamsCurrentPage === totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+      controls.innerHTML = html;
+    }
+
+    function goTeamsPage(page) {
+      teamsCurrentPage = page;
+      renderTeams();
+      document.getElementById('tab-teams').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function openAddTeamModal() {
+      document.getElementById('teamModalTitle').textContent = 'Add Team';
+      document.getElementById('teamId').value = '';
+      document.getElementById('teamName').value = '';
+      document.getElementById('teamSchoolName').value = '';
+      document.getElementById('teamCity').value = '';
+      document.getElementById('teamState').value = '';
+      document.getElementById('teamBannerStart').value = '#1e3c72';
+      document.getElementById('teamBannerStartHex').value = '#1e3c72';
+      document.getElementById('teamBannerEnd').value = '#2a5298';
+      document.getElementById('teamBannerEndHex').value = '#2a5298';
+      document.getElementById('teamUseGradient').checked = false;
+
+      // Show coach dropdown, hide readonly display
+      const selectEl = document.getElementById('teamCoachSelect');
+      const readonlyEl = document.getElementById('teamCoachReadonly');
+      selectEl.style.display = '';
+      readonlyEl.style.display = 'none';
+
+      // Load available coaches (coaches without a team)
+      try {
+        const res = await fetch('/api/admin/teams/available-coaches');
+        const coaches = res.ok ? await res.json() : [];
+        selectEl.innerHTML = '<option value="">-- Select Coach --</option>'
+          + coaches.map(c => `<option value="${c.id}">${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})</option>`).join('');
+      } catch (_) {
+        selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
+      }
+
+      document.getElementById('teamModal').classList.add('active');
+    }
+
+    function openEditTeamModal(teamId) {
+      const t = allTeams.find(team => team.id === teamId);
+      if (!t) return;
+
+      document.getElementById('teamModalTitle').textContent = 'Edit Team';
+      document.getElementById('teamId').value = t.id;
+      document.getElementById('teamName').value = t.team_name || '';
+      document.getElementById('teamSchoolName').value = t.school_name || '';
+      document.getElementById('teamCity').value = t.city || '';
+      document.getElementById('teamState').value = t.state || '';
+      const startColor = t.banner_color_start || '#1e3c72';
+      const endColor = t.banner_color_end || '#2a5298';
+      document.getElementById('teamBannerStart').value = startColor;
+      document.getElementById('teamBannerStartHex').value = startColor;
+      document.getElementById('teamBannerEnd').value = endColor;
+      document.getElementById('teamBannerEndHex').value = endColor;
+      document.getElementById('teamUseGradient').checked = !!t.use_banner_gradient_cards;
+
+      // Hide coach dropdown, show readonly coach name
+      document.getElementById('teamCoachSelect').style.display = 'none';
+      const readonlyEl = document.getElementById('teamCoachReadonly');
+      readonlyEl.style.display = '';
+      readonlyEl.textContent = (t.coach_name || t.coach_email || 'Unknown') + (t.coach_email ? ` (${t.coach_email})` : '');
+
+      document.getElementById('teamModal').classList.add('active');
+    }
+
+    async function saveTeam() {
+      const id = document.getElementById('teamId').value;
+      const isEdit = !!id;
+      const teamName = document.getElementById('teamName').value.trim();
+      if (!teamName) return alert('Team name is required');
+
+      const payload = {
+        team_name: teamName,
+        school_name: document.getElementById('teamSchoolName').value.trim(),
+        city: document.getElementById('teamCity').value.trim(),
+        state: document.getElementById('teamState').value.trim(),
+        banner_color_start: document.getElementById('teamBannerStartHex').value.trim(),
+        banner_color_end: document.getElementById('teamBannerEndHex').value.trim(),
+        use_banner_gradient_cards: document.getElementById('teamUseGradient').checked
+      };
+
+      if (!isEdit) {
+        const coachId = document.getElementById('teamCoachSelect').value;
+        if (!coachId) return alert('Please select a coach');
+        payload.coach_id = coachId;
+      }
+
+      const url = isEdit ? `/api/admin/teams/${id}` : '/api/admin/teams';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return alert(err.error || 'Failed to save team');
+      }
+
+      closeModal('teamModal');
+      loadTeams();
+    }
+
+    async function deleteTeam(teamId, name) {
+      if (!confirm(`Delete team "${name}"? This will also remove all roster members, invites, and recruiter shares. This cannot be undone.`)) return;
+      const res = await fetch(`/api/admin/teams/${teamId}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadTeams();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete team');
+      }
+    }
+
+    // Sync color picker <-> hex text inputs for team modal
+    document.getElementById('teamBannerStart').addEventListener('input', e => {
+      document.getElementById('teamBannerStartHex').value = e.target.value;
+    });
+    document.getElementById('teamBannerStartHex').addEventListener('input', e => {
+      if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+        document.getElementById('teamBannerStart').value = e.target.value;
+      }
+    });
+    document.getElementById('teamBannerEnd').addEventListener('input', e => {
+      document.getElementById('teamBannerEndHex').value = e.target.value;
+    });
+    document.getElementById('teamBannerEndHex').addEventListener('input', e => {
+      if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+        document.getElementById('teamBannerEnd').value = e.target.value;
+      }
+    });
 
     // College Management
     let allColleges = [];

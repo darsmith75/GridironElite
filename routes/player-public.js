@@ -8,6 +8,79 @@ const { enrichPlayerProfile } = require('../utils/enrich-player');
 
 const router = express.Router();
 
+// Public: List all HS teams
+router.get('/teams', async (req, res) => {
+  try {
+    const teams = await db.prepare(`
+      SELECT ht.id, ht.team_name, ht.school_name, ht.school_logo,
+        ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
+        ht.city, ht.state, ht.created_at, ht.coach_id,
+        u.full_name AS coach_name,
+        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count
+      FROM hs_teams ht
+      JOIN users u ON u.id = ht.coach_id
+      ORDER BY ht.team_name ASC
+    `).all();
+    res.json(teams);
+  } catch (error) {
+    console.error('Get public teams error:', error);
+    res.status(500).json({ error: 'Failed to load teams' });
+  }
+});
+
+// Public: Get full team page details by team ID
+router.get('/team/:id', async (req, res) => {
+  try {
+    const teamId = parseInt(req.params.id, 10);
+    if (Number.isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+
+    const team = await db.prepare(`
+      SELECT ht.id, ht.team_name, ht.school_name, ht.school_logo,
+        ht.school_overview, ht.team_website,
+        ht.twitter_url, ht.instagram_url, ht.facebook_url, ht.youtube_url, ht.tiktok_url,
+        ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
+        ht.city, ht.state, ht.created_at, ht.coach_id,
+        u.full_name AS coach_name,
+        u.email AS coach_email,
+        u.phone AS coach_phone,
+        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count
+      FROM hs_teams ht
+      JOIN users u ON u.id = ht.coach_id
+      WHERE ht.id = ?
+      LIMIT 1
+    `).get(teamId);
+
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const roster = await db.prepare(`
+      SELECT pp.user_id, pp.full_name, pp.position, pp.graduation_year, pp.height, pp.weight, pp.profile_picture, tp.joined_at
+      FROM team_players tp
+      JOIN player_profiles pp ON pp.user_id = tp.player_id
+      WHERE tp.team_id = ?
+      ORDER BY pp.full_name ASC
+    `).all(teamId);
+
+    const schedule = await db.prepare(`
+      SELECT id, opponent_name, event_date, event_time, location, is_home, notes, sort_order
+      FROM team_schedules
+      WHERE team_id = ?
+      ORDER BY COALESCE(event_date, DATE '2999-12-31') ASC, sort_order ASC, id ASC
+    `).all(teamId);
+
+    const staff = await db.prepare(`
+      SELECT id, full_name, role_title, bio, email, phone, sort_order
+      FROM team_staff_members
+      WHERE team_id = ?
+      ORDER BY sort_order ASC, full_name ASC, id ASC
+    `).all(teamId);
+
+    res.json({ team, roster, schedule, staff });
+  } catch (error) {
+    console.error('Get public team detail error:', error);
+    res.status(500).json({ error: 'Failed to load team details' });
+  }
+});
+
 router.get('/ad-slots', async (req, res) => {
   try {
     const slots = await getAdSlotsMap();
