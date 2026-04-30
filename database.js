@@ -538,6 +538,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
   CREATE INDEX IF NOT EXISTS idx_users_role_created ON users(role, created_at);
   CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
+  CREATE INDEX IF NOT EXISTS idx_users_email_verification_token ON users(email_verification_token) WHERE email_verification_token IS NOT NULL;
+  CREATE INDEX IF NOT EXISTS idx_users_password_reset_token ON users(password_reset_token) WHERE password_reset_token IS NOT NULL;
   CREATE INDEX IF NOT EXISTS idx_player_videos_user ON player_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_images_user ON player_images(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_contacts_user ON player_contacts(user_id);
