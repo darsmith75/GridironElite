@@ -113,7 +113,10 @@
           </div>
           <div class="input-group">
             <label>Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password" required onkeypress="handleLoginKeyPress(event)">
+            <div class="password-input-wrap">
+              <input type="password" id="loginPassword" placeholder="Enter your password" required onkeypress="handleLoginKeyPress(event)">
+              <button type="button" class="password-toggle-btn" id="toggleLoginPassword" aria-label="Show password" aria-pressed="false" title="Show password">&#128065;</button>
+            </div>
           </div>
           <div class="auth-help-row">
             <a href="#" class="auth-link-btn" onclick="openForgotPasswordModal(event)">Forgot password?</a>

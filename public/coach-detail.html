@@ -118,7 +118,7 @@
     <div class="dashboard-container">
       <div class="coach-detail-container">
         <a href="#" id="backLink" class="back-button" style="display:none;">
-          <span>← Back to Players</span>
+          <span>← Back to Previous Page</span>
         </a>
         <div id="coachDetail"></div>
       </div>
@@ -142,6 +142,35 @@
       return shareToken
         ? 'recruiter-share.html?token=' + encodeURIComponent(shareToken)
         : 'recruiter-share.html';
+    }
+
+    function getBackFallbackUrl() {
+      if (shareToken) return getRecruiterShareUrl();
+      if (document.referrer) {
+        try {
+          const ref = new URL(document.referrer);
+          if (ref.origin === window.location.origin) {
+            return ref.pathname + ref.search + ref.hash;
+          }
+        } catch (_) {}
+      }
+      return 'teams.html';
+    }
+
+    function setupBackLink() {
+      const backLink = document.getElementById('backLink');
+      if (!backLink) return;
+
+      backLink.style.display = '';
+      backLink.href = getBackFallbackUrl();
+      backLink.onclick = function (event) {
+        event.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = getBackFallbackUrl();
+        }
+      };
     }
 
     function applyRecruiterShareTopNav() {
@@ -228,6 +257,8 @@
     }
 
     async function init() {
+      setupBackLink();
+
       if (shareToken) {
         applyRecruiterShareTopNav();
       }
@@ -253,14 +284,6 @@
 
         renderCoachDetail(data);
         markTopNavReady();
-
-        if (shareToken) {
-          const backLink = document.getElementById('backLink');
-          if (backLink) {
-            backLink.style.display = '';
-            backLink.href = getRecruiterShareUrl();
-          }
-        }
       } catch (error) {
         console.error('Coach detail load error:', error);
         document.getElementById('coachDetail').innerHTML = '<p style="color:#c62828;">Error loading coach profile.</p>';

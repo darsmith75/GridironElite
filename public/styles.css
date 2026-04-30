@@ -2235,6 +2235,39 @@ textarea {
   background: white;
 }
 
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input-wrap input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #4a6fa5;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.password-toggle-btn:hover {
+  color: #2f568f;
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid #4a6fa5;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .input-group input:focus {
   outline: none;
   border-color: #4a6fa5;

@@ -57,6 +57,21 @@ function handleRegisterKeyPress(event) {
   }
 }
 
+function initLoginPasswordToggle() {
+  const passwordInput = document.getElementById('loginPassword');
+  const toggleButton = document.getElementById('toggleLoginPassword');
+  if (!passwordInput || !toggleButton) return;
+
+  toggleButton.addEventListener('click', () => {
+    const isHidden = passwordInput.type === 'password';
+    passwordInput.type = isHidden ? 'text' : 'password';
+    toggleButton.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+    toggleButton.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    toggleButton.title = isHidden ? 'Hide password' : 'Show password';
+    toggleButton.innerHTML = isHidden ? '&#128064;' : '&#128065;';
+  });
+}
+
 function openForgotPasswordModal(event) {
   if (event) event.preventDefault();
   clearAuthMessage('forgotMessage');
@@ -472,7 +487,11 @@ function injectGlobalFooter() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', injectGlobalFooter);
+  document.addEventListener('DOMContentLoaded', () => {
+    injectGlobalFooter();
+    initLoginPasswordToggle();
+  });
 } else {
   injectGlobalFooter();
+  initLoginPasswordToggle();
 }
