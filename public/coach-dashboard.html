@@ -1018,6 +1018,19 @@
     }
     .team-page-message.success { color: #2e7d32; }
     .team-page-message.error { color: #c62828; }
+    .banner-image-preview {
+      width: 100%;
+      height: 120px;
+      border-radius: 10px;
+      background: #1e3c72 center/cover no-repeat;
+      border: 2px dashed #c7d0da;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 600;
+    }
     .team-record-list {
       display: grid;
       gap: 12px;
@@ -1382,6 +1395,20 @@
       <!-- Tab: Team Page -->
       <div id="tab-coach-teampage" class="coach-tab-panel hidden">
         <div class="team-page-manager">
+          <div class="team-page-card">
+            <div class="section-title" style="margin:0 0 8px;">Team Page Banner Image</div>
+            <p class="team-page-help">Upload a background image for the top banner on your public team page. Recommended: wide landscape photo (1200&times;400 px or larger).</p>
+            <div id="bannerImagePreview" class="banner-image-preview">No banner image set</div>
+            <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
+              <div style="flex:1;min-width:220px;">
+                <label for="bannerImageInput" style="display:block;font-size:12px;color:#666;margin-bottom:4px;">Choose Image</label>
+                <input type="file" id="bannerImageInput" accept="image/*" onchange="previewBannerImageFromFile()" style="width:100%;padding:8px 10px;border:1px solid #c7d0da;border-radius:8px;font-size:13px;background:#fff;box-sizing:border-box;">
+              </div>
+              <button class="btn-invite" id="saveBannerImageBtn" onclick="saveBannerImage()">Save Banner Image</button>
+            </div>
+            <div class="team-page-message" id="bannerImageMessage"></div>
+          </div>
+
           <div class="team-page-card">
             <div class="section-title" style="margin:0 0 8px;">Public Team Profile</div>
             <p class="team-page-help">This information appears on the public team page when someone clicks View Team.</p>
@@ -1839,6 +1866,17 @@
       document.getElementById('teamPageFacebook').value = teamData.facebook_url || '';
       document.getElementById('teamPageYouTube').value = teamData.youtube_url || '';
       document.getElementById('teamPageTikTok').value = teamData.tiktok_url || '';
+
+      const bannerPreview = document.getElementById('bannerImagePreview');
+      if (bannerPreview) {
+        if (teamData.banner_image) {
+          bannerPreview.style.backgroundImage = `url('/uploads/${encodeURI(teamData.banner_image)}')`;
+          bannerPreview.textContent = '';
+        } else {
+          bannerPreview.style.backgroundImage = '';
+          bannerPreview.textContent = 'No banner image set';
+        }
+      }
     }
 
     function setTeamPageMessage(elementId, type, text) {
@@ -1875,6 +1913,50 @@
         setTeamPageMessage('teamPageProfileMessage', 'success', 'Public team profile saved.');
       } catch (_) {
         setTeamPageMessage('teamPageProfileMessage', 'error', 'Network error while saving team profile.');
+      }
+    }
+
+    function previewBannerImageFromFile() {
+      const input = document.getElementById('bannerImageInput');
+      const preview = document.getElementById('bannerImagePreview');
+      if (!input || !input.files || !input.files[0] || !preview) return;
+      const src = URL.createObjectURL(input.files[0]);
+      preview.style.backgroundImage = `url('${src}')`;
+      preview.textContent = '';
+    }
+
+    async function saveBannerImage() {
+      const input = document.getElementById('bannerImageInput');
+      const msg = document.getElementById('bannerImageMessage');
+      const btn = document.getElementById('saveBannerImageBtn');
+      if (!input || !input.files || !input.files[0]) {
+        msg.className = 'team-page-message error';
+        msg.textContent = 'Please choose an image first.';
+        return;
+      }
+      const formData = new FormData();
+      formData.append('bannerImage', input.files[0]);
+      btn.disabled = true;
+      msg.className = 'team-page-message';
+      msg.textContent = 'Uploading...';
+      try {
+        const res = await fetch('/api/coach/team/banner-image', { method: 'POST', body: formData });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          msg.className = 'team-page-message error';
+          msg.textContent = data.error || 'Failed to upload banner image.';
+          return;
+        }
+        teamData = teamData || {};
+        teamData.banner_image = data.bannerImage || null;
+        input.value = '';
+        msg.className = 'team-page-message success';
+        msg.textContent = 'Banner image updated successfully.';
+      } catch (_) {
+        msg.className = 'team-page-message error';
+        msg.textContent = 'Network error while uploading banner image.';
+      } finally {
+        btn.disabled = false;
       }
     }
 

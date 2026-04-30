@@ -322,8 +322,8 @@
       const bannerStart = t.banner_color_start || '#1e3c72';
       const bannerEnd = t.banner_color_end || '#2a5298';
       const useGradient = !!t.use_banner_gradient_cards;
-      const bannerStyle = useGradient
-        ? `background: linear-gradient(135deg, ${escapeHtml(bannerStart)} 0%, ${escapeHtml(bannerEnd)} 100%);`
+      const bannerStyle = t.banner_image
+        ? `background: url('/uploads/${encodeURI(t.banner_image)}') center/cover no-repeat, linear-gradient(135deg, ${escapeHtml(bannerStart)} 0%, ${escapeHtml(bannerEnd)} 100%);`
         : `background: linear-gradient(135deg, ${escapeHtml(bannerStart)} 0%, ${escapeHtml(bannerEnd)} 100%);`;
 
       const logoHtml = t.school_logo

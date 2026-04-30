@@ -528,6 +528,9 @@
       const start = team.banner_color_start || '#1e3c72';
       const end = team.banner_color_end || '#2a5298';
       const location = [team.city, team.state].filter(Boolean).map(escHtml).join(', ');
+      const bannerBg = team.banner_image
+        ? `background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('/uploads/${encodeURI(team.banner_image)}') center/cover no-repeat;`
+        : `background: linear-gradient(135deg, ${escHtml(start)} 0%, ${escHtml(end)} 100%);`;
       const logoHtml = team.school_logo
         ? `<img src="/uploads/${encodeURI(team.school_logo)}" alt="${escHtml(team.team_name || 'Team')}" onerror="this.onerror=null;this.parentNode.innerHTML='<div class=&quot;team-hero-logo-placeholder&quot;>🏈</div>'">`
         : '<div class="team-hero-logo-placeholder">🏈</div>';
@@ -542,7 +545,7 @@
       document.title = `${team.team_name || 'Team'} - Gridiron Athletes`;
 
       root.innerHTML = `
-        <div class="team-hero" style="background: linear-gradient(135deg, ${escHtml(start)} 0%, ${escHtml(end)} 100%);">
+        <div class="team-hero" style="${bannerBg}">
           <div class="team-hero-logo">${logoHtml}</div>
           <div class="team-hero-content">
             <h1 class="team-hero-title">${escHtml(team.team_name || 'Team')}</h1>

@@ -13,7 +13,7 @@ router.get('/teams', async (req, res) => {
     const teams = await db.prepare(`
       SELECT ht.id, ht.team_name, ht.school_name, ht.school_logo,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
-        ht.city, ht.state, ht.created_at, ht.coach_id,
+        ht.banner_image, ht.city, ht.state, ht.created_at, ht.coach_id,
         u.full_name AS coach_name,
         (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count
       FROM hs_teams ht
@@ -38,7 +38,7 @@ router.get('/team/:id', async (req, res) => {
         ht.school_overview, ht.team_website,
         ht.twitter_url, ht.instagram_url, ht.facebook_url, ht.youtube_url, ht.tiktok_url,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
-        ht.city, ht.state, ht.created_at, ht.coach_id,
+        ht.banner_image, ht.city, ht.state, ht.created_at, ht.coach_id,
         u.full_name AS coach_name,
         u.email AS coach_email,
         u.phone AS coach_phone,

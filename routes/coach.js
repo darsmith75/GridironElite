@@ -52,7 +52,7 @@ router.get('/coach/team', requireCoach, async (req, res) => {
       SELECT id, coach_id, team_name, school_name, school_logo, school_overview,
              team_website, twitter_url, instagram_url, facebook_url, youtube_url, tiktok_url,
              banner_color_start, banner_color_end, use_banner_gradient_cards,
-             city, state, created_at
+             banner_image, city, state, created_at
       FROM hs_teams
       WHERE coach_id = ?
     `).get(coachId);
@@ -106,6 +106,30 @@ router.post('/coach/team/logo', requireCoach, upload.single('schoolLogo'), async
   } catch (error) {
     console.error('Coach upload school logo error:', error);
     res.status(500).json({ error: 'Failed to upload school logo' });
+  }
+});
+
+// Coach: Upload/update team page background banner image
+router.post('/coach/team/banner-image', requireCoach, upload.single('bannerImage'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Banner image file is required' });
+    }
+    const team = await db.prepare('SELECT id, banner_image FROM hs_teams WHERE coach_id = ?').get(req.session.userId);
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    await processUploadedFiles(req.session.userId, { bannerImage: [req.file] });
+    const bannerImage = req.session.userId + '/' + req.file.filename;
+
+    if (team.banner_image && team.banner_image !== bannerImage) {
+      await deleteUploadFile(team.banner_image);
+    }
+
+    await db.prepare('UPDATE hs_teams SET banner_image = ? WHERE id = ?').run(bannerImage, team.id);
+    res.json({ success: true, bannerImage });
+  } catch (error) {
+    console.error('Coach upload banner image error:', error);
+    res.status(500).json({ error: 'Failed to upload banner image' });
   }
 });
 
