@@ -19,8 +19,7 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-iisnode/*-stdout-*.txt
-iisnode/*-stderr-*.txt
+iisnode/
 
 # OS files
 .DS_Store
