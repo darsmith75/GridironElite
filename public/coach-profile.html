@@ -8,59 +8,88 @@
   <style>
     .team-banner {
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      border-radius: 14px;
-      color: #fff;
-      padding: 20px 24px;
+      border-radius: 18px;
+      color: white;
+      padding: 28px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 22px;
       margin-bottom: 16px;
+      box-shadow: 0 14px 34px rgba(18, 42, 84, 0.18);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
     }
 
     .team-banner .team-icon {
-      font-size: 40px;
+      font-size: 46px;
       line-height: 1;
       flex-shrink: 0;
-      width: 54px;
-      height: 54px;
+      width: 104px;
+      height: 104px;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px solid rgba(0, 0, 0, 0.7);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.14);
     }
 
     .team-banner .team-icon img {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      border-radius: 8px;
-      background: #fff;
-      padding: 4px;
-      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.94);
+      padding: 10px;
     }
 
     .team-banner .team-text { flex: 1; min-width: 0; }
 
     .team-banner .team-name {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 0 0 2px;
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #ffffff;
+      margin: 0;
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 6px rgba(0, 0, 0, 0.45);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .team-banner .school-name {
-      font-size: 14px;
-      opacity: 0.86;
+      margin-top: 6px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      opacity: 0.95;
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 6px rgba(0, 0, 0, 0.45);
     }
 
     .team-banner .team-location {
-      font-size: 12px;
-      opacity: 0.72;
-      margin-top: 2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      opacity: 1;
+      margin-top: 14px;
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 6px rgba(0, 0, 0, 0.45);
     }
 
     .coach-profile-photo-section {
@@ -76,14 +105,9 @@
     }
 
     @media (max-width: 768px) {
-      .team-banner {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .team-banner .team-name {
-        white-space: normal;
-      }
+      .team-banner { flex-direction: column; text-align: center; }
+      .team-banner .team-name { font-size: 26px; white-space: normal; }
+      .team-banner .school-name { font-size: 18px; }
     }
   </style>
 </head>
