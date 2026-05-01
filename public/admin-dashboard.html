@@ -320,6 +320,24 @@
     .btn-save:hover { background: #2a5298; }
     .btn-cancel { background: #eee; color: #333; }
     .btn-cancel:hover { background: #ddd; }
+    .roster-player-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid #e8edf2;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      background: #fafbfc;
+    }
+    .roster-player-row .roster-player-info { flex: 1; min-width: 0; }
+    .roster-player-row .roster-player-name { font-weight: 600; color: #1e3c72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .roster-player-row .roster-player-meta { color: #76849b; font-size: 12px; }
+    .roster-remove-btn { background: #ffebee; color: #c62828; border: none; border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .roster-remove-btn:hover { background: #ffcdd2; }
+    .roster-add-btn { background: #e8f5e9; color: #2e7d32; border: none; border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .roster-add-btn:hover { background: #c8e6c9; }
     .pro-tip-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -1028,6 +1046,35 @@
     </div>
   </div>
 
+
+  <!-- Manage Roster Modal -->
+  <div class="modal-overlay" id="rosterModal">
+    <div class="modal" style="max-width:640px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 id="rosterModalTitle" style="margin:0;">Manage Roster</h3>
+        <button onclick="closeModal('rosterModal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666;">&times;</button>
+      </div>
+
+      <h4 style="margin:0 0 10px;color:#333;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Current Roster</h4>
+      <div id="rosterList" style="min-height:40px;margin-bottom:20px;">
+        <div style="color:#999;font-size:14px;padding:10px 0;">Loading…</div>
+      </div>
+
+      <h4 style="margin:0 0 10px;color:#333;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-top:1px solid #e8edf2;padding-top:16px;">Add Player</h4>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="text" id="rosterSearchInput" placeholder="Search by name or email…"
+          style="flex:1;padding:9px 12px;border:1px solid #c7d0da;border-radius:8px;font-size:14px;"
+          onkeydown="if(event.key==='Enter')searchRosterPlayers()">
+        <button onclick="searchRosterPlayers()" style="padding:9px 16px;background:#1e3c72;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Search</button>
+      </div>
+      <div id="rosterSearchResults" style="margin-bottom:16px;"></div>
+      <div id="rosterMsg" style="min-height:20px;font-size:13px;color:#c62828;"></div>
+
+      <div class="modal-actions" style="margin-top:0;">
+        <button class="btn-cancel" onclick="closeModal('rosterModal')">Close</button>
+      </div>
+    </div>
+  </div>
   <script src="app.js"></script>
   <script>
     checkAuth('admin');
@@ -2035,6 +2082,7 @@
           <td>${created}</td>
           <td class="actions-cell">
             <div class="user-actions">
+              <button class="action-btn view" onclick="openRosterModal(${t.id}, teamName)">Roster</button>
               <button class="action-btn edit" onclick="openEditTeamModal(${t.id})">Edit</button>
               <button class="action-btn delete" onclick="deleteTeam(${t.id}, '${teamName.replace(/'/g, "\\'")}')">Delete</button>
             </div>
@@ -2343,6 +2391,112 @@
     loadSchoolRatingCategories();
     loadB2DeleteQueue();
     startB2QueueAutoRefresh();
+  
+    // ---- Roster Management ----
+    let rosterCurrentTeamId = null;
+
+    async function openRosterModal(teamId, teamName) {
+      rosterCurrentTeamId = teamId;
+      document.getElementById('rosterModalTitle').textContent = 'Manage Roster — ' + (teamName || 'Team');
+      document.getElementById('rosterSearchInput').value = '';
+      document.getElementById('rosterSearchResults').innerHTML = '';
+      document.getElementById('rosterMsg').textContent = '';
+      document.getElementById('rosterModal').classList.add('active');
+      await loadRoster();
+    }
+
+    async function loadRoster() {
+      const list = document.getElementById('rosterList');
+      list.innerHTML = '<div style="color:#999;font-size:14px;padding:10px 0;">Loading…</div>';
+      try {
+        const res = await fetch('/api/admin/teams/' + rosterCurrentTeamId + '/roster');
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        renderRoster(data.players || []);
+      } catch (e) {
+        list.innerHTML = '<div style="color:#c62828;font-size:14px;">Failed to load roster</div>';
+      }
+    }
+
+    function renderRoster(players) {
+      const list = document.getElementById('rosterList');
+      if (!players.length) {
+        list.innerHTML = '<div style="color:#999;font-size:14px;padding:6px 0;">No players on this roster yet.</div>';
+        return;
+      }
+      list.innerHTML = players.map(function(p) {
+        var name = escapeHtml(p.full_name || p.email || '—');
+        var meta = [p.position, p.graduation_year ? 'Class of ' + p.graduation_year : ''].filter(Boolean).join(' · ') || escapeHtml(p.email || '');
+        return '<div class="roster-player-row">'
+          + '<div class="roster-player-info">'
+          + '<div class="roster-player-name">' + name + '</div>'
+          + '<div class="roster-player-meta">' + escapeHtml(meta) + '</div>'
+          + '</div>'
+          + '<button class="roster-remove-btn" onclick="removeRosterPlayer(' + p.player_id + ')">Remove</button>'
+          + '</div>';
+      }).join('');
+    }
+
+    async function removeRosterPlayer(playerId) {
+      if (!confirm('Remove this player from the roster?')) return;
+      var msg = document.getElementById('rosterMsg');
+      msg.textContent = '';
+      try {
+        var res = await fetch('/api/admin/teams/' + rosterCurrentTeamId + '/roster/' + playerId, { method: 'DELETE' });
+        if (!res.ok) { var e = await res.json().catch(function(){return {};}); msg.textContent = e.error || 'Failed to remove'; return; }
+        await loadRoster();
+        loadTeams();
+      } catch (e) {
+        msg.textContent = 'Failed to remove player';
+      }
+    }
+
+    async function searchRosterPlayers() {
+      var q = document.getElementById('rosterSearchInput').value.trim();
+      var results = document.getElementById('rosterSearchResults');
+      var msg = document.getElementById('rosterMsg');
+      msg.textContent = '';
+      if (q.length < 2) { results.innerHTML = '<div style="color:#999;font-size:13px;">Enter at least 2 characters</div>'; return; }
+      results.innerHTML = '<div style="color:#999;font-size:13px;">Searching…</div>';
+      try {
+        var res = await fetch('/api/admin/players/search?q=' + encodeURIComponent(q) + '&excludeTeam=' + rosterCurrentTeamId);
+        if (!res.ok) throw new Error();
+        var players = await res.json();
+        if (!players.length) { results.innerHTML = '<div style="color:#999;font-size:13px;">No players found</div>'; return; }
+        results.innerHTML = players.map(function(p) {
+          var name = escapeHtml(p.full_name || p.email || '—');
+          var meta = [p.position, p.graduation_year ? 'Class of ' + p.graduation_year : ''].filter(Boolean).join(' · ') || escapeHtml(p.email || '');
+          return '<div class="roster-player-row">'
+            + '<div class="roster-player-info">'
+            + '<div class="roster-player-name">' + name + '</div>'
+            + '<div class="roster-player-meta">' + escapeHtml(meta) + '</div>'
+            + '</div>'
+            + '<button class="roster-add-btn" onclick="addRosterPlayer(' + p.id + ')">Add</button>'
+            + '</div>';
+        }).join('');
+      } catch (e) {
+        results.innerHTML = '<div style="color:#c62828;font-size:13px;">Search failed</div>';
+      }
+    }
+
+    async function addRosterPlayer(playerId) {
+      var msg = document.getElementById('rosterMsg');
+      msg.textContent = '';
+      try {
+        var res = await fetch('/api/admin/teams/' + rosterCurrentTeamId + '/roster', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerId: playerId })
+        });
+        if (!res.ok) { var e = await res.json().catch(function(){return {};}); msg.textContent = e.error || 'Failed to add'; return; }
+        await loadRoster();
+        loadTeams();
+        searchRosterPlayers();
+      } catch (e) {
+        msg.textContent = 'Failed to add player';
+      }
+    }
+
   </script>
 </body>
 </html>

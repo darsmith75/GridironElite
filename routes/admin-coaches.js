@@ -267,3 +267,93 @@ router.delete('/admin/teams/:id', requireAdmin, async (req, res) => {
 });
 
 module.exports = router;
+
+  // Admin: Get team roster
+  router.get('/admin/teams/:id/roster', requireAdmin, async (req, res) => {
+    const teamId = parseInt(req.params.id, 10);
+    if (!teamId || isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+    try {
+      const team = await db.prepare(`SELECT id, team_name FROM hs_teams WHERE id = ?`).get(teamId);
+      if (!team) return res.status(404).json({ error: 'Team not found' });
+      const players = await db.prepare(`
+        SELECT tp.player_id, tp.joined_at,
+          COALESCE(pp.full_name, u.full_name, u.email) AS full_name,
+          u.email, pp.position, pp.graduation_year
+        FROM team_players tp
+        JOIN users u ON u.id = tp.player_id
+        LEFT JOIN player_profiles pp ON pp.user_id = tp.player_id
+        WHERE tp.team_id = ?
+        ORDER BY COALESCE(pp.full_name, u.full_name, u.email) ASC
+      `).all(teamId);
+      res.json({ team, players });
+    } catch (error) {
+      console.error('Admin get team roster error:', error);
+      res.status(500).json({ error: 'Failed to get roster' });
+    }
+  });
+
+  // Admin: Search players (optionally excluding those already on a team)
+  router.get('/admin/players/search', requireAdmin, async (req, res) => {
+    const q = String(req.query?.q || '').trim();
+    const excludeTeamId = parseInt(req.query?.excludeTeam, 10) || null;
+    if (!q || q.length < 2) return res.json([]);
+    try {
+      const like = `%${q}%`;
+      let sql = `
+        SELECT u.id, COALESCE(pp.full_name, u.full_name, u.email) AS full_name,
+          u.email, pp.position, pp.graduation_year
+        FROM users u
+        LEFT JOIN player_profiles pp ON pp.user_id = u.id
+        WHERE u.role = 'player'
+          AND (LOWER(COALESCE(pp.full_name, u.full_name, '')) LIKE LOWER(?)
+            OR LOWER(u.email) LIKE LOWER(?))
+      `;
+      const params = [like, like];
+      if (excludeTeamId) {
+        sql += ` AND u.id NOT IN (SELECT player_id FROM team_players WHERE team_id = ?)`;
+        params.push(excludeTeamId);
+      }
+      sql += ` ORDER BY full_name ASC LIMIT 20`;
+      const players = await db.prepare(sql).all(...params);
+      res.json(players);
+    } catch (error) {
+      console.error('Admin player search error:', error);
+      res.status(500).json({ error: 'Failed to search players' });
+    }
+  });
+
+  // Admin: Add player to team
+  router.post('/admin/teams/:id/roster', requireAdmin, async (req, res) => {
+    const teamId = parseInt(req.params.id, 10);
+    const playerId = parseInt(req.body?.playerId, 10);
+    if (!teamId || isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+    if (!playerId || isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+    try {
+      const team = await db.prepare(`SELECT id FROM hs_teams WHERE id = ?`).get(teamId);
+      if (!team) return res.status(404).json({ error: 'Team not found' });
+      const player = await db.prepare(`SELECT id FROM users WHERE id = ? AND role = 'player'`).get(playerId);
+      if (!player) return res.status(404).json({ error: 'Player not found' });
+      const existing = await db.prepare(`SELECT player_id FROM team_players WHERE team_id = ? AND player_id = ?`).get(teamId, playerId);
+      if (existing) return res.status(409).json({ error: 'Player is already on this team' });
+      await db.prepare(`INSERT INTO team_players (team_id, player_id) VALUES (?, ?)`).run(teamId, playerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Admin add player to team error:', error);
+      res.status(500).json({ error: 'Failed to add player to team' });
+    }
+  });
+
+  // Admin: Remove player from team
+  router.delete('/admin/teams/:id/roster/:playerId', requireAdmin, async (req, res) => {
+    const teamId = parseInt(req.params.id, 10);
+    const playerId = parseInt(req.params.playerId, 10);
+    if (!teamId || isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+    if (!playerId || isNaN(playerId)) return res.status(400).json({ error: 'Invalid player ID' });
+    try {
+      await db.prepare(`DELETE FROM team_players WHERE team_id = ? AND player_id = ?`).run(teamId, playerId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Admin remove player from team error:', error);
+      res.status(500).json({ error: 'Failed to remove player' });
+    }
+  });
