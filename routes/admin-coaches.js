@@ -333,9 +333,14 @@ module.exports = router;
       if (!team) return res.status(404).json({ error: 'Team not found' });
       const player = await db.prepare(`SELECT id FROM users WHERE id = ? AND role = 'player'`).get(playerId);
       if (!player) return res.status(404).json({ error: 'Player not found' });
-      const existing = await db.prepare(`SELECT player_id FROM team_players WHERE team_id = ? AND player_id = ?`).get(teamId, playerId);
-      if (existing) return res.status(409).json({ error: 'Player is already on this team' });
-      await db.prepare(`INSERT INTO team_players (team_id, player_id) VALUES (?, ?)`).run(teamId, playerId);
+      const inserted = await db.prepare(`
+        INSERT INTO team_players (team_id, player_id)
+        VALUES (?, ?)
+        ON CONFLICT (team_id, player_id) DO NOTHING
+      `).run(teamId, playerId);
+      if ((inserted?.changes || 0) === 0) {
+        return res.status(409).json({ error: 'Player is already on this team' });
+      }
       res.json({ success: true });
     } catch (error) {
       console.error('Admin add player to team error:', error);

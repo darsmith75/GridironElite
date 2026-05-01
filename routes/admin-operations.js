@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { getPendingB2DeleteQueueSnapshot, processPendingB2DeleteQueue } = require('../utils/b2-queue');
@@ -196,7 +197,11 @@ router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo')
       // Delete old logo from disk if present
       if (existing.logo) {
         const oldPath = path.resolve(existing.logo);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        try {
+          await fsPromises.unlink(oldPath);
+        } catch (error) {
+          if (error?.code !== 'ENOENT') throw error;
+        }
       }
       logo = path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/');
     }
@@ -223,7 +228,11 @@ router.delete('/admin/colleges/:id', requireAdmin, async (req, res) => {
 
     if (existing.logo) {
       const logoPath = path.resolve(existing.logo);
-      if (fs.existsSync(logoPath)) fs.unlinkSync(logoPath);
+      try {
+        await fsPromises.unlink(logoPath);
+      } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+      }
     }
 
     await db.prepare('DELETE FROM colleges WHERE id = ?').run(collegeId);

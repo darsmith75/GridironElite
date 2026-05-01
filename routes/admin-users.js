@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { b2Enabled, deleteFromB2Prefix } = require('../backblaze');
@@ -225,9 +226,7 @@ router.delete('/admin/users/:id', requireAdmin, async (req, res) => {
       }
       // Remove local upload folder (legacy / non-B2 fallback)
       const userUploadDir = path.join('uploads', String(user.id));
-      if (fs.existsSync(userUploadDir)) {
-        fs.rmSync(userUploadDir, { recursive: true, force: true });
-      }
+      await fsPromises.rm(userUploadDir, { recursive: true, force: true });
     }
     await db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
 

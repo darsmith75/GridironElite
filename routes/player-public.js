@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const db = require('../database');
 const { requireAuth } = require('../middleware/auth');
 const { getAdSlotsMap, logSiteTrafficEvent } = require('../utils/helpers');
-const { enrichPlayerProfile } = require('../utils/enrich-player');
+const { enrichPlayerProfile, enrichPlayerProfiles } = require('../utils/enrich-player');
 
 const router = express.Router();
 
@@ -52,12 +52,13 @@ router.get('/team/:id', async (req, res) => {
     if (!team) return res.status(404).json({ error: 'Team not found' });
 
     const roster = await db.prepare(`
-      SELECT pp.user_id, pp.full_name, pp.position, pp.graduation_year, pp.height, pp.weight, pp.profile_picture, tp.joined_at
+      SELECT pp.*, tp.joined_at
       FROM team_players tp
       JOIN player_profiles pp ON pp.user_id = tp.player_id
       WHERE tp.team_id = ?
       ORDER BY pp.full_name ASC
     `).all(teamId);
+    await enrichPlayerProfiles(roster);
 
     const schedule = await db.prepare(`
       SELECT id, opponent_name, event_date, event_time, location, is_home, notes, sort_order
@@ -158,7 +159,7 @@ router.get('/recruiter-share/:token', async (req, res) => {
       ORDER BY pp.full_name ASC
     `).all(share.id);
 
-    await Promise.all(players.map(player => enrichPlayerProfile(player)));
+    await enrichPlayerProfiles(players);
 
     res.json({
       share: {

@@ -207,44 +207,52 @@
     }
     .team-roster-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 320px));
+      justify-content: start;
+      gap: 22px;
     }
-    .team-player-card {
-      border: 1px solid #e4ebf3;
-      border-radius: 14px;
-      overflow: hidden;
-      background: #fbfdff;
+    .team-roster-grid .player-card-compact {
+      width: 100%;
+      max-width: 320px;
     }
-    .team-player-photo {
-      height: 130px;
-      background: linear-gradient(135deg, #edf3fb 0%, #d7e3f3 100%);
+    .team-card-actions {
       display: flex;
+      justify-content: center;
+      align-items: center;
+      align-self: stretch;
+      width: 100%;
+      height: 48px;
+      padding: 0 12px;
+      box-sizing: border-box;
+      margin: 0;
+      background: #d3deef;
+      border-top: 1px solid #b7c6db;
+      border-radius: 0;
+      flex-shrink: 0;
+    }
+    .team-card-view-btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #b7c6db;
+      background: #e4eaf4;
+      color: #1f3c68;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      transition: all 0.2s ease;
     }
-    .team-player-photo img {
-      width: 92px;
-      height: 92px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.95);
-      background: #fff;
+    .team-card-view-btn:hover {
+      background: #d8e2f2;
+      border-color: #9eb3d1;
     }
-    .team-player-body {
-      padding: 14px;
-    }
-    .team-player-name {
-      margin: 0;
-      font-size: 16px;
-      color: #1f2c3d;
-    }
-    .team-player-meta {
-      margin-top: 6px;
-      font-size: 13px;
-      color: #617089;
-      display: grid;
-      gap: 4px;
+    .use-banner-gradient-cards .team-roster-grid .player-card-header {
+      background: linear-gradient(135deg, var(--coach-banner-start, #1e3c72) 0%, var(--coach-banner-end, #2a5298) 100%);
     }
     .team-schedule-list,
     .team-staff-grid,
@@ -364,6 +372,12 @@
       .team-hero-meta {
         justify-content: center;
       }
+      .team-roster-grid {
+        grid-template-columns: 1fr;
+      }
+      .team-roster-grid .player-card-compact {
+        max-width: none;
+      }
       .team-schedule-item {
         grid-template-columns: 1fr;
       }
@@ -449,20 +463,97 @@
       }
     }
 
+    function hasVerifiedMetric(player) {
+      if (!player || !player.metric_videos) return false;
+      try {
+        const metricVideos = JSON.parse(player.metric_videos);
+        return Array.isArray(metricVideos) && metricVideos.some((video) => !!video?.is_verified);
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function formatHeightDisplay(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return '';
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        if (!Number.isFinite(feet) || !Number.isFinite(inches)) return raw;
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
+        return `${feet}'${inchesText}"`;
+      }
+
+      const numeric = Number(raw);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        const feet = Math.floor(numeric / 12);
+        const inches = Number((numeric - (feet * 12)).toFixed(1));
+        const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
+        return `${feet}'${inchesText}"`;
+      }
+
+      return raw;
+    }
+
+    function viewPlayer(playerId) {
+      window.location.href = 'player-detail.html?id=' + playerId;
+    }
+
     function formatRosterPlayer(player) {
-      const photo = player.profile_picture
-        ? '/uploads/' + encodeURI(player.profile_picture)
-        : '/images/silhouette-avatar.svg';
-      const parts = [player.position, player.graduation_year ? `Class of ${player.graduation_year}` : '', player.height, player.weight ? `${player.weight} lbs` : '']
-        .filter(Boolean)
-        .map(escHtml);
-      return `<div class="team-player-card">
-        <div class="team-player-photo">
-          <img src="${photo}" alt="${escHtml(player.full_name || 'Player')}" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">
+      const hasVerifiedBadge = hasVerifiedMetric(player);
+      const profilePicture = player.profile_picture ? `/uploads/${encodeURI(player.profile_picture)}` : '';
+      const escapedName = escHtml(player.full_name || 'Player');
+      return `<div class="player-card-compact">
+        <div onclick="viewPlayer(${player.user_id})" style="cursor:pointer;">
+          <div class="player-card-header">
+            ${profilePicture
+              ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-card-photo" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">`
+              : '<img src="/images/silhouette-avatar.svg" alt="No Photo" class="player-card-photo silhouette-photo">'}
+          </div>
+          <div class="player-card-body">
+            <div class="player-info-section">
+              <h3>${escapedName}</h3>
+              <p>${escHtml(player.position || 'Position not set')}</p>
+              <p>${escHtml(player.high_school || 'School not set')}</p>
+              <p>Class of ${escHtml(player.graduation_year || 'N/A')}</p>
+            </div>
+            <div class="player-stats-compact">
+              <div class="stat-item">
+                <div class="stat-label">Height</div>
+                <div class="stat-value">${escHtml(formatHeightDisplay(player.height) || 'N/A')}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Weight</div>
+                <div class="stat-value">${player.weight ? `${escHtml(player.weight)} lbs` : 'N/A'}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">GPA</div>
+                <div class="stat-value">${escHtml(player.gpa || 'N/A')}</div>
+              </div>
+              <div class="stat-item" title="${hasVerifiedBadge ? 'This athlete has at least one third-party verified athletic metric' : 'No third-party verified athletic metrics yet'}">
+                <div class="stat-label">Verified</div>
+                <div class="stat-value verified-athlete-tile ${hasVerifiedBadge ? '' : 'verified-athlete-tile-empty'}">
+                  ${hasVerifiedBadge
+                    ? '<img src="/images/logos/verified-athlete.svg" alt="Verified Athlete" class="verified-athlete-image">'
+                    : 'Not Yet'}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="team-player-body">
-          <h3 class="team-player-name">${escHtml(player.full_name || 'Player')}</h3>
-          <div class="team-player-meta">${parts.map(part => `<div>${part}</div>`).join('')}</div>
+        <div class="team-card-actions">
+          <button class="team-card-view-btn" onclick="viewPlayer(${player.user_id})">View Profile</button>
         </div>
       </div>`;
     }
@@ -572,6 +663,9 @@
       const staff = Array.isArray(data.staff) ? data.staff : [];
       const start = team.banner_color_start || '#1e3c72';
       const end = team.banner_color_end || '#2a5298';
+      document.body.classList.toggle('use-banner-gradient-cards', !!team.use_banner_gradient_cards);
+      document.documentElement.style.setProperty('--coach-banner-start', start);
+      document.documentElement.style.setProperty('--coach-banner-end', end);
       const location = [team.city, team.state].filter(Boolean).map(escHtml).join(', ');
       const bannerBg = team.banner_image
         ? `background: url('/uploads/${encodeURI(team.banner_image)}') center/cover no-repeat;`

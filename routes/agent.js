@@ -13,6 +13,25 @@ const {
 
 const router = express.Router();
 
+function wrapAsync(handler) {
+  return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+}
+
+for (const method of ['get', 'post', 'put', 'delete']) {
+  const original = router[method].bind(router);
+  router[method] = (routePath, ...handlers) => {
+    const wrappedHandlers = handlers.map((handler) => {
+      if (typeof handler !== 'function') return handler;
+      if (handler.length >= 3) return handler;
+      if (handler.constructor && handler.constructor.name === 'AsyncFunction') {
+        return wrapAsync(handler);
+      }
+      return handler;
+    });
+    return original(routePath, ...wrappedHandlers);
+  };
+}
+
 // Agent: Get all players with filters
 router.get('/agent/players', async (req, res) => {
   if (isAgentPlayersRateLimited(req)) {
