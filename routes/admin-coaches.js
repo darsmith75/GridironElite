@@ -154,15 +154,26 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
 // Pass ?current_team_id=X to also include the coach currently assigned to that team
 router.get('/admin/teams/available-coaches', requireAdmin, async (req, res) => {
   const currentTeamId = parseInt(req.query.current_team_id, 10) || null;
+  const includeAssigned = String(req.query.include_assigned || '').trim() === '1';
   try {
-    const coaches = await db.prepare(`
-      SELECT u.id, u.full_name, u.email
-      FROM users u
-      LEFT JOIN hs_teams ht ON ht.coach_id = u.id
-      WHERE u.role = 'coach'
-        AND (ht.id IS NULL OR ht.id = ?)
-      ORDER BY u.full_name
-    `).all(currentTeamId || null);
+    const coaches = includeAssigned
+      ? await db.prepare(`
+        SELECT u.id, u.full_name, u.email,
+          ht.id AS assigned_team_id, ht.team_name AS assigned_team_name
+        FROM users u
+        LEFT JOIN hs_teams ht ON ht.coach_id = u.id
+        WHERE u.role = 'coach'
+        ORDER BY u.full_name
+      `).all()
+      : await db.prepare(`
+        SELECT u.id, u.full_name, u.email,
+          ht.id AS assigned_team_id, ht.team_name AS assigned_team_name
+        FROM users u
+        LEFT JOIN hs_teams ht ON ht.coach_id = u.id
+        WHERE u.role = 'coach'
+          AND (ht.id IS NULL OR ht.id = ?)
+        ORDER BY u.full_name
+      `).all(currentTeamId || null);
     res.json(coaches);
   } catch (error) {
     console.error('Admin get available coaches error:', error);
@@ -235,28 +246,31 @@ router.put('/admin/teams/:id', requireAdmin, async (req, res) => {
       if (!coach || coach.role !== 'coach') {
         return res.status(400).json({ error: 'Selected user is not a coach' });
       }
-      const existing = await db.prepare(`SELECT id FROM hs_teams WHERE coach_id = ? AND id != ?`).get(parsedCoachId, teamId);
-      if (existing) {
-        return res.status(400).json({ error: 'This coach is already assigned to another team' });
-      }
     }
 
-    await db.prepare(`
-      UPDATE hs_teams
-      SET coach_id = ?, team_name = ?, school_name = ?, city = ?, state = ?,
-          banner_color_start = ?, banner_color_end = ?, use_banner_gradient_cards = ?
-      WHERE id = ?
-    `).run(
-      parsedCoachId || null,
-      trimmedTeamName,
-      String(school_name || '').trim() || null,
-      String(city || '').trim() || null,
-      String(state || '').trim() || null,
-      String(banner_color_start || '').trim() || null,
-      String(banner_color_end || '').trim() || null,
-      use_banner_gradient_cards ? 1 : 0,
-      teamId
-    );
+    await db.withTransaction(async (tx) => {
+      if (parsedCoachId) {
+        // Keep one-team-per-coach invariant by detaching coach from any other team.
+        await tx.prepare(`UPDATE hs_teams SET coach_id = NULL WHERE coach_id = ? AND id != ?`).run(parsedCoachId, teamId);
+      }
+
+      await tx.prepare(`
+        UPDATE hs_teams
+        SET coach_id = ?, team_name = ?, school_name = ?, city = ?, state = ?,
+            banner_color_start = ?, banner_color_end = ?, use_banner_gradient_cards = ?
+        WHERE id = ?
+      `).run(
+        parsedCoachId || null,
+        trimmedTeamName,
+        String(school_name || '').trim() || null,
+        String(city || '').trim() || null,
+        String(state || '').trim() || null,
+        String(banner_color_start || '').trim() || null,
+        String(banner_color_end || '').trim() || null,
+        use_banner_gradient_cards ? 1 : 0,
+        teamId
+      );
+    });
 
     res.json({ success: true });
   } catch (error) {

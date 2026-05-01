@@ -2196,10 +2196,16 @@
       readonlyEl.style.display = 'none';
 
       try {
-        const res = await fetch(`/api/admin/teams/available-coaches?current_team_id=${t.id}`);
+        const res = await fetch(`/api/admin/teams/available-coaches?current_team_id=${t.id}&include_assigned=1`);
         const coaches = res.ok ? await res.json() : [];
         selectEl.innerHTML = '<option value="">-- No Coach (Optional) --</option>'
-          + coaches.map(c => `<option value="${c.id}"${c.id === t.coach_id ? ' selected' : ''}>${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})</option>`).join('');
+          + coaches.map(c => {
+            const assignedElsewhere = c.assigned_team_id && c.assigned_team_id !== t.id;
+            const assignedSuffix = assignedElsewhere
+              ? ` - currently on ${escapeHtml(c.assigned_team_name || 'another team')}`
+              : '';
+            return `<option value="${c.id}"${c.id === t.coach_id ? ' selected' : ''}>${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})${assignedSuffix}</option>`;
+          }).join('');
       } catch (_) {
         selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
       }
