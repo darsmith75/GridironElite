@@ -150,16 +150,19 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
   }
 });
 
-// Admin: Get coaches without a team (for add-team dropdown)
+// Admin: Get coaches without a team (for add/edit-team dropdown)
+// Pass ?current_team_id=X to also include the coach currently assigned to that team
 router.get('/admin/teams/available-coaches', requireAdmin, async (req, res) => {
+  const currentTeamId = parseInt(req.query.current_team_id, 10) || null;
   try {
     const coaches = await db.prepare(`
       SELECT u.id, u.full_name, u.email
       FROM users u
       LEFT JOIN hs_teams ht ON ht.coach_id = u.id
-      WHERE u.role = 'coach' AND ht.id IS NULL
+      WHERE u.role = 'coach'
+        AND (ht.id IS NULL OR ht.id = ?)
       ORDER BY u.full_name
-    `).all();
+    `).all(currentTeamId || null);
     res.json(coaches);
   } catch (error) {
     console.error('Admin get available coaches error:', error);
@@ -215,22 +218,36 @@ router.put('/admin/teams/:id', requireAdmin, async (req, res) => {
   const teamId = parseInt(req.params.id, 10);
   if (!teamId || isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
 
-  const { team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards } = req.body || {};
+  const { coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards } = req.body || {};
   const trimmedTeamName = String(team_name || '').trim();
   if (!trimmedTeamName) {
     return res.status(400).json({ error: 'Team name is required' });
   }
 
+  const parsedCoachId = coach_id ? parseInt(coach_id, 10) : null;
+
   try {
     const team = await db.prepare(`SELECT id FROM hs_teams WHERE id = ?`).get(teamId);
     if (!team) return res.status(404).json({ error: 'Team not found' });
 
+    if (parsedCoachId) {
+      const coach = await db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(parsedCoachId);
+      if (!coach || coach.role !== 'coach') {
+        return res.status(400).json({ error: 'Selected user is not a coach' });
+      }
+      const existing = await db.prepare(`SELECT id FROM hs_teams WHERE coach_id = ? AND id != ?`).get(parsedCoachId, teamId);
+      if (existing) {
+        return res.status(400).json({ error: 'This coach is already assigned to another team' });
+      }
+    }
+
     await db.prepare(`
       UPDATE hs_teams
-      SET team_name = ?, school_name = ?, city = ?, state = ?,
+      SET coach_id = ?, team_name = ?, school_name = ?, city = ?, state = ?,
           banner_color_start = ?, banner_color_end = ?, use_banner_gradient_cards = ?
       WHERE id = ?
     `).run(
+      parsedCoachId || null,
       trimmedTeamName,
       String(school_name || '').trim() || null,
       String(city || '').trim() || null,

@@ -2189,11 +2189,20 @@
       document.getElementById('teamBannerEndHex').value = endColor;
       document.getElementById('teamUseGradient').checked = !!t.use_banner_gradient_cards;
 
-      // Hide coach dropdown, show readonly coach name
-      document.getElementById('teamCoachSelect').style.display = 'none';
+      // Show coach dropdown with all available coaches + current team's coach
+      const selectEl = document.getElementById('teamCoachSelect');
       const readonlyEl = document.getElementById('teamCoachReadonly');
-      readonlyEl.style.display = '';
-      readonlyEl.textContent = (t.coach_name || t.coach_email || 'Unknown') + (t.coach_email ? ` (${t.coach_email})` : '');
+      selectEl.style.display = '';
+      readonlyEl.style.display = 'none';
+
+      try {
+        const res = await fetch(`/api/admin/teams/available-coaches?current_team_id=${t.id}`);
+        const coaches = res.ok ? await res.json() : [];
+        selectEl.innerHTML = '<option value="">-- No Coach (Optional) --</option>'
+          + coaches.map(c => `<option value="${c.id}"${c.id === t.coach_id ? ' selected' : ''}>${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})</option>`).join('');
+      } catch (_) {
+        selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
+      }
 
       document.getElementById('teamModal').classList.add('active');
     }
@@ -2217,6 +2226,9 @@
       if (!isEdit) {
         const coachId = document.getElementById('teamCoachSelect').value;
         if (coachId) payload.coach_id = coachId;
+      } else {
+        const coachId = document.getElementById('teamCoachSelect').value;
+        payload.coach_id = coachId || null;
       }
 
       const url = isEdit ? `/api/admin/teams/${id}` : '/api/admin/teams';
