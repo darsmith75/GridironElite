@@ -997,9 +997,9 @@
       <h3 id="teamModalTitle">Add Team</h3>
       <input type="hidden" id="teamId">
       <div class="input-group" id="teamCoachGroup">
-        <label>Coach *</label>
+        <label>Coach <span style="color:#999;font-size:12px;font-weight:normal;">(Optional)</span></label>
         <select id="teamCoachSelect">
-          <option value="">-- Select Coach --</option>
+          <option value="">-- No Coach (Optional) --</option>
         </select>
         <div id="teamCoachReadonly" style="display:none; padding:10px 12px; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; font-size:14px; color:#333;"></div>
       </div>
@@ -2162,7 +2162,7 @@
       try {
         const res = await fetch('/api/admin/teams/available-coaches');
         const coaches = res.ok ? await res.json() : [];
-        selectEl.innerHTML = '<option value="">-- Select Coach --</option>'
+        selectEl.innerHTML = '<option value="">-- No Coach (Optional) --</option>'
           + coaches.map(c => `<option value="${c.id}">${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})</option>`).join('');
       } catch (_) {
         selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
@@ -2216,8 +2216,7 @@
 
       if (!isEdit) {
         const coachId = document.getElementById('teamCoachSelect').value;
-        if (!coachId) return alert('Please select a coach');
-        payload.coach_id = coachId;
+        if (coachId) payload.coach_id = coachId;
       }
 
       const url = isEdit ? `/api/admin/teams/${id}` : '/api/admin/teams';

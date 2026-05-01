@@ -114,7 +114,7 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
     const totals = await db.prepare(`
       SELECT COUNT(*)::int AS count
       FROM hs_teams ht
-      JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN users u ON u.id = ht.coach_id
       ${whereSql}
     `).get(...whereParams);
     const total = totals?.count || 0;
@@ -127,7 +127,7 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
         (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count,
         (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
       FROM hs_teams ht
-      JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN users u ON u.id = ht.coach_id
       ${whereSql}
       ORDER BY ht.created_at DESC
       LIMIT ? OFFSET ?
@@ -171,30 +171,29 @@ router.get('/admin/teams/available-coaches', requireAdmin, async (req, res) => {
 router.post('/admin/teams', requireAdmin, async (req, res) => {
   const { coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards } = req.body || {};
 
-  const parsedCoachId = parseInt(coach_id, 10);
-  if (!parsedCoachId || isNaN(parsedCoachId)) {
-    return res.status(400).json({ error: 'A valid coach is required' });
-  }
+  const parsedCoachId = coach_id ? parseInt(coach_id, 10) : null;
   const trimmedTeamName = String(team_name || '').trim();
   if (!trimmedTeamName) {
     return res.status(400).json({ error: 'Team name is required' });
   }
 
   try {
-    const coach = await db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(parsedCoachId);
-    if (!coach || coach.role !== 'coach') {
-      return res.status(400).json({ error: 'Selected user is not a coach' });
-    }
-    const existing = await db.prepare(`SELECT id FROM hs_teams WHERE coach_id = ?`).get(parsedCoachId);
-    if (existing) {
-      return res.status(400).json({ error: 'This coach already has a team' });
+    if (parsedCoachId) {
+      const coach = await db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(parsedCoachId);
+      if (!coach || coach.role !== 'coach') {
+        return res.status(400).json({ error: 'Selected user is not a coach' });
+      }
+      const existing = await db.prepare(`SELECT id FROM hs_teams WHERE coach_id = ?`).get(parsedCoachId);
+      if (existing) {
+        return res.status(400).json({ error: 'This coach already has a team' });
+      }
     }
 
     await db.prepare(`
       INSERT INTO hs_teams (coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      parsedCoachId,
+      parsedCoachId || null,
       trimmedTeamName,
       String(school_name || '').trim() || null,
       String(city || '').trim() || null,
