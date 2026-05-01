@@ -50,47 +50,65 @@
       background: #fff;
       border: 1px solid #c7d0da;
       border-radius: 14px;
-      overflow: hidden;
+      overflow: visible;
       box-shadow: 0 2px 10px rgba(0,0,0,0.06);
       display: flex;
       flex-direction: column;
       transition: box-shadow 0.2s, transform 0.15s;
       cursor: default;
+      clip-path: none;
     }
     .team-card:hover {
       box-shadow: 0 6px 24px rgba(0,0,0,0.12);
       transform: translateY(-2px);
     }
     .team-card-banner {
-      height: 72px;
+      height: 80px;
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       flex-shrink: 0;
+      border-radius: 14px 14px 0 0;
+      overflow: hidden;
+    }
+    .team-card-identity {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 0 16px;
+      margin-top: -26px;
+      margin-bottom: 8px;
       position: relative;
+      z-index: 1;
     }
     .team-card-logo {
-      width: 60px;
-      height: 60px;
+      width: 52px;
+      height: 52px;
       object-fit: contain;
       border-radius: 10px;
-      background: rgba(255,255,255,0.92);
-      padding: 6px;
+      background: #fff;
+      padding: 5px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      border: 2px solid #fff;
+      flex-shrink: 0;
     }
     .team-card-logo-placeholder {
-      width: 60px;
-      height: 60px;
+      width: 52px;
+      height: 52px;
       border-radius: 10px;
-      background: rgba(255,255,255,0.15);
+      background: #f0f4fa;
+      border: 2px solid #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
+      font-size: 26px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .team-card-name-wrap {
+      min-width: 0;
+      padding-top: 30px;
     }
     .team-card-body {
-      padding: 16px;
+      padding: 0 16px 16px;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -334,12 +352,15 @@
       const location = [t.city, t.state].filter(Boolean).map(escapeHtml).join(', ');
 
       return `<div class="team-card">
-        <div class="team-card-banner" style="${bannerStyle}">
+        <div class="team-card-banner" style="${bannerStyle}"></div>
+        <div class="team-card-identity">
           ${logoHtml}
+          <div class="team-card-name-wrap">
+            <h3 class="team-card-name">${escapeHtml(t.team_name)}</h3>
+            ${t.school_name ? `<p class="team-card-school">${escapeHtml(t.school_name)}</p>` : ''}
+          </div>
         </div>
         <div class="team-card-body">
-          <h3 class="team-card-name">${escapeHtml(t.team_name)}</h3>
-          ${t.school_name ? `<p class="team-card-school">${escapeHtml(t.school_name)}</p>` : ''}
           ${location ? `<div class="team-card-location">📍 ${location}</div>` : ''}
           <div class="team-card-meta">
             <span class="team-meta-pill">
