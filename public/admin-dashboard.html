@@ -2171,7 +2171,7 @@
       document.getElementById('teamModal').classList.add('active');
     }
 
-    function openEditTeamModal(teamId) {
+    async function openEditTeamModal(teamId) {
       const t = allTeams.find(team => team.id === teamId);
       if (!t) return;
 
