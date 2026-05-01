@@ -778,12 +778,18 @@
       const player = await res.json();
       currentPlayerData = player;
       const metricVideoMap = getMetricVideoMap(player);
-      
+
+      const heroStyle = player.hs_team?.banner_image
+        ? 'background: url(\'/uploads/' + player.hs_team.banner_image + '\') center/cover no-repeat;'
+        : (player.hs_team?.banner_color_start && player.hs_team?.banner_color_end
+            ? 'background: linear-gradient(135deg, ' + player.hs_team.banner_color_start + ' 0%, ' + player.hs_team.banner_color_end + ' 100%);'
+            : '');
+
       document.getElementById('playerDetail').innerHTML = `
         <div class="profile-container">
           <!-- Hero Section with Gradient Background -->
           <div class="profile-hero">
-            <div class="hero-gradient"></div>
+            <div class="hero-gradient" ${heroStyle ? `style="${heroStyle}"` : ''}></div>
             <div class="profile-photo-wrapper">
               ${player.profile_picture ? 
                 `<img src="/uploads/${player.profile_picture}" alt="${player.full_name}" class="profile-photo-large" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">` : 

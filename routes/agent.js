@@ -272,6 +272,17 @@ router.get('/agent/player/:id', async (req, res) => {
   player.coach_comments = coachComments;
 
   await enrichPlayerProfile(player);
+
+  // Attach team info (banner image, colors) if player is on a team
+  const teamRow = await db.prepare(`
+    SELECT ht.team_name, ht.school_name, ht.banner_image, ht.banner_color_start, ht.banner_color_end, ht.school_logo
+    FROM team_players tp
+    JOIN hs_teams ht ON ht.id = tp.team_id
+    WHERE tp.player_id = ?
+    LIMIT 1
+  `).get(req.params.id);
+  if (teamRow) player.hs_team = teamRow;
+
   res.json(player);
 });
 
