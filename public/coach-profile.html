@@ -255,7 +255,11 @@
 
       const startColor = normalizeHexColorClient(team?.banner_color_start) || DEFAULT_BANNER_START_COLOR;
       const endColor = normalizeHexColorClient(team?.banner_color_end) || DEFAULT_BANNER_END_COLOR;
-      badge.style.background = `linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
+      if (team?.banner_image) {
+        badge.style.background = `url('/uploads/${encodeURI(team.banner_image)}') center / cover no-repeat, linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
+      } else {
+        badge.style.background = `linear-gradient(135deg, ${startColor} 0%, ${endColor} 100%)`;
+      }
 
       document.getElementById('teamNameDisplay').textContent = team?.team_name || 'My Team';
       document.getElementById('schoolNameDisplay').textContent = team?.school_name || '';

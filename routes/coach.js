@@ -861,7 +861,7 @@ router.get('/coach/profile', requireCoach, async (req, res) => {
 
     const coach = await db.prepare('SELECT email, full_name, phone, organization, profile_picture FROM users WHERE id = ? AND role = ?').get(targetCoachId, 'coach');
     if (!coach) return res.status(404).json({ error: 'Coach not found' });
-    const team = await db.prepare('SELECT team_name, school_name, city, state, school_logo, banner_color_start, banner_color_end FROM hs_teams WHERE coach_id = ?').get(targetCoachId);
+    const team = await db.prepare('SELECT team_name, school_name, city, state, school_logo, banner_color_start, banner_color_end, banner_image FROM hs_teams WHERE coach_id = ?').get(targetCoachId);
     res.json({ ...coach, team: team || {} });
   } catch (error) {
     console.error('Coach get profile error:', error);
