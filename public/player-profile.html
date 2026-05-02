@@ -2622,7 +2622,7 @@
               <div style="flex-shrink:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">${logoHtml}</div>
               <div style="flex:1; min-width:0;">
                 <div style="font-weight:600; font-size:14px; color:#1e3c72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtmlDetail(school.name)}</div>
-                ${school.conference ? `<div style="font-size:12px; color:#76849b; margin-top:1px;">${escapeHtmlDetail(school.conference)}</div>` : ''}
+                ${(school.division || school.conference) ? `<div style="font-size:12px; color:#76849b; margin-top:1px;">${escapeHtmlDetail([school.division, school.conference].filter(Boolean).join(' | '))}</div>` : ''}
               </div>
               <div style="flex-shrink:0; text-align:right;">
                 <div style="line-height:1;">${stars}</div>
@@ -2707,6 +2707,9 @@
         const confBadge = c.conference
           ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block;">${escapeHtmlSchools(c.conference)}</span>`
           : '';
+        const divisionBadge = c.division
+          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-right:4px;">${escapeHtmlSchools(c.division)}</span>`
+          : '';
         const teamBadge = c.team
           ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-left:4px;">${escapeHtmlSchools(c.team)}</span>`
           : '';
@@ -2719,7 +2722,7 @@
           <div style="flex:1; min-width:0;">
             <h4 style="margin:0 0 4px; font-size:15px; color:#333;">${escapeHtmlSchools(c.name)}</h4>
             ${urlHtml}
-            <div style="margin-top:6px;">${confBadge}${teamBadge}</div>
+            <div style="margin-top:6px;">${divisionBadge}${confBadge}${teamBadge}</div>
             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
               <button onclick="toggleFavorite(${c.id})" style="padding:6px 14px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${favActive}">${c.is_favorite ? '⭐ Favorited' : '☆ Favorite'}</button>
               <button onclick="toggleOffer(${c.id})" style="padding:6px 14px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${offerActive}">${c.has_offer ? '📩 Offer Received' : '📨 Mark Offer'}</button>
@@ -2785,7 +2788,7 @@
         logoEl.innerHTML = `<div style="width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px;">🏫</div>`;
       }
       document.getElementById('schoolDetailName').textContent = currentSchoolData.name;
-      document.getElementById('schoolDetailConf').textContent = [currentSchoolData.conference, currentSchoolData.team].filter(Boolean).join(' · ');
+      document.getElementById('schoolDetailConf').textContent = [currentSchoolData.division, currentSchoolData.conference, currentSchoolData.team].filter(Boolean).join(' · ');
 
       document.getElementById('schoolDetailModal').style.display = 'block';
       switchDetailTab('contacts');
