@@ -651,19 +651,11 @@
           </div>
           <div class="admin-toolbar">
             <input type="text" id="collegeSearch" placeholder="Search colleges...">
+            <select id="divisionFilter">
+              <option value="">All Divisions</option>
+            </select>
             <select id="conferenceFilter">
               <option value="">All Conferences</option>
-              <option value="ACC">ACC</option>
-              <option value="American">American</option>
-              <option value="Big 12">Big 12</option>
-              <option value="Big Ten">Big Ten</option>
-              <option value="Conference USA">Conference USA</option>
-              <option value="FBS Independents">FBS Independents</option>
-              <option value="Mid-American">Mid-American</option>
-              <option value="Mountain West">Mountain West</option>
-              <option value="Pac-12">Pac-12</option>
-              <option value="SEC">SEC</option>
-              <option value="Sun Belt">Sun Belt</option>
             </select>
           </div>
           <div class="college-grid" id="collegeGrid"></div>
@@ -973,17 +965,6 @@
           <label>Conference</label>
           <select id="collegeConference" onchange="syncDivisionFromConference()">
             <option value="">-- Select Conference --</option>
-            <option value="ACC">ACC</option>
-            <option value="American">American</option>
-            <option value="Big 12">Big 12</option>
-            <option value="Big Ten">Big Ten</option>
-            <option value="Conference USA">Conference USA</option>
-            <option value="FBS Independents">FBS Independents</option>
-            <option value="Mid-American">Mid-American</option>
-            <option value="Mountain West">Mountain West</option>
-            <option value="Pac-12">Pac-12</option>
-            <option value="SEC">SEC</option>
-            <option value="Sun Belt">Sun Belt</option>
           </select>
         </div>
         <div class="input-group">
@@ -2303,13 +2284,88 @@
       const res = await fetch('/api/admin/colleges');
       if (!res.ok) return;
       allColleges = await res.json();
+      populateCollegeFilterOptions();
+      renderColleges();
+    }
+
+    function getCollegeDivisionConferenceMap() {
+      const map = new Map();
+      for (const college of allColleges) {
+        const division = String(college.division || '').trim();
+        const conference = String(college.conference || '').trim();
+        if (!conference) continue;
+        const key = division || '';
+        if (!map.has(key)) map.set(key, new Set());
+        map.get(key).add(conference);
+      }
+      return map;
+    }
+
+    function getCollegeDivisions() {
+      return [...new Set(allColleges.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+    }
+
+    function getCollegeConferences(selectedDivision) {
+      const division = String(selectedDivision || '').trim();
+      const map = getCollegeDivisionConferenceMap();
+      if (division) {
+        return [...(map.get(division) || new Set())].sort();
+      }
+      const all = new Set();
+      for (const conferences of map.values()) {
+        for (const conference of conferences) all.add(conference);
+      }
+      return [...all].sort();
+    }
+
+    function populateSelectOptions(selectId, placeholder, values, selectedValue) {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      const normalizedSelected = String(selectedValue || '').trim();
+      select.innerHTML = `<option value="">${placeholder}</option>` + values.map(value =>
+        `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`
+      ).join('');
+      select.value = values.includes(normalizedSelected) ? normalizedSelected : '';
+    }
+
+    function populateCollegeFilterOptions() {
+      const divisionFilter = document.getElementById('divisionFilter');
+      const currentDivision = divisionFilter ? divisionFilter.value : '';
+      const currentConference = document.getElementById('conferenceFilter').value;
+      const divisions = getCollegeDivisions();
+      populateSelectOptions('divisionFilter', 'All Divisions', divisions, currentDivision);
+      const selectedDivision = document.getElementById('divisionFilter').value;
+      const conferences = getCollegeConferences(selectedDivision);
+      populateSelectOptions('conferenceFilter', 'All Conferences', conferences, currentConference);
+    }
+
+    function populateCollegeModalConferenceOptions(selectedDivision, selectedConference) {
+      const conferences = getCollegeConferences(selectedDivision);
+      const conferenceSelect = document.getElementById('collegeConference');
+      if (!conferenceSelect) return;
+      const normalizedSelected = String(selectedConference || '').trim();
+      conferenceSelect.innerHTML = '<option value="">-- Select Conference --</option>' + conferences.map(value =>
+        `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`
+      ).join('');
+      if (normalizedSelected && !conferences.includes(normalizedSelected)) {
+        conferenceSelect.innerHTML += `<option value="${escapeHtml(normalizedSelected)}">${escapeHtml(normalizedSelected)}</option>`;
+      }
+      conferenceSelect.value = normalizedSelected;
+    }
+
+    function handleCollegeDivisionFilterChange() {
+      populateCollegeFilterOptions();
       renderColleges();
     }
 
     function renderColleges() {
       const search = document.getElementById('collegeSearch').value.toLowerCase().trim();
+      const divisionFilter = document.getElementById('divisionFilter').value;
       const confFilter = document.getElementById('conferenceFilter').value;
       let filtered = allColleges;
+      if (divisionFilter) {
+        filtered = filtered.filter(c => (c.division || '') === divisionFilter);
+      }
       if (confFilter) {
         filtered = filtered.filter(c => c.conference === confFilter);
       }
@@ -2355,23 +2411,14 @@
     }
 
     document.getElementById('collegeSearch').addEventListener('input', renderColleges);
+  document.getElementById('divisionFilter').addEventListener('change', handleCollegeDivisionFilterChange);
     document.getElementById('conferenceFilter').addEventListener('change', renderColleges);
 
     function defaultDivisionForConference(conference) {
-      const fbsConferences = new Set([
-        'ACC',
-        'American',
-        'Big 12',
-        'Big Ten',
-        'Conference USA',
-        'FBS Independents',
-        'Mid-American',
-        'Mountain West',
-        'Pac-12',
-        'SEC',
-        'Sun Belt'
-      ]);
-      return fbsConferences.has(conference) ? 'NCAA Division I (FBS)' : '';
+      const normalizedConference = String(conference || '').trim();
+      if (!normalizedConference) return '';
+      const match = allColleges.find(c => String(c.conference || '').trim() === normalizedConference && String(c.division || '').trim());
+      return match ? String(match.division || '').trim() : '';
     }
 
     function syncDivisionFromConference() {
@@ -2381,6 +2428,12 @@
         document.getElementById('collegeDivision').value = suggested;
       }
     }
+
+    document.getElementById('collegeDivision').addEventListener('change', function () {
+      const division = this.value;
+      const currentConference = document.getElementById('collegeConference').value;
+      populateCollegeModalConferenceOptions(division, currentConference);
+    });
 
     function openCollegeModal(collegeId) {
       document.getElementById('collegeForm').reset();
@@ -2395,7 +2448,7 @@
           document.getElementById('collegeName').value = c.name;
           document.getElementById('collegeUrl').value = c.website_url || '';
           document.getElementById('collegeDivision').value = c.division || '';
-          document.getElementById('collegeConference').value = c.conference || '';
+          populateCollegeModalConferenceOptions(c.division || '', c.conference || '');
           document.getElementById('collegeTeam').value = c.team || '';
           if (c.logo) {
             document.getElementById('collegeCurrentLogo').innerHTML =
@@ -2404,6 +2457,7 @@
         }
       } else {
         document.getElementById('collegeModalTitle').textContent = 'Add College';
+        populateCollegeModalConferenceOptions('', '');
       }
       document.getElementById('collegeModal').classList.add('active');
     }
