@@ -59,7 +59,7 @@ async function enrichPlayerProfiles(profiles) {
     db.prepare('SELECT user_id, filename FROM player_images WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, metric_key, video_filename, is_verified, verified_by, recorded_at FROM player_metric_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare(`
-      SELECT psi.user_id, c.id, c.name, c.logo, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
+      SELECT psi.user_id, c.id, c.name, c.logo, c.division, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
       FROM player_school_interests psi
       JOIN colleges c ON psi.college_id = c.id
       LEFT JOIN (
@@ -72,7 +72,7 @@ async function enrichPlayerProfiles(profiles) {
       ORDER BY psi.user_id, c.name
     `).all(playerIds, playerIds),
     db.prepare(`
-      SELECT psi.user_id, c.id, c.name, c.logo, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
+      SELECT psi.user_id, c.id, c.name, c.logo, c.division, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
       FROM player_school_interests psi
       JOIN colleges c ON psi.college_id = c.id
       LEFT JOIN (
@@ -101,6 +101,7 @@ async function enrichPlayerProfiles(profiles) {
     id: row.id,
     name: row.name,
     logo: row.logo,
+    division: row.division,
     conference: row.conference,
     team: row.team,
     visit_count: row.visit_count
@@ -109,6 +110,7 @@ async function enrichPlayerProfiles(profiles) {
     id: row.id,
     name: row.name,
     logo: row.logo,
+    division: row.division,
     conference: row.conference,
     team: row.team,
     visit_count: row.visit_count

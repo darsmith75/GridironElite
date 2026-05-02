@@ -935,7 +935,7 @@ router.get('/coach/contacts', requireCoach, async (req, res) => {
     const contacts = await db.prepare(`
       SELECT sc.id, sc.college_id, sc.name, sc.title, sc.email, sc.phone,
         sc.twitter_handle, sc.instagram_handle,
-        c.name AS college_name, c.conference
+        c.name AS college_name, c.division, c.conference
       FROM school_contacts sc
       JOIN colleges c ON c.id = sc.college_id
       WHERE sc.user_id = ?

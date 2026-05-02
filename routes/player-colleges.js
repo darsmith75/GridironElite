@@ -8,13 +8,13 @@ const router = express.Router();
 router.get('/player/top-schools', requireAuth, async (req, res) => {
   try {
     const rows = await db.prepare(`
-      SELECT c.id, c.name, c.logo, c.conference, c.team,
+            SELECT c.id, c.name, c.logo, c.division, c.conference, c.team,
              ROUND(AVG(r.rating_value)::numeric, 2) AS avg_rating,
              COUNT(r.id) AS rated_categories
       FROM player_school_ratings r
       JOIN colleges c ON c.id = r.college_id
       WHERE r.user_id = ?
-      GROUP BY c.id, c.name, c.logo, c.conference, c.team
+            GROUP BY c.id, c.name, c.logo, c.division, c.conference, c.team
       ORDER BY avg_rating DESC, rated_categories DESC
       LIMIT 5
     `).all(req.session.userId);

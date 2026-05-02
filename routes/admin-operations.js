@@ -9,6 +9,27 @@ const { collegeLogoUpload } = require('../utils/upload');
 
 const router = express.Router();
 
+function inferDivisionFromConference(conference) {
+  const normalized = String(conference || '').trim();
+  if (!normalized) return null;
+
+  const fbsConferences = new Set([
+    'ACC',
+    'American',
+    'Big 12',
+    'Big Ten',
+    'Conference USA',
+    'FBS Independents',
+    'Mid-American',
+    'Mountain West',
+    'Pac-12',
+    'SEC',
+    'Sun Belt'
+  ]);
+
+  return fbsConferences.has(normalized) ? 'NCAA Division I (FBS)' : null;
+}
+
 // Admin: Get comprehensive statistics dashboard
 router.get('/admin/stats', requireAdmin, async (req, res) => {
   try {
@@ -145,7 +166,7 @@ router.post('/admin/b2-delete-queue/flush', requireAdmin, async (req, res) => {
 router.get('/admin/colleges', requireAdmin, async (req, res) => {
   try {
     const colleges = await db.prepare(
-      'SELECT id, name, website_url, conference, team, logo FROM colleges ORDER BY name ASC'
+      'SELECT id, name, website_url, division, conference, team, logo FROM colleges ORDER BY name ASC'
     ).all();
     res.json(colleges);
   } catch (error) {
@@ -161,13 +182,15 @@ router.post('/admin/colleges', requireAdmin, collegeLogoUpload.single('logo'), a
     if (!name) return res.status(400).json({ error: 'College name is required' });
 
     const websiteUrl = (req.body.website_url || '').trim() || null;
+    const divisionInput = (req.body.division || '').trim();
     const conference = (req.body.conference || '').trim() || null;
+    const division = divisionInput || inferDivisionFromConference(conference);
     const team = (req.body.team || '').trim() || null;
     const logo = req.file ? path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/') : null;
 
     const result = await db.prepare(
-      'INSERT INTO colleges (name, website_url, conference, team, logo) VALUES (?, ?, ?, ?, ?)'
-    ).run(name, websiteUrl, conference, team, logo);
+      'INSERT INTO colleges (name, website_url, division, conference, team, logo) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(name, websiteUrl, division, conference, team, logo);
 
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
@@ -190,6 +213,8 @@ router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo')
 
     const websiteUrl = (req.body.website_url || '').trim() || null;
     const conference = (req.body.conference || '').trim() || null;
+    const divisionInput = (req.body.division || '').trim();
+    const division = divisionInput || inferDivisionFromConference(conference);
     const team = (req.body.team || '').trim() || null;
 
     let logo = existing.logo;
@@ -207,8 +232,8 @@ router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo')
     }
 
     await db.prepare(
-      'UPDATE colleges SET name = ?, website_url = ?, conference = ?, team = ?, logo = ? WHERE id = ?'
-    ).run(name, websiteUrl, conference, team, logo, collegeId);
+      'UPDATE colleges SET name = ?, website_url = ?, division = ?, conference = ?, team = ?, logo = ? WHERE id = ?'
+    ).run(name, websiteUrl, division, conference, team, logo, collegeId);
 
     res.json({ success: true });
   } catch (error) {

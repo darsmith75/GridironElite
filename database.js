@@ -126,6 +126,7 @@ const createTablesSQL = `
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     website_url TEXT,
+    division VARCHAR(100),
     logo TEXT,
     conference VARCHAR(100),
     team VARCHAR(100),
@@ -521,6 +522,23 @@ const alterTablesSQL = `
   ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0;
   DROP TABLE IF EXISTS messages;
   ALTER TABLE metric_pro_tips ADD COLUMN IF NOT EXISTS youtube_url TEXT;
+  ALTER TABLE colleges ADD COLUMN IF NOT EXISTS division VARCHAR(100);
+  UPDATE colleges
+  SET division = 'NCAA Division I (FBS)'
+  WHERE (division IS NULL OR TRIM(division) = '')
+    AND conference IN (
+      'ACC',
+      'American',
+      'Big 12',
+      'Big Ten',
+      'Conference USA',
+      'FBS Independents',
+      'Mid-American',
+      'Mountain West',
+      'Pac-12',
+      'SEC',
+      'Sun Belt'
+    );
 `;
 
 const createIndexesSQL = `
@@ -530,6 +548,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_school_notes_college ON school_notes(college_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_user ON school_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
+  CREATE INDEX IF NOT EXISTS idx_colleges_division ON colleges(division);
+  CREATE INDEX IF NOT EXISTS idx_colleges_conference ON colleges(conference);
   CREATE INDEX IF NOT EXISTS idx_school_rating_categories_sort ON school_rating_categories(sort_order);
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_user_college ON player_school_ratings(user_id, college_id);
   CREATE INDEX IF NOT EXISTS idx_player_school_ratings_category ON player_school_ratings(category_id);

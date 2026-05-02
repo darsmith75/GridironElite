@@ -958,14 +958,26 @@
           <input type="url" id="collegeUrl" placeholder="https://...">
         </div>
         <div class="input-group">
+          <label>Division</label>
+          <select id="collegeDivision">
+            <option value="">-- Select Division --</option>
+            <option value="NCAA Division I (FBS)">NCAA Division I (FBS)</option>
+            <option value="NCAA Division I (FCS)">NCAA Division I (FCS)</option>
+            <option value="NCAA Division II">NCAA Division II</option>
+            <option value="NCAA Division III">NCAA Division III</option>
+            <option value="NAIA">NAIA</option>
+            <option value="NJCAA">NJCAA</option>
+          </select>
+        </div>
+        <div class="input-group">
           <label>Conference</label>
-          <select id="collegeConference">
+          <select id="collegeConference" onchange="syncDivisionFromConference()">
             <option value="">-- Select Conference --</option>
             <option value="ACC">ACC</option>
             <option value="American">American</option>
             <option value="Big 12">Big 12</option>
             <option value="Big Ten">Big Ten</option>
-            <option value="Converence USA">Conference USA</option>
+            <option value="Conference USA">Conference USA</option>
             <option value="FBS Independents">FBS Independents</option>
             <option value="Mid-American">Mid-American</option>
             <option value="Mountain West">Mountain West</option>
@@ -2321,6 +2333,9 @@
         const confHtml = c.conference
           ? `<span style="font-size:12px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px;">${escapeHtml(c.conference)}</span>`
           : '';
+        const divisionHtml = c.division
+          ? `<span style="font-size:12px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-right:4px;">${escapeHtml(c.division)}</span>`
+          : '';
         const teamHtml = c.team
           ? `<span style="font-size:12px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-left:4px;">${escapeHtml(c.team)}</span>`
           : '';
@@ -2329,7 +2344,7 @@
           <div class="college-info">
             <h4>${escapeHtml(c.name)}</h4>
             ${urlHtml}
-            <div>${confHtml}${teamHtml}</div>
+            <div>${divisionHtml}${confHtml}${teamHtml}</div>
           </div>
           <div class="college-actions">
             <button class="action-btn edit" onclick="openCollegeModal(${c.id})">Edit</button>
@@ -2341,6 +2356,31 @@
 
     document.getElementById('collegeSearch').addEventListener('input', renderColleges);
     document.getElementById('conferenceFilter').addEventListener('change', renderColleges);
+
+    function defaultDivisionForConference(conference) {
+      const fbsConferences = new Set([
+        'ACC',
+        'American',
+        'Big 12',
+        'Big Ten',
+        'Conference USA',
+        'FBS Independents',
+        'Mid-American',
+        'Mountain West',
+        'Pac-12',
+        'SEC',
+        'Sun Belt'
+      ]);
+      return fbsConferences.has(conference) ? 'NCAA Division I (FBS)' : '';
+    }
+
+    function syncDivisionFromConference() {
+      const conference = document.getElementById('collegeConference').value;
+      const suggested = defaultDivisionForConference(conference);
+      if (suggested) {
+        document.getElementById('collegeDivision').value = suggested;
+      }
+    }
 
     function openCollegeModal(collegeId) {
       document.getElementById('collegeForm').reset();
@@ -2354,6 +2394,7 @@
           document.getElementById('collegeId').value = c.id;
           document.getElementById('collegeName').value = c.name;
           document.getElementById('collegeUrl').value = c.website_url || '';
+          document.getElementById('collegeDivision').value = c.division || '';
           document.getElementById('collegeConference').value = c.conference || '';
           document.getElementById('collegeTeam').value = c.team || '';
           if (c.logo) {
@@ -2373,6 +2414,7 @@
       const formData = new FormData();
       formData.append('name', document.getElementById('collegeName').value);
       formData.append('website_url', document.getElementById('collegeUrl').value);
+      formData.append('division', document.getElementById('collegeDivision').value);
       formData.append('conference', document.getElementById('collegeConference').value);
       formData.append('team', document.getElementById('collegeTeam').value);
       const logoFile = document.getElementById('collegeLogo').files[0];
