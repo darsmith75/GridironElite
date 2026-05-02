@@ -1618,6 +1618,9 @@
       </div>
       <div class="coach-modal-filters">
         <input type="text" id="coachSchoolSearch" placeholder="Search schools..." oninput="renderBrowseSchools()" style="flex:1; min-width:180px;">
+        <select id="coachSchoolDivisionFilter" onchange="handleCoachSchoolDivisionFilterChange()" style="min-width:170px;">
+          <option value="">All Divisions</option>
+        </select>
         <select id="coachSchoolConferenceFilter" onchange="renderBrowseSchools()" style="min-width:160px;">
           <option value="">All Conferences</option>
         </select>
@@ -3061,18 +3064,46 @@
         coachAllSchools = await res.json();
         coachSchoolsLoaded = true;
         renderFollowedSchools();
-        populateConferenceFilter();
+        populateCoachSchoolFilterOptions();
       } catch (err) {
         console.error('Failed to load coach schools:', err);
       }
     }
 
-    function populateConferenceFilter() {
-      const sel = document.getElementById('coachSchoolConferenceFilter');
-      if (!sel) return;
-      const conferences = [...new Set(coachAllSchools.map(c => c.conference).filter(Boolean))].sort();
-      sel.innerHTML = '<option value="">All Conferences</option>' +
+    function getCoachSchoolDivisions() {
+      return [...new Set(coachAllSchools.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+    }
+
+    function getCoachSchoolConferences(selectedDivision) {
+      const division = String(selectedDivision || '').trim();
+      const filtered = division
+        ? coachAllSchools.filter(c => String(c.division || '').trim() === division)
+        : coachAllSchools;
+      return [...new Set(filtered.map(c => String(c.conference || '').trim()).filter(Boolean))].sort();
+    }
+
+    function populateCoachSchoolFilterOptions() {
+      const divisionSel = document.getElementById('coachSchoolDivisionFilter');
+      const conferenceSel = document.getElementById('coachSchoolConferenceFilter');
+      if (!divisionSel || !conferenceSel) return;
+
+      const selectedDivision = String(divisionSel.value || '').trim();
+      const selectedConference = String(conferenceSel.value || '').trim();
+
+      const divisions = getCoachSchoolDivisions();
+      divisionSel.innerHTML = '<option value="">All Divisions</option>' +
+        divisions.map(d => `<option value="${escC(d)}">${escC(d)}</option>`).join('');
+      divisionSel.value = divisions.includes(selectedDivision) ? selectedDivision : '';
+
+      const conferences = getCoachSchoolConferences(divisionSel.value);
+      conferenceSel.innerHTML = '<option value="">All Conferences</option>' +
         conferences.map(conf => `<option value="${escC(conf)}">${escC(conf)}</option>`).join('');
+      conferenceSel.value = conferences.includes(selectedConference) ? selectedConference : '';
+    }
+
+    function handleCoachSchoolDivisionFilterChange() {
+      populateCoachSchoolFilterOptions();
+      renderBrowseSchools();
     }
 
     function renderFollowedSchools() {
@@ -3108,7 +3139,10 @@
       document.getElementById('coachSchoolsModal').style.display = 'block';
       document.body.style.overflow = 'hidden';
       document.getElementById('coachSchoolSearch').value = '';
+      document.getElementById('coachSchoolDivisionFilter').value = '';
+      document.getElementById('coachSchoolConferenceFilter').value = '';
       document.getElementById('coachSchoolStatusFilter').value = '';
+      populateCoachSchoolFilterOptions();
       renderBrowseSchools();
     }
 
@@ -3120,9 +3154,11 @@
 
     function renderBrowseSchools() {
       const search = document.getElementById('coachSchoolSearch').value.toLowerCase().trim();
+      const divisionFilter = document.getElementById('coachSchoolDivisionFilter').value;
       const confFilter = document.getElementById('coachSchoolConferenceFilter').value;
       const statusFilter = document.getElementById('coachSchoolStatusFilter').value;
       let filtered = coachAllSchools;
+      if (divisionFilter) filtered = filtered.filter(c => (c.division || '') === divisionFilter);
       if (confFilter) filtered = filtered.filter(c => c.conference === confFilter);
       if (search) filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.team || '').toLowerCase().includes(search));
       if (statusFilter === 'followed') filtered = filtered.filter(c => c.is_followed);

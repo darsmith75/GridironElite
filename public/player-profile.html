@@ -444,19 +444,11 @@
       <!-- Filters -->
       <div style="padding:16px 30px; background:#f8f9fa; border-bottom:1px solid #c7d0da; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         <input type="text" id="schoolSearch" placeholder="Search schools..." oninput="renderSchools()" style="flex:1; min-width:200px; padding:10px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px;">
+        <select id="schoolDivisionFilter" onchange="handleSchoolDivisionFilterChange()" style="padding:10px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; min-width:170px;">
+          <option value="">All Divisions</option>
+        </select>
         <select id="schoolConferenceFilter" onchange="renderSchools()" style="padding:10px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; min-width:160px;">
           <option value="">All Conferences</option>
-          <option value="ACC">ACC</option>
-          <option value="American">American</option>
-          <option value="Big 12">Big 12</option>
-          <option value="Big Ten">Big Ten</option>
-          <option value="Conference USA">Conference USA</option>
-          <option value="FBS Independents">FBS Independents</option>
-          <option value="Mid-American">Mid-American</option>
-          <option value="Mountain West">Mountain West</option>
-          <option value="Pac-12">Pac-12</option>
-          <option value="SEC">SEC</option>
-          <option value="Sun Belt">Sun Belt</option>
         </select>
         <select id="schoolStatusFilter" onchange="renderSchools()" style="padding:10px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; min-width:140px;">
           <option value="">All Schools</option>
@@ -2644,6 +2636,7 @@
       document.getElementById('schoolsModal').style.display = 'block';
       document.body.style.overflow = 'hidden';
       document.getElementById('schoolSearch').value = '';
+      document.getElementById('schoolDivisionFilter').value = '';
       document.getElementById('schoolConferenceFilter').value = '';
       document.getElementById('schoolStatusFilter').value = '';
       await loadSchools();
@@ -2660,10 +2653,47 @@
         const res = await fetch('/api/player/colleges');
         if (!res.ok) return;
         allSchools = await res.json();
+        populateSchoolFilterOptions();
         renderSchools();
       } catch (err) {
         console.error('Failed to load schools:', err);
       }
+    }
+
+    function getSchoolDivisions() {
+      return [...new Set(allSchools.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+    }
+
+    function getSchoolConferences(selectedDivision) {
+      const division = String(selectedDivision || '').trim();
+      const filtered = division
+        ? allSchools.filter(c => String(c.division || '').trim() === division)
+        : allSchools;
+      return [...new Set(filtered.map(c => String(c.conference || '').trim()).filter(Boolean))].sort();
+    }
+
+    function populateSchoolFilterOptions() {
+      const divisionSelect = document.getElementById('schoolDivisionFilter');
+      const conferenceSelect = document.getElementById('schoolConferenceFilter');
+      if (!divisionSelect || !conferenceSelect) return;
+
+      const selectedDivision = String(divisionSelect.value || '').trim();
+      const selectedConference = String(conferenceSelect.value || '').trim();
+
+      const divisions = getSchoolDivisions();
+      divisionSelect.innerHTML = '<option value="">All Divisions</option>' +
+        divisions.map(d => `<option value="${escapeHtmlSchools(d)}">${escapeHtmlSchools(d)}</option>`).join('');
+      divisionSelect.value = divisions.includes(selectedDivision) ? selectedDivision : '';
+
+      const conferences = getSchoolConferences(divisionSelect.value);
+      conferenceSelect.innerHTML = '<option value="">All Conferences</option>' +
+        conferences.map(conf => `<option value="${escapeHtmlSchools(conf)}">${escapeHtmlSchools(conf)}</option>`).join('');
+      conferenceSelect.value = conferences.includes(selectedConference) ? selectedConference : '';
+    }
+
+    function handleSchoolDivisionFilterChange() {
+      populateSchoolFilterOptions();
+      renderSchools();
     }
 
     function escapeHtmlSchools(str) {
@@ -2675,10 +2705,14 @@
 
     function renderSchools() {
       const search = document.getElementById('schoolSearch').value.toLowerCase().trim();
+      const divisionFilter = document.getElementById('schoolDivisionFilter').value;
       const confFilter = document.getElementById('schoolConferenceFilter').value;
       const statusFilter = document.getElementById('schoolStatusFilter').value;
 
       let filtered = allSchools;
+      if (divisionFilter) {
+        filtered = filtered.filter(c => (c.division || '') === divisionFilter);
+      }
       if (confFilter) {
         filtered = filtered.filter(c => c.conference === confFilter);
       }
