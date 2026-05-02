@@ -21,6 +21,20 @@ function parsePagination(query) {
   return { page, limit, offset };
 }
 
+// Admin: Get own profile
+router.get('/admin/profile', requireAdmin, async (req, res) => {
+  try {
+    const admin = await db.prepare(
+      'SELECT full_name, email, phone, organization, title, experience, bio, profile_picture, last_login_at FROM users WHERE id = ?'
+    ).get(req.session.userId);
+    if (!admin) return res.status(404).json({ error: 'Admin not found' });
+    res.json(admin);
+  } catch (error) {
+    console.error('Admin get own profile error:', error);
+    res.status(500).json({ error: 'Failed to load profile' });
+  }
+});
+
 // Admin: Update own profile
 router.post('/admin/profile', requireAdmin, upload.fields([
   { name: 'profilePicture', maxCount: 1 }
