@@ -20,6 +20,7 @@ const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const { Readable } = require('stream');
 const db = require('./database');
 const { b2Enabled, getB2Url, checkB2Health } = require('./backblaze');
@@ -41,9 +42,21 @@ app.set('trust proxy', 1);
 // Compress all text-based responses (JSON, HTML, CSS, JS).
 app.use(compression());
 
-// Create uploads directory
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
-if (!fs.existsSync(path.join('images', 'collegelogos'))) fs.mkdirSync(path.join('images', 'collegelogos'), { recursive: true });
+async function pathExists(targetPath) {
+  try {
+    await fsPromises.access(targetPath, fs.constants.F_OK);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function ensureRuntimeDirectories() {
+  await Promise.all([
+    fsPromises.mkdir('uploads', { recursive: true }),
+    fsPromises.mkdir(path.join('images', 'collegelogos'), { recursive: true })
+  ]);
+}
 
 // Migrate existing flat uploads into per-user folders.
 // Guard: skip entirely if no un-migrated filenames remain (no '/' in path).
@@ -70,9 +83,9 @@ async function migrateUploads() {
           const src = path.join('uploads', filename);
           const userDir = path.join('uploads', String(p.user_id));
           const dest = path.join(userDir, filename);
-          if (fs.existsSync(src)) {
-            if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-            fs.renameSync(src, dest);
+          if (await pathExists(src)) {
+            await fsPromises.mkdir(userDir, { recursive: true });
+            await fsPromises.rename(src, dest);
           }
           await db.prepare(`UPDATE player_profiles SET ${col} = ? WHERE user_id = ?`)
             .run(p.user_id + '/' + filename, p.user_id);
@@ -86,9 +99,9 @@ async function migrateUploads() {
         const src = path.join('uploads', v.filename);
         const userDir = path.join('uploads', String(v.user_id));
         const dest = path.join(userDir, v.filename);
-        if (fs.existsSync(src)) {
-          if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-          fs.renameSync(src, dest);
+        if (await pathExists(src)) {
+          await fsPromises.mkdir(userDir, { recursive: true });
+          await fsPromises.rename(src, dest);
         }
         await db.prepare('UPDATE player_videos SET filename = ? WHERE id = ?')
           .run(v.user_id + '/' + v.filename, v.id);
@@ -101,9 +114,9 @@ async function migrateUploads() {
         const src = path.join('uploads', i.filename);
         const userDir = path.join('uploads', String(i.user_id));
         const dest = path.join(userDir, i.filename);
-        if (fs.existsSync(src)) {
-          if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-          fs.renameSync(src, dest);
+        if (await pathExists(src)) {
+          await fsPromises.mkdir(userDir, { recursive: true });
+          await fsPromises.rename(src, dest);
         }
         await db.prepare('UPDATE player_images SET filename = ? WHERE id = ?')
           .run(i.user_id + '/' + i.filename, i.id);
@@ -116,9 +129,9 @@ async function migrateUploads() {
         const src = path.join('uploads', mv.video_filename);
         const userDir = path.join('uploads', String(mv.user_id));
         const dest = path.join(userDir, mv.video_filename);
-        if (fs.existsSync(src)) {
-          if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-          fs.renameSync(src, dest);
+        if (await pathExists(src)) {
+          await fsPromises.mkdir(userDir, { recursive: true });
+          await fsPromises.rename(src, dest);
         }
         await db.prepare('UPDATE player_metric_videos SET video_filename = ? WHERE id = ?')
           .run(mv.user_id + '/' + mv.video_filename, mv.id);
@@ -265,7 +278,7 @@ app.get('/api/upload-proxy', async (req, res) => {
     }
 
     const safePath = safeUploadPath(requestedPath);
-    if (!safePath || !fs.existsSync(safePath)) {
+    if (!safePath || !(await pathExists(safePath))) {
       return res.status(404).send('File not found');
     }
 
@@ -318,6 +331,7 @@ app.use((err, req, res, next) => {
 async function initializeAndStart() {
   try {
     await db.initialize();
+    await ensureRuntimeDirectories();
     await migrateUploads();
     console.log(`[ai] feature=${isAiGenerationEnabled() ? 'enabled' : 'disabled'} provider=${getActiveAiProviderName()} model=${getActiveAiModelName()}`);
     app.listen(process.env.PORT || PORT, () => {

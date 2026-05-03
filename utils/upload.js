@@ -202,9 +202,15 @@ async function optimizeVideoFile(file) {
 
 // Use temp disk storage to avoid high RAM usage for larger media uploads.
 const incomingUploadDir = path.join(os.tmpdir(), 'gridiron-elite-incoming');
-if (!fs.existsSync(incomingUploadDir)) fs.mkdirSync(incomingUploadDir, { recursive: true });
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, incomingUploadDir),
+  destination: async (req, file, cb) => {
+    try {
+      await fsPromises.mkdir(incomingUploadDir, { recursive: true });
+      cb(null, incomingUploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.bin';
     cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);

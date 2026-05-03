@@ -1,9 +1,19 @@
 const db = require('../database');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const path = require('path');
 const { b2Enabled, deleteFromB2Prefix } = require('../backblaze');
 const { buildB2DeleteCandidateKeys, tryDeleteB2KeyWithRetries, enqueuePendingB2Delete } = require('./b2-queue');
 const { normalizeUploadFilename, safeUploadPath } = require('./upload');
+
+async function pathExists(targetPath) {
+  try {
+    await fsPromises.access(targetPath, fs.constants.F_OK);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
 async function deleteUploadFile(filename) {
   if (!filename) return false;
@@ -26,8 +36,8 @@ async function deleteUploadFile(filename) {
   }
 
   const safePath = safeUploadPath(normalizedFilename);
-  if (safePath && fs.existsSync(safePath)) {
-    try { fs.unlinkSync(safePath); } catch (_) {}
+  if (safePath && await pathExists(safePath)) {
+    try { await fsPromises.unlink(safePath); } catch (_) {}
     return true;
   }
 
@@ -177,7 +187,7 @@ async function deletePlayerAccountAndAssociatedData(playerId) {
     }
 
     try {
-      fs.rmSync(path.join('uploads', userPrefix), { recursive: true, force: true });
+      await fsPromises.rm(path.join('uploads', userPrefix), { recursive: true, force: true });
     } catch (error) {
       console.error('Player account delete: local uploads cleanup failed:', error?.message || error);
     }
