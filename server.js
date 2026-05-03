@@ -61,7 +61,7 @@ app.use(helmet({
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' } // let YouTube/Hudl validate the embedding origin
 }));
 
-// Global rate limiter – broad throttle per IP across all routes.
+// Global rate limiter – broad throttle per IP across API routes.
 // Per-endpoint limiters (login, forgot-password, etc.) apply stricter limits on top.
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -71,7 +71,7 @@ const globalLimiter = rateLimit({
   message: { error: 'Too many requests. Please try again later.' },
   skip: (req) => req.path === '/health' || req.path === '/ready'
 });
-app.use(globalLimiter);
+app.use('/api', globalLimiter);
 
 // Compress all text-based responses (JSON, HTML, CSS, JS).
 app.use(compression());
