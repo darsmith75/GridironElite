@@ -696,9 +696,18 @@ router.post('/coach/invite', requireCoach, async (req, res) => {
 
     const token = crypto.randomBytes(48).toString('hex');
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    const result = await db.prepare(
-      'INSERT INTO team_invites (team_id, player_email, player_user_id, token, status, expires_at) VALUES (?, ?, ?, ?, ?, ?)'
-    ).run(team.id, normalizedEmail, playerUser?.id || null, token, 'pending', expiresAt.toISOString());
+
+    let result;
+    try {
+      result = await db.prepare(
+        'INSERT INTO team_invites (team_id, player_email, player_user_id, token, status, expires_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).run(team.id, normalizedEmail, playerUser?.id || null, token, 'pending', expiresAt.toISOString());
+    } catch (insertError) {
+      if (insertError?.code === '23505') {
+        return res.status(409).json({ error: 'A pending invite already exists for this email' });
+      }
+      throw insertError;
+    }
 
     const coach = await db.prepare('SELECT full_name FROM users WHERE id = ?').get(req.session.userId);
     try {

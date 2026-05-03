@@ -18,18 +18,20 @@ router.post('/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const result = await db.prepare(
-      'INSERT INTO users (email, password, role, email_verified, email_verification_token) VALUES (?, ?, ?, false, ?)'
-    ).run(email, hashedPassword, role, verificationToken);
+    await db.withTransaction(async (tx) => {
+      const result = await tx.prepare(
+        'INSERT INTO users (email, password, role, email_verified, email_verification_token) VALUES (?, ?, ?, false, ?)'
+      ).run(email, hashedPassword, role, verificationToken);
 
-    if (role === 'player') {
-      await db.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)').run(result.lastInsertRowid, fullName);
-    }
+      if (role === 'player') {
+        await tx.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)').run(result.lastInsertRowid, fullName);
+      }
 
-    if (role === 'coach') {
-      const teamName = (fullName ? fullName + "'s Team" : 'My Team');
-      await db.prepare('INSERT INTO hs_teams (coach_id, team_name) VALUES (?, ?)').run(result.lastInsertRowid, teamName);
-    }
+      if (role === 'coach') {
+        const teamName = (fullName ? fullName + "'s Team" : 'My Team');
+        await tx.prepare('INSERT INTO hs_teams (coach_id, team_name) VALUES (?, ?)').run(result.lastInsertRowid, teamName);
+      }
+    });
 
     // Send verification email (non-fatal – log error but still return success)
     try {

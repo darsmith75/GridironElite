@@ -523,6 +523,13 @@ const alterTablesSQL = `
   DROP TABLE IF EXISTS messages;
   ALTER TABLE metric_pro_tips ADD COLUMN IF NOT EXISTS youtube_url TEXT;
   ALTER TABLE colleges ADD COLUMN IF NOT EXISTS division VARCHAR(100);
+  DELETE FROM team_invites older
+  USING team_invites newer
+  WHERE older.id < newer.id
+    AND older.team_id = newer.team_id
+    AND LOWER(older.player_email) = LOWER(newer.player_email)
+    AND older.status = 'pending'
+    AND newer.status = 'pending';
   UPDATE colleges
   SET division = 'NCAA Division I (FBS)'
   WHERE (division IS NULL OR TRIM(division) = '')
@@ -587,6 +594,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_team_invites_team ON team_invites(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_invites_email ON team_invites(player_email);
   CREATE INDEX IF NOT EXISTS idx_team_invites_player ON team_invites(player_user_id);
+  CREATE UNIQUE INDEX IF NOT EXISTS uq_team_pending_invite ON team_invites(team_id, LOWER(player_email)) WHERE status = 'pending';
   CREATE INDEX IF NOT EXISTS idx_team_players_team ON team_players(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_players_player ON team_players(player_id);
   CREATE INDEX IF NOT EXISTS idx_recruiter_shares_coach ON recruiter_player_shares(coach_user_id);

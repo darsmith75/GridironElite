@@ -1,6 +1,7 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const os = require('os');
 const sharp = require('sharp');
 const ffmpegPath = require('ffmpeg-static');
@@ -125,9 +126,9 @@ async function optimizeImageFile(file) {
     .toBuffer();
 
   const tempDir = path.join(os.tmpdir(), 'gridiron-elite-media-opt');
-  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+  await fsPromises.mkdir(tempDir, { recursive: true });
   const tempPath = path.join(tempDir, `${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`);
-  fs.writeFileSync(tempPath, optimizedBuffer);
+  await fsPromises.writeFile(tempPath, optimizedBuffer);
 
   return {
     filePath: tempPath,
@@ -160,7 +161,7 @@ async function optimizeVideoFile(file) {
 
   const preset = getVideoPreset(file.fieldname);
   const tempDir = path.join(os.tmpdir(), 'gridiron-elite-media-opt');
-  if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+  await fsPromises.mkdir(tempDir, { recursive: true });
 
   const sourceExt = path.extname(file.originalname).toLowerCase() || '.mp4';
   const tempBase = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
@@ -170,7 +171,7 @@ async function optimizeVideoFile(file) {
 
   try {
     if (createdInputTemp) {
-      fs.writeFileSync(inputPath, file.buffer);
+      await fsPromises.writeFile(inputPath, file.buffer);
     }
 
     await runFfmpeg([
@@ -193,8 +194,8 @@ async function optimizeVideoFile(file) {
       mimeType: 'video/mp4'
     };
   } finally {
-    if (createdInputTemp && fs.existsSync(inputPath)) {
-      try { fs.unlinkSync(inputPath); } catch (_) {}
+    if (createdInputTemp) {
+      try { await fsPromises.unlink(inputPath); } catch (_) {}
     }
   }
 }
@@ -279,12 +280,12 @@ async function processUploadedFiles(userId, reqFiles) {
         await uploadToB2('uploads/' + userId + '/' + safeName, uploadBody, processed.mimeType);
       } else {
         const userDir = path.join('uploads', String(userId));
-        if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
+        await fsPromises.mkdir(userDir, { recursive: true });
         const destination = path.join(userDir, safeName);
         if (processed.filePath) {
-          fs.copyFileSync(processed.filePath, destination);
+          await fsPromises.copyFile(processed.filePath, destination);
         } else {
-          fs.writeFileSync(destination, processed.buffer);
+          await fsPromises.writeFile(destination, processed.buffer);
         }
       }
 
@@ -306,11 +307,11 @@ async function processUploadedFiles(userId, reqFiles) {
       });
       throw error;
     } finally {
-      if (processed.filePath && processed.filePath !== originalTempPath && fs.existsSync(processed.filePath)) {
-        try { fs.unlinkSync(processed.filePath); } catch (_) {}
+      if (processed.filePath && processed.filePath !== originalTempPath) {
+        try { await fsPromises.unlink(processed.filePath); } catch (_) {}
       }
-      if (originalTempPath && fs.existsSync(originalTempPath)) {
-        try { fs.unlinkSync(originalTempPath); } catch (_) {}
+      if (originalTempPath) {
+        try { await fsPromises.unlink(originalTempPath); } catch (_) {}
       }
     }
   }

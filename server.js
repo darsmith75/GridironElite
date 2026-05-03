@@ -11,6 +11,7 @@ process.emitWarning = function patchedEmitWarning(warning, ...args) {
 };
 
 try { require('dotenv').config(); } catch (_) {}
+require('express-async-errors');
 
 const compression = require('compression');
 const express = require('express');
@@ -304,6 +305,14 @@ app.use((err, req, res, next) => {
   }
 
   return next(err);
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled route error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  return res.status(500).json({ error: 'Internal server error' });
 });
 
 async function initializeAndStart() {
