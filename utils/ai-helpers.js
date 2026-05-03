@@ -94,7 +94,7 @@ async function logAiEvent({ eventType, actorUserId, playerUserId, summaryId = nu
 
 async function canAccessPlayerSummary(req, playerUserId) {
   if (!req.session.userId) return false;
-  if (req.session.role === 'admin' || req.session.role === 'agent') return true;
+  if (req.session.role === 'admin' || req.session.role === 'agent' || req.session.role === 'coach') return true;
   return req.session.userId === playerUserId;
 }
 
