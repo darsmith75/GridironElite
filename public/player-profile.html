@@ -1238,7 +1238,7 @@
         if (favorites.length > 0) {
           html += `
             <div class="profile-section">
-              <h2 class="section-title-small">COLLEGE FAVORITES</h2>
+              <h2 class="section-title-small">FOLLOWING</h2>
               <div class="college-offers-grid-profile" data-college-group="favorites">
                 ${favorites.map(fav => `
                      <div class="college-logo-card" style="position:relative; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center;"
@@ -2802,7 +2802,7 @@
             ${urlHtml}
             <div style="margin-top:6px;">${divisionBadge}${confBadge}${teamBadge}</div>
             <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-              <button onclick="toggleFavorite(${c.id})" style="padding:6px 14px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${favActive}">${c.is_favorite ? '⭐ Favorited' : '☆ Favorite'}</button>
+              <button onclick="toggleFavorite(${c.id})" style="padding:6px 14px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${favActive}">${c.is_favorite ? '⭐ Following' : '☆ Follow'}</button>
               <button onclick="toggleOffer(${c.id})" style="padding:6px 14px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; ${offerActive}">${c.has_offer ? '📩 Offer Received' : '📨 Mark Offer'}</button>
               <button onclick="openSchoolDetail(${c.id})" style="padding:6px 14px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; background:#e8edf5; color:#1e3c72;">📝 Notes</button>
             </div>
