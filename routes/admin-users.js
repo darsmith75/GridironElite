@@ -223,26 +223,32 @@ router.delete('/admin/users/:id', requireAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    // Delete related data
-    await db.prepare('DELETE FROM agent_favorites WHERE agent_id = ? OR user_id = ?').run(user.id, user.id);
-    if (user.role === 'player') {
-      await db.prepare('DELETE FROM player_videos WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM player_images WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM player_video_links WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM player_school_interests WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM school_notes WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM school_contacts WHERE user_id = ?').run(user.id);
-      await db.prepare('DELETE FROM player_profiles WHERE user_id = ?').run(user.id);
-      // Remove user's uploads from Backblaze B2
-      if (b2Enabled) {
-        await deleteFromB2Prefix('uploads/' + user.id + '/');
+    await db.withTransaction(async (tx) => {
+      await tx.prepare('DELETE FROM agent_favorites WHERE agent_id = ? OR user_id = ?').run(user.id, user.id);
+      if (user.role === 'player') {
+        await tx.prepare('DELETE FROM player_videos WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM player_images WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM player_video_links WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM player_school_interests WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM school_notes WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM school_contacts WHERE user_id = ?').run(user.id);
+        await tx.prepare('DELETE FROM player_profiles WHERE user_id = ?').run(user.id);
       }
-      // Remove local upload folder (legacy / non-B2 fallback)
-      const userUploadDir = path.join('uploads', String(user.id));
-      await fsPromises.rm(userUploadDir, { recursive: true, force: true });
+      await tx.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+    });
+
+    if (user.role === 'player') {
+      try {
+        if (b2Enabled) {
+          await deleteFromB2Prefix('uploads/' + user.id + '/');
+        }
+        const userUploadDir = path.join('uploads', String(user.id));
+        await fsPromises.rm(userUploadDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        console.warn('Admin delete user cleanup warning:', cleanupError.message || cleanupError);
+      }
     }
-    await db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
 
     res.json({ success: true });
   } catch (error) {

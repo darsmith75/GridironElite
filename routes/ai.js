@@ -183,11 +183,15 @@ router.post('/ai/player/:playerUserId/summary/:summaryId/feedback', requireAuth,
 });
 
 // AI: Get cached player rating
-router.get('/ai/player/:playerUserId/rating', async (req, res) => {
+router.get('/ai/player/:playerUserId/rating', requireAuth, async (req, res) => {
   try {
     const playerUserId = parseAiPlayerId(req.params.playerUserId);
     if (!playerUserId) {
       return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    if (!(await canAccessPlayerSummary(req, playerUserId))) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     const row = await db.prepare(
@@ -220,6 +224,10 @@ router.post('/ai/player/:playerUserId/rating/generate', requireAuth, async (req,
     const playerUserId = parseAiPlayerId(req.params.playerUserId);
     if (!playerUserId) {
       return res.status(400).json({ error: 'Invalid player ID' });
+    }
+
+    if (!(await canAccessPlayerSummary(req, playerUserId))) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     if (req.session.role !== 'admin' && isAiGenerationRateLimited(req.session.userId, playerUserId)) {

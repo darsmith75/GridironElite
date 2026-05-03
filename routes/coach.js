@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../database');
 const { requireCoach } = require('../middleware/auth');
-const { enrichPlayerProfile } = require('../utils/enrich-player');
+const { enrichPlayerProfiles } = require('../utils/enrich-player');
 const { upload, processUploadedFiles } = require('../utils/upload');
 const { deleteUploadFile } = require('../utils/file-mgmt');
 const { normalizeHexColor, getPublicAppUrl } = require('../utils/helpers');
@@ -494,7 +494,7 @@ router.get('/coach/team/roster', requireCoach, async (req, res) => {
       WHERE tp.team_id = ?
       ORDER BY pp.full_name ASC
     `).all(team.id);
-    await Promise.all(players.map(p => enrichPlayerProfile(p)));
+    await enrichPlayerProfiles(players);
     res.json(players);
   } catch (error) {
     console.error('Coach get roster error:', error);
@@ -913,12 +913,13 @@ router.post('/coach/profile/photo', requireCoach, upload.single('profilePicture'
 
 // Coach: Change password
 router.post('/coach/change-password', requireCoach, async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  const coach = await db.prepare('SELECT password FROM users WHERE id = ?').get(req.session.userId);
-  if (!coach || !(await bcrypt.compare(currentPassword, coach.password))) {
-    return res.status(400).json({ error: 'Current password is incorrect' });
-  }
   try {
+    const { currentPassword, newPassword } = req.body;
+    const coach = await db.prepare('SELECT password FROM users WHERE id = ?').get(req.session.userId);
+    if (!coach || !(await bcrypt.compare(currentPassword, coach.password))) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.session.userId);
     res.json({ success: true });
@@ -974,15 +975,16 @@ router.post('/coach/colleges/:collegeId/follow', requireCoach, async (req, res) 
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
-    const existing = await db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
-    if (existing) {
-      const newVal = existing.is_favorite ? 0 : 1;
-      await db.prepare('UPDATE player_school_interests SET is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newVal, existing.id);
-      res.json({ is_followed: newVal });
-    } else {
-      await db.prepare('INSERT INTO player_school_interests (user_id, college_id, is_favorite) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
-      res.json({ is_followed: 1 });
-    }
+    const updated = await db.prepare(`
+      INSERT INTO player_school_interests (user_id, college_id, is_favorite, has_offer, updated_at)
+      VALUES (?, ?, 1, 0, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, college_id)
+      DO UPDATE SET
+        is_favorite = CASE WHEN player_school_interests.is_favorite = 1 THEN 0 ELSE 1 END,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING is_favorite
+    `).get(req.session.userId, collegeId);
+    res.json({ is_followed: updated?.is_favorite ? 1 : 0 });
   } catch (error) {
     console.error('Coach toggle follow error:', error);
     res.status(500).json({ error: 'Failed to toggle follow' });

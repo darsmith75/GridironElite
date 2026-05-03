@@ -132,15 +132,17 @@ router.post('/player/colleges/:collegeId/favorite', requireAuth, async (req, res
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
 
-    const existing = await db.prepare('SELECT id, is_favorite FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
-    if (existing) {
-      const newVal = existing.is_favorite ? 0 : 1;
-      await db.prepare('UPDATE player_school_interests SET is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newVal, existing.id);
-      res.json({ is_favorite: newVal });
-    } else {
-      await db.prepare('INSERT INTO player_school_interests (user_id, college_id, is_favorite) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
-      res.json({ is_favorite: 1 });
-    }
+    const updated = await db.prepare(`
+      INSERT INTO player_school_interests (user_id, college_id, is_favorite, has_offer, updated_at)
+      VALUES (?, ?, 1, 0, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, college_id)
+      DO UPDATE SET
+        is_favorite = CASE WHEN player_school_interests.is_favorite = 1 THEN 0 ELSE 1 END,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING is_favorite
+    `).get(req.session.userId, collegeId);
+
+    res.json({ is_favorite: updated?.is_favorite ? 1 : 0 });
   } catch (error) {
     console.error('Toggle favorite error:', error);
     res.status(500).json({ error: 'Failed to toggle favorite' });
@@ -155,15 +157,17 @@ router.post('/player/colleges/:collegeId/offer', requireAuth, async (req, res) =
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
 
-    const existing = await db.prepare('SELECT id, has_offer FROM player_school_interests WHERE user_id = ? AND college_id = ?').get(req.session.userId, collegeId);
-    if (existing) {
-      const newVal = existing.has_offer ? 0 : 1;
-      await db.prepare('UPDATE player_school_interests SET has_offer = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newVal, existing.id);
-      res.json({ has_offer: newVal });
-    } else {
-      await db.prepare('INSERT INTO player_school_interests (user_id, college_id, has_offer) VALUES (?, ?, 1)').run(req.session.userId, collegeId);
-      res.json({ has_offer: 1 });
-    }
+    const updated = await db.prepare(`
+      INSERT INTO player_school_interests (user_id, college_id, is_favorite, has_offer, updated_at)
+      VALUES (?, ?, 0, 1, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, college_id)
+      DO UPDATE SET
+        has_offer = CASE WHEN player_school_interests.has_offer = 1 THEN 0 ELSE 1 END,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING has_offer
+    `).get(req.session.userId, collegeId);
+
+    res.json({ has_offer: updated?.has_offer ? 1 : 0 });
   } catch (error) {
     console.error('Toggle offer error:', error);
     res.status(500).json({ error: 'Failed to toggle offer' });
