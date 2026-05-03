@@ -57,7 +57,8 @@ app.use(helmet({
       objectSrc: ["'none'"],
     }
   },
-  crossOriginEmbedderPolicy: false // allow images/videos from external CDNs
+  crossOriginEmbedderPolicy: false, // allow images/videos from external CDNs
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' } // let YouTube/Hudl validate the embedding origin
 }));
 
 // Global rate limiter – broad throttle per IP across all routes.
