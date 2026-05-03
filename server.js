@@ -51,8 +51,9 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      mediaSrc: ["'self'", 'blob:', 'https:'], // allow <video> from B2 (302 redirect) and HTTPS sources
       connectSrc: ["'self'"],
-      frameSrc: ["'none'"],
+      frameSrc: ["'self'", 'https:'], // allow YouTube, Hudl, and other HTTPS iframe embeds
       objectSrc: ["'none'"],
     }
   },
