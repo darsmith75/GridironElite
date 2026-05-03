@@ -13,21 +13,35 @@ function inferDivisionFromConference(conference) {
   const normalized = String(conference || '').trim();
   if (!normalized) return null;
 
-  const fbsConferences = new Set([
-    'ACC',
-    'American',
-    'Big 12',
-    'Big Ten',
-    'Conference USA',
-    'FBS Independents',
-    'Mid-American',
-    'Mountain West',
-    'Pac-12',
-    'SEC',
-    'Sun Belt'
+  const divisionByConference = new Map([
+    ['FBS Independents', 'FBS'],
+    ['Pac-12', 'FBS'],
+    ['American', 'FBS'],
+    ['Mid-American', 'FBS'],
+    ['Mountain West', 'FBS'],
+    ['SEC', 'FBS'],
+    ['Sun Belt', 'FBS'],
+    ['ACC', 'FBS'],
+    ['Big Ten', 'FBS'],
+    ['Conference USA', 'FBS'],
+    ['Big 12', 'FBS'],
+    ['UAC', 'FCS'],
+    ['NEC', 'FCS'],
+    ['Independent', 'FCS'],
+    ['MEAC', 'FCS'],
+    ['Southland', 'FCS'],
+    ['Patriot League', 'FCS'],
+    ['SWAC', 'FCS'],
+    ['Ivy League', 'FCS'],
+    ['CAA', 'FCS'],
+    ['Big South-OVC', 'FCS'],
+    ['Pioneer', 'FCS'],
+    ['SoCon', 'FCS'],
+    ['Missouri Valley', 'FCS'],
+    ['Big Sky', 'FCS']
   ]);
 
-  return fbsConferences.has(normalized) ? 'NCAA Division I (FBS)' : null;
+  return divisionByConference.get(normalized) || null;
 }
 
 // Admin: Get comprehensive statistics dashboard

@@ -2301,7 +2301,7 @@
       let filtered = shareContactsData;
       if (schoolFilter) filtered = filtered.filter(c => String(c.college_name || '') === schoolFilter);
       if (search) {
-        filtered = filtered.filter(c => [c.name, c.email, c.title, c.college_name, c.division, c.conference]
+        filtered = filtered.filter(c => [c.name, c.email, c.title, c.college_name, normalizeCoachDivision(c.division), c.conference]
           .filter(Boolean)
           .join(' ')
           .toLowerCase()
@@ -2326,7 +2326,7 @@
             <input type="checkbox" ${checked} onchange="toggleShareContact(${Number(c.id)}, this.checked)">
             <div>
               <div><strong>${escHtml(c.name || 'Contact')}</strong> &lt;${escHtml(c.email)}&gt;</div>
-              <div class="share-modal-contact-meta">${escHtml(c.title || 'No title')} • ${escHtml(c.college_name || 'Unknown School')}${c.division ? ' • ' + escHtml(c.division) : ''}${c.conference ? ' • ' + escHtml(c.conference) : ''}</div>
+              <div class="share-modal-contact-meta">${escHtml(c.title || 'No title')} • ${escHtml(c.college_name || 'Unknown School')}${c.division ? ' • ' + escHtml(normalizeCoachDivision(c.division)) : ''}${c.conference ? ' • ' + escHtml(c.conference) : ''}</div>
             </div>
           </label>`;
         }).join('');
@@ -3045,10 +3045,51 @@
     }
 
     // ============ COACH SCHOOLS ============
+    const COACH_DIVISION_CONFERENCES = Object.freeze({
+      FBS: [
+        'FBS Independents',
+        'Pac-12',
+        'American',
+        'Mid-American',
+        'Mountain West',
+        'SEC',
+        'Sun Belt',
+        'ACC',
+        'Big Ten',
+        'Conference USA',
+        'Big 12'
+      ],
+      FCS: [
+        'UAC',
+        'NEC',
+        'Independent',
+        'MEAC',
+        'Southland',
+        'Patriot League',
+        'SWAC',
+        'Ivy League',
+        'CAA',
+        'Big South-OVC',
+        'Pioneer',
+        'SoCon',
+        'Missouri Valley',
+        'Big Sky'
+      ]
+    });
+    const COACH_LEGACY_DIVISION_ALIASES = Object.freeze({
+      'NCAA Division I (FBS)': 'FBS',
+      'NCAA Division I (FCS)': 'FCS'
+    });
     let coachAllSchools = [];
     let coachCurrentSchoolId = null;
     let coachCurrentSchoolData = null;
     let coachSchoolsLoaded = false;
+
+    function normalizeCoachDivision(division) {
+      const normalized = String(division || '').trim();
+      if (!normalized) return '';
+      return COACH_LEGACY_DIVISION_ALIASES[normalized] || normalized;
+    }
 
     function escC(str) {
       if (!str) return '';
@@ -3071,15 +3112,17 @@
     }
 
     function getCoachSchoolDivisions() {
-      return [...new Set(coachAllSchools.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+      return Object.keys(COACH_DIVISION_CONFERENCES);
     }
 
     function getCoachSchoolConferences(selectedDivision) {
       const division = String(selectedDivision || '').trim();
-      const filtered = division
-        ? coachAllSchools.filter(c => String(c.division || '').trim() === division)
-        : coachAllSchools;
-      return [...new Set(filtered.map(c => String(c.conference || '').trim()).filter(Boolean))].sort();
+      if (division) return COACH_DIVISION_CONFERENCES[division] || [];
+      const all = new Set();
+      Object.values(COACH_DIVISION_CONFERENCES).forEach(conferences => {
+        conferences.forEach(conference => all.add(conference));
+      });
+      return [...all];
     }
 
     function populateCoachSchoolFilterOptions() {
@@ -3122,7 +3165,7 @@
         const logoHtml = s.logo
           ? `<img class="followed-school-logo" src="/${escC(s.logo)}" alt="${escC(s.name)}">`
           : `<div class="followed-school-logo-placeholder">🏫</div>`;
-        const conf = [s.division, s.conference, s.team].filter(Boolean).join(' · ');
+        const conf = [normalizeCoachDivision(s.division), s.conference, s.team].filter(Boolean).join(' · ');
         return `<div class="followed-school-card" onclick="openCoachSchoolDetail(${s.id})">
           ${logoHtml}
           <div class="followed-school-info">
@@ -3158,7 +3201,7 @@
       const confFilter = document.getElementById('coachSchoolConferenceFilter').value;
       const statusFilter = document.getElementById('coachSchoolStatusFilter').value;
       let filtered = coachAllSchools;
-      if (divisionFilter) filtered = filtered.filter(c => (c.division || '') === divisionFilter);
+      if (divisionFilter) filtered = filtered.filter(c => normalizeCoachDivision(c.division) === divisionFilter);
       if (confFilter) filtered = filtered.filter(c => c.conference === confFilter);
       if (search) filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.team || '').toLowerCase().includes(search));
       if (statusFilter === 'followed') filtered = filtered.filter(c => c.is_followed);
@@ -3175,8 +3218,9 @@
         const confBadge = c.conference
           ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px;">${escC(c.conference)}</span>`
           : '';
-        const divisionBadge = c.division
-          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; margin-right:4px;">${escC(c.division)}</span>`
+        const normalizedDivision = normalizeCoachDivision(c.division);
+        const divisionBadge = normalizedDivision
+          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; margin-right:4px;">${escC(normalizedDivision)}</span>`
           : '';
         const teamBadge = c.team
           ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; margin-left:4px;">${escC(c.team)}</span>`
@@ -3223,7 +3267,7 @@
         logoEl.innerHTML = `<div style="width:44px; height:44px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:22px;">🏫</div>`;
       }
       document.getElementById('coachDetailName').textContent = coachCurrentSchoolData.name;
-      document.getElementById('coachDetailConf').textContent = [coachCurrentSchoolData.division, coachCurrentSchoolData.conference, coachCurrentSchoolData.team].filter(Boolean).join(' · ');
+      document.getElementById('coachDetailConf').textContent = [normalizeCoachDivision(coachCurrentSchoolData.division), coachCurrentSchoolData.conference, coachCurrentSchoolData.team].filter(Boolean).join(' · ');
 
       document.getElementById('coachSchoolDetailModal').style.display = 'block';
       document.body.style.overflow = 'hidden';

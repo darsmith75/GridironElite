@@ -2580,8 +2580,49 @@
     }
 
     // ============ SCHOOLS FEATURE ============
+    const PLAYER_DIVISION_CONFERENCES = Object.freeze({
+      FBS: [
+        'FBS Independents',
+        'Pac-12',
+        'American',
+        'Mid-American',
+        'Mountain West',
+        'SEC',
+        'Sun Belt',
+        'ACC',
+        'Big Ten',
+        'Conference USA',
+        'Big 12'
+      ],
+      FCS: [
+        'UAC',
+        'NEC',
+        'Independent',
+        'MEAC',
+        'Southland',
+        'Patriot League',
+        'SWAC',
+        'Ivy League',
+        'CAA',
+        'Big South-OVC',
+        'Pioneer',
+        'SoCon',
+        'Missouri Valley',
+        'Big Sky'
+      ]
+    });
+    const PLAYER_LEGACY_DIVISION_ALIASES = Object.freeze({
+      'NCAA Division I (FBS)': 'FBS',
+      'NCAA Division I (FCS)': 'FCS'
+    });
     let allSchools = [];
     let currentSchoolRatings = [];
+
+    function normalizeSchoolDivision(division) {
+      const normalized = String(division || '').trim();
+      if (!normalized) return '';
+      return PLAYER_LEGACY_DIVISION_ALIASES[normalized] || normalized;
+    }
 
     async function loadTopSchools() {
       const section = document.getElementById('topSchoolsSection');
@@ -2614,7 +2655,7 @@
               <div style="flex-shrink:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">${logoHtml}</div>
               <div style="flex:1; min-width:0;">
                 <div style="font-weight:600; font-size:14px; color:#1e3c72; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtmlDetail(school.name)}</div>
-                ${(school.division || school.conference) ? `<div style="font-size:12px; color:#76849b; margin-top:1px;">${escapeHtmlDetail([school.division, school.conference].filter(Boolean).join(' | '))}</div>` : ''}
+                ${(school.division || school.conference) ? `<div style="font-size:12px; color:#76849b; margin-top:1px;">${escapeHtmlDetail([normalizeSchoolDivision(school.division), school.conference].filter(Boolean).join(' | '))}</div>` : ''}
               </div>
               <div style="flex-shrink:0; text-align:right;">
                 <div style="line-height:1;">${stars}</div>
@@ -2661,15 +2702,17 @@
     }
 
     function getSchoolDivisions() {
-      return [...new Set(allSchools.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+      return Object.keys(PLAYER_DIVISION_CONFERENCES);
     }
 
     function getSchoolConferences(selectedDivision) {
       const division = String(selectedDivision || '').trim();
-      const filtered = division
-        ? allSchools.filter(c => String(c.division || '').trim() === division)
-        : allSchools;
-      return [...new Set(filtered.map(c => String(c.conference || '').trim()).filter(Boolean))].sort();
+      if (division) return PLAYER_DIVISION_CONFERENCES[division] || [];
+      const all = new Set();
+      Object.values(PLAYER_DIVISION_CONFERENCES).forEach(conferences => {
+        conferences.forEach(conference => all.add(conference));
+      });
+      return [...all];
     }
 
     function populateSchoolFilterOptions() {
@@ -2711,7 +2754,7 @@
 
       let filtered = allSchools;
       if (divisionFilter) {
-        filtered = filtered.filter(c => (c.division || '') === divisionFilter);
+        filtered = filtered.filter(c => normalizeSchoolDivision(c.division) === divisionFilter);
       }
       if (confFilter) {
         filtered = filtered.filter(c => c.conference === confFilter);
@@ -2741,8 +2784,9 @@
         const confBadge = c.conference
           ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block;">${escapeHtmlSchools(c.conference)}</span>`
           : '';
-        const divisionBadge = c.division
-          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-right:4px;">${escapeHtmlSchools(c.division)}</span>`
+        const normalizedDivision = normalizeSchoolDivision(c.division);
+        const divisionBadge = normalizedDivision
+          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-right:4px;">${escapeHtmlSchools(normalizedDivision)}</span>`
           : '';
         const teamBadge = c.team
           ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-left:4px;">${escapeHtmlSchools(c.team)}</span>`
@@ -2822,7 +2866,7 @@
         logoEl.innerHTML = `<div style="width:48px; height:48px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px;">🏫</div>`;
       }
       document.getElementById('schoolDetailName').textContent = currentSchoolData.name;
-      document.getElementById('schoolDetailConf').textContent = [currentSchoolData.division, currentSchoolData.conference, currentSchoolData.team].filter(Boolean).join(' · ');
+      document.getElementById('schoolDetailConf').textContent = [normalizeSchoolDivision(currentSchoolData.division), currentSchoolData.conference, currentSchoolData.team].filter(Boolean).join(' · ');
 
       document.getElementById('schoolDetailModal').style.display = 'block';
       switchDetailTab('contacts');

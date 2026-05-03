@@ -953,12 +953,6 @@
           <label>Division</label>
           <select id="collegeDivision">
             <option value="">-- Select Division --</option>
-            <option value="NCAA Division I (FBS)">NCAA Division I (FBS)</option>
-            <option value="NCAA Division I (FCS)">NCAA Division I (FCS)</option>
-            <option value="NCAA Division II">NCAA Division II</option>
-            <option value="NCAA Division III">NCAA Division III</option>
-            <option value="NAIA">NAIA</option>
-            <option value="NJCAA">NJCAA</option>
           </select>
         </div>
         <div class="input-group">
@@ -2278,6 +2272,41 @@
     });
 
     // College Management
+    const COLLEGE_DIVISION_CONFERENCES = Object.freeze({
+      FBS: [
+        'FBS Independents',
+        'Pac-12',
+        'American',
+        'Mid-American',
+        'Mountain West',
+        'SEC',
+        'Sun Belt',
+        'ACC',
+        'Big Ten',
+        'Conference USA',
+        'Big 12'
+      ],
+      FCS: [
+        'UAC',
+        'NEC',
+        'Independent',
+        'MEAC',
+        'Southland',
+        'Patriot League',
+        'SWAC',
+        'Ivy League',
+        'CAA',
+        'Big South-OVC',
+        'Pioneer',
+        'SoCon',
+        'Missouri Valley',
+        'Big Sky'
+      ]
+    });
+    const LEGACY_DIVISION_ALIASES = Object.freeze({
+      'NCAA Division I (FBS)': 'FBS',
+      'NCAA Division I (FCS)': 'FCS'
+    });
     let allColleges = [];
 
     async function loadColleges() {
@@ -2290,19 +2319,31 @@
 
     function getCollegeDivisionConferenceMap() {
       const map = new Map();
-      for (const college of allColleges) {
-        const division = String(college.division || '').trim();
-        const conference = String(college.conference || '').trim();
-        if (!conference) continue;
-        const key = division || '';
-        if (!map.has(key)) map.set(key, new Set());
-        map.get(key).add(conference);
-      }
+      Object.entries(COLLEGE_DIVISION_CONFERENCES).forEach(([division, conferences]) => {
+        map.set(division, new Set(conferences));
+      });
       return map;
     }
 
+    function normalizeDivisionValue(value) {
+      const normalized = String(value || '').trim();
+      if (!normalized) return '';
+      return LEGACY_DIVISION_ALIASES[normalized] || normalized;
+    }
+
+    function defaultDivisionForConference(conference) {
+      const normalizedConference = String(conference || '').trim();
+      if (!normalizedConference) return '';
+      for (const [division, conferences] of Object.entries(COLLEGE_DIVISION_CONFERENCES)) {
+        if (conferences.includes(normalizedConference)) {
+          return division;
+        }
+      }
+      return '';
+    }
+
     function getCollegeDivisions() {
-      return [...new Set(allColleges.map(c => String(c.division || '').trim()).filter(Boolean))].sort();
+      return Object.keys(COLLEGE_DIVISION_CONFERENCES);
     }
 
     function getCollegeConferences(selectedDivision) {
@@ -2353,6 +2394,11 @@
       conferenceSelect.value = normalizedSelected;
     }
 
+    function populateCollegeModalDivisionOptions(selectedDivision) {
+      const divisions = getCollegeDivisions();
+      populateSelectOptions('collegeDivision', '-- Select Division --', divisions, normalizeDivisionValue(selectedDivision));
+    }
+
     function handleCollegeDivisionFilterChange() {
       populateCollegeFilterOptions();
       renderColleges();
@@ -2364,7 +2410,7 @@
       const confFilter = document.getElementById('conferenceFilter').value;
       let filtered = allColleges;
       if (divisionFilter) {
-        filtered = filtered.filter(c => (c.division || '') === divisionFilter);
+        filtered = filtered.filter(c => normalizeDivisionValue(c.division) === divisionFilter);
       }
       if (confFilter) {
         filtered = filtered.filter(c => c.conference === confFilter);
@@ -2389,8 +2435,9 @@
         const confHtml = c.conference
           ? `<span style="font-size:12px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px;">${escapeHtml(c.conference)}</span>`
           : '';
-        const divisionHtml = c.division
-          ? `<span style="font-size:12px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-right:4px;">${escapeHtml(c.division)}</span>`
+        const normalizedDivision = normalizeDivisionValue(c.division);
+        const divisionHtml = normalizedDivision
+          ? `<span style="font-size:12px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-right:4px;">${escapeHtml(normalizedDivision)}</span>`
           : '';
         const teamHtml = c.team
           ? `<span style="font-size:12px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; display:inline-block; margin-top:4px; margin-left:4px;">${escapeHtml(c.team)}</span>`
@@ -2414,18 +2461,12 @@
   document.getElementById('divisionFilter').addEventListener('change', handleCollegeDivisionFilterChange);
     document.getElementById('conferenceFilter').addEventListener('change', renderColleges);
 
-    function defaultDivisionForConference(conference) {
-      const normalizedConference = String(conference || '').trim();
-      if (!normalizedConference) return '';
-      const match = allColleges.find(c => String(c.conference || '').trim() === normalizedConference && String(c.division || '').trim());
-      return match ? String(match.division || '').trim() : '';
-    }
-
     function syncDivisionFromConference() {
       const conference = document.getElementById('collegeConference').value;
       const suggested = defaultDivisionForConference(conference);
       if (suggested) {
         document.getElementById('collegeDivision').value = suggested;
+        populateCollegeModalConferenceOptions(suggested, conference);
       }
     }
 
@@ -2439,16 +2480,18 @@
       document.getElementById('collegeForm').reset();
       document.getElementById('collegeId').value = '';
       document.getElementById('collegeCurrentLogo').innerHTML = '';
+      const selectedCollege = collegeId ? allColleges.find(col => col.id === collegeId) : null;
+      populateCollegeModalDivisionOptions(selectedCollege ? selectedCollege.division : '');
 
       if (collegeId) {
-        const c = allColleges.find(col => col.id === collegeId);
+        const c = selectedCollege;
         if (c) {
           document.getElementById('collegeModalTitle').textContent = 'Edit College';
           document.getElementById('collegeId').value = c.id;
           document.getElementById('collegeName').value = c.name;
           document.getElementById('collegeUrl').value = c.website_url || '';
-          document.getElementById('collegeDivision').value = c.division || '';
-          populateCollegeModalConferenceOptions(c.division || '', c.conference || '');
+          document.getElementById('collegeDivision').value = normalizeDivisionValue(c.division || '');
+          populateCollegeModalConferenceOptions(normalizeDivisionValue(c.division || ''), c.conference || '');
           document.getElementById('collegeTeam').value = c.team || '';
           if (c.logo) {
             document.getElementById('collegeCurrentLogo').innerHTML =
