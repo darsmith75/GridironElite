@@ -2,7 +2,7 @@ const db = require('../database');
 const { PROMPT_VERSION } = require('../ai-provider');
 const { METRIC_TIP_CONFIG, METRIC_TIP_KEYS } = require('./constants');
 
-const aiGenerateRateTracker = new Map();
+let aiRateLimitCleanupCounter = 0;
 
 function isAiGenerationEnabled() {
   return String(process.env.AI_FEATURE_ENABLED || 'false').toLowerCase() === 'true';
@@ -28,20 +28,39 @@ function aiRateLimitKey(actorUserId, playerUserId) {
   return `${actorUserId}:${playerUserId}`;
 }
 
-function isAiGenerationRateLimited(actorUserId, playerUserId) {
+async function maybeCleanupAiRateLimits() {
+  aiRateLimitCleanupCounter += 1;
+  if (aiRateLimitCleanupCounter % 200 !== 0) return;
+
+  try {
+    await db.prepare('DELETE FROM distributed_rate_limits WHERE expires_at <= CURRENT_TIMESTAMP').run();
+  } catch (_) {
+    // Cleanup is best-effort only.
+  }
+}
+
+async function isAiGenerationRateLimited(actorUserId, playerUserId) {
   const limitPerHour = parseInt(process.env.AI_GENERATE_MAX_PER_HOUR || '8', 10);
   const windowMs = 60 * 60 * 1000;
   const now = Date.now();
-  const key = aiRateLimitKey(actorUserId, playerUserId);
-  const entry = aiGenerateRateTracker.get(key) || { stamps: [] };
-  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
-  if (entry.stamps.length >= limitPerHour) {
-    aiGenerateRateTracker.set(key, entry);
-    return true;
-  }
-  entry.stamps.push(now);
-  aiGenerateRateTracker.set(key, entry);
-  return false;
+  const windowStartMs = Math.floor(now / windowMs) * windowMs;
+  const windowStart = new Date(windowStartMs).toISOString();
+  const expiresAt = new Date(windowStartMs + (windowMs * 2)).toISOString();
+  const key = `ai-generate:${aiRateLimitKey(actorUserId, playerUserId)}`;
+
+  const row = await db.prepare(`
+    INSERT INTO distributed_rate_limits (bucket_key, window_start, request_count, expires_at, updated_at)
+    VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT (bucket_key, window_start)
+    DO UPDATE SET
+      request_count = distributed_rate_limits.request_count + 1,
+      updated_at = CURRENT_TIMESTAMP,
+      expires_at = EXCLUDED.expires_at
+    RETURNING request_count
+  `).get(key, windowStart, expiresAt);
+
+  await maybeCleanupAiRateLimits();
+  return Number(row?.request_count || 0) > limitPerHour;
 }
 
 function mapSummaryRow(row) {

@@ -80,7 +80,7 @@ router.post('/ai/player/:playerUserId/summary/generate', requireAuth, async (req
     const audience = normalizeAudience(req.body?.audience);
     const forceRegenerate = !!req.body?.forceRegenerate;
 
-    if (req.session.role !== 'admin' && isAiGenerationRateLimited(req.session.userId, playerUserId)) {
+    if (req.session.role !== 'admin' && await isAiGenerationRateLimited(req.session.userId, playerUserId)) {
       return res.status(429).json({ error: 'Rate limit exceeded. Please try again shortly.' });
     }
 
@@ -230,7 +230,7 @@ router.post('/ai/player/:playerUserId/rating/generate', requireAuth, async (req,
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    if (req.session.role !== 'admin' && isAiGenerationRateLimited(req.session.userId, playerUserId)) {
+    if (req.session.role !== 'admin' && await isAiGenerationRateLimited(req.session.userId, playerUserId)) {
       return res.status(429).json({ error: 'Rate limit reached. Try again shortly.' });
     }
 

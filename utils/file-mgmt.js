@@ -20,7 +20,7 @@ async function deleteUploadFile(filename) {
       if (deleted) {
         deletedInB2 = true;
       } else {
-        enqueuePendingB2Delete(objectKey, { filename: normalizedFilename, source: 'deleteUploadFile' }, 'immediate-delete-failed');
+        await enqueuePendingB2Delete(objectKey, { filename: normalizedFilename, source: 'deleteUploadFile' }, 'immediate-delete-failed');
       }
     }
   }

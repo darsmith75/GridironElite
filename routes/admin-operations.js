@@ -160,7 +160,7 @@ router.get('/admin/stats', requireAdmin, async (req, res) => {
 // Admin: Get B2 delete queue status
 router.get('/admin/b2-delete-queue', requireAdmin, async (req, res) => {
   try {
-    const snapshot = getPendingB2DeleteQueueSnapshot();
+    const snapshot = await getPendingB2DeleteQueueSnapshot();
     res.json(snapshot);
   } catch (error) {
     console.error('Admin get B2 delete queue error:', error);
@@ -183,7 +183,7 @@ router.post('/admin/b2-delete-queue/flush', requireAdmin, async (req, res) => {
         successCount: 0,
         failedCount: 0,
         droppedCount: 0,
-        remaining: getPendingB2DeleteQueueSnapshot().size
+        remaining: (await getPendingB2DeleteQueueSnapshot()).size
       })
     });
   } catch (error) {

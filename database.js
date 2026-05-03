@@ -342,6 +342,18 @@ const createTablesSQL = `
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS b2_delete_queue (
+    object_key TEXT PRIMARY KEY,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    queued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_attempt_at TIMESTAMP,
+    next_attempt_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    locked_until TIMESTAMP,
+    locked_by VARCHAR(120),
+    reason TEXT,
+    context_json JSONB NOT NULL DEFAULT '{}'::jsonb
+  );
+
   CREATE TABLE IF NOT EXISTS hs_teams (
     id SERIAL PRIMARY KEY,
     coach_id INTEGER UNIQUE NOT NULL,
@@ -605,6 +617,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_ai_events_player ON ai_events(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_rate_limits_expires_at ON distributed_rate_limits(expires_at);
   CREATE INDEX IF NOT EXISTS idx_response_cache_expires_at ON distributed_response_cache(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_b2_delete_queue_next_attempt ON b2_delete_queue(next_attempt_at, queued_at);
+  CREATE INDEX IF NOT EXISTS idx_b2_delete_queue_locked_until ON b2_delete_queue(locked_until);
   CREATE INDEX IF NOT EXISTS idx_hs_teams_coach ON hs_teams(coach_id);
   CREATE INDEX IF NOT EXISTS idx_team_schedules_team ON team_schedules(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_schedules_date ON team_schedules(event_date);
