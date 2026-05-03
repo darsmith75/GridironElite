@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../database');
 const { requireAuth } = require('../middleware/auth');
+const { normalizeCollegeLogoRows } = require('../utils/college-logo-path');
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.get('/player/top-schools', requireAuth, async (req, res) => {
       ORDER BY avg_rating DESC, rated_categories DESC
       LIMIT 5
     `).all(req.session.userId);
-    res.json(rows);
+    res.json(normalizeCollegeLogoRows(rows));
   } catch (error) {
     console.error('Player top schools error:', error);
     res.status(500).json({ error: 'Failed to get top schools' });
@@ -116,7 +117,7 @@ router.get('/player/colleges', requireAuth, async (req, res) => {
       is_favorite: interestMap[c.id]?.is_favorite || 0,
       has_offer: interestMap[c.id]?.has_offer || 0
     }));
-    res.json(result);
+    res.json(normalizeCollegeLogoRows(result));
   } catch (error) {
     console.error('Get colleges error:', error);
     res.status(500).json({ error: 'Failed to get colleges' });

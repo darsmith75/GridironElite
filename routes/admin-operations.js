@@ -6,8 +6,26 @@ const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { getPendingB2DeleteQueueSnapshot, processPendingB2DeleteQueue } = require('../utils/b2-queue');
 const { collegeLogoUpload } = require('../utils/upload');
+const { normalizeDivisionTag, normalizeCollegeLogoPath, normalizeCollegeLogoRows } = require('../utils/college-logo-path');
 
 const router = express.Router();
+
+async function storeUploadedCollegeLogo(file, division) {
+  if (!file) return null;
+
+  const divisionTag = normalizeDivisionTag(division);
+  if (!divisionTag) {
+    return path.join('images', 'collegelogos', file.filename).replace(/\\/g, '/');
+  }
+
+  const targetDir = path.join('images', 'collegelogos', divisionTag);
+  const targetPath = path.join(targetDir, file.filename);
+
+  await fsPromises.mkdir(targetDir, { recursive: true });
+  await fsPromises.rename(file.path, targetPath);
+
+  return targetPath.replace(/\\/g, '/');
+}
 
 function inferDivisionFromConference(conference) {
   const normalized = String(conference || '').trim();
@@ -182,7 +200,7 @@ router.get('/admin/colleges', requireAdmin, async (req, res) => {
     const colleges = await db.prepare(
       'SELECT id, name, website_url, division, conference, team, logo FROM colleges ORDER BY name ASC'
     ).all();
-    res.json(colleges);
+    res.json(normalizeCollegeLogoRows(colleges));
   } catch (error) {
     console.error('Admin get colleges error:', error);
     res.status(500).json({ error: 'Failed to get colleges' });
@@ -200,7 +218,8 @@ router.post('/admin/colleges', requireAdmin, collegeLogoUpload.single('logo'), a
     const conference = (req.body.conference || '').trim() || null;
     const division = divisionInput || inferDivisionFromConference(conference);
     const team = (req.body.team || '').trim() || null;
-    const logo = req.file ? path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/') : null;
+    const uploadedLogo = await storeUploadedCollegeLogo(req.file, division);
+    const logo = normalizeCollegeLogoPath(uploadedLogo, division);
 
     const result = await db.prepare(
       'INSERT INTO colleges (name, website_url, division, conference, team, logo) VALUES (?, ?, ?, ?, ?, ?)'
@@ -242,7 +261,10 @@ router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo')
           if (error?.code !== 'ENOENT') throw error;
         }
       }
-      logo = path.join('images', 'collegelogos', req.file.filename).replace(/\\/g, '/');
+      const uploadedLogo = await storeUploadedCollegeLogo(req.file, division);
+      logo = normalizeCollegeLogoPath(uploadedLogo, division);
+    } else {
+      logo = normalizeCollegeLogoPath(logo, division);
     }
 
     await db.prepare(

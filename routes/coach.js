@@ -7,6 +7,7 @@ const { enrichPlayerProfile } = require('../utils/enrich-player');
 const { upload, processUploadedFiles } = require('../utils/upload');
 const { deleteUploadFile } = require('../utils/file-mgmt');
 const { normalizeHexColor, getPublicAppUrl } = require('../utils/helpers');
+const { normalizeCollegeLogoRows } = require('../utils/college-logo-path');
 const { sendTeamInviteEmail } = require('../utils/email');
 
 const router = express.Router();
@@ -959,7 +960,7 @@ router.get('/coach/colleges', requireCoach, async (req, res) => {
       ...c,
       is_followed: followMap[c.id] ? 1 : 0
     }));
-    res.json(result);
+    res.json(normalizeCollegeLogoRows(result));
   } catch (error) {
     console.error('Coach get colleges error:', error);
     res.status(500).json({ error: 'Failed to get colleges' });

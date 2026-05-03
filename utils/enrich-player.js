@@ -1,4 +1,5 @@
 const db = require('../database');
+const { normalizeCollegeLogoPath } = require('./college-logo-path');
 
 function parseCollegeLogoOrderState(profile) {
   let collegeLogoOrderState = {};
@@ -100,7 +101,7 @@ async function enrichPlayerProfiles(profiles) {
   const offerSchoolsByUser = groupRowsByUser(offerSchoolsRaw, row => ({
     id: row.id,
     name: row.name,
-    logo: row.logo,
+    logo: normalizeCollegeLogoPath(row.logo, row.division),
     division: row.division,
     conference: row.conference,
     team: row.team,
@@ -109,7 +110,7 @@ async function enrichPlayerProfiles(profiles) {
   const favoriteSchoolsByUser = groupRowsByUser(favoriteSchoolsRaw, row => ({
     id: row.id,
     name: row.name,
-    logo: row.logo,
+    logo: normalizeCollegeLogoPath(row.logo, row.division),
     division: row.division,
     conference: row.conference,
     team: row.team,
