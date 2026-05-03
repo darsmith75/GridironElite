@@ -34,7 +34,7 @@ for (const method of ['get', 'post', 'put', 'delete']) {
 
 // Agent: Get all players with filters
 router.get('/agent/players', async (req, res) => {
-  if (isAgentPlayersRateLimited(req)) {
+  if (await isAgentPlayersRateLimited(req)) {
     return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
 
@@ -71,7 +71,7 @@ router.get('/agent/players', async (req, res) => {
   const shouldUseCache = !normalizedFilters.favoritesOnly;
   const cacheKey = buildAgentPlayersCacheKey(req, normalizedFilters);
   if (shouldUseCache) {
-    const cachedPayload = getCachedAgentPlayers(cacheKey);
+    const cachedPayload = await getCachedAgentPlayers(cacheKey);
     if (cachedPayload) {
       return res.json(cachedPayload);
     }
@@ -219,7 +219,7 @@ router.get('/agent/players', async (req, res) => {
   };
 
   if (shouldUseCache) {
-    setCachedAgentPlayers(cacheKey, payload);
+    await setCachedAgentPlayers(cacheKey, payload);
   }
   res.json(payload);
 });

@@ -326,6 +326,22 @@ const createTablesSQL = `
     FOREIGN KEY (summary_id) REFERENCES ai_player_summaries(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS distributed_rate_limits (
+    bucket_key VARCHAR(255) NOT NULL,
+    window_start TIMESTAMP NOT NULL,
+    request_count INTEGER NOT NULL DEFAULT 0,
+    expires_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (bucket_key, window_start)
+  );
+
+  CREATE TABLE IF NOT EXISTS distributed_response_cache (
+    cache_key TEXT PRIMARY KEY,
+    payload_json JSONB NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS hs_teams (
     id SERIAL PRIMARY KEY,
     coach_id INTEGER UNIQUE NOT NULL,
@@ -587,6 +603,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_ai_events_event_type ON ai_events(event_type);
   CREATE INDEX IF NOT EXISTS idx_ai_events_created_at ON ai_events(created_at);
   CREATE INDEX IF NOT EXISTS idx_ai_events_player ON ai_events(player_user_id);
+  CREATE INDEX IF NOT EXISTS idx_rate_limits_expires_at ON distributed_rate_limits(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_response_cache_expires_at ON distributed_response_cache(expires_at);
   CREATE INDEX IF NOT EXISTS idx_hs_teams_coach ON hs_teams(coach_id);
   CREATE INDEX IF NOT EXISTS idx_team_schedules_team ON team_schedules(team_id);
   CREATE INDEX IF NOT EXISTS idx_team_schedules_date ON team_schedules(event_date);

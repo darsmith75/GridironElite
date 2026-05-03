@@ -2,13 +2,49 @@ const db = require('../database');
 const { AD_SLOT_CONFIG, AD_SLOT_KEYS } = require('./constants');
 
 // ---------------------------------------------------------------------------
-// In-memory rate-limit and cache state
+// Distributed rate-limit and cache state (PostgreSQL-backed)
 // ---------------------------------------------------------------------------
 const agentPlayersRateTracker = new Map();
 const agentPlayersResponseCache = new Map();
 const supportContactRateTracker = new Map();
 const authLoginRateTracker = new Map();
 const authForgotPasswordRateTracker = new Map();
+let distributedStateCleanupCounter = 0;
+
+async function maybeCleanupDistributedState() {
+  distributedStateCleanupCounter += 1;
+  if (distributedStateCleanupCounter % 200 !== 0) return;
+
+  try {
+    await Promise.all([
+      db.prepare('DELETE FROM distributed_rate_limits WHERE expires_at <= CURRENT_TIMESTAMP').run(),
+      db.prepare('DELETE FROM distributed_response_cache WHERE expires_at <= CURRENT_TIMESTAMP').run()
+    ]);
+  } catch (_) {
+    // Best effort cleanup only.
+  }
+}
+
+async function consumeDistributedRateLimit(bucketKey, windowMs, maxPerWindow) {
+  const now = Date.now();
+  const windowStartMs = Math.floor(now / windowMs) * windowMs;
+  const windowStart = new Date(windowStartMs).toISOString();
+  const expiresAt = new Date(windowStartMs + (windowMs * 2)).toISOString();
+
+  const row = await db.prepare(`
+    INSERT INTO distributed_rate_limits (bucket_key, window_start, request_count, expires_at, updated_at)
+    VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT (bucket_key, window_start)
+    DO UPDATE SET
+      request_count = distributed_rate_limits.request_count + 1,
+      updated_at = CURRENT_TIMESTAMP,
+      expires_at = EXCLUDED.expires_at
+    RETURNING request_count
+  `).get(bucketKey, windowStart, expiresAt);
+
+  await maybeCleanupDistributedState();
+  return Number(row?.request_count || 0) > maxPerWindow;
+}
 
 // ---------------------------------------------------------------------------
 // General utilities
@@ -70,32 +106,13 @@ function getAgentPlayersRateKey(req) {
   return `ip:${getClientIp(req) || 'unknown'}`;
 }
 
-function isAgentPlayersRateLimited(req) {
+async function isAgentPlayersRateLimited(req) {
   const windowMs = parseInt(process.env.AGENT_PLAYERS_RATE_WINDOW_MS || '60000', 10);
   const authedLimit = parseInt(process.env.AGENT_PLAYERS_RATE_LIMIT_AUTH || '180', 10);
   const anonLimit = parseInt(process.env.AGENT_PLAYERS_RATE_LIMIT_ANON || '90', 10);
   const limit = req.session?.userId ? authedLimit : anonLimit;
-  const now = Date.now();
   const key = getAgentPlayersRateKey(req);
-  const entry = agentPlayersRateTracker.get(key) || { stamps: [] };
-  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
-  if (entry.stamps.length >= limit) {
-    agentPlayersRateTracker.set(key, entry);
-    return true;
-  }
-  entry.stamps.push(now);
-  agentPlayersRateTracker.set(key, entry);
-
-  if (agentPlayersRateTracker.size > 2500) {
-    const cutoff = now - (windowMs * 2);
-    for (const [trackerKey, trackerEntry] of agentPlayersRateTracker.entries()) {
-      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
-        agentPlayersRateTracker.delete(trackerKey);
-      }
-    }
-  }
-
-  return false;
+  return consumeDistributedRateLimit(`agent-players:${key}`, windowMs, limit);
 }
 
 function buildAgentPlayersCacheKey(req, normalized) {
@@ -106,34 +123,37 @@ function buildAgentPlayersCacheKey(req, normalized) {
   });
 }
 
-function getCachedAgentPlayers(cacheKey) {
+async function getCachedAgentPlayers(cacheKey) {
   const ttlMs = parseInt(process.env.AGENT_PLAYERS_CACHE_TTL_MS || '7000', 10);
   if (ttlMs <= 0) return null;
-  const entry = agentPlayersResponseCache.get(cacheKey);
-  if (!entry) return null;
-  if ((Date.now() - entry.cachedAt) > ttlMs) {
-    agentPlayersResponseCache.delete(cacheKey);
-    return null;
-  }
-  return entry.payload;
+
+  const row = await db.prepare(`
+    SELECT payload_json
+    FROM distributed_response_cache
+    WHERE cache_key = ?
+      AND expires_at > CURRENT_TIMESTAMP
+    LIMIT 1
+  `).get(cacheKey);
+
+  return row?.payload_json || null;
 }
 
-function setCachedAgentPlayers(cacheKey, payload) {
+async function setCachedAgentPlayers(cacheKey, payload) {
   const ttlMs = parseInt(process.env.AGENT_PLAYERS_CACHE_TTL_MS || '7000', 10);
   if (ttlMs <= 0) return;
-  agentPlayersResponseCache.set(cacheKey, {
-    cachedAt: Date.now(),
-    payload
-  });
 
-  if (agentPlayersResponseCache.size > 400) {
-    const cutoff = Date.now() - (ttlMs * 2);
-    for (const [key, value] of agentPlayersResponseCache.entries()) {
-      if ((value?.cachedAt || 0) < cutoff) {
-        agentPlayersResponseCache.delete(key);
-      }
-    }
-  }
+  const expiresAt = new Date(Date.now() + ttlMs).toISOString();
+  await db.prepare(`
+    INSERT INTO distributed_response_cache (cache_key, payload_json, expires_at, updated_at)
+    VALUES (?, ?::jsonb, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT (cache_key)
+    DO UPDATE SET
+      payload_json = EXCLUDED.payload_json,
+      expires_at = EXCLUDED.expires_at,
+      updated_at = CURRENT_TIMESTAMP
+  `).run(cacheKey, JSON.stringify(payload), expiresAt);
+
+  await maybeCleanupDistributedState();
 }
 
 // ---------------------------------------------------------------------------
@@ -145,30 +165,11 @@ function supportContactRateKey(req) {
   return `support:${ip}`;
 }
 
-function isSupportContactRateLimited(req) {
+async function isSupportContactRateLimited(req) {
   const windowMs = parseInt(process.env.SUPPORT_CONTACT_RATE_WINDOW_MS || '600000', 10);
   const maxPerWindow = parseInt(process.env.SUPPORT_CONTACT_RATE_LIMIT || '5', 10);
-  const now = Date.now();
   const key = supportContactRateKey(req);
-  const entry = supportContactRateTracker.get(key) || { stamps: [] };
-  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
-  if (entry.stamps.length >= maxPerWindow) {
-    supportContactRateTracker.set(key, entry);
-    return true;
-  }
-  entry.stamps.push(now);
-  supportContactRateTracker.set(key, entry);
-
-  if (supportContactRateTracker.size > 2000) {
-    const cutoff = now - (windowMs * 2);
-    for (const [trackerKey, trackerEntry] of supportContactRateTracker.entries()) {
-      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
-        supportContactRateTracker.delete(trackerKey);
-      }
-    }
-  }
-
-  return false;
+  return consumeDistributedRateLimit(`support-contact:${key}`, windowMs, maxPerWindow);
 }
 
 // ---------------------------------------------------------------------------
@@ -180,30 +181,11 @@ function authLoginRateKey(req) {
   return `login:${ip}`;
 }
 
-function isLoginRateLimited(req) {
+async function isLoginRateLimited(req) {
   const windowMs = parseInt(process.env.LOGIN_RATE_WINDOW_MS || '900000', 10);
   const maxPerWindow = parseInt(process.env.LOGIN_RATE_LIMIT || '12', 10);
-  const now = Date.now();
   const key = authLoginRateKey(req);
-  const entry = authLoginRateTracker.get(key) || { stamps: [] };
-  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
-  if (entry.stamps.length >= maxPerWindow) {
-    authLoginRateTracker.set(key, entry);
-    return true;
-  }
-  entry.stamps.push(now);
-  authLoginRateTracker.set(key, entry);
-
-  if (authLoginRateTracker.size > 2500) {
-    const cutoff = now - (windowMs * 2);
-    for (const [trackerKey, trackerEntry] of authLoginRateTracker.entries()) {
-      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
-        authLoginRateTracker.delete(trackerKey);
-      }
-    }
-  }
-
-  return false;
+  return consumeDistributedRateLimit(`login:${key}`, windowMs, maxPerWindow);
 }
 
 function authForgotPasswordRateKey(req) {
@@ -211,30 +193,11 @@ function authForgotPasswordRateKey(req) {
   return `forgot:${ip}`;
 }
 
-function isForgotPasswordRateLimited(req) {
+async function isForgotPasswordRateLimited(req) {
   const windowMs = parseInt(process.env.FORGOT_PASSWORD_RATE_WINDOW_MS || '900000', 10);
   const maxPerWindow = parseInt(process.env.FORGOT_PASSWORD_RATE_LIMIT || '6', 10);
-  const now = Date.now();
   const key = authForgotPasswordRateKey(req);
-  const entry = authForgotPasswordRateTracker.get(key) || { stamps: [] };
-  entry.stamps = entry.stamps.filter(ts => now - ts < windowMs);
-  if (entry.stamps.length >= maxPerWindow) {
-    authForgotPasswordRateTracker.set(key, entry);
-    return true;
-  }
-  entry.stamps.push(now);
-  authForgotPasswordRateTracker.set(key, entry);
-
-  if (authForgotPasswordRateTracker.size > 2500) {
-    const cutoff = now - (windowMs * 2);
-    for (const [trackerKey, trackerEntry] of authForgotPasswordRateTracker.entries()) {
-      if (!Array.isArray(trackerEntry?.stamps) || trackerEntry.stamps.every(ts => ts < cutoff)) {
-        authForgotPasswordRateTracker.delete(trackerKey);
-      }
-    }
-  }
-
-  return false;
+  return consumeDistributedRateLimit(`forgot-password:${key}`, windowMs, maxPerWindow);
 }
 
 // ---------------------------------------------------------------------------

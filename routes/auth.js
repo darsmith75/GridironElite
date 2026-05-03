@@ -71,7 +71,7 @@ router.get('/verify-email', async (req, res) => {
 
 // Forgot password - always return success so emails cannot be enumerated
 router.post('/forgot-password', async (req, res) => {
-  if (isForgotPasswordRateLimited(req)) {
+  if (await isForgotPasswordRateLimited(req)) {
     return res.status(429).json({ error: 'Too many reset requests. Please wait a few minutes and try again.' });
   }
 
@@ -100,7 +100,7 @@ router.post('/forgot-password', async (req, res) => {
 
 router.post('/support/contact', async (req, res) => {
   try {
-    if (isSupportContactRateLimited(req)) {
+    if (await isSupportContactRateLimited(req)) {
       return res.status(429).json({ error: 'Too many requests. Please try again in a few minutes.' });
     }
 
@@ -173,7 +173,7 @@ router.post('/reset-password', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    if (isLoginRateLimited(req)) {
+    if (await isLoginRateLimited(req)) {
       return res.status(429).json({ error: 'Too many login attempts. Please wait a few minutes and try again.' });
     }
 
