@@ -10,7 +10,8 @@ const router = express.Router();
 
 // Register
 router.post('/register', async (req, res) => {
-  const { email, password, role, fullName } = req.body;
+  const { email: rawEmail, password, role, fullName } = req.body;
+  const email = (rawEmail || '').trim().toLowerCase();
   const ALLOWED_PUBLIC_ROLES = ['player', 'agent', 'coach'];
   if (!ALLOWED_PUBLIC_ROLES.includes(role)) {
     return res.status(400).json({ error: 'Invalid role' });
@@ -178,17 +179,18 @@ router.post('/login', async (req, res) => {
     }
 
     const { email, password } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
     let user;
     try {
       user = await db.prepare(
-        'SELECT id, email, password AS password_hash, role, is_active, email_verified FROM users WHERE email = ?'
-      ).get(email);
+        'SELECT id, email, password AS password_hash, role, is_active, email_verified FROM users WHERE LOWER(email) = ?'
+      ).get(normalizedEmail);
     } catch (queryError) {
       // Backward compatibility for environments where is_active has not been migrated yet.
       if (!/is_active/i.test(String(queryError?.message || ''))) throw queryError;
       user = await db.prepare(
-        'SELECT id, email, password AS password_hash, role, email_verified FROM users WHERE email = ?'
-      ).get(email);
+        'SELECT id, email, password AS password_hash, role, email_verified FROM users WHERE LOWER(email) = ?'
+      ).get(normalizedEmail);
     }
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {

@@ -55,10 +55,12 @@ router.get('/admin/coaches', requireAdmin, async (req, res) => {
     const coaches = await db.prepare(`
       SELECT u.id, u.email, u.full_name, u.phone, u.created_at, u.last_login_at, u.login_count,
         ht.id AS team_id, ht.team_name, ht.school_name, ht.city, ht.state,
-        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count,
-        (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
+        COALESCE(tp_agg.roster_count, 0) AS roster_count,
+        COALESCE(ti_agg.pending_invites, 0) AS pending_invites
       FROM users u
       LEFT JOIN hs_teams ht ON ht.coach_id = u.id
+      LEFT JOIN (SELECT team_id, COUNT(*) AS roster_count FROM team_players GROUP BY team_id) tp_agg ON tp_agg.team_id = ht.id
+      LEFT JOIN (SELECT team_id, COUNT(*) AS pending_invites FROM team_invites WHERE status = 'pending' GROUP BY team_id) ti_agg ON ti_agg.team_id = ht.id
       ${whereSql}
       ORDER BY u.created_at DESC
       LIMIT ? OFFSET ?
@@ -124,10 +126,12 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
       SELECT ht.id, ht.team_name, ht.school_name, ht.city, ht.state, ht.school_logo,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards, ht.created_at,
         u.id AS coach_id, u.full_name AS coach_name, u.email AS coach_email,
-        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count,
-        (SELECT COUNT(*) FROM team_invites ti WHERE ti.team_id = ht.id AND ti.status = 'pending') AS pending_invites
+        COALESCE(tp_agg.roster_count, 0) AS roster_count,
+        COALESCE(ti_agg.pending_invites, 0) AS pending_invites
       FROM hs_teams ht
       LEFT JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN (SELECT team_id, COUNT(*) AS roster_count FROM team_players GROUP BY team_id) tp_agg ON tp_agg.team_id = ht.id
+      LEFT JOIN (SELECT team_id, COUNT(*) AS pending_invites FROM team_invites WHERE status = 'pending' GROUP BY team_id) ti_agg ON ti_agg.team_id = ht.id
       ${whereSql}
       ORDER BY ht.created_at DESC
       LIMIT ? OFFSET ?

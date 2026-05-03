@@ -15,6 +15,8 @@ require('express-async-errors');
 
 const compression = require('compression');
 const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const PgSession = require('connect-pg-simple')(session);
 const multer = require('multer');
@@ -38,6 +40,35 @@ if (!process.env.SESSION_SECRET) {
 
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
+
+// Security headers (helmet).
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+      connectSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    }
+  },
+  crossOriginEmbedderPolicy: false // allow images/videos from external CDNs
+}));
+
+// Global rate limiter – broad throttle per IP across all routes.
+// Per-endpoint limiters (login, forgot-password, etc.) apply stricter limits on top.
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 300,            // 300 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' },
+  skip: (req) => req.path === '/health' || req.path === '/ready'
+});
+app.use(globalLimiter);
 
 // Compress all text-based responses (JSON, HTML, CSS, JS).
 app.use(compression());
