@@ -15,9 +15,14 @@ router.get('/teams', async (req, res) => {
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
         ht.banner_image, ht.city, ht.state, ht.created_at, ht.coach_id,
         u.full_name AS coach_name,
-        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count
+        COALESCE(tp_agg.roster_count, 0) AS roster_count
       FROM hs_teams ht
       JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN (
+        SELECT team_id, COUNT(*) AS roster_count
+        FROM team_players
+        GROUP BY team_id
+      ) tp_agg ON tp_agg.team_id = ht.id
       ORDER BY ht.team_name ASC
     `).all();
     res.json(teams);
@@ -42,9 +47,14 @@ router.get('/team/:id', async (req, res) => {
         u.full_name AS coach_name,
         u.email AS coach_email,
         u.phone AS coach_phone,
-        (SELECT COUNT(*) FROM team_players tp WHERE tp.team_id = ht.id) AS roster_count
+        COALESCE(tp_agg.roster_count, 0) AS roster_count
       FROM hs_teams ht
       JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN (
+        SELECT team_id, COUNT(*) AS roster_count
+        FROM team_players
+        GROUP BY team_id
+      ) tp_agg ON tp_agg.team_id = ht.id
       WHERE ht.id = ?
       LIMIT 1
     `).get(teamId);

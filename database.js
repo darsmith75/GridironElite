@@ -600,6 +600,17 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_favorites_agent_user ON agent_favorites(agent_id, user_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_user ON player_profiles(user_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_height_inches ON player_profiles(height_inches);
+  CREATE INDEX IF NOT EXISTS idx_profiles_position ON player_profiles(position);
+  CREATE INDEX IF NOT EXISTS idx_profiles_graduation_year ON player_profiles(graduation_year);
+  CREATE INDEX IF NOT EXISTS idx_profiles_gpa ON player_profiles(gpa);
+  CREATE INDEX IF NOT EXISTS idx_profiles_forty_yard_dash ON player_profiles(forty_yard_dash);
+  CREATE INDEX IF NOT EXISTS idx_profiles_weight ON player_profiles(weight);
+  CREATE INDEX IF NOT EXISTS idx_profiles_vertical_jump ON player_profiles(vertical_jump);
+  CREATE INDEX IF NOT EXISTS idx_profiles_bench_press ON player_profiles(bench_press);
+  CREATE INDEX IF NOT EXISTS idx_profiles_squat ON player_profiles(squat);
+  CREATE INDEX IF NOT EXISTS idx_profiles_shuttle_5_10_5 ON player_profiles(shuttle_5_10_5);
+  CREATE INDEX IF NOT EXISTS idx_profiles_l_drill ON player_profiles(l_drill);
+  CREATE INDEX IF NOT EXISTS idx_profiles_broad_jump ON player_profiles(broad_jump);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
   CREATE INDEX IF NOT EXISTS idx_users_role_created ON users(role, created_at);
   CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
