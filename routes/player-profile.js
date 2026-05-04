@@ -19,6 +19,7 @@ const {
   deletePlayerAccountAndAssociatedData
 } = require('../utils/file-mgmt');
 const { enrichPlayerProfile } = require('../utils/enrich-player');
+const { parseHeightToInches } = require('../utils/height');
 
 const router = express.Router();
 
@@ -178,7 +179,7 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
     const result = await db.prepare(`
       UPDATE player_profiles SET
         full_name = ?, high_school = ?, graduation_year = ?, position = ?,
-        height = ?, weight = ?, forty_yard_dash = ?, bench_press = ?,
+        height = ?, height_inches = ?, weight = ?, forty_yard_dash = ?, bench_press = ?,
         squat = ?, vertical_jump = ?, shuttle_5_10_5 = ?, l_drill = ?,
         broad_jump = ?, power_clean = ?, single_leg_squat = ?, gpa = ?, achievement = ?, bio = ?,
         phone = ?,
@@ -191,6 +192,7 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
       data.graduationYear || null,
       data.position || null,
       data.height || null,
+      parseHeightToInches(data.height),
       data.weight || null,
       data.fortyYardDash || null,
       data.benchPress || null,

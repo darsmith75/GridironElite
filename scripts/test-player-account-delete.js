@@ -30,8 +30,8 @@ async function checkServerOnline() {
 }
 
 async function main() {
-  await db.initialize();
   await checkServerOnline();
+  await db.initialize();
 
   const now = Date.now();
   const suffix = `${now}`;

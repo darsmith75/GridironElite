@@ -1514,10 +1514,11 @@
       }
 
       feet = Math.floor(feet);
+      inches = Number(inches.toFixed(1));
       feetInput.value = String(feet);
-      inchesInput.value = inches ? String(Number(inches.toFixed(1))) : '';
-      const inchesText = Number.isInteger(inches) ? String(inches) : String(Number(inches.toFixed(1)));
-      combinedInput.value = `${feet}'${inchesText}"`;
+      inchesInput.value = inches ? String(inches) : '';
+      const totalInches = (feet * 12) + inches;
+      combinedInput.value = String(Number(totalInches.toFixed(1)));
     }
 
     function populateHeightFeetInches(heightValue) {
@@ -1588,8 +1589,8 @@
       inches = Number(inches.toFixed(1));
       feetInput.value = String(feet);
       inchesInput.value = inches ? String(inches) : '';
-      const inchesText = Number.isInteger(inches) ? String(inches) : String(inches);
-      combinedInput.value = `${feet}'${inchesText}"`;
+      const totalInches = (feet * 12) + inches;
+      combinedInput.value = String(Number(totalInches.toFixed(1)));
     }
 
     function initHeightInputs() {
@@ -1824,8 +1825,9 @@
         ensureGraduationYearOption(profile.graduation_year || '');
         document.querySelector('[name="graduationYear"]').value = profile.graduation_year || '';
         document.querySelector('[name="position"]').value = profile.position || '';
-        document.querySelector('[name="height"]').value = profile.height || '';
-        populateHeightFeetInches(profile.height);
+        const profileHeightValue = profile.height_inches ?? profile.height || '';
+        document.querySelector('[name="height"]').value = profileHeightValue;
+        populateHeightFeetInches(profileHeightValue);
         document.querySelector('[name="weight"]').value = profile.weight || '';
         document.querySelector('[name="fortyYardDash"]').value = profile.forty_yard_dash || '';
         document.querySelector('[name="benchPress"]').value = profile.bench_press || '';

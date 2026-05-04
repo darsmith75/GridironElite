@@ -10,6 +10,7 @@ const {
   getAgentPlayersRateKey, isAgentPlayersRateLimited,
   buildAgentPlayersCacheKey, getCachedAgentPlayers, setCachedAgentPlayers
 } = require('../utils/helpers');
+const { parseHeightToInches, formatHeightFromInches } = require('../utils/height');
 
 const router = express.Router();
 
@@ -47,6 +48,7 @@ router.get('/agent/players', async (req, res) => {
   const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
   const quickSearch = String(req.query.quickSearch || '').trim().toLowerCase();
   const sortBy = String(req.query.sortBy || 'name_asc').trim().toLowerCase();
+  const minHeightInches = parseHeightToInches(req.query.minHeight);
 
   const normalizedFilters = {
     limit,
@@ -57,6 +59,7 @@ router.get('/agent/players', async (req, res) => {
     minGpa: parseQueryNumber(req.query.minGpa),
     maxForty: parseQueryNumber(req.query.maxForty),
     minHeight: String(req.query.minHeight || '').trim(),
+    minHeightInches,
     minWeight: parseQueryNumber(req.query.minWeight),
     minVertical: parseQueryNumber(req.query.minVertical),
     minBench: parseQueryNumber(req.query.minBench),
@@ -121,9 +124,9 @@ router.get('/agent/players', async (req, res) => {
     fromAndWhere += ' AND pp.forty_yard_dash <= ?';
     params.push(normalizedFilters.maxForty);
   }
-  if (normalizedFilters.minHeight) {
-    fromAndWhere += ' AND pp.height ILIKE ?';
-    params.push(`%${normalizedFilters.minHeight}%`);
+  if (normalizedFilters.minHeightInches !== null) {
+    fromAndWhere += ' AND pp.height_inches >= ?';
+    params.push(normalizedFilters.minHeightInches);
   }
   if (normalizedFilters.minWeight !== null) {
     fromAndWhere += ' AND pp.weight >= ?';
@@ -174,7 +177,7 @@ router.get('/agent/players', async (req, res) => {
   else if (sortBy === 'gpa_asc') orderBy = 'pp.gpa ASC NULLS LAST, pp.user_id ASC';
   else if (sortBy === 'forty_asc') orderBy = 'pp.forty_yard_dash ASC NULLS LAST, pp.user_id ASC';
   else if (sortBy === 'forty_desc') orderBy = 'pp.forty_yard_dash DESC NULLS LAST, pp.user_id ASC';
-  else if (sortBy === 'height_desc') orderBy = 'pp.height DESC NULLS LAST, pp.user_id ASC';
+  else if (sortBy === 'height_desc') orderBy = 'pp.height_inches DESC NULLS LAST, pp.user_id ASC';
   else if (sortBy === 'weight_desc') orderBy = 'pp.weight DESC NULLS LAST, pp.user_id ASC';
   else if (sortBy === 'vertical_desc') orderBy = 'pp.vertical_jump DESC NULLS LAST, pp.user_id ASC';
 
@@ -189,6 +192,7 @@ router.get('/agent/players', async (req, res) => {
         pp.graduation_year,
         pp.position,
         pp.height,
+        pp.height_inches,
         pp.weight,
         pp.forty_yard_dash,
         pp.vertical_jump,
@@ -209,7 +213,13 @@ router.get('/agent/players', async (req, res) => {
   ]);
 
   const payload = {
-    players,
+    players: players.map((player) => {
+      const legacyHeight = typeof player.height === 'string' ? player.height.trim() : '';
+      return {
+        ...player,
+        height: legacyHeight || formatHeightFromInches(player.height_inches) || null
+      };
+    }),
     pagination: {
       limit,
       offset,

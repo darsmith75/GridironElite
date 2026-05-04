@@ -4,6 +4,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { METRIC_TIP_CONFIG, METRIC_TIP_KEYS } = require('../utils/constants');
 const { getMergedMetricTipsForPlayer } = require('../utils/ai-helpers');
 const { normalizeOptionalInteger, normalizeOptionalFloat } = require('../utils/upload');
+const { parseHeightToInches } = require('../utils/height');
 
 const router = express.Router();
 
@@ -18,13 +19,14 @@ router.put('/admin/players/:id', requireAdmin, async (req, res) => {
     const normalizedWeight = normalizeOptionalInteger(weight);
     const normalizedGpa = normalizeOptionalFloat(gpa);
 
-    await db.prepare(`UPDATE player_profiles SET full_name = ?, high_school = ?, graduation_year = ?, position = ?, height = ?, weight = ?, gpa = ? WHERE user_id = ?`)
+    await db.prepare(`UPDATE player_profiles SET full_name = ?, high_school = ?, graduation_year = ?, position = ?, height = ?, height_inches = ?, weight = ?, gpa = ? WHERE user_id = ?`)
       .run(
         full_name?.trim() || null,
         high_school?.trim() || null,
         normalizedGraduationYear,
         position?.trim() || null,
         height?.trim() || null,
+        parseHeightToInches(height),
         normalizedWeight,
         normalizedGpa,
         req.params.id

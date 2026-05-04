@@ -1,6 +1,7 @@
 try { require('dotenv').config(); } catch (_) {}
 
 const { Pool } = require('pg');
+const { parseHeightToInches } = require('./utils/height');
 
 const dbHost = process.env.DB_HOST || 'localhost';
 const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(dbHost).toLowerCase());
@@ -30,6 +31,11 @@ if (shouldUseSsl) {
 }
 
 const pool = new Pool(poolConfig);
+
+// Prevent process crashes from transient errors on idle pooled clients.
+pool.on('error', (error) => {
+  console.error('PostgreSQL pool idle client error:', error?.message || error);
+});
 
 const insertPrimaryKeys = {
   users: 'id',
@@ -84,6 +90,7 @@ const createTablesSQL = `
     graduation_year INTEGER,
     position VARCHAR(50),
     height VARCHAR(10),
+    height_inches SMALLINT,
     weight INTEGER,
     forty_yard_dash DECIMAL(5,2),
     bench_press INTEGER,
@@ -524,6 +531,7 @@ const alterTablesSQL = `
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS profile_view_count INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS college_logo_order JSONB DEFAULT '{}'::jsonb;
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS height_inches SMALLINT;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
@@ -591,6 +599,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_favorites_agent ON agent_favorites(agent_id);
   CREATE INDEX IF NOT EXISTS idx_favorites_agent_user ON agent_favorites(agent_id, user_id);
   CREATE INDEX IF NOT EXISTS idx_profiles_user ON player_profiles(user_id);
+  CREATE INDEX IF NOT EXISTS idx_profiles_height_inches ON player_profiles(height_inches);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
   CREATE INDEX IF NOT EXISTS idx_users_role_created ON users(role, created_at);
   CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
@@ -811,6 +820,7 @@ async function initialize() {
   await exec(createTablesSQL);
   await exec(alterTablesSQL);
   await exec(createIndexesSQL);
+  await backfillHeightInches();
 
   const existing = await prepare('SELECT COUNT(*)::int AS count FROM school_rating_categories').get();
   if ((existing?.count || 0) === 0) {
@@ -832,6 +842,25 @@ async function initialize() {
         category.sortOrder
       );
     }
+  }
+}
+
+async function backfillHeightInches() {
+  const rowsNeedingBackfill = await prepare(`
+    SELECT user_id, height
+    FROM player_profiles
+    WHERE height_inches IS NULL
+      AND height IS NOT NULL
+      AND TRIM(height) <> ''
+  `).all();
+
+  if (!rowsNeedingBackfill.length) return;
+
+  const updateHeightInches = prepare('UPDATE player_profiles SET height_inches = ? WHERE user_id = ?');
+  for (const row of rowsNeedingBackfill) {
+    const inches = parseHeightToInches(row.height);
+    if (inches === null) continue;
+    await updateHeightInches.run(inches, row.user_id);
   }
 }
 
