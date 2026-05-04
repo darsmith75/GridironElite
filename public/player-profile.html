@@ -1825,7 +1825,7 @@
         ensureGraduationYearOption(profile.graduation_year || '');
         document.querySelector('[name="graduationYear"]').value = profile.graduation_year || '';
         document.querySelector('[name="position"]').value = profile.position || '';
-        const profileHeightValue = profile.height_inches ?? profile.height || '';
+        const profileHeightValue = (profile.height_inches ?? profile.height) || '';
         document.querySelector('[name="height"]').value = profileHeightValue;
         populateHeightFeetInches(profileHeightValue);
         document.querySelector('[name="weight"]').value = profile.weight || '';
