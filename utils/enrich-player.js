@@ -54,13 +54,13 @@ async function enrichPlayerProfiles(profiles) {
   ));
   if (playerIds.length === 0) return profiles;
 
-  const [videos, videoLinks, images, metricVideos, offerSchoolsRaw, favoriteSchoolsRaw, contacts] = await Promise.all([
+  const [videos, videoLinks, images, metricVideos, schoolInterestsRaw, contacts] = await Promise.all([
     db.prepare('SELECT user_id, filename FROM player_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, id, url, title FROM player_video_links WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, filename FROM player_images WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, metric_key, video_filename, is_verified, verified_by, recorded_at FROM player_metric_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare(`
-      SELECT psi.user_id, c.id, c.name, c.logo, c.division, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
+      SELECT psi.user_id, psi.has_offer, psi.is_favorite, c.id, c.name, c.logo, c.division, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
       FROM player_school_interests psi
       JOIN colleges c ON psi.college_id = c.id
       LEFT JOIN (
@@ -69,20 +69,7 @@ async function enrichPlayerProfiles(profiles) {
         WHERE user_id = ANY(?::int[]) AND visit_date IS NOT NULL AND TRIM(visit_date) <> ''
         GROUP BY user_id, college_id
       ) vc ON vc.user_id = psi.user_id AND vc.college_id = c.id
-      WHERE psi.user_id = ANY(?::int[]) AND psi.has_offer = 1
-      ORDER BY psi.user_id, c.name
-    `).all(playerIds, playerIds),
-    db.prepare(`
-      SELECT psi.user_id, c.id, c.name, c.logo, c.division, c.conference, c.team, COALESCE(vc.visit_count, 0) AS visit_count
-      FROM player_school_interests psi
-      JOIN colleges c ON psi.college_id = c.id
-      LEFT JOIN (
-        SELECT user_id, college_id, COUNT(*) AS visit_count
-        FROM school_notes
-        WHERE user_id = ANY(?::int[]) AND visit_date IS NOT NULL AND TRIM(visit_date) <> ''
-        GROUP BY user_id, college_id
-      ) vc ON vc.user_id = psi.user_id AND vc.college_id = c.id
-      WHERE psi.user_id = ANY(?::int[]) AND psi.is_favorite = 1 AND (psi.has_offer = 0 OR psi.has_offer IS NULL)
+      WHERE psi.user_id = ANY(?::int[]) AND (psi.has_offer = 1 OR psi.is_favorite = 1)
       ORDER BY psi.user_id, c.name
     `).all(playerIds, playerIds),
     db.prepare('SELECT user_id, role, name, email, phone FROM player_contacts WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
@@ -98,24 +85,29 @@ async function enrichPlayerProfiles(profiles) {
     verified_by: row.verified_by,
     recorded_at: row.recorded_at
   }));
-  const offerSchoolsByUser = groupRowsByUser(offerSchoolsRaw, row => ({
-    id: row.id,
-    name: row.name,
-    logo: normalizeCollegeLogoPath(row.logo, row.division),
-    division: row.division,
-    conference: row.conference,
-    team: row.team,
-    visit_count: row.visit_count
-  }));
-  const favoriteSchoolsByUser = groupRowsByUser(favoriteSchoolsRaw, row => ({
-    id: row.id,
-    name: row.name,
-    logo: normalizeCollegeLogoPath(row.logo, row.division),
-    division: row.division,
-    conference: row.conference,
-    team: row.team,
-    visit_count: row.visit_count
-  }));
+  const offerSchoolsByUser = new Map();
+  const favoriteSchoolsByUser = new Map();
+  for (const row of schoolInterestsRaw || []) {
+    const userId = Number(row.user_id);
+    if (!Number.isInteger(userId)) continue;
+    const school = {
+      id: row.id,
+      name: row.name,
+      logo: normalizeCollegeLogoPath(row.logo, row.division),
+      division: row.division,
+      conference: row.conference,
+      team: row.team,
+      visit_count: row.visit_count
+    };
+    if (row.has_offer === 1) {
+      if (!offerSchoolsByUser.has(userId)) offerSchoolsByUser.set(userId, []);
+      offerSchoolsByUser.get(userId).push(school);
+    }
+    if (row.is_favorite === 1 && !row.has_offer) {
+      if (!favoriteSchoolsByUser.has(userId)) favoriteSchoolsByUser.set(userId, []);
+      favoriteSchoolsByUser.get(userId).push(school);
+    }
+  }
   const contactsByUser = groupRowsByUser(contacts, row => ({
     role: row.role,
     name: row.name,
