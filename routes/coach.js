@@ -833,11 +833,11 @@ router.post('/coach/recruiter-shares', requireCoach, async (req, res) => {
         expiresAt.toISOString()
       );
       const newShareId = insertedShare.lastInsertRowid;
-      for (const playerId of selectedPlayerIds) {
-        await tx.prepare(
-          'INSERT INTO recruiter_player_share_items (share_id, player_user_id) VALUES (?, ?)'
-        ).run(newShareId, playerId);
-      }
+      const valuesClause = selectedPlayerIds.map(() => '(?, ?)').join(', ');
+      const valuesParams = selectedPlayerIds.flatMap((playerId) => [newShareId, playerId]);
+      await tx.prepare(
+        `INSERT INTO recruiter_player_share_items (share_id, player_user_id) VALUES ${valuesClause}`
+      ).run(...valuesParams);
       return newShareId;
     });
 
