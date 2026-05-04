@@ -9,6 +9,127 @@ const { collegeLogoUpload } = require('../utils/upload');
 const { normalizeDivisionTag, normalizeCollegeLogoPath, normalizeCollegeLogoRows } = require('../utils/college-logo-path');
 
 const router = express.Router();
+const ADMIN_STATS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let adminStatsCache = {
+  data: null,
+  expiresAt: 0,
+  inFlight: null
+};
+
+async function buildAdminStatsPayload() {
+  const [
+    totalUsersRow,
+    totalPlayersRow,
+    totalAgentsRow,
+    usersActive24hRow,
+    newUsers7dRow,
+    totalProfileViewsRow,
+    aiSummariesRow,
+    totalTrafficRow,
+    pageViews24hRow,
+    uniqueVisitors24hRow,
+    recentLogins,
+    topViewedPlayers,
+    topPages,
+    recentProfileViews
+  ] = await Promise.all([
+    db.prepare('SELECT COUNT(*) as count FROM users').get(),
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'player'").get(),
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'agent'").get(),
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE last_login_at >= NOW() - INTERVAL '24 hours'").get(),
+    db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= NOW() - INTERVAL '7 days'").get(),
+    db.prepare('SELECT COALESCE(SUM(profile_view_count), 0) as count FROM player_profiles').get(),
+    db.prepare('SELECT COUNT(*) as count FROM ai_player_summaries').get(),
+    db.prepare('SELECT COUNT(*) as count FROM site_traffic_events').get(),
+    db.prepare("SELECT COUNT(*) as count FROM site_traffic_events WHERE event_type = 'page_view' AND created_at >= NOW() - INTERVAL '24 hours'").get(),
+    db.prepare("SELECT COUNT(DISTINCT ip_address) as count FROM site_traffic_events WHERE created_at >= NOW() - INTERVAL '24 hours' AND ip_address IS NOT NULL AND ip_address <> ''").get(),
+    db.prepare(`
+      SELECT u.id, u.email, u.role,
+        COALESCE(pp.full_name, u.full_name, '') AS display_name,
+        u.last_login_at
+      FROM users u
+      LEFT JOIN player_profiles pp ON pp.user_id = u.id
+      WHERE u.last_login_at IS NOT NULL
+      ORDER BY u.last_login_at DESC
+      LIMIT 8
+    `).all(),
+    db.prepare(`
+      SELECT pp.user_id, pp.full_name,
+        COALESCE(pp.profile_view_count, 0) AS profile_view_count,
+        pp.last_viewed_at
+      FROM player_profiles pp
+      ORDER BY COALESCE(pp.profile_view_count, 0) DESC, pp.last_viewed_at DESC NULLS LAST
+      LIMIT 8
+    `).all(),
+    db.prepare(`
+      SELECT COALESCE(NULLIF(path, ''), 'unknown') AS page_path,
+        COUNT(*)::int AS views
+      FROM site_traffic_events
+      WHERE event_type = 'page_view'
+      GROUP BY COALESCE(NULLIF(path, ''), 'unknown')
+      ORDER BY views DESC, page_path ASC
+      LIMIT 8
+    `).all(),
+    db.prepare(`
+      SELECT ste.created_at,
+        ste.ip_address,
+        ste.role,
+        COALESCE(viewer_profile.full_name, viewer.full_name, viewer.email, 'Unknown viewer') AS viewer_name,
+        COALESCE(target_profile.full_name, target_user.full_name, target_user.email, 'Unknown player') AS player_name
+      FROM site_traffic_events ste
+      LEFT JOIN users viewer ON viewer.id = ste.user_id
+      LEFT JOIN player_profiles viewer_profile ON viewer_profile.user_id = viewer.id
+      LEFT JOIN users target_user ON target_user.id = (ste.metadata_json->>'playerUserId')::int
+      LEFT JOIN player_profiles target_profile ON target_profile.user_id = target_user.id
+      WHERE ste.event_type = 'player_profile_view'
+      ORDER BY ste.created_at DESC
+      LIMIT 8
+    `).all()
+  ]);
+
+  return {
+    totalUsers: totalUsersRow.count,
+    totalPlayers: totalPlayersRow.count,
+    totalAgents: totalAgentsRow.count,
+    usersActive24h: usersActive24hRow.count,
+    newUsers7d: newUsers7dRow.count,
+    totalProfileViews: totalProfileViewsRow.count,
+    aiSummariesGenerated: aiSummariesRow.count,
+    totalTrafficEvents: totalTrafficRow.count,
+    pageViews24h: pageViews24hRow.count,
+    uniqueVisitors24h: uniqueVisitors24hRow.count,
+    recentLogins,
+    topViewedPlayers,
+    topPages,
+    recentProfileViews
+  };
+}
+
+async function getAdminStats(forceRefresh = false) {
+  const now = Date.now();
+
+  if (!forceRefresh && adminStatsCache.data && now < adminStatsCache.expiresAt) {
+    return adminStatsCache.data;
+  }
+
+  if (adminStatsCache.inFlight) {
+    return adminStatsCache.inFlight;
+  }
+
+  adminStatsCache.inFlight = (async () => {
+    const payload = await buildAdminStatsPayload();
+    adminStatsCache.data = payload;
+    adminStatsCache.expiresAt = Date.now() + ADMIN_STATS_CACHE_TTL_MS;
+    return payload;
+  })();
+
+  try {
+    return await adminStatsCache.inFlight;
+  } finally {
+    adminStatsCache.inFlight = null;
+  }
+}
 
 async function storeUploadedCollegeLogo(file, division) {
   if (!file) return null;
@@ -65,92 +186,9 @@ function inferDivisionFromConference(conference) {
 // Admin: Get comprehensive statistics dashboard
 router.get('/admin/stats', requireAdmin, async (req, res) => {
   try {
-    const [
-      totalUsersRow,
-      totalPlayersRow,
-      totalAgentsRow,
-      usersActive24hRow,
-      newUsers7dRow,
-      totalProfileViewsRow,
-      aiSummariesRow,
-      totalTrafficRow,
-      pageViews24hRow,
-      uniqueVisitors24hRow,
-      recentLogins,
-      topViewedPlayers,
-      topPages,
-      recentProfileViews
-    ] = await Promise.all([
-      db.prepare('SELECT COUNT(*) as count FROM users').get(),
-      db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'player'").get(),
-      db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'agent'").get(),
-      db.prepare("SELECT COUNT(*) as count FROM users WHERE last_login_at >= NOW() - INTERVAL '24 hours'").get(),
-      db.prepare("SELECT COUNT(*) as count FROM users WHERE created_at >= NOW() - INTERVAL '7 days'").get(),
-      db.prepare('SELECT COALESCE(SUM(profile_view_count), 0) as count FROM player_profiles').get(),
-      db.prepare('SELECT COUNT(*) as count FROM ai_player_summaries').get(),
-      db.prepare('SELECT COUNT(*) as count FROM site_traffic_events').get(),
-      db.prepare("SELECT COUNT(*) as count FROM site_traffic_events WHERE event_type = 'page_view' AND created_at >= NOW() - INTERVAL '24 hours'").get(),
-      db.prepare("SELECT COUNT(DISTINCT ip_address) as count FROM site_traffic_events WHERE created_at >= NOW() - INTERVAL '24 hours' AND ip_address IS NOT NULL AND ip_address <> ''").get(),
-      db.prepare(`
-        SELECT u.id, u.email, u.role,
-          COALESCE(pp.full_name, u.full_name, '') AS display_name,
-          u.last_login_at
-        FROM users u
-        LEFT JOIN player_profiles pp ON pp.user_id = u.id
-        WHERE u.last_login_at IS NOT NULL
-        ORDER BY u.last_login_at DESC
-        LIMIT 8
-      `).all(),
-      db.prepare(`
-        SELECT pp.user_id, pp.full_name,
-          COALESCE(pp.profile_view_count, 0) AS profile_view_count,
-          pp.last_viewed_at
-        FROM player_profiles pp
-        ORDER BY COALESCE(pp.profile_view_count, 0) DESC, pp.last_viewed_at DESC NULLS LAST
-        LIMIT 8
-      `).all(),
-      db.prepare(`
-        SELECT COALESCE(NULLIF(path, ''), 'unknown') AS page_path,
-          COUNT(*)::int AS views
-        FROM site_traffic_events
-        WHERE event_type = 'page_view'
-        GROUP BY COALESCE(NULLIF(path, ''), 'unknown')
-        ORDER BY views DESC, page_path ASC
-        LIMIT 8
-      `).all(),
-      db.prepare(`
-        SELECT ste.created_at,
-          ste.ip_address,
-          ste.role,
-          COALESCE(viewer_profile.full_name, viewer.full_name, viewer.email, 'Unknown viewer') AS viewer_name,
-          COALESCE(target_profile.full_name, target_user.full_name, target_user.email, 'Unknown player') AS player_name
-        FROM site_traffic_events ste
-        LEFT JOIN users viewer ON viewer.id = ste.user_id
-        LEFT JOIN player_profiles viewer_profile ON viewer_profile.user_id = viewer.id
-        LEFT JOIN users target_user ON target_user.id = (ste.metadata_json->>'playerUserId')::int
-        LEFT JOIN player_profiles target_profile ON target_profile.user_id = target_user.id
-        WHERE ste.event_type = 'player_profile_view'
-        ORDER BY ste.created_at DESC
-        LIMIT 8
-      `).all()
-    ]);
-
-    res.json({
-      totalUsers: totalUsersRow.count,
-      totalPlayers: totalPlayersRow.count,
-      totalAgents: totalAgentsRow.count,
-      usersActive24h: usersActive24hRow.count,
-      newUsers7d: newUsers7dRow.count,
-      totalProfileViews: totalProfileViewsRow.count,
-      aiSummariesGenerated: aiSummariesRow.count,
-      totalTrafficEvents: totalTrafficRow.count,
-      pageViews24h: pageViews24hRow.count,
-      uniqueVisitors24h: uniqueVisitors24hRow.count,
-      recentLogins,
-      topViewedPlayers,
-      topPages,
-      recentProfileViews
-    });
+    const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
+    const stats = await getAdminStats(forceRefresh);
+    res.json(stats);
   } catch (error) {
     console.error('Admin get stats error:', error);
     res.status(500).json({ error: 'Failed to load statistics' });
