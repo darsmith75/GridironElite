@@ -133,52 +133,64 @@ router.put('/admin/school-rating-categories', requireAdmin, async (req, res) => 
     await db.withTransaction(async (tx) => {
       const existingRows = await tx.prepare('SELECT id FROM school_rating_categories').all();
       const existingIds = new Set(existingRows.map(row => Number(row.id)));
-      const keptIds = [];
+      const updateItems = normalizedCategories.filter((item) => item.id && existingIds.has(item.id));
+      const insertItems = normalizedCategories.filter((item) => !item.id || !existingIds.has(item.id));
+      const keptIds = updateItems.map((item) => item.id);
 
-      for (const item of normalizedCategories) {
-        if (item.id && existingIds.has(item.id)) {
-          await tx.prepare(`
-            UPDATE school_rating_categories
-            SET category_name = ?,
-              what_to_rate = ?,
-              why_it_matters = ?,
-              sort_order = ?,
-              is_active = ?,
-              updated_by_user_id = ?,
-              updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `).run(
-            item.categoryName,
-            item.whatToRate,
-            item.whyItMatters,
-            item.sortOrder,
-            item.isActive,
-            req.session.userId,
-            item.id
-          );
-          keptIds.push(item.id);
-        } else {
-          const inserted = await tx.prepare(`
-            INSERT INTO school_rating_categories (
-              category_name,
-              what_to_rate,
-              why_it_matters,
-              sort_order,
-              is_active,
-              updated_by_user_id,
-              updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-          `).run(
-            item.categoryName,
-            item.whatToRate,
-            item.whyItMatters,
-            item.sortOrder,
-            item.isActive,
-            req.session.userId
-          );
-          if (inserted?.lastInsertRowid) {
-            keptIds.push(Number(inserted.lastInsertRowid));
+      if (updateItems.length > 0) {
+        const valuesClause = updateItems.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+        const valuesParams = updateItems.flatMap((item) => [
+          item.id,
+          item.categoryName,
+          item.whatToRate,
+          item.whyItMatters,
+          item.sortOrder,
+          item.isActive
+        ]);
+
+        await tx.prepare(`
+          UPDATE school_rating_categories src
+          SET category_name = v.category_name,
+            what_to_rate = v.what_to_rate,
+            why_it_matters = v.why_it_matters,
+            sort_order = v.sort_order,
+            is_active = v.is_active,
+            updated_by_user_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          FROM (VALUES ${valuesClause}) AS v(id, category_name, what_to_rate, why_it_matters, sort_order, is_active)
+          WHERE src.id = v.id
+        `).run(req.session.userId, ...valuesParams);
+      }
+
+      if (insertItems.length > 0) {
+        const insertValuesClause = insertItems.map(() => '(?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ');
+        const insertParams = insertItems.flatMap((item) => [
+          item.categoryName,
+          item.whatToRate,
+          item.whyItMatters,
+          item.sortOrder,
+          item.isActive,
+          req.session.userId
+        ]);
+
+        const insertedRows = await tx.prepare(`
+          INSERT INTO school_rating_categories (
+            category_name,
+            what_to_rate,
+            why_it_matters,
+            sort_order,
+            is_active,
+            updated_by_user_id,
+            updated_at
+          )
+          VALUES ${insertValuesClause}
+          RETURNING id
+        `).all(...insertParams);
+
+        for (const row of insertedRows || []) {
+          const id = Number(row.id);
+          if (Number.isInteger(id) && id > 0) {
+            keptIds.push(id);
           }
         }
       }
