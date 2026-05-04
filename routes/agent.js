@@ -162,11 +162,10 @@ router.get('/agent/players', async (req, res) => {
         LOWER(COALESCE(pp.full_name, '')) LIKE ?
         OR LOWER(COALESCE(pp.high_school, '')) LIKE ?
         OR LOWER(COALESCE(pp.position, '')) LIKE ?
-        OR LOWER(COALESCE(pp.bio, '')) LIKE ?
       )
     `;
     const token = `%${normalizedFilters.quickSearch}%`;
-    params.push(token, token, token, token);
+    params.push(token, token, token);
   }
 
   let orderBy = 'pp.full_name ASC NULLS LAST, pp.user_id ASC';
