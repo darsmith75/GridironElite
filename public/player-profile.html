@@ -1164,6 +1164,27 @@
         `;
       }
 
+      // My Ratings
+      html += `
+        <div class="profile-section" id="myRatingsSection">
+          <h2 class="section-title-small">MY RATINGS</h2>
+          <div class="rating-tabs" role="tablist" id="myRatingTabList">
+            <button class="rating-tab-btn active" role="tab" aria-selected="true" data-tab="ai" onclick="switchMyRatingTab('ai', this)">AI Rating</button>
+            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="coach" onclick="switchMyRatingTab('coach', this)">Coach Rating</button>
+            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="ge" onclick="switchMyRatingTab('ge', this)">Gridiron Elite</button>
+          </div>
+          <div id="myRatingTab-ai" class="rating-tab-content" role="tabpanel">
+            <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+          <div id="myRatingTab-coach" class="rating-tab-content" role="tabpanel" style="display:none;">
+            <div id="myCoachRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+          <div id="myRatingTab-ge" class="rating-tab-content" role="tabpanel" style="display:none;">
+            <div id="myGeRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+        </div>
+      `;
+
       // Athletic Metrics
       const metricVideoMap = getMetricVideoMap(profile);
       const hasMetrics = METRIC_DEFINITIONS.some(metric => profile[metric.key]);
@@ -1375,24 +1396,6 @@
 
       html += `
         <div class="profile-section" id="myRatingsSection">
-          <h2 class="section-title-small">MY RATINGS</h2>
-          <div class="rating-tabs" role="tablist" id="myRatingTabList">
-            <button class="rating-tab-btn active" role="tab" aria-selected="true" data-tab="ai" onclick="switchMyRatingTab('ai', this)">AI Rating</button>
-            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="coach" onclick="switchMyRatingTab('coach', this)">Coach Rating</button>
-            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="ge" onclick="switchMyRatingTab('ge', this)">Gridiron Elite</button>
-          </div>
-          <div id="myRatingTab-ai" class="rating-tab-content" role="tabpanel">
-            <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
-          </div>
-          <div id="myRatingTab-coach" class="rating-tab-content" role="tabpanel" style="display:none;">
-            <div id="myCoachRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
-          </div>
-          <div id="myRatingTab-ge" class="rating-tab-content" role="tabpanel" style="display:none;">
-            <div id="myGeRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
-          </div>
-        </div>
-      `;
-
       document.getElementById('viewProfileContent').innerHTML = html;
       applyMetricTipsToIcons();
       initCollegeLogoDragAndDrop();
