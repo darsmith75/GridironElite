@@ -194,6 +194,17 @@
       color: #1e3c72;
       font-size: 18px;
     }
+    .team-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .team-panel-header .team-panel-title {
+      margin: 0;
+    }
     .team-empty-state {
       text-align: center;
       padding: 44px 20px;
@@ -214,6 +225,12 @@
     .team-roster-grid .player-card-compact {
       width: 100%;
       max-width: 320px;
+    }
+    .team-roster-list .player-list-row {
+      cursor: pointer;
+    }
+    .team-roster-list .player-list-stats {
+      margin-left: auto;
     }
     .team-card-actions {
       display: flex;
@@ -249,6 +266,28 @@
     }
     .team-card-view-btn:hover {
       background: #d8e2f2;
+      border-color: #9eb3d1;
+    }
+    .team-list-view-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid #b7c6db;
+      background: #eef3f9;
+      color: #1f3c68;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .team-list-view-btn:hover {
+      background: #e1ebf7;
       border-color: #9eb3d1;
     }
     .use-banner-gradient-cards .team-roster-grid .player-card-header {
@@ -378,6 +417,13 @@
       .team-roster-grid .player-card-compact {
         max-width: none;
       }
+      .team-roster-list .player-list-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      .team-roster-list .player-list-stats {
+        margin-left: 0;
+      }
       .team-schedule-item {
         grid-template-columns: 1fr;
       }
@@ -429,7 +475,9 @@
   <script src="app.js"></script>
   <script>
     const teamId = new URLSearchParams(window.location.search).get('id');
+    const TEAM_ROSTER_VIEW_STORAGE_KEY = 'teamDetailRosterViewMode';
     let teamPageData = null;
+    let rosterViewMode = getDefaultRosterViewMode();
 
     function escHtml(str) {
       if (str == null) return '';
@@ -510,6 +558,41 @@
       window.location.href = 'player-detail.html?id=' + playerId;
     }
 
+    function isMobileViewport() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function getDefaultRosterViewMode() {
+      const saved = localStorage.getItem(TEAM_ROSTER_VIEW_STORAGE_KEY);
+      if (saved === 'grid' || saved === 'list') return saved;
+      return isMobileViewport() ? 'list' : 'grid';
+    }
+
+    function updateRosterViewToggleButtons() {
+      document.querySelectorAll('.team-roster-view-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.view === rosterViewMode);
+      });
+    }
+
+    function setRosterViewMode(nextMode) {
+      if (nextMode !== 'grid' && nextMode !== 'list') return;
+      if (rosterViewMode === nextMode) return;
+      rosterViewMode = nextMode;
+      localStorage.setItem(TEAM_ROSTER_VIEW_STORAGE_KEY, rosterViewMode);
+      updateRosterViewToggleButtons();
+      rerenderRosterTab();
+    }
+
+    function handleRosterResponsiveResize() {
+      const hasSavedPreference = !!localStorage.getItem(TEAM_ROSTER_VIEW_STORAGE_KEY);
+      if (hasSavedPreference) return;
+      const preferredMode = isMobileViewport() ? 'list' : 'grid';
+      if (rosterViewMode === preferredMode) return;
+      rosterViewMode = preferredMode;
+      updateRosterViewToggleButtons();
+      rerenderRosterTab();
+    }
+
     function formatRosterPlayer(player) {
       const hasVerifiedBadge = hasVerifiedMetric(player);
       const profilePicture = player.profile_picture ? `/uploads/${encodeURI(player.profile_picture)}` : '';
@@ -558,11 +641,81 @@
       </div>`;
     }
 
+    function formatRosterPlayerListRow(player) {
+      const hasVerifiedBadge = hasVerifiedMetric(player);
+      const profilePicture = player.profile_picture ? `/uploads/${encodeURI(player.profile_picture)}` : '';
+      const escapedName = escHtml(player.full_name || 'Player');
+      const escapedPosition = escHtml(player.position || 'Position TBD');
+      const escapedSchool = escHtml(player.high_school || 'School TBD');
+      const escapedGradYear = escHtml(player.graduation_year || 'N/A');
+      const escapedHeight = escHtml(formatHeightDisplay(player.height) || 'N/A');
+      const escapedWeight = player.weight ? `${escHtml(player.weight)} lbs` : 'N/A';
+      const escapedGpa = escHtml(player.gpa || 'N/A');
+      return `<div class="player-list-row" onclick="viewPlayer(${player.user_id})">
+        <div class="player-list-photo">
+          ${profilePicture
+            ? `<img src="${escHtml(profilePicture)}" alt="${escapedName}" class="player-list-img" onerror="this.onerror=null;this.src='/images/silhouette-avatar.svg';">`
+            : '<img src="/images/silhouette-avatar.svg" alt="No Photo" class="player-list-img silhouette-photo">'}
+        </div>
+        <div class="player-list-info">
+          <div class="player-list-name">${escapedName}</div>
+          <div class="player-list-details">
+            <span class="detail-item">${escapedPosition}</span>
+            <span class="detail-separator">•</span>
+            <span class="detail-item">${escapedSchool}</span>
+            <span class="detail-separator">•</span>
+            <span class="detail-item">Class of ${escapedGradYear}</span>
+          </div>
+        </div>
+        <div class="player-list-stats">
+          <div class="list-stat">
+            <span class="list-stat-label">HT:</span>
+            <span class="list-stat-value">${escapedHeight}</span>
+          </div>
+          <div class="list-stat">
+            <span class="list-stat-label">WT:</span>
+            <span class="list-stat-value">${escapedWeight}</span>
+          </div>
+          <div class="list-stat">
+            <span class="list-stat-label">GPA:</span>
+            <span class="list-stat-value">${escapedGpa}</span>
+          </div>
+          <div class="list-stat" title="${hasVerifiedBadge ? 'This athlete has at least one third-party verified athletic metric' : 'No third-party verified athletic metrics yet'}">
+            <span class="list-stat-label">Verified</span>
+            <span class="list-stat-value">${hasVerifiedBadge ? 'Yes' : 'No'}</span>
+          </div>
+        </div>
+        <button class="team-list-view-btn" type="button" onclick="event.stopPropagation(); viewPlayer(${player.user_id})">View Profile</button>
+      </div>`;
+    }
+
+    function renderRosterViewToggle() {
+      return `<div class="view-toggle" aria-label="Roster view toggle">
+        <button class="view-toggle-btn team-roster-view-btn ${rosterViewMode === 'grid' ? 'active' : ''}" type="button" data-view="grid" title="Card View" onclick="setRosterViewMode('grid')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </button>
+        <button class="view-toggle-btn team-roster-view-btn ${rosterViewMode === 'list' ? 'active' : ''}" type="button" data-view="list" title="List View" onclick="setRosterViewMode('list')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>`;
+    }
+
     function renderRosterTab(players) {
       if (!players.length) {
         return `<div class="team-empty-state"><strong>No roster posted yet</strong><span>This coach has not published any rostered players on this team page.</span></div>`;
       }
+      if (rosterViewMode === 'list') {
+        return `<div class="players-list team-roster-list">${players.map(formatRosterPlayerListRow).join('')}</div>`;
+      }
       return `<div class="team-roster-grid">${players.map(formatRosterPlayer).join('')}</div>`;
+    }
+
+    function rerenderRosterTab() {
+      if (!teamPageData) return;
+      const roster = Array.isArray(teamPageData.roster) ? teamPageData.roster : [];
+      const rosterContent = document.getElementById('teamRosterContent');
+      if (!rosterContent) return;
+      rosterContent.innerHTML = renderRosterTab(roster);
     }
 
     function renderScheduleTab(schedule) {
@@ -713,8 +866,11 @@
 
         <div class="team-tab-panel" id="teamPanel-roster">
           <div class="team-panel-card">
-            <h2 class="team-panel-title">Roster</h2>
-            ${renderRosterTab(roster)}
+            <div class="team-panel-header">
+              <h2 class="team-panel-title">Roster</h2>
+              ${renderRosterViewToggle()}
+            </div>
+            <div id="teamRosterContent">${renderRosterTab(roster)}</div>
           </div>
         </div>
         <div class="team-tab-panel hidden" id="teamPanel-schedule">
@@ -757,6 +913,8 @@
         }
         teamPageData = data;
         renderTeamPage(teamPageData);
+        updateRosterViewToggleButtons();
+        window.addEventListener('resize', handleRosterResponsiveResize);
         logPageView('team_detail');
       } catch (error) {
         document.getElementById('teamPageRoot').innerHTML = `<div class="team-status"><h2>Unable to load team page</h2><p>${escHtml(error.message || 'Unexpected error')}</p></div>`;
