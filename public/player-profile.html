@@ -1373,10 +1373,143 @@
         }
       }
 
+      html += `
+        <div class="profile-section" id="myRatingsSection">
+          <h2 class="section-title-small">MY RATINGS</h2>
+          <div class="rating-tabs" role="tablist" id="myRatingTabList">
+            <button class="rating-tab-btn active" role="tab" aria-selected="true" data-tab="ai" onclick="switchMyRatingTab('ai', this)">AI Rating</button>
+            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="coach" onclick="switchMyRatingTab('coach', this)">Coach Rating</button>
+            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="ge" onclick="switchMyRatingTab('ge', this)">Gridiron Elite</button>
+          </div>
+          <div id="myRatingTab-ai" class="rating-tab-content" role="tabpanel">
+            <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+          <div id="myRatingTab-coach" class="rating-tab-content" role="tabpanel" style="display:none;">
+            <div id="myCoachRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+          <div id="myRatingTab-ge" class="rating-tab-content" role="tabpanel" style="display:none;">
+            <div id="myGeRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+        </div>
+      `;
+
       document.getElementById('viewProfileContent').innerHTML = html;
       applyMetricTipsToIcons();
       initCollegeLogoDragAndDrop();
     }
+
+    // ─── Player Ratings (read-only view) ────────────────────────────────────
+
+    function myRatingColor(score) {
+      if (score >= 85) return '#1a9e5c';
+      if (score >= 70) return '#27ae60';
+      if (score >= 55) return '#f39c12';
+      if (score >= 40) return '#e67e22';
+      return '#e74c3c';
+    }
+
+    function myRatingLabel(score) {
+      if (score >= 85) return 'Elite';
+      if (score >= 70) return 'Above Avg';
+      if (score >= 55) return 'Average';
+      if (score >= 40) return 'Below Avg';
+      return 'Developing';
+    }
+
+    function buildMyRatingMeter(label, score, description) {
+      const color = myRatingColor(score);
+      return `
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;">
+            <span style="font-size:13px;font-weight:600;color:#1e3c72;">${label}</span>
+            <span style="font-size:13px;font-weight:700;color:${color};">${score} <span style="font-weight:400;font-size:11px;color:#7a8a9e;">${myRatingLabel(score)}</span></span>
+          </div>
+          <div style="background:#e8edf2;border-radius:6px;height:10px;overflow:hidden;">
+            <div style="width:${score}%;background:${color};height:100%;border-radius:6px;"></div>
+          </div>
+          ${description ? `<p style="margin:5px 0 0;font-size:12px;color:#7a8a9e;line-height:1.4;">${description}</p>` : ''}
+        </div>`;
+    }
+
+    function renderMyRatingData(data) {
+      const color = myRatingColor(data.overallScore);
+      const label = myRatingLabel(data.overallScore);
+      const cats = (data.categories || []).map(c => buildMyRatingMeter(c.name, c.score, c.description)).join('');
+      return `
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+          <div style="text-align:center;min-width:90px;">
+            <div style="width:88px;height:88px;border-radius:50%;background:${color};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 6px;">
+              <span style="font-size:28px;font-weight:800;color:#fff;line-height:1;">${data.overallScore}</span>
+              <span style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.5px;text-transform:uppercase;">Overall</span>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:${color};">${label}</span>
+          </div>
+          <div style="flex:1;min-width:220px;">${cats}</div>
+        </div>`;
+    }
+
+    function renderMyRatingDisplay(containerId, data, sourceLabel) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      if (!data) {
+        el.innerHTML = `<p style="color:#7a8a9e;font-size:13px;margin:0;">No ${sourceLabel} rating submitted yet.</p>`;
+        return;
+      }
+      const categories = Array.isArray(data.scores_json) ? data.scores_json : (data.categories || []);
+      const dateStr = data.updated_at ? new Date(data.updated_at).toLocaleDateString() : '';
+      const overallScore = data.overall_score !== undefined ? data.overall_score : data.overallScore;
+      el.innerHTML = `
+        <div style="margin-bottom:14px;">
+          ${renderMyRatingData({ overallScore, categories })}
+          ${data.rater_name ? `<p style="margin:10px 0 0;font-size:11px;color:#b0b8c5;">Rated by <strong>${data.rater_name}</strong>${dateStr ? ' &bull; ' + dateStr : ''}</p>` : ''}
+        </div>`;
+    }
+
+    function switchMyRatingTab(tab, btn) {
+      const section = document.getElementById('myRatingsSection');
+      if (!section) return;
+      section.querySelectorAll('.rating-tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      section.querySelectorAll('.rating-tab-content').forEach(c => c.style.display = 'none');
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      const panel = document.getElementById('myRatingTab-' + tab);
+      if (panel) panel.style.display = '';
+    }
+
+    async function loadMyRatings() {
+      if (!playerProfileData || !playerProfileData.id) return;
+      const pid = playerProfileData.id;
+
+      // AI rating
+      try {
+        const res = await fetch(`/api/ai/player/${pid}/rating`);
+        const aiEl = document.getElementById('myAiRatingContent');
+        if (res.ok) {
+          const data = await res.json();
+          if (aiEl) aiEl.innerHTML = renderMyRatingData(data) + '<p style="margin:12px 0 0;font-size:11px;color:#b0b8c5;">AI-generated estimate based on your reported metrics.</p>';
+        } else {
+          if (aiEl) aiEl.innerHTML = '<p style="color:#7a8a9e;font-size:13px;margin:0;">No AI rating generated yet. A coach or admin can generate one from your player detail page.</p>';
+        }
+      } catch (e) {
+        const aiEl = document.getElementById('myAiRatingContent');
+        if (aiEl) aiEl.innerHTML = '<p style="color:#7a8a9e;font-size:13px;margin:0;">No AI rating generated yet.</p>';
+      }
+
+      // Coach + GE ratings
+      try {
+        const res = await fetch(`/api/agent/player/${pid}/ratings`);
+        if (res.ok) {
+          const { coachRating, geRating } = await res.json();
+          renderMyRatingDisplay('myCoachRatingContent', coachRating, 'coach');
+          renderMyRatingDisplay('myGeRatingContent', geRating, 'Gridiron Elite');
+        }
+      } catch (e) { /* silent */ }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     function getEmbedUrl(url) {
       try {
@@ -1675,6 +1808,7 @@
       if (profile.id) {
         renderViewMode(profile);
         loadTopSchools();
+        loadMyRatings();
       }
       
       // Display profile picture in edit mode hero section
