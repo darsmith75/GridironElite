@@ -107,6 +107,8 @@
               <select name="graduationYear" id="graduationYearPicker">
                 <option value="">Select Graduation Year</option>
               </select>
+              <label>Birth Date:</label>
+              <input type="date" name="birthDate" id="birthDatePicker">
               <label>Position:</label>
               <select name="position">
                 <option value="">Select Position</option>
@@ -1137,6 +1139,7 @@
           ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
           <span class="meta-badge">Profile Views: ${Number(profile.profile_view_count || 0)}</span>
           ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
+          ${profile.birth_date ? `<span class="meta-badge">DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
         </div>
         <div style="margin-top: 20px;">
           <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>
@@ -1840,6 +1843,7 @@
         document.querySelector('[name="powerClean"]').value = profile.power_clean || '';
         document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
         document.querySelector('[name="gpa"]').value = profile.gpa || '';
+        document.querySelector('[name="birthDate"]').value = profile.birth_date ? profile.birth_date.substring(0, 10) : '';
         document.querySelector('[name="achievement"]').value = profile.achievement || '';
         document.querySelector('[name="fatherName"]').value = profile.father_name || '';
         document.querySelector('[name="fatherEmail"]').value = profile.father_email || '';

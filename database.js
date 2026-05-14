@@ -532,6 +532,7 @@ const alterTablesSQL = `
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS college_logo_order JSONB DEFAULT '{}'::jsonb;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS height_inches SMALLINT;
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);

@@ -184,7 +184,8 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
         broad_jump = ?, power_clean = ?, single_leg_squat = ?, gpa = ?, achievement = ?, bio = ?,
         phone = ?,
         hudl_link = ?, instagram_link = ?, twitter_link = ?,
-        hudl_username = ?, instagram_username = ?, twitter_username = ?
+        hudl_username = ?, instagram_username = ?, twitter_username = ?,
+        birth_date = ?
       WHERE user_id = ?
     `).run(
       data.fullName || null,
@@ -213,6 +214,7 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
       data.hudlUsername || null,
       data.instagramUsername || null,
       data.twitterUsername || null,
+      data.birthDate || null,
       req.session.userId
     );
 
