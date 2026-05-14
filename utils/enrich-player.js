@@ -35,6 +35,17 @@ function applyCollegeOrder(collegeLogoOrderState, group, schools) {
   });
 }
 
+function computeAgeFlag(profile) {
+  if (!profile.birth_date || !profile.graduation_year) return;
+  const gradYear = Number(profile.graduation_year);
+  if (!Number.isFinite(gradYear)) return;
+  // Players born before Sept 1 of (gradYear - 18) are older than typical classmates
+  const classStartDate = new Date(Date.UTC(gradYear - 18, 8, 1)); // Sept 1
+  const birthDate = new Date(profile.birth_date);
+  if (!Number.isFinite(birthDate.getTime())) return;
+  profile.age_flag = birthDate < classStartDate ? 'old_for_class' : null;
+}
+
 function groupRowsByUser(rows, mapper) {
   const grouped = new Map();
   for (const row of rows || []) {
@@ -144,6 +155,8 @@ async function enrichPlayerProfiles(profiles) {
       profile[contact.role + '_email'] = contact.email;
       profile[contact.role + '_phone'] = contact.phone;
     }
+
+    computeAgeFlag(profile);
   }
 
   return profiles;

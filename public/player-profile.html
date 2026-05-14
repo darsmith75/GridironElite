@@ -1140,6 +1140,7 @@
           <span class="meta-badge">Profile Views: ${Number(profile.profile_view_count || 0)}</span>
           ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
           ${profile.birth_date ? `<span class="meta-badge">DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
+          ${profile.age_flag === 'old_for_class' ? `<span class="meta-badge" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;" title="This player is older than typical players in their graduating class.">&#9888; Old for Class</span>` : ''}
         </div>
         <div style="margin-top: 20px;">
           <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>

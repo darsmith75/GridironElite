@@ -808,6 +808,7 @@
               ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
               ${player.gpa ? `<span class="meta-badge ${player.report_card_image ? 'clickable-gpa' : ''}" ${player.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openLightbox('/uploads/${player.report_card_image}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openLightbox('/uploads/${player.report_card_image}');}"` : ''}>GPA: ${player.gpa}${player.report_card_image ? ' (View)' : ''}</span>` : ''}
               ${player.birth_date ? `<span class="meta-badge">DOB: ${new Date(player.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
+              ${player.age_flag === 'old_for_class' ? `<span class="meta-badge" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;" title="This player is older than typical players in their graduating class.">&#9888; Old for Class</span>` : ''}
               ${player.achievement ? `<span class="meta-badge">${player.achievement}</span>` : ''}
             </div>
             <div style="margin-top: 20px;">
