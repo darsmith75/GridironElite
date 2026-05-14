@@ -53,10 +53,49 @@
     </div>
   </div>
 
+  <div id="compareModal" onclick="if (event.target === this) closeCompareModal();" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.68); z-index:10040; padding:20px; overflow:auto;">
+    <div style="max-width:980px; margin:40px auto; background:#fff; border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,0.24); overflow:hidden;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px; border-bottom:1px solid #e4ebf3;">
+        <div>
+          <h2 style="margin:0; color:#1e3c72; font-size:22px;">Compare Metrics</h2>
+          <p style="margin:6px 0 0; color:#6c7b8f; font-size:14px;">Compare this athlete against benchmark groups without any AI calls.</p>
+        </div>
+        <button type="button" onclick="closeCompareModal()" style="border:none; background:#eef3f9; color:#385884; width:38px; height:38px; border-radius:10px; font-size:20px; cursor:pointer;">×</button>
+      </div>
+      <div style="padding:22px 24px;">
+        <div id="compareBenchmarkNote" style="display:none; margin-bottom:16px; padding:12px 14px; border-radius:12px; background:#f5f8fc; color:#526177; font-size:13px; line-height:1.5;"></div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
+          <div>
+            <label style="display:block; font-size:12px; font-weight:700; color:#6c7b8f; margin-bottom:6px;">Benchmark Level</label>
+            <select id="compareLevelSelect" onchange="handleCompareLevelChange()" class="agent-sort-select">
+              <option value="nfl">NFL</option>
+              <option value="college_fbs">College FBS</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:700; color:#6c7b8f; margin-bottom:6px;">Position Group</label>
+            <select id="comparePositionSelect" onchange="renderCompareModalContent()" class="agent-sort-select"></select>
+          </div>
+          <div>
+            <label style="display:block; font-size:12px; font-weight:700; color:#6c7b8f; margin-bottom:6px;">Benchmark Basis</label>
+            <select id="compareBasisSelect" onchange="renderCompareModalContent()" class="agent-sort-select">
+              <option value="p50">Median</option>
+              <option value="prototype">Prototype</option>
+            </select>
+          </div>
+        </div>
+        <div id="compareSummaryCards"></div>
+        <div id="compareMetricsTableWrap" style="margin-top:18px;"></div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     let currentViewer = null;
     let reportCardPreviewEl = null;
+    let benchmarkDataCache = null;
+    let benchmarkDataPromise = null;
     const DETAIL_METRICS = [
       { key: 'forty_yard_dash', label: '40-Yard Dash', suffix: 's' },
       { key: 'vertical_jump', label: 'Vertical Jump', suffix: '"' },
@@ -67,6 +106,18 @@
       { key: 'broad_jump', label: 'Broad Jump', suffix: '"' },
       { key: 'power_clean', label: 'Power Clean', suffix: ' lbs' },
       { key: 'single_leg_squat', label: 'Single Leg Squat', suffix: ' lbs' }
+    ];
+    const COMPARE_METRIC_ORDER = [
+      'height_inches',
+      'weight',
+      'forty_yard_dash',
+      'vertical_jump',
+      'bench_press',
+      'squat',
+      'shuttle_5_10_5',
+      'l_drill',
+      'broad_jump',
+      'power_clean'
     ];
     
     const urlParams = new URLSearchParams(window.location.search);
@@ -146,7 +197,7 @@
       }
 
       document.querySelectorAll('#playerDetail button').forEach((btn) => {
-        if (btn.id === 'favoriteBtn') return;
+        if (btn.id === 'favoriteBtn' || btn.id === 'compareMetricsBtn') return;
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
         btn.title = 'Log in to interact';
@@ -309,6 +360,328 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+    }
+
+    function formatCompareNumber(value) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 'N/A';
+      return Number.isInteger(numeric) ? String(numeric) : numeric.toFixed(2);
+    }
+
+    function parseHeightToInches(heightValue) {
+      const raw = String(heightValue || '').trim();
+      if (!raw) return null;
+
+      let m = raw.match(/^(\d+)\s*'\s*(\d+(?:\.\d+)?)?\s*"?$/);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        return Number.isFinite(feet) && Number.isFinite(inches) ? feet * 12 + inches : null;
+      }
+
+      m = raw.match(/^(\d+)\s*(?:ft|feet)\s*(\d+(?:\.\d+)?)?\s*(?:in|inches)?$/i);
+      if (m) {
+        const feet = Number(m[1] || '0');
+        const inches = Number(m[2] || '0');
+        return Number.isFinite(feet) && Number.isFinite(inches) ? feet * 12 + inches : null;
+      }
+
+      const numeric = Number(raw);
+      return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+    }
+
+    function formatBenchmarkMetricValue(metricKey, value, unit) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return 'N/A';
+      if (metricKey === 'height_inches') {
+        return formatHeightDisplay(numeric);
+      }
+      if (metricKey === 'broad_jump') {
+        return formatBroadJumpFeetInches(numeric);
+      }
+      if (metricKey === 'weight' || metricKey === 'bench_press' || metricKey === 'squat' || metricKey === 'power_clean') {
+        return `${formatCompareNumber(numeric)} lbs`;
+      }
+      if (metricKey === 'vertical_jump') {
+        return `${formatCompareNumber(numeric)}"`;
+      }
+      if (metricKey === 'forty_yard_dash' || metricKey === 'shuttle_5_10_5' || metricKey === 'l_drill') {
+        return `${formatCompareNumber(numeric)}s`;
+      }
+      return `${formatCompareNumber(numeric)}${unit ? ` ${unit}` : ''}`.trim();
+    }
+
+    function getPlayerMetricValue(player, metricKey) {
+      if (!player) return null;
+      if (metricKey === 'height_inches') {
+        const numericHeight = Number(player.height_inches);
+        if (Number.isFinite(numericHeight) && numericHeight > 0) return numericHeight;
+        return parseHeightToInches(player.height);
+      }
+      const numeric = Number(player[metricKey]);
+      return Number.isFinite(numeric) ? numeric : null;
+    }
+
+    function inferComparePositionGroup(position) {
+      const raw = String(position || '').toUpperCase().trim();
+      if (!raw) return 'WR';
+      if (['QB'].includes(raw)) return 'QB';
+      if (['RB', 'HB'].includes(raw)) return 'RB';
+      if (['WR'].includes(raw)) return 'WR';
+      if (['TE'].includes(raw)) return 'TE';
+      if (['OL', 'OT', 'OG', 'C'].includes(raw)) return 'OL';
+      if (['DL', 'DE', 'DT', 'EDGE'].includes(raw)) return 'DL';
+      if (['LB', 'ILB', 'OLB'].includes(raw)) return 'LB';
+      if (['CB'].includes(raw)) return 'CB';
+      if (['S', 'FS', 'SS'].includes(raw)) return 'S';
+      if (['K', 'P', 'PK'].includes(raw)) return 'KP';
+      return raw;
+    }
+
+    async function loadBenchmarkData() {
+      if (benchmarkDataCache) return benchmarkDataCache;
+      if (benchmarkDataPromise) return benchmarkDataPromise;
+
+      benchmarkDataPromise = fetch('/data/player-benchmarks.json', { cache: 'force-cache' })
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(`Failed to load benchmark data (${res.status})`);
+          }
+          const data = await res.json();
+          benchmarkDataCache = data;
+          return data;
+        })
+        .finally(() => {
+          benchmarkDataPromise = null;
+        });
+
+      return benchmarkDataPromise;
+    }
+
+    function updateBenchmarkNote(meta) {
+      const noteEl = document.getElementById('compareBenchmarkNote');
+      if (!noteEl) return;
+      const note = meta && meta.note ? String(meta.note) : '';
+      if (!note) {
+        noteEl.style.display = 'none';
+        noteEl.textContent = '';
+        return;
+      }
+      noteEl.style.display = 'block';
+      noteEl.textContent = note;
+    }
+
+    function populateComparePositionOptions(data, preferredGroup) {
+      const level = document.getElementById('compareLevelSelect')?.value || 'nfl';
+      const select = document.getElementById('comparePositionSelect');
+      if (!select) return;
+      const levelData = data && data.levels ? data.levels[level] : null;
+      const groups = levelData ? Object.keys(levelData) : [];
+      select.innerHTML = groups.map((group) => {
+        const label = levelData[group]?.label || group;
+        return `<option value="${escapeHtml(group)}">${escapeHtml(label)}</option>`;
+      }).join('');
+      const chosen = groups.includes(preferredGroup) ? preferredGroup : groups[0];
+      if (chosen) select.value = chosen;
+    }
+
+    function handleCompareLevelChange() {
+      if (!benchmarkDataCache) return;
+      populateComparePositionOptions(benchmarkDataCache, inferComparePositionGroup(currentPlayerData?.position));
+      renderCompareModalContent();
+    }
+
+    function getCompareStatus(metricMeta, playerValue) {
+      const bestDirection = metricMeta.best_direction || 'higher';
+      const p25 = Number(metricMeta.p25);
+      const p50 = Number(metricMeta.p50);
+      const p75 = Number(metricMeta.p75);
+      const p90 = Number(metricMeta.p90);
+      if (!Number.isFinite(playerValue)) return { label: 'Needs Data', rank: 0, color: '#64748b', bg: '#f1f5f9' };
+
+      if (bestDirection === 'lower') {
+        if (Number.isFinite(p25) && playerValue <= p25) return { label: 'Elite', rank: 4, color: '#166534', bg: '#dcfce7' };
+        if (Number.isFinite(p50) && playerValue <= p50) return { label: 'Above Benchmark', rank: 3, color: '#0f766e', bg: '#ccfbf1' };
+        if (Number.isFinite(p75) && playerValue <= p75) return { label: 'Around Benchmark', rank: 2, color: '#1d4ed8', bg: '#dbeafe' };
+        return { label: 'Below Benchmark', rank: 1, color: '#b45309', bg: '#fef3c7' };
+      }
+
+      if (Number.isFinite(p90) && playerValue >= p90) return { label: 'Elite', rank: 4, color: '#166534', bg: '#dcfce7' };
+      if (Number.isFinite(p75) && playerValue >= p75) return { label: 'Above Benchmark', rank: 3, color: '#0f766e', bg: '#ccfbf1' };
+      if (Number.isFinite(p50) && playerValue >= p50) return { label: 'Around Benchmark', rank: 2, color: '#1d4ed8', bg: '#dbeafe' };
+      return { label: 'Below Benchmark', rank: 1, color: '#b45309', bg: '#fef3c7' };
+    }
+
+    function formatCompareDelta(metricKey, playerValue, benchmarkValue, bestDirection) {
+      if (!Number.isFinite(playerValue) || !Number.isFinite(benchmarkValue)) return 'Not enough data';
+      const delta = playerValue - benchmarkValue;
+      const absDelta = Math.abs(delta);
+      const formattedAbs = metricKey === 'height_inches'
+        ? formatCompareNumber(absDelta)
+        : (metricKey === 'broad_jump' ? formatCompareNumber(absDelta) : formatCompareNumber(absDelta));
+
+      if (delta === 0) return 'Matches benchmark';
+      if (bestDirection === 'lower') {
+        return delta < 0 ? `${formattedAbs} faster` : `${formattedAbs} slower`;
+      }
+      if (metricKey === 'height_inches' || metricKey === 'weight' || metricKey === 'vertical_jump' || metricKey === 'bench_press' || metricKey === 'squat' || metricKey === 'power_clean' || metricKey === 'broad_jump') {
+        return delta > 0 ? `${formattedAbs} above` : `${formattedAbs} below`;
+      }
+      return delta > 0 ? `${formattedAbs} above` : `${formattedAbs} below`;
+    }
+
+    function buildCompareRows(groupData, basis) {
+      const player = currentPlayerData;
+      if (!player || !groupData || !groupData.metrics) return [];
+      const rows = [];
+
+      COMPARE_METRIC_ORDER.forEach((metricKey) => {
+        const metricMeta = groupData.metrics[metricKey];
+        if (!metricMeta) return;
+        const playerValue = getPlayerMetricValue(player, metricKey);
+        const benchmarkValue = Number(metricMeta[basis]);
+        const status = getCompareStatus(metricMeta, playerValue);
+        const baseline = Number.isFinite(benchmarkValue) ? benchmarkValue : Number(metricMeta.p50);
+        const centerValue = Number(metricMeta.p50);
+        const spread = Math.max(Math.abs(Number(metricMeta.p75) - Number(metricMeta.p25)), 1);
+        let relativeScore = -999;
+        if (Number.isFinite(playerValue) && Number.isFinite(centerValue)) {
+          relativeScore = (metricMeta.best_direction === 'lower')
+            ? (centerValue - playerValue) / spread
+            : (playerValue - centerValue) / spread;
+        }
+        rows.push({
+          key: metricKey,
+          label: metricMeta.label || metricKey,
+          unit: metricMeta.unit || '',
+          playerValue,
+          benchmarkValue: baseline,
+          status,
+          deltaLabel: formatCompareDelta(metricKey, playerValue, baseline, metricMeta.best_direction || 'higher'),
+          relativeScore,
+          metricMeta
+        });
+      });
+
+      return rows;
+    }
+
+    function renderCompareSummaryCards(groupData, rows) {
+      const summaryEl = document.getElementById('compareSummaryCards');
+      if (!summaryEl) return;
+      const validRows = rows.filter((row) => Number.isFinite(row.playerValue));
+      if (!validRows.length) {
+        summaryEl.innerHTML = '<div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff; color:#64748b;">This athlete needs more recorded metrics before benchmark comparisons can be calculated.</div>';
+        return;
+      }
+
+      const strongest = [...validRows].sort((a, b) => b.relativeScore - a.relativeScore)[0];
+      const gap = [...validRows].sort((a, b) => a.relativeScore - b.relativeScore)[0];
+      summaryEl.innerHTML = `
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+          <div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff;">
+            <div style="font-size:12px; font-weight:700; color:#6c7b8f; text-transform:uppercase; letter-spacing:0.04em;">Strongest Relative Metric</div>
+            <div style="margin-top:8px; font-size:18px; font-weight:800; color:#1e3c72;">${escapeHtml(strongest.label)}</div>
+            <div style="margin-top:4px; color:${strongest.status.color}; font-size:13px; font-weight:700;">${escapeHtml(strongest.status.label)}</div>
+          </div>
+          <div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff;">
+            <div style="font-size:12px; font-weight:700; color:#6c7b8f; text-transform:uppercase; letter-spacing:0.04em;">Biggest Gap</div>
+            <div style="margin-top:8px; font-size:18px; font-weight:800; color:#1e3c72;">${escapeHtml(gap.label)}</div>
+            <div style="margin-top:4px; color:${gap.status.color}; font-size:13px; font-weight:700;">${escapeHtml(gap.deltaLabel)}</div>
+          </div>
+          <div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff;">
+            <div style="font-size:12px; font-weight:700; color:#6c7b8f; text-transform:uppercase; letter-spacing:0.04em;">Benchmark Sample</div>
+            <div style="margin-top:8px; font-size:18px; font-weight:800; color:#1e3c72;">${escapeHtml(String(groupData.sample_size || 'N/A'))}</div>
+            <div style="margin-top:4px; color:#64748b; font-size:13px; font-weight:600;">${validRows.length} metric${validRows.length === 1 ? '' : 's'} compared</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCompareTable(rows, basis) {
+      const tableWrap = document.getElementById('compareMetricsTableWrap');
+      if (!tableWrap) return;
+      const basisLabel = basis === 'prototype' ? 'Prototype' : 'Median';
+      if (!rows.length) {
+        tableWrap.innerHTML = '<div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff; color:#64748b;">No benchmark metrics are available for this position group yet.</div>';
+        return;
+      }
+
+      tableWrap.innerHTML = `
+        <div style="border:1px solid #e4ebf3; border-radius:16px; overflow:hidden; background:#fff;">
+          <div style="display:grid; grid-template-columns:minmax(140px, 1.4fr) minmax(100px, 0.9fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(140px, 1fr); gap:0; background:#f8fbff; border-bottom:1px solid #e4ebf3; font-size:12px; font-weight:800; color:#5d6d83; text-transform:uppercase; letter-spacing:0.04em;">
+            <div style="padding:12px 14px;">Metric</div>
+            <div style="padding:12px 14px;">Player</div>
+            <div style="padding:12px 14px;">${basisLabel}</div>
+            <div style="padding:12px 14px;">Delta</div>
+            <div style="padding:12px 14px;">Status</div>
+          </div>
+          ${rows.map((row, index) => `
+            <div style="display:grid; grid-template-columns:minmax(140px, 1.4fr) minmax(100px, 0.9fr) minmax(120px, 1fr) minmax(130px, 1fr) minmax(140px, 1fr); gap:0; border-bottom:${index === rows.length - 1 ? 'none' : '1px solid #eef3f8'}; align-items:center;">
+              <div style="padding:14px; font-weight:700; color:#1e3c72;">${escapeHtml(row.label)}</div>
+              <div style="padding:14px; color:#334155;">${escapeHtml(formatBenchmarkMetricValue(row.key, row.playerValue, row.unit))}</div>
+              <div style="padding:14px; color:#334155;">${escapeHtml(formatBenchmarkMetricValue(row.key, row.benchmarkValue, row.unit))}</div>
+              <div style="padding:14px; color:#526177; font-weight:600;">${escapeHtml(row.deltaLabel)}</div>
+              <div style="padding:14px;"><span style="display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:${row.status.bg}; color:${row.status.color}; font-size:12px; font-weight:800;">${escapeHtml(row.status.label)}</span></div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderCompareModalContent() {
+      if (!benchmarkDataCache || !currentPlayerData) return;
+      const level = document.getElementById('compareLevelSelect')?.value || 'nfl';
+      const group = document.getElementById('comparePositionSelect')?.value || '';
+      const basis = document.getElementById('compareBasisSelect')?.value || 'p50';
+      const levelData = benchmarkDataCache.levels ? benchmarkDataCache.levels[level] : null;
+      const groupData = levelData && group ? levelData[group] : null;
+      const summaryEl = document.getElementById('compareSummaryCards');
+      const tableWrap = document.getElementById('compareMetricsTableWrap');
+
+      if (!groupData) {
+        if (summaryEl) summaryEl.innerHTML = '';
+        if (tableWrap) {
+          tableWrap.innerHTML = '<div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff; color:#64748b;">No benchmark group is available for this position yet. Add it to /public/data/player-benchmarks.json to enable this comparison.</div>';
+        }
+        return;
+      }
+
+      const rows = buildCompareRows(groupData, basis);
+      renderCompareSummaryCards(groupData, rows);
+      renderCompareTable(rows, basis);
+    }
+
+    async function openCompareModal() {
+      const modal = document.getElementById('compareModal');
+      const summaryEl = document.getElementById('compareSummaryCards');
+      const tableWrap = document.getElementById('compareMetricsTableWrap');
+      if (!modal || !currentPlayerData) return;
+
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      if (summaryEl) summaryEl.innerHTML = '';
+      if (tableWrap) {
+        tableWrap.innerHTML = '<div style="padding:16px 18px; border:1px solid #e4ebf3; border-radius:14px; background:#fbfdff; color:#64748b;">Loading benchmark profiles...</div>';
+      }
+
+      try {
+        const data = await loadBenchmarkData();
+        updateBenchmarkNote(data.meta || {});
+        populateComparePositionOptions(data, inferComparePositionGroup(currentPlayerData.position));
+        renderCompareModalContent();
+      } catch (error) {
+        if (tableWrap) {
+          tableWrap.innerHTML = `<div style="padding:16px 18px; border:1px solid #fecaca; border-radius:14px; background:#fef2f2; color:#b91c1c;">${escapeHtml(error.message || 'Unable to load benchmark data.')}</div>`;
+        }
+      }
+    }
+
+    function closeCompareModal() {
+      const modal = document.getElementById('compareModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
     }
 
       function getRatingColor(score) {
@@ -881,7 +1254,10 @@
 
           <!-- Athletic Metrics Grid -->
           <div class="profile-section">
-            <h2 class="section-title-small">ATHLETIC METRICS</h2>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+              <h2 class="section-title-small" style="margin-bottom:0;">ATHLETIC METRICS</h2>
+              <button id="compareMetricsBtn" type="button" onclick="openCompareModal()" class="player-card-btn">Compare Metrics</button>
+            </div>
             <div class="metrics-grid">
               ${DETAIL_METRICS.map(metric => buildDetailMetricCard(player, metric, metricVideoMap)).join('')}
             </div>
@@ -1125,6 +1501,9 @@
         if (e.key === 'Escape' && document.querySelector('.lightbox')) {
           const lb = document.querySelector('.lightbox');
           if (lb) document.body.removeChild(lb);
+        }
+        if (e.key === 'Escape' && document.getElementById('compareModal')?.style.display === 'block') {
+          closeCompareModal();
         }
       });
     }
