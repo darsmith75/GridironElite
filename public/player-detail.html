@@ -442,7 +442,7 @@
       if (benchmarkDataCache) return benchmarkDataCache;
       if (benchmarkDataPromise) return benchmarkDataPromise;
 
-      benchmarkDataPromise = fetch('/data/player-benchmarks.json', { cache: 'force-cache' })
+      benchmarkDataPromise = fetch('/data/player-benchmarks.json', { cache: 'no-cache' })
         .then(async (res) => {
           if (!res.ok) {
             throw new Error(`Failed to load benchmark data (${res.status})`);
