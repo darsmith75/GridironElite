@@ -35,3 +35,6 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# Generated benchmark backups
+public/data/player-benchmarks.backup-*.json
