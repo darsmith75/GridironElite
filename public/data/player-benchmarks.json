@@ -166,6 +166,28 @@
           "bench_press": { "label": "Bench Press", "unit": "lbs", "best_direction": "higher", "p25": 18, "p50": 22, "p75": 26, "p90": 29, "prototype": 26 }
         }
       },
+      "DL": {
+        "label": "College FBS Defensive Line",
+        "sample_size": 176,
+        "metrics": {
+          "height_inches": { "label": "Height", "unit": "in", "best_direction": "higher", "p25": 73, "p50": 75, "p75": 76, "p90": 77, "prototype": 76 },
+          "weight": { "label": "Weight", "unit": "lbs", "best_direction": "higher", "p25": 255, "p50": 272, "p75": 289, "p90": 303, "prototype": 288 },
+          "forty_yard_dash": { "label": "40-Yard Dash", "unit": "s", "best_direction": "lower", "p25": 5.09, "p50": 4.93, "p75": 4.79, "p90": 4.68, "prototype": 4.77 },
+          "vertical_jump": { "label": "Vertical Jump", "unit": "in", "best_direction": "higher", "p25": 26, "p50": 30, "p75": 33, "p90": 35, "prototype": 33 },
+          "bench_press": { "label": "Bench Press", "unit": "lbs", "best_direction": "higher", "p25": 20, "p50": 25, "p75": 29, "p90": 33, "prototype": 30 }
+        }
+      },
+      "EDGE": {
+        "label": "College FBS EDGE",
+        "sample_size": 132,
+        "metrics": {
+          "height_inches": { "label": "Height", "unit": "in", "best_direction": "higher", "p25": 73, "p50": 75, "p75": 76, "p90": 77, "prototype": 76 },
+          "weight": { "label": "Weight", "unit": "lbs", "best_direction": "higher", "p25": 233, "p50": 246, "p75": 258, "p90": 267, "prototype": 257 },
+          "forty_yard_dash": { "label": "40-Yard Dash", "unit": "s", "best_direction": "lower", "p25": 4.93, "p50": 4.79, "p75": 4.67, "p90": 4.58, "prototype": 4.66 },
+          "vertical_jump": { "label": "Vertical Jump", "unit": "in", "best_direction": "higher", "p25": 29, "p50": 32, "p75": 35, "p90": 37, "prototype": 35 },
+          "broad_jump": { "label": "Broad Jump", "unit": "in", "best_direction": "higher", "p25": 110, "p50": 116, "p75": 121, "p90": 125, "prototype": 121 }
+        }
+      },
       "CB": {
         "label": "College FBS Cornerback",
         "sample_size": 149,
