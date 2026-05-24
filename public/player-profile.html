@@ -117,7 +117,11 @@
                 <option value="WR">Wide Receiver (WR)</option>
                 <option value="TE">Tight End (TE)</option>
                 <option value="OL">Offensive Line (OL)</option>
+                <option value="OT">Tackle (OT)</option>
+                <option value="OG">Guard (OG)</option>
+                <option value="C">Center (C)</option>
                 <option value="DL">Defensive Line (DL)</option>
+                <option value="EDGE">EDGE (EDGE)</option>
                 <option value="LB">Linebacker (LB)</option>
                 <option value="CB">Cornerback (CB)</option>
                 <option value="S">Safety (S)</option>
@@ -1130,17 +1134,38 @@
 
       // Header info with name, badges, and action buttons
       document.getElementById('viewHeaderInfo').innerHTML = `
+        ${(profile.hudl_link || profile.instagram_link || profile.twitter_link) ? `
+          <div class="profile-photo-social-links">
+            ${profile.hudl_link ? `
+              <a href="${profile.hudl_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="Hudl${profile.hudl_username ? `: ${profile.hudl_username}` : ''}">
+                <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="profile-photo-social-icon">
+                <span class="profile-photo-social-handle">${profile.hudl_username || 'Hudl'}</span>
+              </a>
+            ` : ''}
+            ${profile.instagram_link ? `
+              <a href="${profile.instagram_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="Instagram${profile.instagram_username ? `: ${profile.instagram_username}` : ''}">
+                <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="profile-photo-social-icon">
+                <span class="profile-photo-social-handle">${profile.instagram_username || 'Instagram'}</span>
+              </a>
+            ` : ''}
+            ${profile.twitter_link ? `
+              <a href="${profile.twitter_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="X${profile.twitter_username ? `: ${profile.twitter_username}` : ''}">
+                <img src="/images/logos/X_logo.png" alt="X" class="profile-photo-social-icon">
+                <span class="profile-photo-social-handle">${profile.twitter_username || 'X'}</span>
+              </a>
+            ` : ''}
+          </div>
+        ` : ''}
         <h1 class="player-name-large">${profile.full_name || 'Your Name'}</h1>
         <div class="meta-badges">
           ${profile.position ? `<span class="meta-badge">${profile.position}</span>` : ''}
+          ${profile.birth_date ? `<span class="meta-badge">DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
           ${profile.graduation_year ? `<span class="meta-badge">Class of ${profile.graduation_year}</span>` : ''}
           ${profile.high_school ? `<span class="meta-badge">${profile.high_school}</span>` : ''}
           ${profile.height ? `<span class="meta-badge">${formatHeightDisplay(profile.height)}</span>` : ''}
           ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
           <span class="meta-badge">Profile Views: ${Number(profile.profile_view_count || 0)}</span>
           ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
-          ${profile.birth_date ? `<span class="meta-badge">DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
-          ${profile.age_flag === 'old_for_class' ? `<span class="meta-badge" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;" title="This player is older than typical players in their graduating class.">&#9888; Old for Class</span>` : ''}
         </div>
         <div style="margin-top: 20px;">
           <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>
@@ -1286,44 +1311,6 @@
             </div>
           `;
         }
-      }
-
-      // Social Media
-      if (profile.hudl_link || profile.instagram_link || profile.twitter_link) {
-        html += `
-          <div class="profile-section">
-            <h2 class="section-title-small">SOCIAL MEDIA</h2>
-            <div class="social-links social-links-grid">
-              ${profile.hudl_link ? `
-                <a href="${profile.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
-                  <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
-                  <div class="social-info">
-                    <span class="social-name">Hudl</span>
-                    ${profile.hudl_username ? `<span class="social-username">${profile.hudl_username}</span>` : ''}
-                  </div>
-                </a>
-              ` : ''}
-              ${profile.instagram_link ? `
-                <a href="${profile.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
-                  <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
-                  <div class="social-info">
-                    <span class="social-name">Instagram</span>
-                    ${profile.instagram_username ? `<span class="social-username">${profile.instagram_username}</span>` : ''}
-                  </div>
-                </a>
-              ` : ''}
-              ${profile.twitter_link ? `
-                <a href="${profile.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
-                  <img src="/images/logos/X_logo.png" alt="X" class="social-icon-img">
-                  <div class="social-info">
-                    <span class="social-name">X (Twitter)</span>
-                    ${profile.twitter_username ? `<span class="social-username">${profile.twitter_username}</span>` : ''}
-                  </div>
-                </a>
-              ` : ''}
-            </div>
-          </div>
-        `;
       }
 
       // Report Card

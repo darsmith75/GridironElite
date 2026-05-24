@@ -2570,6 +2570,52 @@ textarea {
   margin-bottom: 40px;
 }
 
+.profile-photo-social-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.profile-photo-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  min-height: 30px;
+  border-radius: 999px;
+  border: 1px solid #d3dce8;
+  background: #f7f9fc;
+  color: #2f466a;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.25;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-photo-social-link:hover {
+  background: #edf3fb;
+  border-color: #b8c9e2;
+  transform: translateY(-1px);
+}
+
+.profile-photo-social-icon {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.profile-photo-social-handle {
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .player-name-large {
   font-size: 36px;
   font-weight: 800;

@@ -205,6 +205,57 @@
     .team-panel-header .team-panel-title {
       margin: 0;
     }
+    .team-roster-filters {
+      margin-bottom: 16px;
+      padding: 14px;
+      border: 1px solid #dde6f0;
+      border-radius: 12px;
+      background: #f9fbff;
+    }
+    .team-roster-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    .team-roster-filter-field label {
+      display: block;
+      font-size: 12px;
+      color: #5d6f8b;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .team-roster-filter-field select,
+    .team-roster-filter-field input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .team-roster-filter-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .team-roster-clear-btn {
+      padding: 9px 12px;
+      border: 1px solid #c7d0da;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .team-roster-clear-btn:hover {
+      background: #f3f6fb;
+    }
     .team-empty-state {
       text-align: center;
       padding: 44px 20px;
@@ -478,6 +529,10 @@
     const TEAM_ROSTER_VIEW_STORAGE_KEY = 'teamDetailRosterViewMode';
     let teamPageData = null;
     let rosterViewMode = getDefaultRosterViewMode();
+    const teamRosterFilters = {
+      position: '',
+      graduationYear: ''
+    };
 
     function escHtml(str) {
       if (str == null) return '';
@@ -700,8 +755,76 @@
       </div>`;
     }
 
-    function renderRosterTab(players) {
+    function renderRosterFilters() {
+      return `<div class="team-roster-filters">
+        <div class="team-roster-filter-grid">
+          <div class="team-roster-filter-field">
+            <label for="teamRosterFilterPosition">Position</label>
+            <select id="teamRosterFilterPosition" onchange="onTeamRosterFilterChange()">
+              <option value="">All Positions</option>
+              <option value="QB">Quarterback (QB)</option>
+              <option value="RB">Running Back (RB)</option>
+              <option value="WR">Wide Receiver (WR)</option>
+              <option value="TE">Tight End (TE)</option>
+              <option value="OL">Offensive Line (OL)</option>
+              <option value="OT">Tackle (OT)</option>
+              <option value="OG">Guard (OG)</option>
+              <option value="C">Center (C)</option>
+              <option value="DL">Defensive Line (DL)</option>
+              <option value="EDGE">EDGE (EDGE)</option>
+              <option value="LB">Linebacker (LB)</option>
+              <option value="CB">Cornerback (CB)</option>
+              <option value="S">Safety (S)</option>
+              <option value="K">Kicker (K)</option>
+            </select>
+          </div>
+          <div class="team-roster-filter-field">
+            <label for="teamRosterFilterYear">Graduation Year</label>
+            <input type="number" id="teamRosterFilterYear" placeholder="e.g. 2027" oninput="onTeamRosterFilterChange()">
+          </div>
+          <div class="team-roster-filter-actions">
+            <button type="button" class="team-roster-clear-btn" onclick="clearTeamRosterFilters()">Clear Filters</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function getFilteredRoster(roster) {
+      let filtered = Array.isArray(roster) ? roster.slice() : [];
+      if (teamRosterFilters.position) {
+        const selected = teamRosterFilters.position.toUpperCase();
+        filtered = filtered.filter((player) => String(player?.position || '').toUpperCase() === selected);
+      }
+      if (teamRosterFilters.graduationYear) {
+        const year = String(teamRosterFilters.graduationYear).trim();
+        filtered = filtered.filter((player) => String(player?.graduation_year || '') === year);
+      }
+      return filtered;
+    }
+
+    function onTeamRosterFilterChange() {
+      const positionEl = document.getElementById('teamRosterFilterPosition');
+      const yearEl = document.getElementById('teamRosterFilterYear');
+      teamRosterFilters.position = positionEl ? String(positionEl.value || '').trim() : '';
+      teamRosterFilters.graduationYear = yearEl ? String(yearEl.value || '').trim() : '';
+      rerenderRosterTab();
+    }
+
+    function clearTeamRosterFilters() {
+      teamRosterFilters.position = '';
+      teamRosterFilters.graduationYear = '';
+      const positionEl = document.getElementById('teamRosterFilterPosition');
+      const yearEl = document.getElementById('teamRosterFilterYear');
+      if (positionEl) positionEl.value = '';
+      if (yearEl) yearEl.value = '';
+      rerenderRosterTab();
+    }
+
+    function renderRosterTab(players, totalRosterCount = players.length) {
       if (!players.length) {
+        if (totalRosterCount > 0) {
+          return `<div class="team-empty-state"><strong>No players match these filters</strong><span>Try a different position or graduation year.</span></div>`;
+        }
         return `<div class="team-empty-state"><strong>No roster posted yet</strong><span>This coach has not published any rostered players on this team page.</span></div>`;
       }
       if (rosterViewMode === 'list') {
@@ -713,9 +836,10 @@
     function rerenderRosterTab() {
       if (!teamPageData) return;
       const roster = Array.isArray(teamPageData.roster) ? teamPageData.roster : [];
+      const filteredRoster = getFilteredRoster(roster);
       const rosterContent = document.getElementById('teamRosterContent');
       if (!rosterContent) return;
-      rosterContent.innerHTML = renderRosterTab(roster);
+      rosterContent.innerHTML = renderRosterTab(filteredRoster, roster.length);
     }
 
     function renderScheduleTab(schedule) {
@@ -796,7 +920,7 @@
           <h3>${escHtml(member.full_name || 'Staff Member')}</h3>
           <p class="team-staff-meta">${escHtml(member.role_title || 'Role')}</p>
           ${member.bio ? `<div class="team-staff-bio">${escHtml(member.bio)}</div>` : ''}
-          ${(member.email || member.phone) ? `<div class="team-staff-meta" style="margin-top:10px;">${member.email ? `<div>${escHtml(member.email)}</div>` : ''}${member.phone ? `<div>${escHtml(member.phone)}</div>` : ''}</div>` : ''}
+          ${(member.email || member.phone) ? `<div class="team-staff-meta" style="margin-top:10px;">${member.email ? `<div><a href="mailto:${encodeURIComponent(String(member.email || '').trim())}" class="team-social-link">${escHtml(member.email)}</a></div>` : ''}${member.phone ? `<div>${escHtml(member.phone)}</div>` : ''}</div>` : ''}
         </div>
       `).join('')}</div>`;
     }
@@ -812,6 +936,7 @@
       const root = document.getElementById('teamPageRoot');
       const team = data.team;
       const roster = Array.isArray(data.roster) ? data.roster : [];
+      const filteredRoster = getFilteredRoster(roster);
       const schedule = Array.isArray(data.schedule) ? data.schedule : [];
       const staff = Array.isArray(data.staff) ? data.staff : [];
       const start = team.banner_color_start || '#1e3c72';
@@ -870,7 +995,8 @@
               <h2 class="team-panel-title">Roster</h2>
               ${renderRosterViewToggle()}
             </div>
-            <div id="teamRosterContent">${renderRosterTab(roster)}</div>
+            ${renderRosterFilters()}
+            <div id="teamRosterContent">${renderRosterTab(filteredRoster, roster.length)}</div>
           </div>
         </div>
         <div class="team-tab-panel hidden" id="teamPanel-schedule">

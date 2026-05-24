@@ -1172,16 +1172,37 @@
           
           <!-- Player Header Info -->
           <div class="profile-header-info">
+            ${(player.hudl_link || player.instagram_link || player.twitter_link) ? `
+              <div class="profile-photo-social-links">
+                ${player.hudl_link ? `
+                  <a href="${player.hudl_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="Hudl${player.hudl_username ? `: ${player.hudl_username}` : ''}">
+                    <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="profile-photo-social-icon">
+                    <span class="profile-photo-social-handle">${player.hudl_username || 'Hudl'}</span>
+                  </a>
+                ` : ''}
+                ${player.instagram_link ? `
+                  <a href="${player.instagram_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="Instagram${player.instagram_username ? `: ${player.instagram_username}` : ''}">
+                    <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="profile-photo-social-icon">
+                    <span class="profile-photo-social-handle">${player.instagram_username || 'Instagram'}</span>
+                  </a>
+                ` : ''}
+                ${player.twitter_link ? `
+                  <a href="${player.twitter_link}" target="_blank" rel="noopener noreferrer" class="profile-photo-social-link" title="X${player.twitter_username ? `: ${player.twitter_username}` : ''}">
+                    <img src="/images/logos/X_logo.png" alt="X" class="profile-photo-social-icon">
+                    <span class="profile-photo-social-handle">${player.twitter_username || 'X'}</span>
+                  </a>
+                ` : ''}
+              </div>
+            ` : ''}
             <h1 class="player-name-large">${player.full_name}</h1>
             <div class="meta-badges">
               ${player.position ? `<span class="meta-badge">${player.position}</span>` : ''}
+              ${player.birth_date ? `<span class="meta-badge">DOB: ${new Date(player.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
               ${player.graduation_year ? `<span class="meta-badge">Class of ${player.graduation_year}</span>` : ''}
               ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
               ${player.height ? `<span class="meta-badge">${formatHeightDisplay(player.height)}</span>` : ''}
               ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
               ${player.gpa ? `<span class="meta-badge ${player.report_card_image ? 'clickable-gpa' : ''}" ${player.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openLightbox('/uploads/${player.report_card_image}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openLightbox('/uploads/${player.report_card_image}');}"` : ''}>GPA: ${player.gpa}${player.report_card_image ? ' (View)' : ''}</span>` : ''}
-              ${player.birth_date ? `<span class="meta-badge">DOB: ${new Date(player.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
-              ${player.age_flag === 'old_for_class' ? `<span class="meta-badge" style="background:#fff3cd;color:#856404;border:1px solid #ffc107;" title="This player is older than typical players in their graduating class.">&#9888; Old for Class</span>` : ''}
               ${player.achievement ? `<span class="meta-badge">${player.achievement}</span>` : ''}
             </div>
             <div style="margin-top: 20px;">
@@ -1312,42 +1333,6 @@
             </div>
           ` : '';
           })() : ''}
-          
-          <!-- Social Media Links -->
-          ${(player.hudl_link || player.instagram_link || player.twitter_link) ? `
-            <div class="profile-section">
-              <h2 class="section-title-small">SOCIAL MEDIA</h2>
-              <div class="social-links">
-                ${player.hudl_link ? `
-                  <a href="${player.hudl_link}" target="_blank" rel="noopener noreferrer" class="social-link hudl">
-                    <img src="/images/logos/Hudl_logo.png" alt="Hudl" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">Hudl</span>
-                      ${player.hudl_username ? `<span class="social-username">${player.hudl_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-                ${player.instagram_link ? `
-                  <a href="${player.instagram_link}" target="_blank" rel="noopener noreferrer" class="social-link instagram">
-                    <img src="/images/logos/Instagram_logo.png" alt="Instagram" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">Instagram</span>
-                      ${player.instagram_username ? `<span class="social-username">${player.instagram_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-                ${player.twitter_link ? `
-                  <a href="${player.twitter_link}" target="_blank" rel="noopener noreferrer" class="social-link twitter">
-                    <img src="/images/logos/X_logo.png" alt="X" class="social-icon-img">
-                    <div class="social-info">
-                      <span class="social-name">X (Twitter)</span>
-                      ${player.twitter_username ? `<span class="social-username">${player.twitter_username}</span>` : ''}
-                    </div>
-                  </a>
-                ` : ''}
-              </div>
-            </div>
-          ` : ''}
           
           <!-- Contact Information -->
           ${(player.father_name || player.mother_name || player.coach_name) ? `
