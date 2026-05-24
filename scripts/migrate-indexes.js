@@ -15,6 +15,11 @@ const db = require('../database');
 
 const indexes = [
   {
+    name: 'ext_pg_trgm',
+    description: 'Enable trigram indexes for fast contains search',
+    sql: 'CREATE EXTENSION IF NOT EXISTS pg_trgm'
+  },
+  {
     name: 'idx_users_email_lower',
     description: 'Case-insensitive login lookup: LOWER(email) = ?',
     sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_lower ON users (LOWER(email))`
@@ -38,6 +43,66 @@ const indexes = [
     name: 'idx_site_traffic_ip_created',
     description: 'Unique visitor IP count query on admin dashboard (partial index, excludes NULLs)',
     sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_site_traffic_ip_created ON site_traffic_events (ip_address, created_at DESC) WHERE ip_address IS NOT NULL AND ip_address <> ''`
+  },
+  {
+    name: 'idx_pp_full_name_trgm',
+    description: 'Agent quick search on player full name',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pp_full_name_trgm ON player_profiles USING gin (LOWER(COALESCE(full_name, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_pp_high_school_trgm',
+    description: 'Agent quick search on high school',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pp_high_school_trgm ON player_profiles USING gin (LOWER(COALESCE(high_school, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_pp_position_trgm',
+    description: 'Agent quick search on position text',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pp_position_trgm ON player_profiles USING gin (LOWER(COALESCE(position, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_users_full_name_trgm',
+    description: 'Admin search on users full_name',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_full_name_trgm ON users USING gin (LOWER(COALESCE(full_name, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_users_email_trgm',
+    description: 'Admin search on users email',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_email_trgm ON users USING gin (LOWER(email) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_hs_teams_team_name_trgm',
+    description: 'Admin team search on team name',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hs_teams_team_name_trgm ON hs_teams USING gin (LOWER(COALESCE(team_name, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_hs_teams_school_name_trgm',
+    description: 'Admin team search on school name',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hs_teams_school_name_trgm ON hs_teams USING gin (LOWER(COALESCE(school_name, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_hs_teams_city_trgm',
+    description: 'Admin team search on city',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hs_teams_city_trgm ON hs_teams USING gin (LOWER(COALESCE(city, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_hs_teams_state_trgm',
+    description: 'Admin team search on state',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_hs_teams_state_trgm ON hs_teams USING gin (LOWER(COALESCE(state, '')) gin_trgm_ops)`
+  },
+  {
+    name: 'idx_team_invites_pending_player_expires',
+    description: 'Pending invite lookup by player_user_id with expiry filter',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_team_invites_pending_player_expires ON team_invites (player_user_id, expires_at DESC, sent_at DESC) WHERE status = 'pending'`
+  },
+  {
+    name: 'idx_team_invites_pending_email_expires',
+    description: 'Pending invite lookup by player_email (case-insensitive) with expiry filter',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_team_invites_pending_email_expires ON team_invites (LOWER(player_email), expires_at DESC, sent_at DESC) WHERE status = 'pending'`
+  },
+  {
+    name: 'idx_team_invites_team_sent_desc',
+    description: 'Coach invite list by team ordered by sent_at desc',
+    sql: `CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_team_invites_team_sent_desc ON team_invites (team_id, sent_at DESC)`
   }
 ];
 
