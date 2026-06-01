@@ -2,9 +2,11 @@ function normalizeDivisionTag(division) {
   const value = String(division || '').trim();
   if (!value) return '';
 
-  if (value === 'FBS' || value === 'FCS') return value;
+  if (value === 'FBS' || value === 'FCS' || value === 'D2') return value;
   if (value === 'NCAA Division I (FBS)') return 'FBS';
   if (value === 'NCAA Division I (FCS)') return 'FCS';
+  if (value === 'NCAA Division II') return 'D2';
+  if (value === 'NCAA Division II (D2)') return 'D2';
   return '';
 }
 
@@ -17,7 +19,7 @@ function normalizeCollegeLogoPath(logoPath, division) {
     return normalized;
   }
 
-  if (normalized.includes('/FBS/') || normalized.includes('/FCS/')) {
+  if (normalized.includes('/FBS/') || normalized.includes('/FCS/') || normalized.includes('/D2/')) {
     return normalized;
   }
 

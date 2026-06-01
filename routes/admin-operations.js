@@ -177,7 +177,20 @@ function inferDivisionFromConference(conference) {
     ['Pioneer', 'FCS'],
     ['SoCon', 'FCS'],
     ['Missouri Valley', 'FCS'],
-    ['Big Sky', 'FCS']
+    ['Big Sky', 'FCS'],
+    ['CIAA', 'D2'],
+    ['GLIAC', 'D2'],
+    ['GLVC', 'D2'],
+    ['G-MAC', 'D2'],
+    ['Great Northwest', 'D2'],
+    ['Lone Star', 'D2'],
+    ['Mountain East', 'D2'],
+    ['NE10', 'D2'],
+    ['NSIC', 'D2'],
+    ['PSAC', 'D2'],
+    ['RMAC', 'D2'],
+    ['SAC', 'D2'],
+    ['SIAC', 'D2']
   ]);
 
   return divisionByConference.get(normalized) || null;
