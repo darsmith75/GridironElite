@@ -31,6 +31,7 @@ function inferDivisionFromConference(conference) {
     ['Missouri Valley', 'FCS'],
     ['Big Sky', 'FCS'],
     ['CIAA', 'D2'],
+    ['CC', 'D2'],
     ['GLIAC', 'D2'],
     ['GLVC', 'D2'],
     ['GMAC', 'D2'],
