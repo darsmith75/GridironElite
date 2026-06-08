@@ -186,6 +186,8 @@ function inferDivisionFromConference(conference) {
     ['CC', 'D2'],
     ['GLIAC', 'D2'],
     ['GLVC', 'D2'],
+    ['GAC', 'D2'],
+    ['GSC', 'D2'],
     ['GMAC', 'D2'],
     ['LSC', 'D2'],
     ['MIAA', 'D2'],
