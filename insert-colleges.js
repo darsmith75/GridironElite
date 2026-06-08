@@ -35,7 +35,6 @@ function inferDivisionFromConference(conference) {
     ['GLIAC', 'D2'],
     ['GLVC', 'D2'],
     ['GMAC', 'D2'],
-    ['Great Northwest', 'D2'],
     ['LSC', 'D2'],
     ['MEC', 'D2'],
     ['NE10', 'D2'],
