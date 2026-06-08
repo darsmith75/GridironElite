@@ -192,6 +192,7 @@ function inferDivisionFromConference(conference) {
     ['MEC', 'D2'],
     ['NE10', 'D2'],
     ['NSIC', 'D2'],
+    ['Independent DII', 'D2'],
     ['PSAC', 'D2'],
     ['RMAC', 'D2'],
     ['SAC', 'D2'],
