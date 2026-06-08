@@ -10,7 +10,12 @@ function normalizeDivisionTag(division) {
   return '';
 }
 
-function normalizeCollegeLogoPath(logoPath, division) {
+function normalizeConferenceTag(conference) {
+  const value = String(conference || '').trim();
+  return value.replace(/[\\/]+/g, '').trim();
+}
+
+function normalizeCollegeLogoPath(logoPath, division, conference) {
   const raw = String(logoPath || '').trim();
   if (!raw) return null;
 
@@ -29,6 +34,14 @@ function normalizeCollegeLogoPath(logoPath, division) {
   const divisionTag = normalizeDivisionTag(division);
   if (!divisionTag) return normalized;
 
+  const conferenceTag = normalizeConferenceTag(conference);
+  if (divisionTag === 'D2' && conferenceTag) {
+    const expectedPrefix = `images/collegelogos/${divisionTag}/${conferenceTag}/`;
+    if (!normalized.startsWith(expectedPrefix)) {
+      return `${expectedPrefix}${filename}`;
+    }
+  }
+
   return `images/collegelogos/${divisionTag}/${filename}`;
 }
 
@@ -36,7 +49,7 @@ function normalizeCollegeLogoRow(row) {
   if (!row || typeof row !== 'object') return row;
   return {
     ...row,
-    logo: normalizeCollegeLogoPath(row.logo, row.division)
+    logo: normalizeCollegeLogoPath(row.logo, row.division, row.conference)
   };
 }
 
@@ -47,6 +60,7 @@ function normalizeCollegeLogoRows(rows) {
 
 module.exports = {
   normalizeDivisionTag,
+  normalizeConferenceTag,
   normalizeCollegeLogoPath,
   normalizeCollegeLogoRow,
   normalizeCollegeLogoRows

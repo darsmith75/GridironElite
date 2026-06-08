@@ -104,7 +104,7 @@ async function enrichPlayerProfiles(profiles) {
     const school = {
       id: row.id,
       name: row.name,
-      logo: normalizeCollegeLogoPath(row.logo, row.division),
+      logo: normalizeCollegeLogoPath(row.logo, row.division, row.conference),
       division: row.division,
       conference: row.conference,
       team: row.team,

@@ -6,7 +6,7 @@ const db = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { getPendingB2DeleteQueueSnapshot, processPendingB2DeleteQueue } = require('../utils/b2-queue');
 const { collegeLogoUpload } = require('../utils/upload');
-const { normalizeDivisionTag, normalizeCollegeLogoPath, normalizeCollegeLogoRows } = require('../utils/college-logo-path');
+const { normalizeDivisionTag, normalizeConferenceTag, normalizeCollegeLogoPath, normalizeCollegeLogoRows } = require('../utils/college-logo-path');
 
 const router = express.Router();
 const ADMIN_STATS_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -131,7 +131,7 @@ async function getAdminStats(forceRefresh = false) {
   }
 }
 
-async function storeUploadedCollegeLogo(file, division) {
+async function storeUploadedCollegeLogo(file, division, conference) {
   if (!file) return null;
 
   const divisionTag = normalizeDivisionTag(division);
@@ -139,7 +139,11 @@ async function storeUploadedCollegeLogo(file, division) {
     return path.join('images', 'collegelogos', file.filename).replace(/\\/g, '/');
   }
 
-  const targetDir = path.join('images', 'collegelogos', divisionTag);
+  let targetDir = path.join('images', 'collegelogos', divisionTag);
+  const conferenceTag = normalizeConferenceTag(conference);
+  if (divisionTag === 'D2' && conferenceTag) {
+    targetDir = path.join(targetDir, conferenceTag);
+  }
   const targetPath = path.join(targetDir, file.filename);
 
   await fsPromises.mkdir(targetDir, { recursive: true });
@@ -270,8 +274,8 @@ router.post('/admin/colleges', requireAdmin, collegeLogoUpload.single('logo'), a
     const conference = (req.body.conference || '').trim() || null;
     const division = divisionInput || inferDivisionFromConference(conference);
     const team = (req.body.team || '').trim() || null;
-    const uploadedLogo = await storeUploadedCollegeLogo(req.file, division);
-    const logo = normalizeCollegeLogoPath(uploadedLogo, division);
+    const uploadedLogo = await storeUploadedCollegeLogo(req.file, division, conference);
+    const logo = normalizeCollegeLogoPath(uploadedLogo, division, conference);
 
     const result = await db.prepare(
       'INSERT INTO colleges (name, website_url, division, conference, team, logo) VALUES (?, ?, ?, ?, ?, ?)'
@@ -313,10 +317,10 @@ router.put('/admin/colleges/:id', requireAdmin, collegeLogoUpload.single('logo')
           if (error?.code !== 'ENOENT') throw error;
         }
       }
-      const uploadedLogo = await storeUploadedCollegeLogo(req.file, division);
-      logo = normalizeCollegeLogoPath(uploadedLogo, division);
+      const uploadedLogo = await storeUploadedCollegeLogo(req.file, division, conference);
+      logo = normalizeCollegeLogoPath(uploadedLogo, division, conference);
     } else {
-      logo = normalizeCollegeLogoPath(logo, division);
+      logo = normalizeCollegeLogoPath(logo, division, conference);
     }
 
     await db.prepare(
