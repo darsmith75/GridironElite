@@ -6,7 +6,7 @@
   <title>Player Card</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="/vendor/html2canvas.min.js"></script>
   <style>
     body {
       background: #000000;
@@ -797,6 +797,7 @@
       if (!html2canvasLoadPromise) {
         html2canvasLoadPromise = (async () => {
           const fallbackUrls = [
+            '/vendor/html2canvas.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
             'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
             'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
