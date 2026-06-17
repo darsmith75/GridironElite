@@ -159,8 +159,8 @@
     }
     .metric-title-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      align-items: flex-start;
+      justify-content: flex-start;
       gap: 10px;
       margin-bottom: 10px;
       flex-wrap: wrap;
@@ -170,14 +170,50 @@
       color: #1e3c72;
       font-size: 22px;
     }
-    .metric-value-pill {
-      background: #e8edf5;
-      border: 1px solid #c7d0da;
-      border-radius: 999px;
-      color: #1e3c72;
-      font-size: 14px;
+    .metric-performance-card {
+      margin-top: 12px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: 1px solid #d1def1;
+      background: linear-gradient(135deg, #f3f7ff 0%, #edf4ff 100%);
+      padding: 14px 16px;
+      box-shadow: 0 4px 14px rgba(30, 60, 114, 0.1);
+    }
+    .metric-performance-label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #47618a;
+    }
+    .metric-performance-value {
+      margin: 5px 0 0;
+      font-size: 34px;
+      line-height: 1.05;
+      font-weight: 900;
+      color: #13346a;
+      letter-spacing: 0.01em;
+    }
+    .metric-performance-sub {
+      margin: 7px 0 0;
+      font-size: 12px;
       font-weight: 700;
-      padding: 6px 12px;
+      color: #2e4c79;
+    }
+    .metric-performance-card.no-value {
+      border-color: #d5deea;
+      background: #f8fbff;
+      box-shadow: none;
+    }
+    .metric-performance-card.no-value .metric-performance-value {
+      color: #5f7494;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .metric-performance-card.no-value .metric-performance-sub {
+      color: #6f819d;
+      font-weight: 600;
     }
     .metric-help-grid {
       display: grid;
@@ -327,7 +363,11 @@
         <section class="metrics-panel">
           <div class="metric-title-row">
             <h2 id="metricTitle">Metric</h2>
-            <span class="metric-value-pill" id="metricValue">No value yet</span>
+          </div>
+          <div class="metric-performance-card no-value" id="metricPerformanceCard">
+            <p class="metric-performance-label">Your Performance</p>
+            <p class="metric-performance-value" id="metricValue">No value yet</p>
+            <p class="metric-performance-sub" id="metricPerformanceSub">Add this metric in your profile to track your progress.</p>
           </div>
           <div class="metric-help-grid">
             <article class="metric-help-card">
@@ -517,6 +557,9 @@
 
       const rawValue = profile ? profile[metric.key] : null;
       let valueText = 'No value yet';
+      const performanceSubEl = document.getElementById('metricPerformanceSub');
+      const performanceCardEl = document.getElementById('metricPerformanceCard');
+      const hasValue = !!rawValue;
       if (rawValue) {
         if (metric.key === 'broad_jump') {
           valueText = formatBroadJumpFeetInches(rawValue) || (String(rawValue) + metric.suffix);
@@ -525,6 +568,14 @@
         }
       }
       document.getElementById('metricValue').textContent = valueText;
+      if (performanceSubEl) {
+        performanceSubEl.textContent = hasValue
+          ? ('Current ' + metric.label)
+          : 'Add this metric in your profile to track your progress.';
+      }
+      if (performanceCardEl) {
+        performanceCardEl.classList.toggle('no-value', !hasValue);
+      }
 
       const videoBox = document.getElementById('metricVideoBox');
       const videoEl = document.getElementById('metricVideo');
