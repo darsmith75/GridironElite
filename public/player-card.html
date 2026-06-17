@@ -1169,7 +1169,6 @@
         exportRoot.style.height = `${EXPORT_CARD_HEIGHT}px`;
         exportRoot.style.overflow = 'hidden';
         exportRoot.style.pointerEvents = 'none';
-        exportRoot.style.opacity = '0';
         exportRoot.style.zIndex = '-1';
 
         const clonedCard = cardElement.cloneNode(true);
@@ -1204,7 +1203,7 @@
                 clonedExportCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
               }
 
-              const clonedImageContainer = clonedDoc.getElementById('playerImageContainer');
+              const clonedImageContainer = clonedDoc.querySelector('#playerCardExportClone #playerImageContainer');
               if (attempt.removePlayerImage && clonedImageContainer) {
                 clonedImageContainer.style.backgroundImage = 'none';
               }
