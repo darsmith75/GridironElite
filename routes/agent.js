@@ -204,6 +204,8 @@ router.get('/agent/players', async (req, res) => {
         pp.single_leg_squat,
         pp.catapult,
         pp.metric_1080,
+        pp.hand_size,
+        pp.wingspan,
         pp.gpa,
         pp.achievement,
         pp.profile_picture,

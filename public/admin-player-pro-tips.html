@@ -302,6 +302,9 @@
           return isNumeric ? `${numeric}s` : String(rawValue);
         case 'vertical_jump':
           return isNumeric ? `${numeric} in` : String(rawValue);
+        case 'hand_size':
+        case 'wingspan':
+          return isNumeric ? `${numeric} in` : String(rawValue);
         case 'bench_press':
         case 'squat':
         case 'power_clean':

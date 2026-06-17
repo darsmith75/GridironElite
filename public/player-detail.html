@@ -107,7 +107,9 @@
       { key: 'power_clean', label: 'Power Clean', suffix: ' lbs' },
       { key: 'single_leg_squat', label: 'Single Leg Squat', suffix: ' lbs' },
       { key: 'catapult', label: 'Catapult', suffix: '' },
-      { key: 'metric_1080', label: '1080', suffix: '' }
+      { key: 'metric_1080', label: '1080', suffix: '' },
+      { key: 'hand_size', label: 'Hand Size', suffix: '"' },
+      { key: 'wingspan', label: 'Wingspan', suffix: '"' }
     ];
     const COMPARE_METRIC_ORDER = [
       'height_inches',
@@ -1336,7 +1338,7 @@
       const hasMetrics = player.forty_yard_dash || player.vertical_jump || player.bench_press || 
                         player.squat || player.shuttle_5_10_5 || player.l_drill || 
                         player.broad_jump || player.power_clean || player.single_leg_squat ||
-                        player.catapult || player.metric_1080;
+                        player.catapult || player.metric_1080 || player.hand_size || player.wingspan;
       
       if (hasMetrics) {
         excel += addSectionHeader('ATHLETIC METRICS');
@@ -1351,6 +1353,8 @@
         excel += addDataRow('Single Leg Squat', player.single_leg_squat ? `${player.single_leg_squat} lbs` : null);
         excel += addDataRow('Catapult', player.catapult || null);
         excel += addDataRow('1080', player.metric_1080 || null);
+        excel += addDataRow('Hand Size', player.hand_size ? `${player.hand_size} inches` : null);
+        excel += addDataRow('Wingspan', player.wingspan ? `${player.wingspan} inches` : null);
         excel += addEmptyRow();
       }
       

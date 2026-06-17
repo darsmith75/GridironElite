@@ -165,6 +165,10 @@
               <input type="number" step="0.01" name="catapult" placeholder="Catapult">
               <label class="metric-label-with-tip">1080: <span class="metric-tip-icon" data-tip-key="metric_1080" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" step="0.01" name="metric1080" placeholder="1080">
+              <label class="metric-label-with-tip">Hand Size (inches): <span class="metric-tip-icon" data-tip-key="hand_size" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
+              <input type="number" step="0.1" name="handSize" placeholder="Hand Size (inches)">
+              <label class="metric-label-with-tip">Wingspan (inches): <span class="metric-tip-icon" data-tip-key="wingspan" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
+              <input type="number" step="0.1" name="wingspan" placeholder="Wingspan (inches)">
             </div>
 
             <div class="form-section">
@@ -273,6 +277,22 @@
                   <input type="text" name="metricVerifiedBy1080" placeholder="Verified by (name/organization)">
                   <label class="metric-proof-date-label">Date Recorded:</label>
                   <input type="date" name="metricRecordedAt1080" class="metric-proof-date">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Hand Size Video:</label>
+                  <input type="file" name="metricVideoHandSize" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedHandSize"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByHandSize" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtHandSize" class="metric-proof-date">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Wingspan Video:</label>
+                  <input type="file" name="metricVideoWingspan" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedWingspan"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByWingspan" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtWingspan" class="metric-proof-date">
                 </div>
               </div>
             </div>
@@ -782,7 +802,9 @@
       { key: 'power_clean', fieldName: 'powerClean', label: 'Power Clean', suffix: ' lbs', videoField: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean', recordedAtField: 'metricRecordedAtPowerClean' },
       { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' },
       { key: 'catapult', fieldName: 'catapult', label: 'Catapult', suffix: '', videoField: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
-      { key: 'metric_1080', fieldName: 'metric1080', label: '1080', suffix: '', videoField: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' }
+      { key: 'metric_1080', fieldName: 'metric1080', label: '1080', suffix: '', videoField: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' },
+      { key: 'hand_size', fieldName: 'handSize', label: 'Hand Size', suffix: '"', videoField: 'metricVideoHandSize', verifiedField: 'metricVerifiedHandSize', verifiedByField: 'metricVerifiedByHandSize', recordedAtField: 'metricRecordedAtHandSize' },
+      { key: 'wingspan', fieldName: 'wingspan', label: 'Wingspan', suffix: '"', videoField: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' }
     ];
 
     initGraduationYearPicker();
@@ -2329,6 +2351,8 @@
         document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
         document.querySelector('[name="catapult"]').value = profile.catapult || '';
         document.querySelector('[name="metric1080"]').value = profile.metric_1080 || '';
+        document.querySelector('[name="handSize"]').value = profile.hand_size || '';
+        document.querySelector('[name="wingspan"]').value = profile.wingspan || '';
         document.querySelector('[name="gpa"]').value = profile.gpa || '';
         document.querySelector('[name="birthDate"]').value = profile.birth_date ? profile.birth_date.substring(0, 10) : '';
         document.querySelector('[name="achievement"]').value = profile.achievement || '';

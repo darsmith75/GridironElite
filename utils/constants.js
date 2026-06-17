@@ -9,7 +9,9 @@ const METRIC_VIDEO_CONFIG = [
   { key: 'power_clean', fieldName: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean', recordedAtField: 'metricRecordedAtPowerClean' },
   { key: 'single_leg_squat', fieldName: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' },
   { key: 'catapult', fieldName: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
-  { key: 'metric_1080', fieldName: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' }
+  { key: 'metric_1080', fieldName: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' },
+  { key: 'hand_size', fieldName: 'metricVideoHandSize', verifiedField: 'metricVerifiedHandSize', verifiedByField: 'metricVerifiedByHandSize', recordedAtField: 'metricRecordedAtHandSize' },
+  { key: 'wingspan', fieldName: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' }
 ];
 
 const METRIC_TIP_CONFIG = [
@@ -23,7 +25,9 @@ const METRIC_TIP_CONFIG = [
   { key: 'power_clean', label: 'Power Clean' },
   { key: 'single_leg_squat', label: 'Single Leg Squat' },
   { key: 'catapult', label: 'Catapult' },
-  { key: 'metric_1080', label: '1080' }
+  { key: 'metric_1080', label: '1080' },
+  { key: 'hand_size', label: 'Hand Size' },
+  { key: 'wingspan', label: 'Wingspan' }
 ];
 const METRIC_TIP_KEYS = new Set(METRIC_TIP_CONFIG.map(item => item.key));
 

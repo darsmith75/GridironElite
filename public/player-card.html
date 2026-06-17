@@ -899,7 +899,9 @@
         { label: 'Power Clean', value: player.power_clean ? `${player.power_clean} lbs` : '—' },
         { label: 'Single Leg Squat', value: player.single_leg_squat ? `${player.single_leg_squat} lbs` : '—' },
         { label: 'Catapult', value: player.catapult || '—' },
-        { label: '1080', value: player.metric_1080 || '—' }
+        { label: '1080', value: player.metric_1080 || '—' },
+        { label: 'Hand Size', value: player.hand_size ? `${player.hand_size}"` : '—' },
+        { label: 'Wingspan', value: player.wingspan ? `${player.wingspan}"` : '—' }
       ];
       let metricsHTML = '';
       measurableFields.forEach(f => {
