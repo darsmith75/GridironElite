@@ -96,7 +96,6 @@
     let reportCardPreviewEl = null;
     let benchmarkDataCache = null;
     let benchmarkDataPromise = null;
-    let aiRatingCollapsed = false;
     const DETAIL_METRICS = [
       { key: 'forty_yard_dash', label: '40-Yard Dash', suffix: 's' },
       { key: 'vertical_jump', label: 'Vertical Jump', suffix: '"' },
@@ -721,40 +720,18 @@
         const overallLabel = getRatingLabel(data.overallScore);
         const categoriesHtml = (data.categories || []).map(c => buildRatingMeter(c.name, c.score, c.description)).join('');
         return `
-          <div class="rating-summary" style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
-            <div style="text-align:center; min-width:90px;">
+          <div class="rating-layout">
+            <div class="rating-summary" style="text-align:center; min-width:90px;">
               <div style="width:88px; height:88px; border-radius:50%; background:${overallColor}; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 6px;">
                 <span style="font-size:28px; font-weight:800; color:#fff; line-height:1;">${data.overallScore}</span>
                 <span style="font-size:9px; font-weight:600; color:rgba(255,255,255,0.85); letter-spacing:0.5px; text-transform:uppercase;">Overall</span>
               </div>
               <span style="font-size:12px; font-weight:600; color:${overallColor};">${overallLabel}</span>
             </div>
-          </div>
-          <div class="rating-breakdown" style="gap:20px; flex-wrap:wrap; align-items:flex-start;">
-            <div style="flex:1; min-width:220px;">${categoriesHtml}</div>
+            <div class="rating-breakdown" style="min-width:220px;">${categoriesHtml}</div>
           </div>
           <p class="rating-note" style="font-size:11px; color:#b0b8c5;">AI-generated estimate based on reported metrics. Not an official recruiting evaluation.</p>`;
       }
-
-      function updateAiRatingCollapseUi() {
-          const content = document.getElementById('aiRatingContent');
-          const btn = document.getElementById('aiRatingCollapseBtn');
-          const section = document.getElementById('ratingSection');
-          if (!content) return;
-          content.classList.toggle('rating-section-collapsed', aiRatingCollapsed);
-          if (btn) {
-            btn.textContent = aiRatingCollapsed ? 'Expand' : 'Collapse';
-            btn.setAttribute('aria-expanded', String(!aiRatingCollapsed));
-          }
-          if (section) {
-            section.setAttribute('data-collapsed', aiRatingCollapsed ? 'true' : 'false');
-          }
-        }
-
-        function toggleAiRatingSection() {
-          aiRatingCollapsed = !aiRatingCollapsed;
-          updateAiRatingCollapseUi();
-        }
 
       async function loadPlayerRating(playerUserId) {
         try {
@@ -763,7 +740,6 @@
             const data = await res.json();
             document.getElementById('aiRatingContent').innerHTML = renderRatingData(data);
             document.getElementById('generateRatingBtn').textContent = 'Refresh Rating';
-            updateAiRatingCollapseUi();
           }
         } catch (e) {
           // No rating yet — keep default message
@@ -788,7 +764,6 @@
           }
           content.innerHTML = renderRatingData(data);
           btn.textContent = 'Refresh Rating';
-          updateAiRatingCollapseUi();
         } catch (e) {
           content.innerHTML = '<p style="color:#e74c3c; font-size:13px; margin:0;">An error occurred. Please try again.</p>';
           btn.textContent = 'Try Again';
@@ -981,7 +956,6 @@
           <div id="ratingSection" class="profile-section">
             <div class="rating-section-header">
               <h2 class="section-title-small" style="margin-bottom:0;">PLAYER RATING</h2>
-              <button id="aiRatingCollapseBtn" type="button" class="rating-section-toggle-btn" aria-expanded="true" onclick="toggleAiRatingSection()">Collapse</button>
             </div>
             <div class="rating-tab-content" role="tabpanel">
               <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>

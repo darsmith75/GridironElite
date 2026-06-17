@@ -649,7 +649,6 @@
     let currentLightboxEl = null;
     let metricTipsMap = {};
     let metricTipTooltipEl = null;
-    let myRatingCollapsed = false;
     const metricUploadInProgress = new Set();
     const pendingMetricUploadByKey = new Map();
     let metricUploadQueueRunning = false;
@@ -1583,7 +1582,6 @@
         <div class="profile-section" id="myRatingsSection">
           <div class="rating-section-header">
             <h2 class="section-title-small">MY RATINGS</h2>
-            <button id="myRatingCollapseBtn" type="button" class="rating-section-toggle-btn" aria-expanded="true" onclick="toggleMyRatingSection()">Collapse</button>
           </div>
           <div class="rating-tab-content" role="tabpanel">
             <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
@@ -1807,38 +1805,16 @@
       const label = myRatingLabel(data.overallScore);
       const cats = (data.categories || []).map(c => buildMyRatingMeter(c.name, c.score, c.description)).join('');
       return `
-        <div class="rating-summary" style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
-          <div style="text-align:center;min-width:90px;">
+        <div class="rating-layout">
+          <div class="rating-summary" style="text-align:center;min-width:90px;">
             <div style="width:88px;height:88px;border-radius:50%;background:${color};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 6px;">
               <span style="font-size:28px;font-weight:800;color:#fff;line-height:1;">${data.overallScore}</span>
               <span style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.5px;text-transform:uppercase;">Overall</span>
             </div>
             <span style="font-size:12px;font-weight:600;color:${color};">${label}</span>
           </div>
-        </div>
-        <div class="rating-breakdown" style="gap:20px;flex-wrap:wrap;align-items:flex-start;">
-          <div style="flex:1;min-width:220px;">${cats}</div>
+          <div class="rating-breakdown" style="min-width:220px;">${cats}</div>
         </div>`;
-    }
-
-    function updateMyRatingCollapseUi() {
-      const content = document.getElementById('myAiRatingContent');
-      const btn = document.getElementById('myRatingCollapseBtn');
-      const section = document.getElementById('myRatingsSection');
-      if (!content) return;
-      content.classList.toggle('rating-section-collapsed', myRatingCollapsed);
-      if (btn) {
-        btn.textContent = myRatingCollapsed ? 'Expand' : 'Collapse';
-        btn.setAttribute('aria-expanded', String(!myRatingCollapsed));
-      }
-      if (section) {
-        section.setAttribute('data-collapsed', myRatingCollapsed ? 'true' : 'false');
-      }
-    }
-
-    function toggleMyRatingSection() {
-      myRatingCollapsed = !myRatingCollapsed;
-      updateMyRatingCollapseUi();
     }
 
     async function loadMyRatings() {
@@ -1852,7 +1828,6 @@
         if (res.ok) {
           const data = await res.json();
           if (aiEl) aiEl.innerHTML = renderMyRatingData(data) + '<p class="rating-note" style="margin:12px 0 0;font-size:11px;color:#b0b8c5;">AI-generated estimate based on your reported metrics.</p>';
-          updateMyRatingCollapseUi();
         } else {
           if (aiEl) aiEl.innerHTML = '<p style="color:#7a8a9e;font-size:13px;margin:0;">No AI rating generated yet. A coach or admin can generate one from your player detail page.</p>';
         }
