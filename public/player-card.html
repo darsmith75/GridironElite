@@ -887,24 +887,27 @@
       document.getElementById('playerWeight').textContent = player.weight ? `${player.weight} LBS` : '—';
       document.getElementById('playerSchool').textContent = player.high_school || '—';
       
-      // Verified Measurables - always show all fields
+      // Verified Measurables - only show rows that have data
+      const hasMetricValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
+
       const measurableFields = [
-        { label: '40-Yard Dash', value: player.forty_yard_dash || '—' },
-        { label: '5-10-5 Shuttle', value: player.shuttle_5_10_5 || '—' },
-        { label: 'L-Drill', value: player.l_drill || '—' },
-        { label: 'Broad Jump', value: formatInchesAsFeetAndInches(player.broad_jump) || '—' },
-        { label: 'Vertical', value: player.vertical_jump ? `${player.vertical_jump}"` : '—' },
-        { label: 'Bench Press', value: player.bench_press ? `${player.bench_press} lbs` : '—' },
-        { label: 'Squat', value: player.squat ? `${player.squat} lbs` : '—' },
-        { label: 'Power Clean', value: player.power_clean ? `${player.power_clean} lbs` : '—' },
-        { label: 'Single Leg Squat', value: player.single_leg_squat ? `${player.single_leg_squat} lbs` : '—' },
-        { label: 'Catapult', value: player.catapult || '—' },
-        { label: '1080', value: player.metric_1080 || '—' },
-        { label: 'Hand Size', value: player.hand_size ? `${player.hand_size}"` : '—' },
-        { label: 'Wingspan', value: player.wingspan ? `${player.wingspan}"` : '—' }
-      ];
+        { label: '40-Yard Dash', rawValue: player.forty_yard_dash, value: String(player.forty_yard_dash || '') },
+        { label: '5-10-5 Shuttle', rawValue: player.shuttle_5_10_5, value: String(player.shuttle_5_10_5 || '') },
+        { label: 'L-Drill', rawValue: player.l_drill, value: String(player.l_drill || '') },
+        { label: 'Broad Jump', rawValue: player.broad_jump, value: formatInchesAsFeetAndInches(player.broad_jump) || '' },
+        { label: 'Vertical', rawValue: player.vertical_jump, value: hasMetricValue(player.vertical_jump) ? `${player.vertical_jump}"` : '' },
+        { label: 'Bench Press', rawValue: player.bench_press, value: hasMetricValue(player.bench_press) ? `${player.bench_press} lbs` : '' },
+        { label: 'Squat', rawValue: player.squat, value: hasMetricValue(player.squat) ? `${player.squat} lbs` : '' },
+        { label: 'Power Clean', rawValue: player.power_clean, value: hasMetricValue(player.power_clean) ? `${player.power_clean} lbs` : '' },
+        { label: 'Single Leg Squat', rawValue: player.single_leg_squat, value: hasMetricValue(player.single_leg_squat) ? `${player.single_leg_squat} lbs` : '' },
+        { label: 'Catapult', rawValue: player.catapult, value: String(player.catapult || '') },
+        { label: '1080', rawValue: player.metric_1080, value: String(player.metric_1080 || '') },
+        { label: 'Hand Size', rawValue: player.hand_size, value: hasMetricValue(player.hand_size) ? `${player.hand_size}"` : '' },
+        { label: 'Wingspan', rawValue: player.wingspan, value: hasMetricValue(player.wingspan) ? `${player.wingspan}"` : '' }
+      ].filter((field) => hasMetricValue(field.rawValue));
+
       let metricsHTML = '';
-      measurableFields.forEach(f => {
+      measurableFields.forEach((f) => {
         metricsHTML += `<div class="info-row"><span class="info-label">${f.label}</span><span class="info-value">${f.value}</span></div>`;
       });
       document.getElementById('measurables').innerHTML = metricsHTML;
