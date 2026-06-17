@@ -1061,12 +1061,33 @@
       }
     }
     
+    function dataUrlToBlob(dataUrl) {
+      const parts = String(dataUrl || '').split(',');
+      if (parts.length < 2) throw new Error('Invalid data URL');
+      const mimeMatch = parts[0].match(/data:(.*?);base64/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+      const binary = atob(parts[1]);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new Blob([bytes], { type: mimeType });
+    }
+
     function canvasToBlob(canvas) {
       return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
           if (blob) {
             resolve(blob);
-          } else {
+            return;
+          }
+
+          // Some browsers can return null from toBlob for large canvases; fall back to data URL conversion.
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve(dataUrlToBlob(dataUrl));
+          } catch (fallbackError) {
             reject(new Error('Unable to create image blob from canvas'));
           }
         }, 'image/png');
@@ -1204,7 +1225,8 @@
         if (error && String(error.message || '').includes('html2canvas is unavailable')) {
           alert('Export is unavailable because the image rendering library did not load. Please refresh and try again.');
         } else {
-          alert('Failed to export image. Please try again.');
+          const reason = error && error.message ? `\n\nDetails: ${error.message}` : '';
+          alert(`Failed to export image. Please try again.${reason}`);
         }
         button.disabled = false;
         button.textContent = originalText;
@@ -1237,7 +1259,8 @@
         if (error && String(error.message || '').includes('html2canvas is unavailable')) {
           alert('Preview is unavailable because the image rendering library did not load. Please refresh and try again.');
         } else {
-          alert('Failed to generate preview. Please try again.');
+          const reason = error && error.message ? `\n\nDetails: ${error.message}` : '';
+          alert(`Failed to generate preview. Please try again.${reason}`);
         }
         button.disabled = false;
         button.textContent = originalText;
