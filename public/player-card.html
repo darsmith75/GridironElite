@@ -778,6 +778,53 @@
   <script>
     // Check authentication - allow both agents and players
     let previewObjectUrl = null;
+    let html2canvasLoadPromise = null;
+
+    function loadExternalScript(url) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load script: ' + url));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function ensureHtml2CanvasLoaded() {
+      if (typeof html2canvas === 'function') return;
+
+      if (!html2canvasLoadPromise) {
+        html2canvasLoadPromise = (async () => {
+          const fallbackUrls = [
+            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+            'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+            'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
+          ];
+
+          let lastError = null;
+          for (const url of fallbackUrls) {
+            try {
+              await loadExternalScript(url);
+              if (typeof html2canvas === 'function') return;
+            } catch (error) {
+              lastError = error;
+            }
+          }
+
+          throw lastError || new Error('html2canvas load failed');
+        })().finally(() => {
+          if (typeof html2canvas !== 'function') {
+            html2canvasLoadPromise = null;
+          }
+        });
+      }
+
+      await html2canvasLoadPromise;
+      if (typeof html2canvas !== 'function') {
+        throw new Error('html2canvas is unavailable');
+      }
+    }
 
     fetch('/api/user')
       .then(res => {
@@ -1078,10 +1125,7 @@
 
     async function renderPlayerCardCanvas() {
       const cardElement = document.getElementById('playerCard');
-
-      if (typeof html2canvas !== 'function') {
-        throw new Error('html2canvas is unavailable');
-      }
+      await ensureHtml2CanvasLoaded();
 
       if (document.fonts && document.fonts.ready) {
         try { await document.fonts.ready; } catch (_) {}
