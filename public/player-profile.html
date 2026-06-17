@@ -1581,19 +1581,8 @@
       html += `
         <div class="profile-section" id="myRatingsSection">
           <h2 class="section-title-small">MY RATINGS</h2>
-          <div class="rating-tabs" role="tablist" id="myRatingTabList">
-            <button class="rating-tab-btn active" role="tab" aria-selected="true" data-tab="ai" onclick="switchMyRatingTab('ai', this)">AI Rating</button>
-            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="coach" onclick="switchMyRatingTab('coach', this)">Coach Rating</button>
-            <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="ge" onclick="switchMyRatingTab('ge', this)">Gridiron Elite</button>
-          </div>
-          <div id="myRatingTab-ai" class="rating-tab-content" role="tabpanel">
+          <div class="rating-tab-content" role="tabpanel">
             <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
-          </div>
-          <div id="myRatingTab-coach" class="rating-tab-content" role="tabpanel" style="display:none;">
-            <div id="myCoachRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
-          </div>
-          <div id="myRatingTab-ge" class="rating-tab-content" role="tabpanel" style="display:none;">
-            <div id="myGeRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
           </div>
         </div>
       `;
@@ -1826,37 +1815,6 @@
         </div>`;
     }
 
-    function renderMyRatingDisplay(containerId, data, sourceLabel) {
-      const el = document.getElementById(containerId);
-      if (!el) return;
-      if (!data) {
-        el.innerHTML = `<p style="color:#7a8a9e;font-size:13px;margin:0;">No ${sourceLabel} rating submitted yet.</p>`;
-        return;
-      }
-      const categories = Array.isArray(data.scores_json) ? data.scores_json : (data.categories || []);
-      const dateStr = data.updated_at ? new Date(data.updated_at).toLocaleDateString() : '';
-      const overallScore = data.overall_score !== undefined ? data.overall_score : data.overallScore;
-      el.innerHTML = `
-        <div style="margin-bottom:14px;">
-          ${renderMyRatingData({ overallScore, categories })}
-          ${data.rater_name ? `<p style="margin:10px 0 0;font-size:11px;color:#b0b8c5;">Rated by <strong>${data.rater_name}</strong>${dateStr ? ' &bull; ' + dateStr : ''}</p>` : ''}
-        </div>`;
-    }
-
-    function switchMyRatingTab(tab, btn) {
-      const section = document.getElementById('myRatingsSection');
-      if (!section) return;
-      section.querySelectorAll('.rating-tab-btn').forEach(b => {
-        b.classList.remove('active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      section.querySelectorAll('.rating-tab-content').forEach(c => c.style.display = 'none');
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
-      const panel = document.getElementById('myRatingTab-' + tab);
-      if (panel) panel.style.display = '';
-    }
-
     async function loadMyRatings() {
       if (!playerProfileData || !playerProfileData.id) return;
       const pid = playerProfileData.id;
@@ -1875,16 +1833,6 @@
         const aiEl = document.getElementById('myAiRatingContent');
         if (aiEl) aiEl.innerHTML = '<p style="color:#7a8a9e;font-size:13px;margin:0;">No AI rating generated yet.</p>';
       }
-
-      // Coach + GE ratings
-      try {
-        const res = await fetch(`/api/agent/player/${pid}/ratings`);
-        if (res.ok) {
-          const { coachRating, geRating } = await res.json();
-          renderMyRatingDisplay('myCoachRatingContent', coachRating, 'coach');
-          renderMyRatingDisplay('myGeRatingContent', geRating, 'Gridiron Elite');
-        }
-      } catch (e) { /* silent */ }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

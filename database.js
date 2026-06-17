@@ -488,36 +488,6 @@ const createTablesSQL = `
     CREATE INDEX IF NOT EXISTS idx_coach_player_comments_player ON coach_player_comments(player_id);
   CREATE INDEX IF NOT EXISTS idx_ai_player_ratings_player ON ai_player_ratings(player_user_id);
 
-  CREATE TABLE IF NOT EXISTS coach_player_ratings (
-    id SERIAL PRIMARY KEY,
-    coach_id INTEGER NOT NULL,
-    player_id INTEGER NOT NULL,
-    overall_score INTEGER NOT NULL CHECK(overall_score >= 0 AND overall_score <= 100),
-    scores_json JSONB NOT NULL,
-    rater_name VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(coach_id, player_id),
-    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS ge_player_ratings (
-    id SERIAL PRIMARY KEY,
-    agent_id INTEGER NOT NULL,
-    player_user_id INTEGER NOT NULL UNIQUE,
-    overall_score INTEGER NOT NULL CHECK(overall_score >= 0 AND overall_score <= 100),
-    scores_json JSONB NOT NULL,
-    rater_name VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (player_user_id) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_coach_player_ratings_coach ON coach_player_ratings(coach_id);
-  CREATE INDEX IF NOT EXISTS idx_coach_player_ratings_player ON coach_player_ratings(player_id);
-  CREATE INDEX IF NOT EXISTS idx_ge_player_ratings_player ON ge_player_ratings(player_user_id);
 `;
 
 const alterTablesSQL = `
@@ -558,6 +528,8 @@ const alterTablesSQL = `
   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP;
   ALTER TABLE users ADD COLUMN IF NOT EXISTS login_count INTEGER NOT NULL DEFAULT 0;
   DROP TABLE IF EXISTS messages;
+  DROP TABLE IF EXISTS coach_player_ratings;
+  DROP TABLE IF EXISTS ge_player_ratings;
   ALTER TABLE metric_pro_tips ADD COLUMN IF NOT EXISTS youtube_url TEXT;
   ALTER TABLE colleges ADD COLUMN IF NOT EXISTS division VARCHAR(100);
   DELETE FROM team_invites older

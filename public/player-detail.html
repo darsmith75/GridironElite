@@ -740,14 +740,10 @@
             const data = await res.json();
             document.getElementById('aiRatingContent').innerHTML = renderRatingData(data);
             document.getElementById('generateRatingBtn').textContent = 'Refresh Rating';
-            if (data.categories && data.categories.length > 0) {
-              currentAiCategories = data.categories;
-            }
           }
         } catch (e) {
           // No rating yet — keep default message
         }
-        await loadAllRatings();
       }
 
       async function generateRating() {
@@ -768,281 +764,12 @@
           }
           content.innerHTML = renderRatingData(data);
           btn.textContent = 'Refresh Rating';
-          if (data.categories && data.categories.length > 0) {
-            currentAiCategories = data.categories;
-            // Refresh coach/GE forms with updated categories
-            await loadAllRatings();
-          }
         } catch (e) {
           content.innerHTML = '<p style="color:#e74c3c; font-size:13px; margin:0;">An error occurred. Please try again.</p>';
           btn.textContent = 'Try Again';
         }
         btn.disabled = false;
       }
-
-      // ─── Three-Tab Rating System ─────────────────────────────────────────────
-
-      let currentAiCategories = null; // AI category list cached for form building
-
-      function switchRatingTab(tab, btn) {
-        document.querySelectorAll('.rating-tab-btn').forEach(b => {
-          b.classList.remove('active');
-          b.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.rating-tab-content').forEach(c => c.style.display = 'none');
-        btn.classList.add('active');
-        btn.setAttribute('aria-selected', 'true');
-        document.getElementById('ratingTab-' + tab).style.display = '';
-      }
-
-      function buildRatingInputs(containerId, categories, existingScores) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const existingMap = {};
-        if (existingScores) {
-          existingScores.forEach(s => { existingMap[s.name] = s.score; });
-        }
-        container.innerHTML = categories.map((cat, i) => {
-          const val = existingMap[cat.name] !== undefined ? existingMap[cat.name] : 70;
-          const color = getRatingColor(val);
-          return `
-            <div style="margin-bottom:16px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <label style="font-size:13px; font-weight:600; color:#1e3c72;">${escapeHtml(cat.name)}</label>
-                <span id="rv-${containerId}-${i}" style="font-size:13px; font-weight:700; color:${color};">${val} <span style="font-size:11px; font-weight:400; color:#7a8a9e;">${getRatingLabel(val)}</span></span>
-              </div>
-              <input type="range" min="0" max="100" value="${val}"
-                data-category="${escapeHtml(cat.name)}" data-idx="${i}" data-cid="${escapeHtml(containerId)}"
-                oninput="onRatingSlider(this)"
-                style="width:100%; accent-color:#1e3c72; cursor:pointer; height:6px;">
-            </div>`;
-        }).join('');
-      }
-
-      function onRatingSlider(input) {
-        const val = parseInt(input.value, 10);
-        const idx = input.getAttribute('data-idx');
-        const cid = input.getAttribute('data-cid');
-        const span = document.getElementById(`rv-${cid}-${idx}`);
-        if (span) {
-          span.innerHTML = `${val} <span style="font-size:11px; font-weight:400; color:#7a8a9e;">${getRatingLabel(val)}</span>`;
-          span.style.color = getRatingColor(val);
-        }
-      }
-
-      function collectRatingScores(containerId) {
-        const inputs = document.querySelectorAll(`#${containerId} input[type=range]`);
-        const scoresJson = [];
-        let total = 0;
-        inputs.forEach(input => {
-          const score = parseInt(input.value, 10);
-          total += score;
-          scoresJson.push({ name: input.getAttribute('data-category'), score });
-        });
-        const overallScore = inputs.length > 0 ? Math.round(total / inputs.length) : 0;
-        return { overallScore, scoresJson };
-      }
-
-      function renderRatingDisplay(containerId, data, sourceLabel) {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        if (!data) {
-          el.innerHTML = `<p style="color:#7a8a9e; font-size:13px; margin:0 0 14px;">No ${sourceLabel} rating submitted yet.</p>`;
-          return;
-        }
-        const categories = Array.isArray(data.scores_json) ? data.scores_json : [];
-        const dateStr = data.updated_at ? new Date(data.updated_at).toLocaleDateString() : '';
-        el.innerHTML = `
-          <div style="margin-bottom:14px;">
-            ${renderRatingData({ overallScore: data.overall_score, categories })}
-            <p style="margin:10px 0 0; font-size:11px; color:#b0b8c5;">
-              Rated by <strong>${escapeHtml(data.rater_name || 'Unknown')}</strong>${dateStr ? ' &bull; ' + dateStr : ''}
-            </p>
-          </div>`;
-      }
-
-      async function loadAllRatings() {
-        if (!currentPlayerData) return;
-        const pid = currentPlayerData.user_id;
-
-        // Load public coach + GE ratings for display
-        try {
-          const res = await fetch(`/api/agent/player/${pid}/ratings`);
-          if (res.ok) {
-            const { coachRating, geRating } = await res.json();
-            renderRatingDisplay('coachRatingDisplay', coachRating, 'coach');
-            renderRatingDisplay('geRatingDisplay', geRating, 'Gridiron Elite');
-          }
-        } catch (e) { /* silent */ }
-
-        const isCoach = currentViewer && currentViewer.role === 'coach';
-        const isAgentOrAdmin = currentViewer && (currentViewer.role === 'agent' || currentViewer.role === 'admin');
-
-        // Coach form setup
-        if (isCoach && currentAiCategories && currentAiCategories.length > 0) {
-          const formEl = document.getElementById('coachRatingForm');
-          if (formEl) {
-            formEl.style.display = '';
-            // Pre-populate with own existing rating
-            try {
-              const res2 = await fetch(`/api/coach/players/${pid}/rating`);
-              if (res2.ok) {
-                const own = await res2.json();
-                if (own) {
-                  buildRatingInputs('coachRatingInputs', currentAiCategories, own.scores_json || []);
-                  document.getElementById('deleteCoachRatingBtn').style.display = '';
-                } else {
-                  buildRatingInputs('coachRatingInputs', currentAiCategories, []);
-                }
-              } else {
-                buildRatingInputs('coachRatingInputs', currentAiCategories, []);
-              }
-            } catch (e) {
-              buildRatingInputs('coachRatingInputs', currentAiCategories, []);
-            }
-          }
-        } else if (isCoach && (!currentAiCategories || currentAiCategories.length === 0)) {
-          const formEl = document.getElementById('coachRatingForm');
-          if (formEl) {
-            formEl.style.display = '';
-            document.getElementById('coachRatingInputs').innerHTML =
-              '<p style="color:#7a8a9e; font-size:13px; margin:0;">Generate the AI Rating first to enable category scoring.</p>';
-          }
-        }
-
-        // GE form setup
-        if (isAgentOrAdmin && currentAiCategories && currentAiCategories.length > 0) {
-          const geFormEl = document.getElementById('geRatingForm');
-          if (geFormEl) {
-            geFormEl.style.display = '';
-            try {
-              const res3 = await fetch(`/api/agent/player/${pid}/ratings`);
-              if (res3.ok) {
-                const { geRating } = await res3.json();
-                if (geRating) {
-                  buildRatingInputs('geRatingInputs', currentAiCategories, geRating.scores_json || []);
-                  document.getElementById('deleteGeRatingBtn').style.display = '';
-                } else {
-                  buildRatingInputs('geRatingInputs', currentAiCategories, []);
-                }
-              } else {
-                buildRatingInputs('geRatingInputs', currentAiCategories, []);
-              }
-            } catch (e) {
-              buildRatingInputs('geRatingInputs', currentAiCategories, []);
-            }
-          }
-        } else if (isAgentOrAdmin && (!currentAiCategories || currentAiCategories.length === 0)) {
-          const geFormEl = document.getElementById('geRatingForm');
-          if (geFormEl) {
-            geFormEl.style.display = '';
-            document.getElementById('geRatingInputs').innerHTML =
-              '<p style="color:#7a8a9e; font-size:13px; margin:0;">Generate the AI Rating first to enable category scoring.</p>';
-          }
-        }
-      }
-
-      async function saveCoachRating() {
-        if (!currentPlayerData) return;
-        const btn = document.getElementById('saveCoachRatingBtn');
-        const status = document.getElementById('coachRatingStatus');
-        btn.disabled = true;
-        btn.textContent = 'Saving...';
-        status.textContent = '';
-        try {
-          const { overallScore, scoresJson } = collectRatingScores('coachRatingInputs');
-          const res = await fetch(`/api/coach/players/${currentPlayerData.user_id}/rating`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ overallScore, scoresJson })
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            status.textContent = data.error || 'Failed to save.';
-            status.style.color = '#e74c3c';
-          } else {
-            status.textContent = 'Rating saved!';
-            status.style.color = '#28a745';
-            renderRatingDisplay('coachRatingDisplay', data, 'coach');
-            document.getElementById('deleteCoachRatingBtn').style.display = '';
-            setTimeout(() => { status.textContent = ''; }, 3000);
-          }
-        } catch (e) {
-          status.textContent = 'An error occurred.';
-          status.style.color = '#e74c3c';
-        }
-        btn.disabled = false;
-        btn.textContent = 'Save Rating';
-      }
-
-      async function deleteCoachRating() {
-        if (!currentPlayerData) return;
-        if (!confirm('Delete your coach rating for this player?')) return;
-        const status = document.getElementById('coachRatingStatus');
-        try {
-          const res = await fetch(`/api/coach/players/${currentPlayerData.user_id}/rating`, { method: 'DELETE' });
-          if (res.ok) {
-            renderRatingDisplay('coachRatingDisplay', null, 'coach');
-            document.getElementById('deleteCoachRatingBtn').style.display = 'none';
-            buildRatingInputs('coachRatingInputs', currentAiCategories || [], []);
-            status.textContent = 'Rating deleted.';
-            status.style.color = '#7a8a9e';
-            setTimeout(() => { status.textContent = ''; }, 3000);
-          }
-        } catch (e) { /* silent */ }
-      }
-
-      async function saveGeRating() {
-        if (!currentPlayerData) return;
-        const btn = document.getElementById('saveGeRatingBtn');
-        const status = document.getElementById('geRatingStatus');
-        btn.disabled = true;
-        btn.textContent = 'Saving...';
-        status.textContent = '';
-        try {
-          const { overallScore, scoresJson } = collectRatingScores('geRatingInputs');
-          const res = await fetch(`/api/agent/player/${currentPlayerData.user_id}/ge-rating`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ overallScore, scoresJson })
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            status.textContent = data.error || 'Failed to save.';
-            status.style.color = '#e74c3c';
-          } else {
-            status.textContent = 'Rating saved!';
-            status.style.color = '#28a745';
-            renderRatingDisplay('geRatingDisplay', data, 'Gridiron Elite');
-            document.getElementById('deleteGeRatingBtn').style.display = '';
-            setTimeout(() => { status.textContent = ''; }, 3000);
-          }
-        } catch (e) {
-          status.textContent = 'An error occurred.';
-          status.style.color = '#e74c3c';
-        }
-        btn.disabled = false;
-        btn.textContent = 'Save Rating';
-      }
-
-      async function deleteGeRating() {
-        if (!currentPlayerData) return;
-        if (!confirm('Delete the Gridiron Elite rating for this player?')) return;
-        const status = document.getElementById('geRatingStatus');
-        try {
-          const res = await fetch(`/api/agent/player/${currentPlayerData.user_id}/ge-rating`, { method: 'DELETE' });
-          if (res.ok) {
-            renderRatingDisplay('geRatingDisplay', null, 'Gridiron Elite');
-            document.getElementById('deleteGeRatingBtn').style.display = 'none';
-            buildRatingInputs('geRatingInputs', currentAiCategories || [], []);
-            status.textContent = 'Rating deleted.';
-            status.style.color = '#7a8a9e';
-            setTimeout(() => { status.textContent = ''; }, 3000);
-          }
-        } catch (e) { /* silent */ }
-      }
-
-      // ─────────────────────────────────────────────────────────────────────────
 
       async function renderCoachComments(player) {
         const section = document.getElementById('coachCommentsSection');
@@ -1225,51 +952,16 @@
             </div>
           ` : ''}
 
-          <!-- Player Rating (3 tabs: AI, Coach, Gridiron Elite) -->
+          <!-- Player Rating (AI only) -->
           <div id="ratingSection" class="profile-section">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
               <h2 class="section-title-small" style="margin-bottom:0;">PLAYER RATING</h2>
             </div>
-            <div class="rating-tabs" role="tablist">
-              <button class="rating-tab-btn active" role="tab" aria-selected="true" data-tab="ai" onclick="switchRatingTab('ai', this)">AI Rating</button>
-              <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="coach" onclick="switchRatingTab('coach', this)">Coach Rating</button>
-              <button class="rating-tab-btn" role="tab" aria-selected="false" data-tab="ge" onclick="switchRatingTab('ge', this)">Gridiron Elite</button>
-            </div>
-
-            <!-- AI Tab -->
-            <div id="ratingTab-ai" class="rating-tab-content" role="tabpanel">
+            <div class="rating-tab-content" role="tabpanel">
               <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
                 <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
               </div>
               <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>
-            </div>
-
-            <!-- Coach Tab -->
-            <div id="ratingTab-coach" class="rating-tab-content" role="tabpanel" style="display:none;">
-              <div id="coachRatingDisplay"></div>
-              <div id="coachRatingForm" style="display:none;">
-                <p style="font-size:12px; color:#7a8a9e; margin:0 0 14px;">Scores are based on the AI rating categories for this player. Adjust each slider to reflect your evaluation.</p>
-                <div id="coachRatingInputs"></div>
-                <div style="margin-top:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                  <button id="saveCoachRatingBtn" onclick="saveCoachRating()" class="rating-save-btn">Save Rating</button>
-                  <button id="deleteCoachRatingBtn" onclick="deleteCoachRating()" class="rating-delete-btn" style="display:none;">Delete Rating</button>
-                  <span id="coachRatingStatus" class="rating-status-msg"></span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Gridiron Elite Tab -->
-            <div id="ratingTab-ge" class="rating-tab-content" role="tabpanel" style="display:none;">
-              <div id="geRatingDisplay"></div>
-              <div id="geRatingForm" style="display:none;">
-                <p style="font-size:12px; color:#7a8a9e; margin:0 0 14px;">Scores are based on the AI rating categories for this player. Adjust each slider to reflect your scouting evaluation.</p>
-                <div id="geRatingInputs"></div>
-                <div style="margin-top:16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                  <button id="saveGeRatingBtn" onclick="saveGeRating()" class="rating-save-btn">Save Rating</button>
-                  <button id="deleteGeRatingBtn" onclick="deleteGeRating()" class="rating-delete-btn" style="display:none;">Delete Rating</button>
-                  <span id="geRatingStatus" class="rating-status-msg"></span>
-                </div>
-              </div>
             </div>
           </div>
 
