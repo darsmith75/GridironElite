@@ -1116,6 +1116,25 @@
       const offsetY = 0;
 
       ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
+
+      const remainingHeight = targetHeight - (offsetY + drawHeight);
+      if (remainingHeight > 0) {
+        // Extend the card's bottom edge so any extra portrait space blends with the existing background.
+        const sampleHeight = Math.min(4, canvas.height);
+        const sourceY = Math.max(0, canvas.height - sampleHeight);
+        ctx.drawImage(
+          canvas,
+          0,
+          sourceY,
+          canvas.width,
+          sampleHeight,
+          offsetX,
+          offsetY + drawHeight,
+          drawWidth,
+          remainingHeight
+        );
+      }
+
       return normalized;
     }
 
