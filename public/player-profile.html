@@ -161,6 +161,10 @@
               <input type="number" name="powerClean" placeholder="Power Clean (lbs)">
               <label class="metric-label-with-tip">Single Leg Squat (lbs): <span class="metric-tip-icon" data-tip-key="single_leg_squat" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
               <input type="number" name="singleLegSquat" placeholder="Single Leg Squat (lbs)">
+              <label class="metric-label-with-tip">Catapult: <span class="metric-tip-icon" data-tip-key="catapult" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
+              <input type="number" step="0.01" name="catapult" placeholder="Catapult">
+              <label class="metric-label-with-tip">1080: <span class="metric-tip-icon" data-tip-key="metric_1080" aria-label="Pro tip" role="button" tabindex="0">i</span></label>
+              <input type="number" step="0.01" name="metric1080" placeholder="1080">
             </div>
 
             <div class="form-section">
@@ -253,6 +257,22 @@
                   <input type="text" name="metricVerifiedBySingleLegSquat" placeholder="Verified by (name/organization)">
                   <label class="metric-proof-date-label">Date Recorded:</label>
                   <input type="date" name="metricRecordedAtSingleLegSquat" class="metric-proof-date">
+                </div>
+                <div class="metric-proof-item">
+                  <label>Catapult Video:</label>
+                  <input type="file" name="metricVideoCatapult" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedCatapult"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByCatapult" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtCatapult" class="metric-proof-date">
+                </div>
+                <div class="metric-proof-item">
+                  <label>1080 Video:</label>
+                  <input type="file" name="metricVideo1080" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerified1080"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedBy1080" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAt1080" class="metric-proof-date">
                 </div>
               </div>
             </div>
@@ -760,7 +780,9 @@
       { key: 'l_drill', fieldName: 'lDrill', label: 'L-Drill', suffix: 's', videoField: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill', recordedAtField: 'metricRecordedAtLDrill' },
       { key: 'broad_jump', fieldName: 'broadJump', label: 'Broad Jump', suffix: '"', videoField: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump', recordedAtField: 'metricRecordedAtBroadJump' },
       { key: 'power_clean', fieldName: 'powerClean', label: 'Power Clean', suffix: ' lbs', videoField: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean', recordedAtField: 'metricRecordedAtPowerClean' },
-      { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' }
+      { key: 'single_leg_squat', fieldName: 'singleLegSquat', label: 'Single Leg Squat', suffix: ' lbs', videoField: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' },
+      { key: 'catapult', fieldName: 'catapult', label: 'Catapult', suffix: '', videoField: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
+      { key: 'metric_1080', fieldName: 'metric1080', label: '1080', suffix: '', videoField: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' }
     ];
 
     initGraduationYearPicker();
@@ -2305,6 +2327,8 @@
         populateBroadJumpFeetInches(profile.broad_jump);
         document.querySelector('[name="powerClean"]').value = profile.power_clean || '';
         document.querySelector('[name="singleLegSquat"]').value = profile.single_leg_squat || '';
+        document.querySelector('[name="catapult"]').value = profile.catapult || '';
+        document.querySelector('[name="metric1080"]').value = profile.metric_1080 || '';
         document.querySelector('[name="gpa"]').value = profile.gpa || '';
         document.querySelector('[name="birthDate"]').value = profile.birth_date ? profile.birth_date.substring(0, 10) : '';
         document.querySelector('[name="achievement"]').value = profile.achievement || '';

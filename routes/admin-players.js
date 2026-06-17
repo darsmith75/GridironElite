@@ -81,7 +81,9 @@ router.get('/admin/player-metric-pro-tips/:playerUserId', requireAdmin, async (r
         pp.l_drill,
         pp.broad_jump,
         pp.power_clean,
-        pp.single_leg_squat
+        pp.single_leg_squat,
+        pp.catapult,
+        pp.metric_1080
       FROM users u
       LEFT JOIN player_profiles pp ON pp.user_id = u.id
       WHERE u.id = ? AND u.role = 'player'

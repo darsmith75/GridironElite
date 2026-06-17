@@ -897,7 +897,9 @@
         { label: 'Bench Press', value: player.bench_press ? `${player.bench_press} lbs` : '—' },
         { label: 'Squat', value: player.squat ? `${player.squat} lbs` : '—' },
         { label: 'Power Clean', value: player.power_clean ? `${player.power_clean} lbs` : '—' },
-        { label: 'Single Leg Squat', value: player.single_leg_squat ? `${player.single_leg_squat} lbs` : '—' }
+        { label: 'Single Leg Squat', value: player.single_leg_squat ? `${player.single_leg_squat} lbs` : '—' },
+        { label: 'Catapult', value: player.catapult || '—' },
+        { label: '1080', value: player.metric_1080 || '—' }
       ];
       let metricsHTML = '';
       measurableFields.forEach(f => {

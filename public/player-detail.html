@@ -105,7 +105,9 @@
       { key: 'l_drill', label: 'L-Drill', suffix: 's' },
       { key: 'broad_jump', label: 'Broad Jump', suffix: '"' },
       { key: 'power_clean', label: 'Power Clean', suffix: ' lbs' },
-      { key: 'single_leg_squat', label: 'Single Leg Squat', suffix: ' lbs' }
+      { key: 'single_leg_squat', label: 'Single Leg Squat', suffix: ' lbs' },
+      { key: 'catapult', label: 'Catapult', suffix: '' },
+      { key: 'metric_1080', label: '1080', suffix: '' }
     ];
     const COMPARE_METRIC_ORDER = [
       'height_inches',
@@ -1333,7 +1335,8 @@
       // Athletic Metrics
       const hasMetrics = player.forty_yard_dash || player.vertical_jump || player.bench_press || 
                         player.squat || player.shuttle_5_10_5 || player.l_drill || 
-                        player.broad_jump || player.power_clean || player.single_leg_squat;
+                        player.broad_jump || player.power_clean || player.single_leg_squat ||
+                        player.catapult || player.metric_1080;
       
       if (hasMetrics) {
         excel += addSectionHeader('ATHLETIC METRICS');
@@ -1346,6 +1349,8 @@
         excel += addDataRow('Broad Jump', player.broad_jump ? formatBroadJumpFeetInches(player.broad_jump) : null);
         excel += addDataRow('Power Clean', player.power_clean ? `${player.power_clean} lbs` : null);
         excel += addDataRow('Single Leg Squat', player.single_leg_squat ? `${player.single_leg_squat} lbs` : null);
+        excel += addDataRow('Catapult', player.catapult || null);
+        excel += addDataRow('1080', player.metric_1080 || null);
         excel += addEmptyRow();
       }
       

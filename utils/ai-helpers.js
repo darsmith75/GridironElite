@@ -102,7 +102,7 @@ async function loadPlayerSummarySourceBundle(playerUserId) {
   const profile = await db.prepare(`
     SELECT user_id, full_name, high_school, graduation_year, position, height, weight,
       forty_yard_dash, bench_press, squat, vertical_jump, shuttle_5_10_5, l_drill,
-      broad_jump, power_clean, single_leg_squat, gpa, achievement, bio
+      broad_jump, power_clean, single_leg_squat, catapult, metric_1080, gpa, achievement, bio
     FROM player_profiles
     WHERE user_id = ?
   `).get(playerUserId);
@@ -132,6 +132,8 @@ async function loadPlayerSummarySourceBundle(playerUserId) {
     broad_jump: profile.broad_jump || null,
     power_clean: profile.power_clean || null,
     single_leg_squat: profile.single_leg_squat || null,
+    catapult: profile.catapult || null,
+    metric_1080: profile.metric_1080 || null,
     gpa: profile.gpa || null,
     achievement: profile.achievement || null,
     bio: profile.bio || null,

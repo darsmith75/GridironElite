@@ -7,7 +7,9 @@ const METRIC_VIDEO_CONFIG = [
   { key: 'l_drill', fieldName: 'metricVideoLDrill', verifiedField: 'metricVerifiedLDrill', verifiedByField: 'metricVerifiedByLDrill', recordedAtField: 'metricRecordedAtLDrill' },
   { key: 'broad_jump', fieldName: 'metricVideoBroadJump', verifiedField: 'metricVerifiedBroadJump', verifiedByField: 'metricVerifiedByBroadJump', recordedAtField: 'metricRecordedAtBroadJump' },
   { key: 'power_clean', fieldName: 'metricVideoPowerClean', verifiedField: 'metricVerifiedPowerClean', verifiedByField: 'metricVerifiedByPowerClean', recordedAtField: 'metricRecordedAtPowerClean' },
-  { key: 'single_leg_squat', fieldName: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' }
+  { key: 'single_leg_squat', fieldName: 'metricVideoSingleLegSquat', verifiedField: 'metricVerifiedSingleLegSquat', verifiedByField: 'metricVerifiedBySingleLegSquat', recordedAtField: 'metricRecordedAtSingleLegSquat' },
+  { key: 'catapult', fieldName: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
+  { key: 'metric_1080', fieldName: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' }
 ];
 
 const METRIC_TIP_CONFIG = [
@@ -19,7 +21,9 @@ const METRIC_TIP_CONFIG = [
   { key: 'l_drill', label: 'L-Drill' },
   { key: 'broad_jump', label: 'Broad Jump' },
   { key: 'power_clean', label: 'Power Clean' },
-  { key: 'single_leg_squat', label: 'Single Leg Squat' }
+  { key: 'single_leg_squat', label: 'Single Leg Squat' },
+  { key: 'catapult', label: 'Catapult' },
+  { key: 'metric_1080', label: '1080' }
 ];
 const METRIC_TIP_KEYS = new Set(METRIC_TIP_CONFIG.map(item => item.key));
 

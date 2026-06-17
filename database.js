@@ -101,6 +101,8 @@ const createTablesSQL = `
     broad_jump DECIMAL(5,2),
     power_clean INTEGER,
     single_leg_squat INTEGER,
+    catapult DECIMAL(8,2),
+    metric_1080 DECIMAL(8,2),
     gpa DECIMAL(4,2),
     achievement TEXT,
     profile_picture TEXT,
@@ -503,6 +505,8 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS college_logo_order JSONB DEFAULT '{}'::jsonb;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS height_inches SMALLINT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS birth_date DATE;
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS catapult DECIMAL(8,2);
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS metric_1080 DECIMAL(8,2);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
@@ -584,6 +588,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_profiles_shuttle_5_10_5 ON player_profiles(shuttle_5_10_5);
   CREATE INDEX IF NOT EXISTS idx_profiles_l_drill ON player_profiles(l_drill);
   CREATE INDEX IF NOT EXISTS idx_profiles_broad_jump ON player_profiles(broad_jump);
+  CREATE INDEX IF NOT EXISTS idx_profiles_catapult ON player_profiles(catapult);
+  CREATE INDEX IF NOT EXISTS idx_profiles_metric_1080 ON player_profiles(metric_1080);
   CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
   CREATE INDEX IF NOT EXISTS idx_users_role_created ON users(role, created_at);
   CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login_at);
