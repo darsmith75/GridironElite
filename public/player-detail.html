@@ -954,14 +954,12 @@
 
           <!-- Player Rating (AI only) -->
           <div id="ratingSection" class="profile-section">
-            <div class="rating-section-header">
+            <div class="rating-section-header" style="justify-content:space-between; gap:10px; flex-wrap:wrap;">
               <h2 class="section-title-small" style="margin-bottom:0;">PLAYER RATING</h2>
+              <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
             </div>
             <div class="rating-tab-content" role="tabpanel">
               <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>
-                <div style="display:flex; justify-content:flex-start; margin-top:14px;">
-                  <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
-                </div>
             </div>
           </div>
 
