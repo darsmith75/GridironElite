@@ -1138,6 +1138,67 @@
       return normalized;
     }
 
+    function loadImageForCanvas(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+        img.src = src;
+      });
+    }
+
+    async function applyExportFooterBranding(canvas, footerTopY) {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const safeTop = Math.max(0, Math.floor(footerTopY));
+      const footerHeight = canvas.height - safeTop;
+      if (footerHeight < 48) return;
+
+      // Blend the strip and add brand lockup to hide any visible seam at the export bottom.
+      ctx.fillStyle = 'rgba(6, 17, 35, 0.72)';
+      ctx.fillRect(0, safeTop, canvas.width, footerHeight);
+
+      const logoMaxHeight = Math.min(52, Math.max(26, Math.floor(footerHeight * 0.46)));
+      const logoMaxWidth = Math.floor(canvas.width * 0.2);
+      const text = 'Powered by GridironAthletes.com';
+      const textSize = Math.min(28, Math.max(16, Math.floor(footerHeight * 0.26)));
+      const gap = Math.max(10, Math.floor(textSize * 0.55));
+
+      ctx.font = `700 ${textSize}px Arial, sans-serif`;
+      const textWidth = ctx.measureText(text).width;
+
+      let logoWidth = 0;
+      let logoHeight = 0;
+      try {
+        const logo = await loadImageForCanvas('/images/GridIronLogoWhiteBG.png');
+        const logoScale = Math.min(logoMaxWidth / logo.naturalWidth, logoMaxHeight / logo.naturalHeight, 1);
+        logoWidth = Math.max(1, Math.round(logo.naturalWidth * logoScale));
+        logoHeight = Math.max(1, Math.round(logo.naturalHeight * logoScale));
+
+        const groupWidth = logoWidth + gap + textWidth;
+        const startX = Math.max(16, Math.floor((canvas.width - groupWidth) / 2));
+        const centerY = safeTop + Math.floor(footerHeight / 2);
+        const logoY = centerY - Math.floor(logoHeight / 2);
+
+        ctx.drawImage(logo, startX, logoY, logoWidth, logoHeight);
+
+        ctx.fillStyle = 'rgba(233, 241, 255, 0.96)';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, startX + logoWidth + gap, centerY);
+        return;
+      } catch (_) {
+        // Fallback to text-only footer if logo fails to load.
+      }
+
+      ctx.fillStyle = 'rgba(233, 241, 255, 0.96)';
+      ctx.textBaseline = 'middle';
+      const textX = Math.max(16, Math.floor((canvas.width - textWidth) / 2));
+      const textY = safeTop + Math.floor(footerHeight / 2);
+      ctx.fillText(text, textX, textY);
+    }
+
     // College Logo Ordering - Helper Functions
     function getCollegeLogoOrderStorageKey() {
       const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
@@ -1240,6 +1301,7 @@
         try {
           const measuredHeight = Math.max(1, Math.ceil(clonedCard.getBoundingClientRect().height));
           const fitScale = Math.min(1, EXPORT_CARD_HEIGHT / measuredHeight);
+          const usedHeight = Math.min(EXPORT_CARD_HEIGHT, Math.ceil(measuredHeight * fitScale));
           clonedCard.style.transformOrigin = 'top center';
           clonedCard.style.transform = `scale(${fitScale})`;
 
@@ -1274,6 +1336,7 @@
           });
 
           document.body.removeChild(exportRoot);
+          await applyExportFooterBranding(canvas, usedHeight);
           return canvas;
         } catch (error) {
           lastError = error;
