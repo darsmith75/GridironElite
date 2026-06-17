@@ -3835,6 +3835,39 @@ textarea {
   margin-bottom: 18px;
 }
 
+.rating-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.rating-section-toggle-btn {
+  border: 1px solid #b9cbe4;
+  border-radius: 8px;
+  background: #f7faff;
+  color: #1e3c72;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.18s, border-color 0.18s, transform 0.18s;
+}
+
+.rating-section-toggle-btn:hover {
+  background: #edf4ff;
+  border-color: #8fa9cf;
+  transform: translateY(-1px);
+}
+
+.rating-section-toggle-btn:focus-visible {
+  outline: 2px solid #1e3c72;
+  outline-offset: 2px;
+}
+
 .rating-tab-btn {
   background: none;
   border: none;
@@ -3863,6 +3896,23 @@ textarea {
 
 .rating-tab-content {
   animation: tabFadeIn 0.18s ease;
+}
+
+.rating-summary {
+  margin-bottom: 12px;
+}
+
+.rating-breakdown {
+  display: block;
+}
+
+.rating-note {
+  margin: 12px 0 0;
+}
+
+.rating-section-collapsed .rating-breakdown,
+.rating-section-collapsed .rating-note {
+  display: none;
 }
 
 @keyframes tabFadeIn {
