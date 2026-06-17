@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Resources</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .resources-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 8px 0 40px;
+    }
+    .resources-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .resources-back-link:hover { text-decoration: underline; }
+    .resources-hero {
+      background: linear-gradient(135deg, #17315f 0%, #27549a 60%, #4f7cc6 100%);
+      border-radius: 14px;
+      color: #fff;
+      padding: 26px 28px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(19,40,78,0.28);
+    }
+    .resources-hero h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+      color: #fff;
+    }
+    .resources-hero p {
+      margin: 0;
+      color: rgba(255,255,255,0.9);
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 760px;
+    }
+    .resources-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .resources-tab {
+      border: 1px solid #c7d0da;
+      background: #f7faff;
+      color: #234170;
+      border-radius: 999px;
+      padding: 9px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .resources-tab:hover {
+      border-color: #9fb5d5;
+      background: #eef4ff;
+    }
+    .resources-tab.active {
+      background: #1e3c72;
+      border-color: #1e3c72;
+      color: #fff;
+      box-shadow: 0 5px 16px rgba(30,60,114,0.28);
+    }
+    .resources-panel {
+      display: none;
+    }
+    .resources-panel.active {
+      display: block;
+      animation: fadeInPanel 0.2s ease-out;
+    }
+    @keyframes fadeInPanel {
+      from { opacity: 0; transform: translateY(3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .resource-section-heading {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1e3c72;
+      margin: 0 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0eaf5;
+    }
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .resource-card {
+      border: 1px solid #d5deea;
+      border-radius: 12px;
+      padding: 16px;
+      background: #fbfdff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .resource-card h3 {
+      margin: 0 0 10px;
+      color: #1d3765;
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .resource-card h3 .card-icon {
+      font-size: 17px;
+    }
+    .resource-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #3d4e68;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .resource-card li + li { margin-top: 6px; }
+    .resource-card p {
+      margin: 0;
+      color: #3d4e68;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .tip-box {
+      background: linear-gradient(135deg, #f0f6ff 0%, #e8f1fd 100%);
+      border: 1px solid #c5d8f5;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      color: #264a82;
+      line-height: 1.55;
+    }
+    .tip-box strong { color: #1e3c72; }
+    @media (max-width: 720px) {
+      .resources-hero { padding: 20px; }
+      .resources-hero h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V10.5z"/><path d="M9 21V13h6v8"/></svg>
+            Home
+          </a>
+          <a href="player-profile.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"/></svg>
+            My Profile
+          </a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign out
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="resources-shell">
+        <a href="player-profile.html" class="resources-back-link">← Back to My Profile</a>
+
+        <section class="resources-hero">
+          <h1>Resources</h1>
+          <p>Practical tools and knowledge to help you perform and recover at your best. Select a category below to explore.</p>
+        </section>
+
+        <div class="resources-tabs" role="tablist">
+          <button class="resources-tab active" data-tab="nutrition" type="button" role="tab" aria-selected="true">Nutrition</button>
+          <button class="resources-tab" data-tab="recovery" type="button" role="tab" aria-selected="false">Recovery</button>
+        </div>
+
+        <!-- Nutrition Panel -->
+        <section id="panel-nutrition" class="resources-panel active" role="tabpanel">
+          <div class="tip-box">
+            <strong>Quick Tip:</strong> What you eat before, during, and after training directly impacts how fast you improve. Treat nutrition as part of your training plan, not separate from it.
+          </div>
+
+          <h2 class="resource-section-heading">Fueling Your Performance</h2>
+          <div class="resource-grid">
+            <article class="resource-card">
+              <h3><span class="card-icon">🍽️</span> Pre-Workout Nutrition</h3>
+              <ul>
+                <li>Eat a balanced meal 2–3 hours before training (carbs + protein + low fat).</li>
+                <li>If you're short on time, a lighter snack 30–60 minutes before works (banana, rice cake with PB, etc.).</li>
+                <li>Stay hydrated before sessions — start sipping water well before you train.</li>
+                <li>Avoid high-fat or high-fiber foods right before intense sessions as they slow digestion.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">⚡</span> Post-Workout Recovery Nutrition</h3>
+              <ul>
+                <li>Eat within 30–60 minutes of finishing to begin muscle repair.</li>
+                <li>Target 20–40g of quality protein (chicken, eggs, Greek yogurt, protein shake).</li>
+                <li>Pair with fast-digesting carbohydrates to replenish glycogen stores.</li>
+                <li>Don't skip this window — it's one of the most important meals of the day for athletes.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">💧</span> Hydration</h3>
+              <ul>
+                <li>Drink 16–24 oz of water 1–2 hours before practice or games.</li>
+                <li>Replace fluids during activity — don't wait until you're thirsty.</li>
+                <li>Monitor urine color: pale yellow means properly hydrated; dark means drink more.</li>
+                <li>In hot or high-intensity conditions, add electrolytes (sodium, potassium, magnesium).</li>
+                <li>Avoid sugary drinks and energy drinks during activity.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🏋️</span> Building &amp; Maintaining Muscle</h3>
+              <ul>
+                <li>Aim for 0.7–1g of protein per pound of bodyweight daily.</li>
+                <li>Distribute protein across 4–5 meals rather than loading it all at once.</li>
+                <li>Prioritize whole food sources: lean meats, fish, legumes, dairy, eggs.</li>
+                <li>Creatine monohydrate is one of the most researched and effective supplements for power athletes.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🥗</span> Daily Nutrition Habits</h3>
+              <ul>
+                <li>Eat consistent meals throughout the day — skipping meals hurts energy and recovery.</li>
+                <li>Build each plate around lean protein, complex carbs, and vegetables.</li>
+                <li>Healthy fats (avocado, nuts, olive oil) support hormone function and joint health.</li>
+                <li>Limit processed foods, excess sugar, and alcohol — all slow recovery and adaptation.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">📋</span> In-Season vs. Off-Season</h3>
+              <ul>
+                <li>In-season: prioritize calorie maintenance, recovery fueling, and staying consistent.</li>
+                <li>Off-season: this is your window to add lean mass — slightly increase calories and training load.</li>
+                <li>Pre-camp: build up energy stores in the weeks before camp starts.</li>
+                <li>Track what you eat — awareness is the first step to better habits.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <!-- Recovery Panel -->
+        <section id="panel-recovery" class="resources-panel" role="tabpanel">
+          <div class="tip-box">
+            <strong>Quick Tip:</strong> Training breaks your body down. Recovery is where improvement happens. Prioritize sleep, movement quality, and stress management as seriously as your workouts.
+          </div>
+
+          <h2 class="resource-section-heading">Recovery Methods</h2>
+          <div class="resource-grid">
+            <article class="resource-card">
+              <h3><span class="card-icon">😴</span> Sleep</h3>
+              <ul>
+                <li>Sleep is the most powerful recovery tool available — aim for 8–10 hours per night.</li>
+                <li>Prioritize consistent sleep and wake times, even on weekends.</li>
+                <li>Reduce screen time 30–60 minutes before bed to improve sleep quality.</li>
+                <li>Keep your sleep environment cool, dark, and quiet.</li>
+                <li>Naps (20–30 min) can supplement overnight sleep, especially on double-session days.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🧊</span> Cold Therapy</h3>
+              <ul>
+                <li>Ice baths or cold water immersion (10–15 min at 50–59°F) can reduce muscle soreness.</li>
+                <li>Cold therapy is most effective after high-volume or contact-heavy sessions.</li>
+                <li>Contrast therapy (alternating cold and warm) can improve circulation and recovery speed.</li>
+                <li>Cryotherapy chambers are an option at some facilities — short exposure (2–3 min) at extreme cold.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🧘</span> Soft Tissue Work</h3>
+              <ul>
+                <li>Foam rolling (5–10 min post-training) helps reduce tightness and improve range of motion.</li>
+                <li>Massage therapy — even once a month — supports long-term tissue health.</li>
+                <li>Lacrosse balls are great for targeting specific tight spots (feet, glutes, shoulders).</li>
+                <li>Percussion devices (Theragun, Hyperice) can speed up pre and post-session warm-up and cooldown.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🚶</span> Active Recovery</h3>
+              <ul>
+                <li>Light movement on rest days (walking, swimming, cycling) keeps blood flowing without taxing the body.</li>
+                <li>Dynamic stretching before training prepares joints and muscles for load.</li>
+                <li>Static stretching after training (hold 30–60 sec) helps restore flexibility.</li>
+                <li>Yoga or mobility sessions 1–2x/week can significantly reduce injury risk over a season.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🛁</span> Heat Therapy</h3>
+              <ul>
+                <li>Sauna sessions (15–20 min) can support cardiovascular conditioning and relaxation.</li>
+                <li>Heat helps loosen tight muscles before lower-intensity work or mobility sessions.</li>
+                <li>Don't use heat immediately after high-intensity sessions — allow core temp to normalize first.</li>
+                <li>Contrast with cold exposure for amplified circulation and recovery benefits.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🧠</span> Mental Recovery</h3>
+              <ul>
+                <li>Mental fatigue is as real as physical fatigue — schedule time to genuinely unplug.</li>
+                <li>Breathing exercises (box breathing, diaphragmatic breathing) lower cortisol and help with sleep.</li>
+                <li>Visualization and mindfulness practices can sharpen focus and reduce performance anxiety.</li>
+                <li>Talk to coaches, teammates, or counselors if mental load feels unmanageable — it's a strength, not a weakness.</li>
+              </ul>
+            </article>
+          </div>
+
+          <h2 class="resource-section-heading">Recovery Scheduling</h2>
+          <div class="resource-grid">
+            <article class="resource-card">
+              <h3><span class="card-icon">📅</span> During the Season</h3>
+              <ul>
+                <li>Day after game: prioritize sleep, light walking, and nutrition replenishment.</li>
+                <li>Mid-week: controlled soft tissue work and light mobility to keep the body ready.</li>
+                <li>Day before game: avoid anything that leaves you sore — stick to activation and mental prep.</li>
+              </ul>
+            </article>
+            <article class="resource-card">
+              <h3><span class="card-icon">🌱</span> Off-Season Recovery</h3>
+              <ul>
+                <li>Take 2–4 weeks of true rest after the season before starting a new training cycle.</li>
+                <li>Use this window to address nagging injuries, improve mobility, and recharge mentally.</li>
+                <li>Gradually reintroduce volume — don't jump back to full intensity immediately.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth('player');
+
+    // Tab switching
+    document.querySelectorAll('.resources-tab').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.resources-tab').forEach((b) => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.resources-panel').forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        const panelId = 'panel-' + btn.dataset.tab;
+        const panel = document.getElementById(panelId);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
