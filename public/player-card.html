@@ -1105,12 +1105,15 @@
         return canvas;
       }
 
-      // Use a cover-fit draw so the exported frame is always fully filled without letterboxing.
-      const scale = Math.max(targetWidth / canvas.width, targetHeight / canvas.height);
+      // Keep the full card visible (no left/right or top/bottom cropping) across devices.
+      ctx.fillStyle = '#0a1628';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+      const scale = Math.min(targetWidth / canvas.width, targetHeight / canvas.height);
       const drawWidth = canvas.width * scale;
       const drawHeight = canvas.height * scale;
       const offsetX = (targetWidth - drawWidth) / 2;
-      const offsetY = (targetHeight - drawHeight) / 2;
+      const offsetY = 0;
 
       ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
       return normalized;
