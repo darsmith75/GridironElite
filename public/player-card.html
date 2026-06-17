@@ -1061,18 +1061,12 @@
       }
     }
     
-    function dataUrlToBlob(dataUrl) {
-      const parts = String(dataUrl || '').split(',');
-      if (parts.length < 2) throw new Error('Invalid data URL');
-      const mimeMatch = parts[0].match(/data:(.*?);base64/);
-      const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-      const binary = atob(parts[1]);
-      const len = binary.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binary.charCodeAt(i);
+    async function dataUrlToBlob(dataUrl) {
+      const response = await fetch(dataUrl);
+      if (!response.ok) {
+        throw new Error('Invalid data URL');
       }
-      return new Blob([bytes], { type: mimeType });
+      return response.blob();
     }
 
     function canvasToBlob(canvas) {
@@ -1086,7 +1080,9 @@
           // Some browsers can return null from toBlob for large canvases; fall back to data URL conversion.
           try {
             const dataUrl = canvas.toDataURL('image/png');
-            resolve(dataUrlToBlob(dataUrl));
+            dataUrlToBlob(dataUrl)
+              .then(resolve)
+              .catch(() => reject(new Error('Unable to create image blob from canvas')));
           } catch (fallbackError) {
             reject(new Error('Unable to create image blob from canvas'));
           }
