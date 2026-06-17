@@ -1413,23 +1413,49 @@
     }
 
     function exportFromPreview() {
-      const img = document.getElementById('previewImage');
+      const previewExportBtn = document.querySelector('.preview-export-btn');
+      const originalText = previewExportBtn ? previewExportBtn.textContent : '';
       const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
-      
-      // Convert data URL to blob and download
-      fetch(img.src)
-        .then(res => res.blob())
-        .then(blob => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${playerName}_Player_Card.png`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+
+      const downloadFromUrl = (url) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${playerName}_Player_Card.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      (async () => {
+        try {
+          if (previewExportBtn) {
+            previewExportBtn.disabled = true;
+            previewExportBtn.textContent = '⏳ Exporting...';
+          }
+
+          if (previewObjectUrl) {
+            downloadFromUrl(previewObjectUrl);
+            closePreview();
+            return;
+          }
+
+          // Fallback: regenerate if preview blob URL is missing.
+          const canvas = await renderPlayerCardCanvas();
+          const blob = await canvasToBlob(canvas);
+          const tempUrl = URL.createObjectURL(blob);
+          downloadFromUrl(tempUrl);
+          URL.revokeObjectURL(tempUrl);
           closePreview();
-        });
+        } catch (error) {
+          console.error('Error exporting from preview:', error);
+          alert('Failed to export this image. Please try again.');
+        } finally {
+          if (previewExportBtn) {
+            previewExportBtn.disabled = false;
+            previewExportBtn.textContent = originalText || 'Export This Image';
+          }
+        }
+      })();
     }
   </script>
 </body>
