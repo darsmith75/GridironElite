@@ -674,7 +674,7 @@
 <body>
   <button onclick="goBack()" class="card-btn btn-back"><span class="btn-icon">←</span> Back</button>
   <div class="button-bar">
-    <button onclick="previewImage()" class="card-btn btn-preview" id="previewBtn"><span class="btn-icon">👁</span> Preview</button>
+    <button onclick="openPreviewImage()" class="card-btn btn-preview" id="previewBtn"><span class="btn-icon">👁</span> Preview</button>
     <button onclick="exportAsImage()" class="card-btn btn-export" id="exportBtn"><span class="btn-icon">📸</span> Export</button>
     <button onclick="openEmailModal()" class="card-btn btn-email" id="emailBtn"><span class="btn-icon">✉️</span> Email</button>
   </div>
@@ -1079,6 +1079,10 @@
     async function renderPlayerCardCanvas() {
       const cardElement = document.getElementById('playerCard');
 
+      if (typeof html2canvas !== 'function') {
+        throw new Error('html2canvas is unavailable');
+      }
+
       if (document.fonts && document.fonts.ready) {
         try { await document.fonts.ready; } catch (_) {}
       }
@@ -1153,14 +1157,18 @@
         
       } catch (error) {
         console.error('Error exporting image:', error);
-        alert('Failed to export image. Please try again.');
+        if (error && String(error.message || '').includes('html2canvas is unavailable')) {
+          alert('Export is unavailable because the image rendering library did not load. Please refresh and try again.');
+        } else {
+          alert('Failed to export image. Please try again.');
+        }
         button.disabled = false;
         button.textContent = originalText;
       }
     }
     
     // Preview the image before exporting
-    async function previewImage() {
+    async function openPreviewImage() {
       const button = document.getElementById('previewBtn');
       const originalText = button.textContent;
       
@@ -1182,7 +1190,11 @@
         
       } catch (error) {
         console.error('Error generating preview:', error);
-        alert('Failed to generate preview. Please try again.');
+        if (error && String(error.message || '').includes('html2canvas is unavailable')) {
+          alert('Preview is unavailable because the image rendering library did not load. Please refresh and try again.');
+        } else {
+          alert('Failed to generate preview. Please try again.');
+        }
         button.disabled = false;
         button.textContent = originalText;
       }
