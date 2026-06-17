@@ -1091,6 +1091,31 @@
       });
     }
 
+    function normalizeCanvasToPortrait(canvas, targetWidth, targetHeight) {
+      if (canvas.width === targetWidth && canvas.height === targetHeight) {
+        return canvas;
+      }
+
+      const normalized = document.createElement('canvas');
+      normalized.width = targetWidth;
+      normalized.height = targetHeight;
+
+      const ctx = normalized.getContext('2d');
+      if (!ctx) {
+        return canvas;
+      }
+
+      // Use a cover-fit draw so the exported frame is always fully filled without letterboxing.
+      const scale = Math.max(targetWidth / canvas.width, targetHeight / canvas.height);
+      const drawWidth = canvas.width * scale;
+      const drawHeight = canvas.height * scale;
+      const offsetX = (targetWidth - drawWidth) / 2;
+      const offsetY = (targetHeight - drawHeight) / 2;
+
+      ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
+      return normalized;
+    }
+
     // College Logo Ordering - Helper Functions
     function getCollegeLogoOrderStorageKey() {
       const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
@@ -1166,7 +1191,6 @@
         exportRoot.style.left = '-100000px';
         exportRoot.style.top = '0';
         exportRoot.style.width = `${EXPORT_CARD_WIDTH}px`;
-        exportRoot.style.height = `${EXPORT_CARD_HEIGHT}px`;
         exportRoot.style.overflow = 'hidden';
         exportRoot.style.pointerEvents = 'none';
         exportRoot.style.zIndex = '-1';
@@ -1174,7 +1198,7 @@
         const clonedCard = cardElement.cloneNode(true);
         clonedCard.id = 'playerCardExportClone';
         clonedCard.style.width = `${EXPORT_CARD_WIDTH}px`;
-        clonedCard.style.height = `${EXPORT_CARD_HEIGHT}px`;
+        clonedCard.style.height = 'auto';
         clonedCard.style.maxWidth = 'none';
         clonedCard.style.margin = '0';
         clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
@@ -1183,6 +1207,9 @@
         document.body.appendChild(exportRoot);
 
         try {
+          const measuredHeight = Math.max(1, Math.ceil(clonedCard.getBoundingClientRect().height));
+          exportRoot.style.height = `${measuredHeight}px`;
+
           const canvas = await html2canvas(exportRoot, {
             backgroundColor: '#0a1628',
             scale: attempt.scale,
@@ -1191,15 +1218,16 @@
             allowTaint: false,
             imageTimeout: 15000,
             width: EXPORT_CARD_WIDTH,
-            height: EXPORT_CARD_HEIGHT,
+            height: measuredHeight,
             windowWidth: EXPORT_CARD_WIDTH,
-            windowHeight: EXPORT_CARD_HEIGHT,
+            windowHeight: measuredHeight,
             scrollX: 0,
             scrollY: 0,
             onclone: (clonedDoc) => {
               const clonedExportCard = clonedDoc.getElementById('playerCardExportClone');
               if (clonedExportCard) {
                 clonedExportCard.style.margin = '0';
+                clonedExportCard.style.height = 'auto';
                 clonedExportCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
               }
 
@@ -1211,7 +1239,7 @@
           });
 
           document.body.removeChild(exportRoot);
-          return canvas;
+          return normalizeCanvasToPortrait(canvas, EXPORT_CARD_WIDTH, EXPORT_CARD_HEIGHT);
         } catch (error) {
           lastError = error;
           console.warn(`Player card render failed at scale ${attempt.scale} (removePlayerImage=${attempt.removePlayerImage})`, error);
