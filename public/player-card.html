@@ -1149,26 +1149,8 @@
         try { await document.fonts.ready; } catch (_) {}
       }
 
-      const createOptions = (scale, removePlayerImage) => ({
-        backgroundColor: '#0a1628',
-        scale,
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          const clonedCard = clonedDoc.getElementById('playerCard');
-          if (clonedCard) {
-            clonedCard.style.margin = '0';
-            clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
-          }
-
-          const clonedImageContainer = clonedDoc.getElementById('playerImageContainer');
-          if (removePlayerImage && clonedImageContainer) {
-            clonedImageContainer.style.backgroundImage = 'none';
-          }
-        }
-      });
+      const EXPORT_CARD_WIDTH = 1080;
+      const EXPORT_CARD_HEIGHT = 1350;
 
       const attempts = [
         { scale: 2, removePlayerImage: false },
@@ -1177,12 +1159,64 @@
       ];
 
       let lastError = null;
+
       for (const attempt of attempts) {
+        const exportRoot = document.createElement('div');
+        exportRoot.style.position = 'fixed';
+        exportRoot.style.left = '-100000px';
+        exportRoot.style.top = '0';
+        exportRoot.style.width = `${EXPORT_CARD_WIDTH}px`;
+        exportRoot.style.height = `${EXPORT_CARD_HEIGHT}px`;
+        exportRoot.style.overflow = 'hidden';
+        exportRoot.style.pointerEvents = 'none';
+        exportRoot.style.opacity = '0';
+        exportRoot.style.zIndex = '-1';
+
+        const clonedCard = cardElement.cloneNode(true);
+        clonedCard.id = 'playerCardExportClone';
+        clonedCard.style.width = `${EXPORT_CARD_WIDTH}px`;
+        clonedCard.style.height = `${EXPORT_CARD_HEIGHT}px`;
+        clonedCard.style.maxWidth = 'none';
+        clonedCard.style.margin = '0';
+        clonedCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+
+        exportRoot.appendChild(clonedCard);
+        document.body.appendChild(exportRoot);
+
         try {
-          return await html2canvas(cardElement, createOptions(attempt.scale, attempt.removePlayerImage));
+          const canvas = await html2canvas(exportRoot, {
+            backgroundColor: '#0a1628',
+            scale: attempt.scale,
+            logging: false,
+            useCORS: true,
+            allowTaint: false,
+            imageTimeout: 15000,
+            width: EXPORT_CARD_WIDTH,
+            height: EXPORT_CARD_HEIGHT,
+            windowWidth: EXPORT_CARD_WIDTH,
+            windowHeight: EXPORT_CARD_HEIGHT,
+            scrollX: 0,
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+              const clonedExportCard = clonedDoc.getElementById('playerCardExportClone');
+              if (clonedExportCard) {
+                clonedExportCard.style.margin = '0';
+                clonedExportCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
+              }
+
+              const clonedImageContainer = clonedDoc.getElementById('playerImageContainer');
+              if (attempt.removePlayerImage && clonedImageContainer) {
+                clonedImageContainer.style.backgroundImage = 'none';
+              }
+            }
+          });
+
+          document.body.removeChild(exportRoot);
+          return canvas;
         } catch (error) {
           lastError = error;
           console.warn(`Player card render failed at scale ${attempt.scale} (removePlayerImage=${attempt.removePlayerImage})`, error);
+          document.body.removeChild(exportRoot);
         }
       }
 
