@@ -1239,9 +1239,6 @@
 
         try {
           const measuredHeight = Math.max(1, Math.ceil(clonedCard.getBoundingClientRect().height));
-          const fitScale = Math.min(1, EXPORT_CARD_HEIGHT / measuredHeight);
-          clonedCard.style.transformOrigin = 'top center';
-          clonedCard.style.transform = `scale(${fitScale})`;
 
           const canvas = await html2canvas(exportRoot, {
             backgroundColor: '#0a1628',
@@ -1262,8 +1259,6 @@
                 clonedExportCard.style.margin = '0';
                 clonedExportCard.style.height = 'auto';
                 clonedExportCard.style.boxShadow = '0 20px 60px rgba(0,0,0,0.5)';
-                clonedExportCard.style.transformOrigin = 'top center';
-                clonedExportCard.style.transform = `scale(${fitScale})`;
               }
 
               const clonedImageContainer = clonedDoc.querySelector('#playerCardExportClone #playerImageContainer');
