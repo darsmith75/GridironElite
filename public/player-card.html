@@ -1209,6 +1209,8 @@
         clonedCard.style.maxWidth = 'none';
         clonedCard.style.margin = '0';
         clonedCard.style.boxShadow = 'none';
+        clonedCard.style.display = 'flex';
+        clonedCard.style.flexDirection = 'column';
 
         exportRoot.appendChild(clonedCard);
         document.body.appendChild(exportRoot);
@@ -1239,6 +1241,24 @@
                 clonedExportCard.style.height = 'auto';
                 clonedExportCard.style.minHeight = `${EXPORT_CARD_HEIGHT}px`;
                 clonedExportCard.style.boxShadow = 'none';
+                clonedExportCard.style.display = 'flex';
+                clonedExportCard.style.flexDirection = 'column';
+              }
+
+              const clonedExportBody = clonedDoc.querySelector('#playerCardExportClone .card-body');
+              if (clonedExportBody) {
+                clonedExportBody.style.flex = '1';
+                clonedExportBody.style.alignItems = 'stretch';
+              }
+
+              const clonedExportLeft = clonedDoc.querySelector('#playerCardExportClone .card-left');
+              if (clonedExportLeft) {
+                clonedExportLeft.style.height = '100%';
+              }
+
+              const clonedExportRight = clonedDoc.querySelector('#playerCardExportClone .card-right');
+              if (clonedExportRight) {
+                clonedExportRight.style.height = '100%';
               }
 
               const clonedImageContainer = clonedDoc.querySelector('#playerCardExportClone #playerImageContainer');
