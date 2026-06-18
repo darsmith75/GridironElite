@@ -41,6 +41,15 @@ function buildProfileUploadSignature(userId, reqBody, reqFiles) {
   return `${userId}|${bodyFields}|${fileEntries.join('|')}`;
 }
 
+function parseBooleanField(value) {
+  if (value === true || value === 1) return true;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'yes';
+  }
+  return false;
+}
+
 async function handleDeletePlayerAccount(req, res) {
   if (req.session.role !== 'player') {
     return res.status(403).json({ error: 'Only athletes can delete this account' });
@@ -141,8 +150,6 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
   }
 
   console.log('Update request for user:', req.session.userId);
-  console.log('Upload fields received:', (req.files || []).map(f => `${f.fieldname}:${f.originalname}`));
-  console.log('Data received:', data);
 
   try {
     if (files?.highlightVideos && files.highlightVideos.length > 1) {
@@ -175,68 +182,130 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
     }
 
     await processUploadedFiles(req.session.userId, files);
+    const userPrefix = req.session.userId + '/';
+    const filesToDeleteAfterCommit = [];
 
-    const result = await db.prepare(`
-      UPDATE player_profiles SET
-        full_name = ?, high_school = ?, graduation_year = ?, position = ?,
-        height = ?, height_inches = ?, weight = ?, forty_yard_dash = ?, bench_press = ?,
-        squat = ?, vertical_jump = ?, shuttle_5_10_5 = ?, l_drill = ?,
-        broad_jump = ?, power_clean = ?, single_leg_squat = ?, catapult = ?, metric_1080 = ?, hand_size = ?, wingspan = ?, gpa = ?, achievement = ?, bio = ?,
-        phone = ?,
-        hudl_link = ?, instagram_link = ?, twitter_link = ?,
-        hudl_username = ?, instagram_username = ?, twitter_username = ?,
-        birth_date = ?
-      WHERE user_id = ?
-    `).run(
-      data.fullName || null,
-      data.highSchool || null,
-      data.graduationYear || null,
-      data.position || null,
-      data.height || null,
-      parseHeightToInches(data.height),
-      data.weight || null,
-      data.fortyYardDash || null,
-      data.benchPress || null,
-      data.squat || null,
-      data.verticalJump || null,
-      data.shuttle5105 || null,
-      data.lDrill || null,
-      data.broadJump || null,
-      data.powerClean || null,
-      data.singleLegSquat || null,
-      data.catapult || null,
-      data.metric1080 || null,
-      data.handSize || null,
-      data.wingspan || null,
-      data.gpa || null,
-      data.achievement || null,
-      data.bio || null,
-      data.phone || null,
-      data.hudlLink || null,
-      data.instagramLink || null,
-      data.twitterLink || null,
-      data.hudlUsername || null,
-      data.instagramUsername || null,
-      data.twitterUsername || null,
-      data.birthDate || null,
-      req.session.userId
-    );
+    const result = await db.withTransaction(async (tx) => {
+      const updateResult = await tx.prepare(`
+        UPDATE player_profiles SET
+          full_name = ?, high_school = ?, graduation_year = ?, position = ?,
+          height = ?, height_inches = ?, weight = ?, forty_yard_dash = ?, bench_press = ?,
+          squat = ?, vertical_jump = ?, shuttle_5_10_5 = ?, l_drill = ?,
+          broad_jump = ?, power_clean = ?, single_leg_squat = ?, catapult = ?, metric_1080 = ?, hand_size = ?, wingspan = ?, gpa = ?, achievement = ?, bio = ?,
+          phone = ?,
+          hudl_link = ?, instagram_link = ?, twitter_link = ?,
+          hudl_username = ?, instagram_username = ?, twitter_username = ?,
+          birth_date = ?
+        WHERE user_id = ?
+      `).run(
+        data.fullName || null,
+        data.highSchool || null,
+        data.graduationYear || null,
+        data.position || null,
+        data.height || null,
+        parseHeightToInches(data.height),
+        data.weight || null,
+        data.fortyYardDash || null,
+        data.benchPress || null,
+        data.squat || null,
+        data.verticalJump || null,
+        data.shuttle5105 || null,
+        data.lDrill || null,
+        data.broadJump || null,
+        data.powerClean || null,
+        data.singleLegSquat || null,
+        data.catapult || null,
+        data.metric1080 || null,
+        data.handSize || null,
+        data.wingspan || null,
+        data.gpa || null,
+        data.achievement || null,
+        data.bio || null,
+        data.phone || null,
+        data.hudlLink || null,
+        data.instagramLink || null,
+        data.twitterLink || null,
+        data.hudlUsername || null,
+        data.instagramUsername || null,
+        data.twitterUsername || null,
+        data.birthDate || null,
+        req.session.userId
+      );
 
-    await db.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(req.session.userId);
-    const insertContact = db.prepare('INSERT INTO player_contacts (user_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
-    if (data.fatherName || data.fatherEmail || data.fatherPhone) {
-      await insertContact.run(req.session.userId, 'father', data.fatherName || null, data.fatherEmail || null, data.fatherPhone || null);
-    }
-    if (data.motherName || data.motherEmail || data.motherPhone) {
-      await insertContact.run(req.session.userId, 'mother', data.motherName || null, data.motherEmail || null, data.motherPhone || null);
-    }
-    if (data.coachName || data.coachEmail || data.coachPhone) {
-      await insertContact.run(req.session.userId, 'coach', data.coachName || null, data.coachEmail || null, data.coachPhone || null);
+      await tx.prepare('DELETE FROM player_contacts WHERE user_id = ?').run(req.session.userId);
+      const insertContact = tx.prepare('INSERT INTO player_contacts (user_id, role, name, email, phone) VALUES (?, ?, ?, ?, ?)');
+      if (data.fatherName || data.fatherEmail || data.fatherPhone) {
+        await insertContact.run(req.session.userId, 'father', data.fatherName || null, data.fatherEmail || null, data.fatherPhone || null);
+      }
+      if (data.motherName || data.motherEmail || data.motherPhone) {
+        await insertContact.run(req.session.userId, 'mother', data.motherName || null, data.motherEmail || null, data.motherPhone || null);
+      }
+      if (data.coachName || data.coachEmail || data.coachPhone) {
+        await insertContact.run(req.session.userId, 'coach', data.coachName || null, data.coachEmail || null, data.coachPhone || null);
+      }
+
+      if (files?.highlightVideos) {
+        const insertVideo = tx.prepare('INSERT INTO player_videos (user_id, filename) VALUES (?, ?)');
+        for (const f of files.highlightVideos) {
+          await insertVideo.run(req.session.userId, userPrefix + f.filename);
+        }
+      }
+
+      if (files?.additionalImages) {
+        const insertImage = tx.prepare('INSERT INTO player_images (user_id, filename) VALUES (?, ?)');
+        for (const f of files.additionalImages) {
+          await insertImage.run(req.session.userId, userPrefix + f.filename);
+        }
+      }
+
+      for (const config of METRIC_VIDEO_CONFIG) {
+        const uploadedMetricVideo = files?.[config.fieldName]?.[0];
+        const existingMetricVideo = await tx.prepare(
+          'SELECT video_filename FROM player_metric_videos WHERE user_id = ? AND metric_key = ?'
+        ).get(req.session.userId, config.key);
+
+        let resolvedFilename = existingMetricVideo?.video_filename || null;
+        if (uploadedMetricVideo) {
+          resolvedFilename = userPrefix + uploadedMetricVideo.filename;
+          if (existingMetricVideo?.video_filename && existingMetricVideo.video_filename !== resolvedFilename) {
+            filesToDeleteAfterCommit.push(existingMetricVideo.video_filename);
+          }
+        }
+
+        if (!resolvedFilename) {
+          continue;
+        }
+
+        const isVerified = parseBooleanField(data[config.verifiedField]);
+        const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
+        const recordedAtRaw = (data[config.recordedAtField] || '').trim();
+        const recordedAt = recordedAtRaw || null;
+
+        await tx.prepare(`
+          INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, recorded_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT (user_id, metric_key)
+          DO UPDATE SET
+            video_filename = EXCLUDED.video_filename,
+            is_verified = EXCLUDED.is_verified,
+            verified_by = EXCLUDED.verified_by,
+            recorded_at = EXCLUDED.recorded_at,
+            updated_at = CURRENT_TIMESTAMP
+        `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy, recordedAt);
+      }
+
+      return updateResult;
+    });
+
+    for (const filename of filesToDeleteAfterCommit) {
+      try {
+        await deleteUploadFile(filename);
+      } catch (cleanupError) {
+        console.warn('Post-commit cleanup failed for metric video:', filename, cleanupError);
+      }
     }
 
     console.log(`Profile update result: ${result.changes} rows changed`);
-
-    const userPrefix = req.session.userId + '/';
 
     if (files?.profilePicture) {
       await replacePlayerProfileFile(req.session.userId, 'profile_picture', userPrefix + files.profilePicture[0].filename);
@@ -248,56 +317,6 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
 
     if (files?.reportCardImage) {
       await replacePlayerProfileFile(req.session.userId, 'report_card_image', userPrefix + files.reportCardImage[0].filename);
-    }
-
-    if (files?.highlightVideos) {
-      const insertVideo = db.prepare('INSERT INTO player_videos (user_id, filename) VALUES (?, ?)');
-      for (const f of files.highlightVideos) {
-        await insertVideo.run(req.session.userId, userPrefix + f.filename);
-      }
-    }
-
-    if (files?.additionalImages) {
-      const insertImage = db.prepare('INSERT INTO player_images (user_id, filename) VALUES (?, ?)');
-      for (const f of files.additionalImages) {
-        await insertImage.run(req.session.userId, userPrefix + f.filename);
-      }
-    }
-
-    for (const config of METRIC_VIDEO_CONFIG) {
-      const uploadedMetricVideo = files?.[config.fieldName]?.[0];
-      const existingMetricVideo = await db.prepare(
-        'SELECT video_filename FROM player_metric_videos WHERE user_id = ? AND metric_key = ?'
-      ).get(req.session.userId, config.key);
-
-      let resolvedFilename = existingMetricVideo?.video_filename || null;
-      if (uploadedMetricVideo) {
-        resolvedFilename = userPrefix + uploadedMetricVideo.filename;
-        if (existingMetricVideo?.video_filename && existingMetricVideo.video_filename !== resolvedFilename) {
-          await deleteUploadFile(existingMetricVideo.video_filename);
-        }
-      }
-
-      if (!resolvedFilename) {
-        continue;
-      }
-
-      const isVerified = !!data[config.verifiedField];
-      const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
-      const recordedAtRaw = (data[config.recordedAtField] || '').trim();
-      const recordedAt = recordedAtRaw || null;
-
-      await db.prepare(`
-        INSERT INTO player_metric_videos (user_id, metric_key, video_filename, is_verified, verified_by, recorded_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT (user_id, metric_key)
-        DO UPDATE SET
-          video_filename = EXCLUDED.video_filename,
-          is_verified = EXCLUDED.is_verified,
-          verified_by = EXCLUDED.verified_by,
-          recorded_at = EXCLUDED.recorded_at,
-          updated_at = CURRENT_TIMESTAMP
-      `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy, recordedAt);
     }
 
     const updated = await db.prepare('SELECT gpa, vertical_jump FROM player_profiles WHERE user_id = ?').get(req.session.userId);
@@ -348,7 +367,7 @@ router.post('/player/metric-video', requireAuth, playerProfileUploadMiddleware, 
       await deleteUploadFile(existingMetricVideo.video_filename);
     }
 
-    const isVerified = !!data[config.verifiedField];
+    const isVerified = parseBooleanField(data[config.verifiedField]);
     const verifiedBy = (data[config.verifiedByField] || '').trim() || null;
     const recordedAtRaw = (data[config.recordedAtField] || '').trim();
     const recordedAt = recordedAtRaw || null;

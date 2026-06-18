@@ -720,7 +720,7 @@
       </div>
       <div class="preview-footer">
         <button onclick="closePreview()" class="preview-cancel-btn">Close</button>
-        <button onclick="exportFromPreview()" class="preview-export-btn">Export This Image</button>
+        <button onclick="exportFromPreview()" id="previewExportBtn" class="preview-export-btn">Export This Image</button>
       </div>
     </div>
   </div>
@@ -1091,53 +1091,6 @@
       });
     }
 
-    function normalizeCanvasToPortrait(canvas, targetWidth, targetHeight) {
-      if (canvas.width === targetWidth && canvas.height === targetHeight) {
-        return canvas;
-      }
-
-      const normalized = document.createElement('canvas');
-      normalized.width = targetWidth;
-      normalized.height = targetHeight;
-
-      const ctx = normalized.getContext('2d');
-      if (!ctx) {
-        return canvas;
-      }
-
-      // Keep the full card visible (no left/right or top/bottom cropping) across devices.
-      ctx.fillStyle = '#0a1628';
-      ctx.fillRect(0, 0, targetWidth, targetHeight);
-
-      const scale = Math.min(targetWidth / canvas.width, targetHeight / canvas.height);
-      const drawWidth = canvas.width * scale;
-      const drawHeight = canvas.height * scale;
-      const offsetX = (targetWidth - drawWidth) / 2;
-      const offsetY = 0;
-
-      ctx.drawImage(canvas, offsetX, offsetY, drawWidth, drawHeight);
-
-      const remainingHeight = targetHeight - (offsetY + drawHeight);
-      if (remainingHeight > 0) {
-        // Extend the card's bottom edge so any extra portrait space blends with the existing background.
-        const sampleHeight = Math.min(4, canvas.height);
-        const sourceY = Math.max(0, canvas.height - sampleHeight);
-        ctx.drawImage(
-          canvas,
-          0,
-          sourceY,
-          canvas.width,
-          sampleHeight,
-          offsetX,
-          offsetY + drawHeight,
-          drawWidth,
-          remainingHeight
-        );
-      }
-
-      return normalized;
-    }
-
     // College Logo Ordering - Helper Functions
     function getCollegeLogoOrderStorageKey() {
       const userId = window.currentUser && window.currentUser.id ? String(window.currentUser.id) : 'unknown';
@@ -1238,7 +1191,6 @@
         document.body.appendChild(exportRoot);
 
         try {
-          const measuredHeight = Math.max(1, Math.ceil(clonedCard.getBoundingClientRect().height));
 
           const canvas = await html2canvas(exportRoot, {
             backgroundColor: '#0a1628',
@@ -1421,7 +1373,7 @@
     }
 
     function exportFromPreview() {
-      const previewExportBtn = document.querySelector('.preview-export-btn');
+      const previewExportBtn = document.getElementById('previewExportBtn');
       const originalText = previewExportBtn ? previewExportBtn.textContent : '';
       const playerName = document.getElementById('playerName').textContent.replace(/\s+/g, '_');
 
@@ -1443,7 +1395,8 @@
 
           if (previewObjectUrl) {
             downloadFromUrl(previewObjectUrl);
-            closePreview();
+            // Give mobile browsers a moment to process download before revoking the preview URL.
+            setTimeout(() => closePreview(), 300);
             return;
           }
 
@@ -1452,8 +1405,10 @@
           const blob = await canvasToBlob(canvas);
           const tempUrl = URL.createObjectURL(blob);
           downloadFromUrl(tempUrl);
-          URL.revokeObjectURL(tempUrl);
-          closePreview();
+          setTimeout(() => {
+            URL.revokeObjectURL(tempUrl);
+            closePreview();
+          }, 300);
         } catch (error) {
           console.error('Error exporting from preview:', error);
           alert('Failed to export this image. Please try again.');
