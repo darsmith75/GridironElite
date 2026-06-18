@@ -1205,6 +1205,7 @@
         clonedCard.id = 'playerCardExportClone';
         clonedCard.style.width = `${EXPORT_CARD_WIDTH}px`;
         clonedCard.style.height = 'auto';
+        clonedCard.style.minHeight = `${EXPORT_CARD_HEIGHT}px`;
         clonedCard.style.maxWidth = 'none';
         clonedCard.style.margin = '0';
         clonedCard.style.boxShadow = 'none';
@@ -1236,6 +1237,7 @@
               if (clonedExportCard) {
                 clonedExportCard.style.margin = '0';
                 clonedExportCard.style.height = 'auto';
+                clonedExportCard.style.minHeight = `${EXPORT_CARD_HEIGHT}px`;
                 clonedExportCard.style.boxShadow = 'none';
               }
 
