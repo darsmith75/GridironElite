@@ -764,7 +764,7 @@
             <button class="add-college-btn" onclick="openAddTeamModal()">+ Add Team</button>
           </div>
           <div class="admin-toolbar">
-            <input type="text" id="teamSearch" placeholder="Search by team name, school, city, state, or coach...">
+            <input type="text" id="teamSearch" placeholder="Search by team name, school, city, state, coach, or agent...">
             <select id="teamStateFilter">
               <option value="">All States</option>
             </select>
@@ -778,6 +778,7 @@
                   <th>School</th>
                   <th>Location</th>
                   <th>Coach</th>
+                  <th>Responsible Agent</th>
                   <th>Roster</th>
                   <th>Pending Invites</th>
                   <th>Created</th>
@@ -993,6 +994,12 @@
           <option value="">-- No Coach (Optional) --</option>
         </select>
         <div id="teamCoachReadonly" style="display:none; padding:10px 12px; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; font-size:14px; color:#333;"></div>
+      </div>
+      <div class="input-group" id="teamAgentGroup">
+        <label>Responsible Agent <span style="color:#999;font-size:12px;font-weight:normal;">(Optional)</span></label>
+        <select id="teamAgentSelect">
+          <option value="">-- No Agent (Optional) --</option>
+        </select>
       </div>
       <div class="input-group">
         <label>Team Name *</label>
@@ -2005,7 +2012,7 @@
     // Teams Management
     async function loadTeams(page = teamsCurrentPage) {
       const tbody = document.getElementById('teamsTableBody');
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#76849b;padding:24px;">Loading…</td></tr>';
       try {
         const search = document.getElementById('teamSearch').value.trim();
         const state = document.getElementById('teamStateFilter').value;
@@ -2031,7 +2038,7 @@
         }
         renderTeams();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#c62828;padding:24px;">Failed to load teams: ${escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#c62828;padding:24px;">Failed to load teams: ${escapeHtml(err.message)}</td></tr>`;
         renderTeamsPagination(0, 0);
       }
     }
@@ -2051,7 +2058,7 @@
     function renderTeams() {
       const tbody = document.getElementById('teamsTableBody');
       if (allTeams.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#999; padding:30px;">No teams found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#999; padding:30px;">No teams found</td></tr>';
         renderTeamsPagination(0, 0);
         return;
       }
@@ -2061,6 +2068,7 @@
         const school = escapeHtml(t.school_name || '—');
         const loc = [t.city, t.state].filter(Boolean).map(escapeHtml).join(', ') || '—';
         const coach = escapeHtml(t.coach_name || t.coach_email || '—');
+        const agent = escapeHtml(t.responsible_agent_name || t.responsible_agent_email || '—');
         const created = t.created_at ? new Date(t.created_at).toLocaleDateString() : '—';
         return `<tr>
           <td>${t.id}</td>
@@ -2068,6 +2076,7 @@
           <td>${school}</td>
           <td>${loc}</td>
           <td>${coach}</td>
+          <td>${agent}</td>
           <td style="text-align:center;">${t.roster_count || 0}</td>
           <td style="text-align:center;">${t.pending_invites || 0}</td>
           <td>${created}</td>
@@ -2137,6 +2146,7 @@
       document.getElementById('teamSchoolName').value = '';
       document.getElementById('teamCity').value = '';
       document.getElementById('teamState').value = '';
+      document.getElementById('teamAgentSelect').value = '';
       document.getElementById('teamBannerStart').value = '#1e3c72';
       document.getElementById('teamBannerStartHex').value = '#1e3c72';
       document.getElementById('teamBannerEnd').value = '#2a5298';
@@ -2157,6 +2167,21 @@
           + coaches.map(c => `<option value="${c.id}">${escapeHtml(c.full_name || c.email)} (${escapeHtml(c.email)})</option>`).join('');
       } catch (_) {
         selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
+      }
+
+      const agentSelect = document.getElementById('teamAgentSelect');
+      try {
+        const res = await fetch('/api/admin/teams/available-agents');
+        const agents = res.ok ? await res.json() : [];
+        agentSelect.innerHTML = '<option value="">-- No Agent (Optional) --</option>'
+          + agents.map(a => {
+            const name = escapeHtml(a.full_name || a.email);
+            const email = escapeHtml(a.email || '');
+            const title = (a.title || '').trim() ? ` - ${escapeHtml(a.title)}` : '';
+            return `<option value="${a.id}">${name} (${email})${title}</option>`;
+          }).join('');
+      } catch (_) {
+        agentSelect.innerHTML = '<option value="">Failed to load agents</option>';
       }
 
       document.getElementById('teamModal').classList.add('active');
@@ -2201,6 +2226,21 @@
         selectEl.innerHTML = '<option value="">Failed to load coaches</option>';
       }
 
+      const agentSelect = document.getElementById('teamAgentSelect');
+      try {
+        const res = await fetch('/api/admin/teams/available-agents');
+        const agents = res.ok ? await res.json() : [];
+        agentSelect.innerHTML = '<option value="">-- No Agent (Optional) --</option>'
+          + agents.map(a => {
+            const name = escapeHtml(a.full_name || a.email);
+            const email = escapeHtml(a.email || '');
+            const title = (a.title || '').trim() ? ` - ${escapeHtml(a.title)}` : '';
+            return `<option value="${a.id}"${a.id === t.responsible_agent_id ? ' selected' : ''}>${name} (${email})${title}</option>`;
+          }).join('');
+      } catch (_) {
+        agentSelect.innerHTML = '<option value="">Failed to load agents</option>';
+      }
+
       document.getElementById('teamModal').classList.add('active');
     }
 
@@ -2227,6 +2267,9 @@
         const coachId = document.getElementById('teamCoachSelect').value;
         payload.coach_id = coachId || null;
       }
+
+      const responsibleAgentId = document.getElementById('teamAgentSelect').value;
+      payload.responsible_agent_id = responsibleAgentId || null;
 
       const url = isEdit ? `/api/admin/teams/${id}` : '/api/admin/teams';
       const method = isEdit ? 'PUT' : 'POST';

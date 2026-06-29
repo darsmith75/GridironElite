@@ -368,6 +368,7 @@ const createTablesSQL = `
   CREATE TABLE IF NOT EXISTS hs_teams (
     id SERIAL PRIMARY KEY,
     coach_id INTEGER UNIQUE NOT NULL,
+    responsible_agent_id INTEGER,
     team_name VARCHAR(255) NOT NULL,
     school_name VARCHAR(255),
     school_logo VARCHAR(255),
@@ -384,7 +385,8 @@ const createTablesSQL = `
     city VARCHAR(100),
     state VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (responsible_agent_id) REFERENCES users(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS team_schedules (
@@ -527,6 +529,7 @@ const alterTablesSQL = `
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_color_end VARCHAR(7);
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS use_banner_gradient_cards BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS banner_image VARCHAR(255);
+  ALTER TABLE hs_teams ADD COLUMN IF NOT EXISTS responsible_agent_id INTEGER;
   ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
   ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('player', 'agent', 'admin', 'coach'));
   ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT TRUE;

@@ -107,8 +107,14 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
         OR LOWER(COALESCE(ht.state, '')) LIKE LOWER(?)
         OR LOWER(COALESCE(u.full_name, '')) LIKE LOWER(?)
         OR LOWER(COALESCE(u.email, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(au.full_name, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(au.email, '')) LIKE LOWER(?)
+        OR LOWER(COALESCE(au.title, '')) LIKE LOWER(?)
       )`);
-      whereParams.push(likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch);
+      whereParams.push(
+        likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch,
+        likeSearch, likeSearch, likeSearch
+      );
     }
 
     const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
@@ -117,6 +123,7 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
       SELECT COUNT(*)::int AS count
       FROM hs_teams ht
       LEFT JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN users au ON au.id = ht.responsible_agent_id
       ${whereSql}
     `).get(...whereParams);
     const total = totals?.count || 0;
@@ -125,11 +132,14 @@ router.get('/admin/teams', requireAdmin, async (req, res) => {
     const teams = await db.prepare(`
       SELECT ht.id, ht.team_name, ht.school_name, ht.city, ht.state, ht.school_logo,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards, ht.created_at,
+        ht.responsible_agent_id,
         u.id AS coach_id, u.full_name AS coach_name, u.email AS coach_email,
+        au.full_name AS responsible_agent_name, au.email AS responsible_agent_email, au.title AS responsible_agent_title,
         COALESCE(tp_agg.roster_count, 0) AS roster_count,
         COALESCE(ti_agg.pending_invites, 0) AS pending_invites
       FROM hs_teams ht
       LEFT JOIN users u ON u.id = ht.coach_id
+      LEFT JOIN users au ON au.id = ht.responsible_agent_id
       LEFT JOIN (SELECT team_id, COUNT(*) AS roster_count FROM team_players GROUP BY team_id) tp_agg ON tp_agg.team_id = ht.id
       LEFT JOIN (SELECT team_id, COUNT(*) AS pending_invites FROM team_invites WHERE status = 'pending' GROUP BY team_id) ti_agg ON ti_agg.team_id = ht.id
       ${whereSql}
@@ -185,11 +195,38 @@ router.get('/admin/teams/available-coaches', requireAdmin, async (req, res) => {
   }
 });
 
+// Admin: Get agents (for team responsibility dropdown)
+router.get('/admin/teams/available-agents', requireAdmin, async (_req, res) => {
+  try {
+    const agents = await db.prepare(`
+      SELECT u.id, u.full_name, u.email, u.title
+      FROM users u
+      WHERE u.role = 'agent'
+      ORDER BY COALESCE(u.full_name, u.email) ASC
+    `).all();
+    res.json(agents);
+  } catch (error) {
+    console.error('Admin get available agents error:', error);
+    res.status(500).json({ error: 'Failed to get available agents' });
+  }
+});
+
 // Admin: Create team
 router.post('/admin/teams', requireAdmin, async (req, res) => {
-  const { coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards } = req.body || {};
+  const {
+    coach_id,
+    responsible_agent_id,
+    team_name,
+    school_name,
+    city,
+    state,
+    banner_color_start,
+    banner_color_end,
+    use_banner_gradient_cards
+  } = req.body || {};
 
   const parsedCoachId = coach_id ? parseInt(coach_id, 10) : null;
+  const parsedResponsibleAgentId = responsible_agent_id ? parseInt(responsible_agent_id, 10) : null;
   const trimmedTeamName = String(team_name || '').trim();
   if (!trimmedTeamName) {
     return res.status(400).json({ error: 'Team name is required' });
@@ -207,11 +244,19 @@ router.post('/admin/teams', requireAdmin, async (req, res) => {
       }
     }
 
+    if (parsedResponsibleAgentId) {
+      const agent = await db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(parsedResponsibleAgentId);
+      if (!agent || agent.role !== 'agent') {
+        return res.status(400).json({ error: 'Selected user is not an agent' });
+      }
+    }
+
     await db.prepare(`
-      INSERT INTO hs_teams (coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO hs_teams (coach_id, responsible_agent_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       parsedCoachId || null,
+      parsedResponsibleAgentId || null,
       trimmedTeamName,
       String(school_name || '').trim() || null,
       String(city || '').trim() || null,
@@ -233,13 +278,24 @@ router.put('/admin/teams/:id', requireAdmin, async (req, res) => {
   const teamId = parseInt(req.params.id, 10);
   if (!teamId || isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
 
-  const { coach_id, team_name, school_name, city, state, banner_color_start, banner_color_end, use_banner_gradient_cards } = req.body || {};
+  const {
+    coach_id,
+    responsible_agent_id,
+    team_name,
+    school_name,
+    city,
+    state,
+    banner_color_start,
+    banner_color_end,
+    use_banner_gradient_cards
+  } = req.body || {};
   const trimmedTeamName = String(team_name || '').trim();
   if (!trimmedTeamName) {
     return res.status(400).json({ error: 'Team name is required' });
   }
 
   const parsedCoachId = coach_id ? parseInt(coach_id, 10) : null;
+  const parsedResponsibleAgentId = responsible_agent_id ? parseInt(responsible_agent_id, 10) : null;
 
   try {
     const team = await db.prepare(`SELECT id FROM hs_teams WHERE id = ?`).get(teamId);
@@ -252,6 +308,13 @@ router.put('/admin/teams/:id', requireAdmin, async (req, res) => {
       }
     }
 
+    if (parsedResponsibleAgentId) {
+      const agent = await db.prepare(`SELECT id, role FROM users WHERE id = ?`).get(parsedResponsibleAgentId);
+      if (!agent || agent.role !== 'agent') {
+        return res.status(400).json({ error: 'Selected user is not an agent' });
+      }
+    }
+
     await db.withTransaction(async (tx) => {
       if (parsedCoachId) {
         // Keep one-team-per-coach invariant by detaching coach from any other team.
@@ -260,11 +323,12 @@ router.put('/admin/teams/:id', requireAdmin, async (req, res) => {
 
       await tx.prepare(`
         UPDATE hs_teams
-        SET coach_id = ?, team_name = ?, school_name = ?, city = ?, state = ?,
+        SET coach_id = ?, responsible_agent_id = ?, team_name = ?, school_name = ?, city = ?, state = ?,
             banner_color_start = ?, banner_color_end = ?, use_banner_gradient_cards = ?
         WHERE id = ?
       `).run(
         parsedCoachId || null,
+        parsedResponsibleAgentId || null,
         trimmedTeamName,
         String(school_name || '').trim() || null,
         String(city || '').trim() || null,
