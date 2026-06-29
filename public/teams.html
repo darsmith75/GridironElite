@@ -247,6 +247,10 @@
 
       <div class="teams-toolbar">
         <input type="text" id="teamsSearch" placeholder="Search by team name, school, city, or state...">
+        <select id="teamsScopeFilter" style="display:none;">
+          <option value="all">All Teams</option>
+          <option value="mine">My Teams</option>
+        </select>
         <select id="teamsStateFilter">
           <option value="">All States</option>
         </select>
@@ -261,6 +265,7 @@
   <script src="app.js"></script>
   <script>
     let allTeams = [];
+    let currentUser = null;
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -272,16 +277,30 @@
     async function initTeamsPage() {
       const nav = document.querySelector('.top-nav-menu');
       const user = await tryAuth();
+      currentUser = user || null;
       if (user) applyRoleBasedTopNav(user);
       else applyPublicTopNav();
       if (nav) nav.classList.add('nav-ready');
+
+      const scopeFilter = document.getElementById('teamsScopeFilter');
+      if (scopeFilter) {
+        const isAgent = !!(currentUser && currentUser.role === 'agent');
+        scopeFilter.style.display = isAgent ? '' : 'none';
+        scopeFilter.value = 'all';
+      }
+
       logPageView('teams');
       await loadTeams();
     }
 
     async function loadTeams() {
       try {
-        const res = await fetch('/api/teams');
+        const scopeValue = document.getElementById('teamsScopeFilter')?.value || 'all';
+        const params = new URLSearchParams();
+        if (scopeValue === 'mine') params.set('myTeams', '1');
+        const endpoint = params.toString() ? `/api/teams?${params.toString()}` : '/api/teams';
+
+        const res = await fetch(endpoint);
         if (!res.ok) throw new Error('Failed to load teams');
         allTeams = await res.json();
         populateStateFilter(allTeams);
@@ -381,6 +400,11 @@
 
     document.getElementById('teamsSearch').addEventListener('input', renderTeams);
     document.getElementById('teamsStateFilter').addEventListener('change', renderTeams);
+    document.getElementById('teamsScopeFilter').addEventListener('change', async () => {
+      document.getElementById('teamsStateFilter').value = '';
+      document.getElementById('teamsSearch').value = '';
+      await loadTeams();
+    });
 
     initTeamsPage();
   </script>

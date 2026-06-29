@@ -10,10 +10,17 @@ const router = express.Router();
 // Public: List all HS teams
 router.get('/teams', async (req, res) => {
   try {
+    const wantsMyTeams = String(req.query?.myTeams || '').trim() === '1';
+    const isAgentSession = req.session?.role === 'agent' && !!req.session?.userId;
+    const shouldFilterMyTeams = wantsMyTeams && isAgentSession;
+
+    const whereSql = shouldFilterMyTeams ? 'WHERE ht.responsible_agent_id = ?' : '';
+    const whereParams = shouldFilterMyTeams ? [req.session.userId] : [];
+
     const teams = await db.prepare(`
       SELECT ht.id, ht.team_name, ht.school_name, ht.school_logo,
         ht.banner_color_start, ht.banner_color_end, ht.use_banner_gradient_cards,
-        ht.banner_image, ht.city, ht.state, ht.created_at, ht.coach_id,
+        ht.banner_image, ht.city, ht.state, ht.created_at, ht.coach_id, ht.responsible_agent_id,
         u.full_name AS coach_name,
         COALESCE(tp_agg.roster_count, 0) AS roster_count
       FROM hs_teams ht
@@ -23,8 +30,9 @@ router.get('/teams', async (req, res) => {
         FROM team_players
         GROUP BY team_id
       ) tp_agg ON tp_agg.team_id = ht.id
+      ${whereSql}
       ORDER BY ht.team_name ASC
-    `).all();
+    `).all(...whereParams);
     res.json(teams);
   } catch (error) {
     console.error('Get public teams error:', error);
