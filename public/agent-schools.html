@@ -270,27 +270,28 @@
 
       grid.innerHTML = filtered.map((s) => {
         const normalizedDivision = normalizeDivision(s.division);
-        const followActiveStyle = s.is_followed
-          ? 'background:#e8f5e9; border-color:#28a745; color:#155724;'
-          : 'background:#fff; border-color:#c7d0da; color:#333;';
-        return `<div class="browse-card">
-          ${buildLogo(s)}
-          <div style="min-width:0; flex:1;">
-            <div style="font-weight:700; color:#1e3c72; margin-bottom:4px;">${esc(s.name)}</div>
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
-              ${normalizedDivision ? `<span class="pill">${esc(normalizedDivision)}</span>` : ''}
-              ${s.conference ? `<span class="pill">${esc(s.conference)}</span>` : ''}
-              ${s.team ? `<span class="pill">${esc(s.team)}</span>` : ''}
-            </div>
+        const logoHtml = s.logo
+          ? `<img src="/${esc(s.logo)}" alt="${esc(s.name)}" style="width:52px; height:52px; object-fit:contain; border-radius:8px; flex-shrink:0;">`
+          : `<div style="width:52px; height:52px; background:#f0f0f0; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0;">🏫</div>`;
+        const confBadge = s.conference
+          ? `<span style="font-size:11px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:4px;">${esc(s.conference)}</span>`
+          : '';
+        const divisionBadge = normalizedDivision
+          ? `<span style="font-size:11px; color:#1f4d3d; background:#e6f4ee; padding:2px 8px; border-radius:4px; margin-right:4px;">${esc(normalizedDivision)}</span>`
+          : '';
+        const teamBadge = s.team
+          ? `<span style="font-size:11px; color:#1e3c72; background:#e8edf5; padding:2px 8px; border-radius:4px; margin-left:4px;">${esc(s.team)}</span>`
+          : '';
+        const followActiveStyle = s.is_followed ? 'background:#e8f5e9; border-color:#28a745; color:#155724;' : '';
+        return `<div style="display:flex; align-items:flex-start; gap:12px; padding:14px; border:1px solid #e8e8e8; border-radius:10px; background:#fff; transition:box-shadow 0.2s;"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+          ${logoHtml}
+          <div style="flex:1; min-width:0;">
+            <h4 style="margin:0 0 4px; font-size:14px; color:#333;">${esc(s.name)}</h4>
+            <div style="margin:4px 0 8px;">${divisionBadge}${confBadge}${teamBadge}</div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button
-                onclick="toggleFollow(${s.id}); event.stopPropagation();"
-                style="padding:5px 12px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s; ${followActiveStyle}"
-              >${s.is_followed ? '⭐ Following' : '☆ Follow'}</button>
-              <button
-                onclick="openDetail(${s.id}); event.stopPropagation();"
-                style="padding:5px 12px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; background:#e8edf5; color:#1e3c72;"
-              >📝 Contacts & Notes</button>
+              <button onclick="toggleFollow(${s.id}); event.stopPropagation();" style="padding:5px 12px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s; ${followActiveStyle}">${s.is_followed ? '⭐ Following' : '☆ Follow'}</button>
+              <button onclick="openDetail(${s.id}); event.stopPropagation();" style="padding:5px 12px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; background:#e8edf5; color:#1e3c72;">📝 Contacts & Notes</button>
             </div>
           </div>
         </div>`;
