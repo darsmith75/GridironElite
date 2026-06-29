@@ -270,7 +270,9 @@
 
       grid.innerHTML = filtered.map((s) => {
         const normalizedDivision = normalizeDivision(s.division);
-        const followClass = s.is_followed ? 'btn-sm following' : 'btn-sm';
+        const followActiveStyle = s.is_followed
+          ? 'background:#e8f5e9; border-color:#28a745; color:#155724;'
+          : 'background:#fff; border-color:#c7d0da; color:#333;';
         return `<div class="browse-card">
           ${buildLogo(s)}
           <div style="min-width:0; flex:1;">
@@ -281,8 +283,14 @@
               ${s.team ? `<span class="pill">${esc(s.team)}</span>` : ''}
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="${followClass}" onclick="toggleFollow(${s.id}); event.stopPropagation();">${s.is_followed ? '⭐ Following' : '☆ Follow'}</button>
-              <button class="btn-sm primary" onclick="openDetail(${s.id}); event.stopPropagation();">Contacts & Notes</button>
+              <button
+                onclick="toggleFollow(${s.id}); event.stopPropagation();"
+                style="padding:5px 12px; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:all 0.2s; ${followActiveStyle}"
+              >${s.is_followed ? '⭐ Following' : '☆ Follow'}</button>
+              <button
+                onclick="openDetail(${s.id}); event.stopPropagation();"
+                style="padding:5px 12px; border:1px solid #1e3c72; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; background:#e8edf5; color:#1e3c72;"
+              >📝 Contacts & Notes</button>
             </div>
           </div>
         </div>`;
