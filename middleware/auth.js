@@ -9,6 +9,12 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+const requireAgent = (req, res, next) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+  if (req.session.role !== 'agent') return res.status(403).json({ error: 'Forbidden' });
+  next();
+};
+
 // Admin can also access coach routes
 const requireCoach = (req, res, next) => {
   if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -16,4 +22,4 @@ const requireCoach = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAdmin, requireCoach };
+module.exports = { requireAuth, requireAdmin, requireAgent, requireCoach };

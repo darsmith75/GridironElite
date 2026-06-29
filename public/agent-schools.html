@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Schools</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .schools-wrap { max-width: 1100px; margin: 0 auto; padding: 6px 0 24px; }
+    .schools-header { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+    .schools-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+    .school-card { display:flex; gap:12px; align-items:flex-start; border:1px solid #d7e0ed; border-radius:10px; padding:12px; background:#fff; cursor:pointer; }
+    .school-card:hover { box-shadow:0 4px 14px rgba(0,0,0,.08); }
+    .school-logo { width:52px; height:52px; border-radius:8px; object-fit:contain; background:#fff; border:1px solid #e1e8f2; flex-shrink:0; }
+    .school-logo-placeholder { width:52px; height:52px; border-radius:8px; background:#f0f4fa; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
+    .school-name { font-weight:700; color:#1e3c72; font-size:15px; margin:0 0 4px; }
+    .school-meta { color:#62758f; font-size:12px; }
+    .btn-browse { padding:9px 14px; border:none; border-radius:8px; background:#1e3c72; color:#fff; font-weight:700; cursor:pointer; }
+    .btn-browse:hover { background:#2a5298; }
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.68); display:none; z-index:10020; }
+    .modal-box { background:#fff; width:min(960px,92vw); max-height:90vh; overflow:auto; margin:4vh auto; border-radius:12px; }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid #e4ebf4; }
+    .modal-close { border:none; background:none; font-size:24px; cursor:pointer; color:#657992; }
+    .browse-filters { display:flex; gap:10px; flex-wrap:wrap; padding:12px 16px; border-bottom:1px solid #e4ebf4; }
+    .browse-filters input, .browse-filters select { padding:8px 10px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; }
+    .browse-grid { padding:14px 16px 18px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; }
+    .browse-card { display:flex; gap:12px; border:1px solid #e2e8f1; border-radius:10px; padding:12px; background:#fff; }
+    .pill { font-size:11px; border-radius:999px; padding:2px 8px; background:#edf2fb; color:#425a7f; }
+    .btn-sm { padding:5px 10px; border-radius:6px; border:1px solid #c7d0da; background:#fff; cursor:pointer; font-size:12px; }
+    .btn-sm.primary { border-color:#1e3c72; background:#e8edf8; color:#1e3c72; }
+    .btn-sm.following { border-color:#2e7d32; background:#e9f5eb; color:#1f6b2a; }
+    .detail-head { background:linear-gradient(135deg,#17315f 0%,#27549a 100%); color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
+    .detail-tabs { display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid #e4ebf4; }
+    .detail-tab { border:1px solid #c7d0da; background:#f8fbff; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+    .detail-tab.active { background:#1e3c72; border-color:#1e3c72; color:#fff; }
+    .detail-body { padding:14px 16px 18px; }
+    .contact-card, .note-card { border:1px solid #e2e8f1; border-radius:8px; padding:10px; margin-bottom:8px; background:#fafcff; }
+    .inline-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-row input, .form-row textarea { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; }
+    .form-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+    .msg { min-height:16px; font-size:12px; margin-top:6px; font-weight:600; }
+    @media (max-width: 700px) { .inline-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left"><img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo"></div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">Home</a>
+          <a href="teams.html" class="nav-link">Teams</a>
+          <a href="agent-schools.html" class="nav-link">Schools</a>
+          <a href="agent-profile.html" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <div class="schools-wrap">
+        <div class="schools-header">
+          <h1 style="margin:0; color:#1e3c72; font-size:26px;">Schools</h1>
+          <button class="btn-browse" onclick="openBrowseModal()">Browse All Schools</button>
+        </div>
+        <div id="followedGrid" class="schools-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="browseModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 style="margin:0; font-size:18px; color:#1e3c72;">Browse Schools</h2>
+        <button class="modal-close" onclick="closeBrowseModal()">&times;</button>
+      </div>
+      <div class="browse-filters">
+        <input id="browseSearch" type="text" placeholder="Search schools..." oninput="renderBrowseSchools()" style="flex:1; min-width:180px;">
+        <select id="browseDivision" onchange="renderBrowseSchools()"><option value="">All Divisions</option></select>
+        <select id="browseConference" onchange="renderBrowseSchools()"><option value="">All Conferences</option></select>
+        <select id="browseStatus" onchange="renderBrowseSchools()">
+          <option value="">All Schools</option>
+          <option value="followed">Following</option>
+        </select>
+      </div>
+      <div id="browseGrid" class="browse-grid"></div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal-overlay">
+    <div class="modal-box" style="width:min(900px,92vw);">
+      <div class="detail-head">
+        <div>
+          <h2 id="detailName" style="margin:0; font-size:20px;"></h2>
+          <div id="detailMeta" style="font-size:12px; opacity:.9;"></div>
+        </div>
+        <button class="modal-close" style="color:#fff;" onclick="closeDetailModal()">&times;</button>
+      </div>
+      <div class="detail-tabs">
+        <button id="tabContactsBtn" class="detail-tab active" onclick="switchDetailTab('contacts')">Contacts</button>
+        <button id="tabNotesBtn" class="detail-tab" onclick="switchDetailTab('notes')">Notes</button>
+      </div>
+      <div class="detail-body">
+        <div id="contactsPanel">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; color:#1e3c72; font-size:15px;">School Contacts</h3>
+            <button class="btn-sm primary" onclick="showContactForm()">+ Add Contact</button>
+          </div>
+          <div id="contactsList"></div>
+          <div id="contactFormWrap" class="contact-card" style="display:none;">
+            <h4 id="contactFormTitle" style="margin:0 0 8px; font-size:14px; color:#334a68;">Add Contact</h4>
+            <input type="hidden" id="editContactId">
+            <div class="inline-grid form-row">
+              <input id="contactName" type="text" placeholder="Name *">
+              <input id="contactTitle" type="text" placeholder="Title / Position">
+            </div>
+            <div class="inline-grid form-row" style="margin-top:8px;">
+              <input id="contactEmail" type="email" placeholder="Email">
+              <input id="contactPhone" type="text" placeholder="Phone">
+            </div>
+            <div class="inline-grid form-row" style="margin-top:8px;">
+              <input id="contactTwitter" type="text" placeholder="X username (@name)">
+              <input id="contactInstagram" type="text" placeholder="Instagram username (@name)">
+            </div>
+            <div style="display:flex; gap:16px; margin-top:8px; font-size:12px; color:#425a7f;">
+              <label><input id="contactFollowsTwitter" type="checkbox"> Follows on X</label>
+              <label><input id="contactFollowsInstagram" type="checkbox"> Follows on Instagram</label>
+            </div>
+            <div class="form-actions">
+              <button class="btn-sm" onclick="hideContactForm()">Cancel</button>
+              <button class="btn-sm primary" onclick="saveContact()">Save Contact</button>
+            </div>
+            <div id="contactMsg" class="msg"></div>
+          </div>
+        </div>
+
+        <div id="notesPanel" style="display:none;">
+          <h3 style="margin:0 0 10px; color:#1e3c72; font-size:15px;">School Notes</h3>
+          <div id="notesList"></div>
+          <div class="note-card">
+            <input id="noteDate" type="date" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+            <textarea id="noteText" rows="4" placeholder="Write your note..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;"></textarea>
+            <div class="form-actions"><button class="btn-sm primary" onclick="addNote()">Add Note</button></div>
+            <div id="noteMsg" class="msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    const DIVISION_CONFERENCES = {
+      FBS: ['FBS Independents','Pac-12','American','Mid-American','Mountain West','SEC','Sun Belt','ACC','Big Ten','Conference USA','Big 12'],
+      FCS: ['UAC','NEC','Independent','MEAC','Southland','Patriot League','SWAC','Ivy League','CAA','Big South-OVC','Pioneer','SoCon','Missouri Valley','Big Sky'],
+      D2: ['CIAA','CC','GLIAC','GLVC','GAC','GSC','GMAC','LSC','MIAA','MEC','NE10','NSIC','Independent DII','PSAC','RMAC','SAC','SIAC']
+    };
+    const LEGACY_DIVISION_ALIASES = {
+      'NCAA Division I (FBS)': 'FBS',
+      'NCAA Division I (FCS)': 'FCS',
+      'NCAA Division II': 'D2',
+      'NCAA Division II (D2)': 'D2'
+    };
+
+    let allSchools = [];
+    let currentCollegeId = null;
+
+    function esc(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function normalizeDivision(division) {
+      const normalized = String(division || '').trim();
+      if (!normalized) return '';
+      return LEGACY_DIVISION_ALIASES[normalized] || normalized;
+    }
+
+    function getConferencePool() {
+      const all = new Set();
+      Object.values(DIVISION_CONFERENCES).forEach((list) => list.forEach((c) => all.add(c)));
+      return [...all].sort();
+    }
+
+    function buildLogo(school) {
+      if (school.logo) return `<img class="school-logo" src="/${esc(school.logo)}" alt="${esc(school.name)}">`;
+      return '<div class="school-logo-placeholder">🏫</div>';
+    }
+
+    async function init() {
+      const user = await checkAuth('agent');
+      if (!user) return;
+      await loadSchools();
+      await logPageView('agent_schools');
+    }
+
+    async function loadSchools() {
+      try {
+        const res = await fetch('/api/agent/colleges');
+        if (!res.ok) throw new Error('Failed to load schools');
+        allSchools = await res.json();
+        populateFilters();
+        renderFollowedSchools();
+      } catch (err) {
+        document.getElementById('followedGrid').innerHTML = `<div style="color:#c62828;">${esc(err.message)}</div>`;
+      }
+    }
+
+    function populateFilters() {
+      const divSel = document.getElementById('browseDivision');
+      const confSel = document.getElementById('browseConference');
+      divSel.innerHTML = '<option value="">All Divisions</option>' + Object.keys(DIVISION_CONFERENCES).map((d) => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+      confSel.innerHTML = '<option value="">All Conferences</option>' + getConferencePool().map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    }
+
+    function renderFollowedSchools() {
+      const grid = document.getElementById('followedGrid');
+      const followed = allSchools.filter((s) => s.is_followed);
+      if (!followed.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:44px; color:#76849b;"><div style="font-size:42px; margin-bottom:8px;">🏫</div><div style="font-weight:700; color:#1e3c72; margin-bottom:4px;">No followed schools yet</div><div>Use Browse All Schools to start following schools.</div></div>';
+        return;
+      }
+      grid.innerHTML = followed.map((s) => {
+        const meta = [normalizeDivision(s.division), s.conference, s.team].filter(Boolean).join(' · ');
+        return `<div class="school-card" onclick="openDetail(${s.id})">
+          ${buildLogo(s)}
+          <div style="min-width:0;">
+            <p class="school-name">${esc(s.name)}</p>
+            <div class="school-meta">${esc(meta)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function openBrowseModal() {
+      document.getElementById('browseSearch').value = '';
+      document.getElementById('browseDivision').value = '';
+      document.getElementById('browseConference').value = '';
+      document.getElementById('browseStatus').value = '';
+      document.getElementById('browseModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      renderBrowseSchools();
+    }
+
+    function closeBrowseModal() {
+      document.getElementById('browseModal').style.display = 'none';
+      document.body.style.overflow = '';
+      renderFollowedSchools();
+    }
+
+    function renderBrowseSchools() {
+      const search = document.getElementById('browseSearch').value.toLowerCase().trim();
+      const division = document.getElementById('browseDivision').value;
+      const conference = document.getElementById('browseConference').value;
+      const status = document.getElementById('browseStatus').value;
+
+      let filtered = allSchools.slice();
+      if (division) filtered = filtered.filter((s) => normalizeDivision(s.division) === division);
+      if (conference) filtered = filtered.filter((s) => String(s.conference || '') === conference);
+      if (status === 'followed') filtered = filtered.filter((s) => s.is_followed);
+      if (search) filtered = filtered.filter((s) => [s.name, s.team, s.conference, s.division].filter(Boolean).join(' ').toLowerCase().includes(search));
+
+      const grid = document.getElementById('browseGrid');
+      if (!filtered.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#76849b; padding:26px;">No schools found.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map((s) => {
+        const normalizedDivision = normalizeDivision(s.division);
+        const followClass = s.is_followed ? 'btn-sm following' : 'btn-sm';
+        return `<div class="browse-card">
+          ${buildLogo(s)}
+          <div style="min-width:0; flex:1;">
+            <div style="font-weight:700; color:#1e3c72; margin-bottom:4px;">${esc(s.name)}</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+              ${normalizedDivision ? `<span class="pill">${esc(normalizedDivision)}</span>` : ''}
+              ${s.conference ? `<span class="pill">${esc(s.conference)}</span>` : ''}
+              ${s.team ? `<span class="pill">${esc(s.team)}</span>` : ''}
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="${followClass}" onclick="toggleFollow(${s.id}); event.stopPropagation();">${s.is_followed ? '⭐ Following' : '☆ Follow'}</button>
+              <button class="btn-sm primary" onclick="openDetail(${s.id}); event.stopPropagation();">Contacts & Notes</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function toggleFollow(collegeId) {
+      try {
+        const res = await fetch(`/api/agent/colleges/${collegeId}/follow`, { method: 'POST' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const school = allSchools.find((s) => s.id === collegeId);
+        if (school) school.is_followed = data.is_followed;
+        renderBrowseSchools();
+        renderFollowedSchools();
+      } catch (_) {}
+    }
+
+    async function openDetail(collegeId) {
+      currentCollegeId = collegeId;
+      const school = allSchools.find((s) => s.id === collegeId);
+      if (!school) return;
+      document.getElementById('detailName').textContent = school.name;
+      document.getElementById('detailMeta').textContent = [normalizeDivision(school.division), school.conference, school.team].filter(Boolean).join(' · ');
+      document.getElementById('detailModal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      switchDetailTab('contacts');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').style.display = 'none';
+      document.body.style.overflow = '';
+      currentCollegeId = null;
+    }
+
+    function switchDetailTab(tab) {
+      const contacts = tab === 'contacts';
+      document.getElementById('tabContactsBtn').classList.toggle('active', contacts);
+      document.getElementById('tabNotesBtn').classList.toggle('active', !contacts);
+      document.getElementById('contactsPanel').style.display = contacts ? 'block' : 'none';
+      document.getElementById('notesPanel').style.display = contacts ? 'none' : 'block';
+      if (contacts) loadContacts();
+      else loadNotes();
+    }
+
+    async function loadContacts() {
+      const list = document.getElementById('contactsList');
+      list.innerHTML = '<div style="color:#76849b;">Loading contacts...</div>';
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/contacts`);
+        if (!res.ok) throw new Error('Failed to load contacts');
+        const contacts = await res.json();
+        if (!contacts.length) {
+          list.innerHTML = '<div style="color:#76849b;">No contacts yet.</div>';
+          return;
+        }
+        list.innerHTML = contacts.map((c) => {
+          const cData = encodeURIComponent(JSON.stringify(c));
+          const twitter = c.twitter_handle ? (c.twitter_handle.startsWith('@') ? c.twitter_handle : `@${c.twitter_handle}`) : '';
+          const instagram = c.instagram_handle ? (c.instagram_handle.startsWith('@') ? c.instagram_handle : `@${c.instagram_handle}`) : '';
+          return `<div class="contact-card">
+            <div style="display:flex; justify-content:space-between; gap:10px;">
+              <div>
+                <div style="font-weight:700; color:#334a68;">${esc(c.name || 'Unknown')}</div>
+                ${c.title ? `<div style="font-size:12px; color:#607490;">${esc(c.title)}</div>` : ''}
+                ${c.email ? `<div style="font-size:12px; color:#607490;">📧 ${esc(c.email)}</div>` : ''}
+                ${c.phone ? `<div style="font-size:12px; color:#607490;">📞 ${esc(c.phone)}</div>` : ''}
+                ${twitter ? `<div style="font-size:12px; color:#607490;">𝕏 ${esc(twitter)} ${c.follows_player_on_twitter ? '★' : ''}</div>` : ''}
+                ${instagram ? `<div style="font-size:12px; color:#607490;">📷 ${esc(instagram)} ${c.follows_player_on_instagram ? '★' : ''}</div>` : ''}
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-sm" onclick="editContact(JSON.parse(decodeURIComponent('${cData}')))">Edit</button>
+                <button class="btn-sm" onclick="deleteContact(${c.id})">Delete</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        list.innerHTML = `<div style="color:#c62828;">${esc(err.message)}</div>`;
+      }
+    }
+
+    function showContactForm() {
+      document.getElementById('editContactId').value = '';
+      document.getElementById('contactName').value = '';
+      document.getElementById('contactTitle').value = '';
+      document.getElementById('contactEmail').value = '';
+      document.getElementById('contactPhone').value = '';
+      document.getElementById('contactTwitter').value = '';
+      document.getElementById('contactInstagram').value = '';
+      document.getElementById('contactFollowsTwitter').checked = false;
+      document.getElementById('contactFollowsInstagram').checked = false;
+      document.getElementById('contactFormTitle').textContent = 'Add Contact';
+      document.getElementById('contactMsg').textContent = '';
+      document.getElementById('contactFormWrap').style.display = 'block';
+    }
+
+    function hideContactForm() {
+      document.getElementById('contactFormWrap').style.display = 'none';
+      document.getElementById('contactMsg').textContent = '';
+    }
+
+    function editContact(contact) {
+      document.getElementById('editContactId').value = contact.id;
+      document.getElementById('contactName').value = contact.name || '';
+      document.getElementById('contactTitle').value = contact.title || '';
+      document.getElementById('contactEmail').value = contact.email || '';
+      document.getElementById('contactPhone').value = contact.phone || '';
+      document.getElementById('contactTwitter').value = contact.twitter_handle || '';
+      document.getElementById('contactInstagram').value = contact.instagram_handle || '';
+      document.getElementById('contactFollowsTwitter').checked = !!contact.follows_player_on_twitter;
+      document.getElementById('contactFollowsInstagram').checked = !!contact.follows_player_on_instagram;
+      document.getElementById('contactFormTitle').textContent = 'Edit Contact';
+      document.getElementById('contactMsg').textContent = '';
+      document.getElementById('contactFormWrap').style.display = 'block';
+    }
+
+    async function saveContact() {
+      const name = document.getElementById('contactName').value.trim();
+      const title = document.getElementById('contactTitle').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const phone = document.getElementById('contactPhone').value.trim();
+      const twitterHandle = document.getElementById('contactTwitter').value.trim();
+      const instagramHandle = document.getElementById('contactInstagram').value.trim();
+      const followsPlayerOnTwitter = document.getElementById('contactFollowsTwitter').checked;
+      const followsPlayerOnInstagram = document.getElementById('contactFollowsInstagram').checked;
+      const editId = document.getElementById('editContactId').value;
+      const msg = document.getElementById('contactMsg');
+
+      if (!name) {
+        msg.style.color = '#c62828';
+        msg.textContent = 'Contact name is required.';
+        return;
+      }
+
+      try {
+        const url = editId
+          ? `/api/agent/colleges/${currentCollegeId}/contacts/${editId}`
+          : `/api/agent/colleges/${currentCollegeId}/contacts`;
+        const method = editId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            title,
+            email,
+            phone,
+            twitterHandle,
+            followsPlayerOnTwitter,
+            instagramHandle,
+            followsPlayerOnInstagram
+          })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          msg.style.color = '#c62828';
+          msg.textContent = data.error || 'Failed to save contact.';
+          return;
+        }
+
+        hideContactForm();
+        await loadContacts();
+      } catch (_) {
+        msg.style.color = '#c62828';
+        msg.textContent = 'Network error while saving contact.';
+      }
+    }
+
+    async function deleteContact(contactId) {
+      if (!confirm('Delete this contact?')) return;
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/contacts/${contactId}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || 'Failed to delete contact.');
+          return;
+        }
+        await loadContacts();
+      } catch (_) {
+        alert('Network error while deleting contact.');
+      }
+    }
+
+    async function loadNotes() {
+      const list = document.getElementById('notesList');
+      list.innerHTML = '<div style="color:#76849b;">Loading notes...</div>';
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes`);
+        if (!res.ok) throw new Error('Failed to load notes');
+        const notes = await res.json();
+        if (!notes.length) {
+          list.innerHTML = '<div style="color:#76849b;">No notes yet.</div>';
+          return;
+        }
+        list.innerHTML = notes.map((n) => `
+          <div class="note-card" id="note-${n.id}">
+            <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
+              <div style="font-size:12px; color:#5f7390;">${n.visit_date ? `📅 ${esc(n.visit_date)}` : '📝 Note'}</div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn-sm" onclick="editNote(${n.id}, ${esc(JSON.stringify({note:n.note, visitDate:n.visit_date || ''})).replace(/\"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm" onclick="deleteNote(${n.id})">Delete</button>
+              </div>
+            </div>
+            <div style="font-size:13px; color:#334a68; white-space:pre-wrap;">${esc(n.note)}</div>
+          </div>`).join('');
+      } catch (err) {
+        list.innerHTML = `<div style="color:#c62828;">${esc(err.message)}</div>`;
+      }
+    }
+
+    async function addNote() {
+      const note = document.getElementById('noteText').value.trim();
+      const visitDate = document.getElementById('noteDate').value.trim();
+      const msg = document.getElementById('noteMsg');
+      if (!note) {
+        msg.style.color = '#c62828';
+        msg.textContent = 'Note text is required.';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, visitDate })
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          msg.style.color = '#c62828';
+          msg.textContent = data.error || 'Failed to add note.';
+          return;
+        }
+        msg.style.color = '#2e7d32';
+        msg.textContent = 'Note added.';
+        document.getElementById('noteText').value = '';
+        document.getElementById('noteDate').value = '';
+        await loadNotes();
+      } catch (_) {
+        msg.style.color = '#c62828';
+        msg.textContent = 'Network error while adding note.';
+      }
+    }
+
+    function editNote(noteId, data) {
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      const card = document.getElementById(`note-${noteId}`);
+      if (!card) return;
+      card.innerHTML = `
+        <input id="editNoteDate-${noteId}" type="date" value="${esc(parsed.visitDate || '')}" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+        <textarea id="editNoteText-${noteId}" rows="4" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;">${esc(parsed.note || '')}</textarea>
+        <div class="form-actions">
+          <button class="btn-sm" onclick="loadNotes()">Cancel</button>
+          <button class="btn-sm primary" onclick="saveNote(${noteId})">Save</button>
+        </div>`;
+    }
+
+    async function saveNote(noteId) {
+      const note = document.getElementById(`editNoteText-${noteId}`).value.trim();
+      const visitDate = document.getElementById(`editNoteDate-${noteId}`).value.trim();
+      if (!note) { alert('Note text is required.'); return; }
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes/${noteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note, visitDate })
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || 'Failed to save note.');
+          return;
+        }
+        await loadNotes();
+      } catch (_) {
+        alert('Network error while saving note.');
+      }
+    }
+
+    async function deleteNote(noteId) {
+      if (!confirm('Delete this note?')) return;
+      try {
+        const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes/${noteId}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || 'Failed to delete note.');
+          return;
+        }
+        await loadNotes();
+      } catch (_) {
+        alert('Network error while deleting note.');
+      }
+    }
+
+    document.getElementById('browseModal').addEventListener('click', (e) => {
+      if (e.target.id === 'browseModal') closeBrowseModal();
+    });
+    document.getElementById('detailModal').addEventListener('click', (e) => {
+      if (e.target.id === 'detailModal') closeDetailModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>

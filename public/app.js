@@ -220,6 +220,36 @@ function ensureTeamsLink(nav) {
   }
 }
 
+function ensureSchoolsLink(nav, shouldShow) {
+  let schoolsLink = findTopNavLinkByLabel(nav, 'Schools');
+
+  if (!shouldShow) {
+    if (schoolsLink) schoolsLink.remove();
+    return;
+  }
+
+  if (!schoolsLink) {
+    schoolsLink = document.createElement('a');
+    schoolsLink.className = 'nav-link';
+    schoolsLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 4l9 6.5"/><path d="M5 10v9a1 1 0 001 1h12a1 1 0 001-1v-9"/><path d="M9 21v-6h6v6"/></svg>Schools';
+
+    const teamsLink = findTopNavLinkByLabel(nav, 'Teams');
+    if (teamsLink && teamsLink.parentNode) {
+      teamsLink.insertAdjacentElement('afterend', schoolsLink);
+    } else {
+      const profileLink = findTopNavLinkByLabel(nav, 'My Profile');
+      if (profileLink && profileLink.parentNode) {
+        profileLink.insertAdjacentElement('beforebegin', schoolsLink);
+      } else {
+        nav.appendChild(schoolsLink);
+      }
+    }
+  }
+
+  schoolsLink.href = 'agent-schools.html';
+  schoolsLink.style.display = '';
+}
+
 function ensureDashboardLink(nav, shouldShow) {
   let dashboardLink = findTopNavLinkByLabel(nav, 'Dashboard');
 
@@ -269,6 +299,7 @@ function applyRoleBasedTopNav(user) {
   if (loginLink) loginLink.style.display = 'none';
 
   ensureTeamsLink(nav);
+  ensureSchoolsLink(nav, user.role === 'agent');
   ensureDashboardLink(nav, user.role === 'admin');
 }
 
@@ -321,6 +352,8 @@ function applyPublicTopNav() {
   
   const signOutLink = findTopNavLinkByLabel(nav, 'Sign out');
   if (signOutLink) signOutLink.style.display = 'none';
+
+  ensureSchoolsLink(nav, false);
 
   // Show or create Login button
   let loginLink = findTopNavLinkByLabel(nav, 'Login');
