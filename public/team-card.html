@@ -82,7 +82,13 @@
       font-family: 'Oswald', Arial, sans-serif;
       letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.92);
+      color: #f5f9ff;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.55), 0 0 10px rgba(0, 0, 0, 0.4);
+      background: rgba(5, 14, 28, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
     }
 
     .team-meta {
@@ -168,13 +174,34 @@
       margin-top: 8px;
     }
 
+    .offers-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
     .offers-title {
       font-size: 11px;
       color: #9eb4dd;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 0;
+    }
+
+    .offers-count-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: rgba(42, 82, 152, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 999px;
+      padding: 2px 8px;
+      white-space: nowrap;
     }
 
     .offers-grid {
@@ -505,7 +532,8 @@
         let offersHtml = '';
         if (offers.length) {
           const logosToShow = offers.slice(0, 12);
-          offersHtml = '<div class="offers-wrap"><div class="offers-title">Offer Logos</div><div class="offers-grid">' +
+          const offerCountLabel = offers.length === 1 ? '1 Offer' : (offers.length + ' Offers');
+          offersHtml = '<div class="offers-wrap"><div class="offers-header"><div class="offers-title">Offer Logos</div><div class="offers-count-badge">' + escHtml(offerCountLabel) + '</div></div><div class="offers-grid">' +
             logosToShow.map((offer) => {
               const src = offer.logo ? ('/' + String(offer.logo).replace(/^\/+/, '')) : '';
               return '<div class="offer-logo"><img src="' + escHtml(src) + '" alt="' + escHtml(offer.name || 'College') + '"></div>';
@@ -545,6 +573,12 @@
         teamData = await teamRes.json();
         rosterData = await rosterRes.json();
         if (!Array.isArray(rosterData)) rosterData = [];
+        rosterData.sort((a, b) => {
+          const offersA = parseOffers(a).length;
+          const offersB = parseOffers(b).length;
+          if (offersB !== offersA) return offersB - offersA;
+          return String(a && a.full_name ? a.full_name : '').localeCompare(String(b && b.full_name ? b.full_name : ''));
+        });
 
         renderHeader();
         renderPlayers();
