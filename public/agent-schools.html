@@ -29,12 +29,23 @@
     .btn-sm { padding:5px 10px; border-radius:6px; border:1px solid #c7d0da; background:#fff; cursor:pointer; font-size:12px; }
     .btn-sm.primary { border-color:#1e3c72; background:#e8edf8; color:#1e3c72; }
     .btn-sm.following { border-color:#2e7d32; background:#e9f5eb; color:#1f6b2a; }
-    .detail-head { background:linear-gradient(135deg,#17315f 0%,#27549a 100%); color:#fff; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
-    .detail-tabs { display:flex; gap:8px; padding:12px 16px; border-bottom:1px solid #e4ebf4; }
-    .detail-tab { border:1px solid #c7d0da; background:#f8fbff; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; cursor:pointer; }
-    .detail-tab.active { background:#1e3c72; border-color:#1e3c72; color:#fff; }
-    .detail-body { padding:14px 16px 18px; }
-    .contact-card, .note-card { border:1px solid #e2e8f1; border-radius:8px; padding:10px; margin-bottom:8px; background:#fafcff; }
+    .detail-modal-header { background: url('/images/bluebackground.png') center/cover no-repeat; color:#fff; padding:22px 28px; display:flex; justify-content:space-between; align-items:center; }
+    .detail-modal-tabs { display:flex; border-bottom:2px solid #e0e8f5; padding:0 24px; background:#f8faff; }
+    .detail-modal-tab { background:none; border:none; border-bottom:3px solid transparent; padding:12px 20px; font-size:14px; font-weight:600; color:#76849b; cursor:pointer; margin-bottom:-2px; transition:color 0.15s, border-color 0.15s; }
+    .detail-modal-tab.active { color:#1e3c72; border-bottom-color:#1e3c72; }
+    .detail-modal-body { padding:20px 24px; min-height:200px; }
+    .contact-card, .note-card { border:1px solid #e8edf5; border-radius:10px; padding:12px 14px; margin-bottom:10px; background:#f8faff; }
+    .contact-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+    .contact-name { font-weight:600; font-size:14px; color:#1e3c72; }
+    .contact-title { font-size:12px; color:#76849b; }
+    .contact-detail { font-size:12px; color:#555; margin-top:4px; }
+    .note-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
+    .note-date { font-size:11px; color:#76849b; }
+    .note-text { font-size:13px; color:#333; line-height:1.5; white-space:pre-wrap; }
+    .btn-sm-danger { padding:3px 10px; background:#ffebee; color:#c62828; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+    .btn-sm-danger:hover { background:#ffcdd2; }
+    .btn-sm-edit { padding:3px 10px; background:#e8edf5; color:#1e3c72; border:none; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+    .btn-sm-edit:hover { background:#d0daf0; }
     .inline-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .form-row input, .form-row textarea { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; }
     .form-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
@@ -89,22 +100,22 @@
 
   <div id="detailModal" class="modal-overlay">
     <div class="modal-box" style="width:min(900px,92vw);">
-      <div class="detail-head">
+      <div class="detail-modal-header">
         <div>
           <h2 id="detailName" style="margin:0; font-size:20px;"></h2>
           <div id="detailMeta" style="font-size:12px; opacity:.9;"></div>
         </div>
         <button class="modal-close" style="color:#fff;" onclick="closeDetailModal()">&times;</button>
       </div>
-      <div class="detail-tabs">
-        <button id="tabContactsBtn" class="detail-tab active" onclick="switchDetailTab('contacts')">Contacts</button>
-        <button id="tabNotesBtn" class="detail-tab" onclick="switchDetailTab('notes')">Notes</button>
+      <div class="detail-modal-tabs">
+        <button id="tabContactsBtn" class="detail-modal-tab active" onclick="switchDetailTab('contacts')">👥 Contacts</button>
+        <button id="tabNotesBtn" class="detail-modal-tab" onclick="switchDetailTab('notes')">📝 Notes</button>
       </div>
-      <div class="detail-body">
+      <div class="detail-modal-body">
         <div id="contactsPanel">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3 style="margin:0; color:#1e3c72; font-size:15px;">School Contacts</h3>
-            <button class="btn-sm primary" onclick="showContactForm()">+ Add Contact</button>
+            <button onclick="showContactForm()" style="padding:8px 16px; background:#1e3c72; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">+ Add Contact</button>
           </div>
           <div id="contactsList"></div>
           <div id="contactFormWrap" class="contact-card" style="display:none;">
@@ -127,8 +138,8 @@
               <label><input id="contactFollowsInstagram" type="checkbox"> Follows on Instagram</label>
             </div>
             <div class="form-actions">
-              <button class="btn-sm" onclick="hideContactForm()">Cancel</button>
-              <button class="btn-sm primary" onclick="saveContact()">Save Contact</button>
+              <button onclick="hideContactForm()" style="padding:8px 16px; background:#f0f0f0; color:#333; border:1px solid #c7d0da; border-radius:6px; cursor:pointer; font-size:13px;">Cancel</button>
+              <button onclick="saveContact()" style="padding:8px 16px; background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500;">Save Contact</button>
             </div>
             <div id="contactMsg" class="msg"></div>
           </div>
@@ -140,7 +151,7 @@
           <div class="note-card">
             <input id="noteDate" type="date" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
             <textarea id="noteText" rows="4" placeholder="Write your note..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;"></textarea>
-            <div class="form-actions"><button class="btn-sm primary" onclick="addNote()">Add Note</button></div>
+            <div class="form-actions"><button class="btn-invite" onclick="addNote()">Add Note</button></div>
             <div id="noteMsg" class="msg"></div>
           </div>
         </div>
@@ -353,18 +364,18 @@
           const twitter = c.twitter_handle ? (c.twitter_handle.startsWith('@') ? c.twitter_handle : `@${c.twitter_handle}`) : '';
           const instagram = c.instagram_handle ? (c.instagram_handle.startsWith('@') ? c.instagram_handle : `@${c.instagram_handle}`) : '';
           return `<div class="contact-card">
-            <div style="display:flex; justify-content:space-between; gap:10px;">
+            <div class="contact-card-header">
               <div>
-                <div style="font-weight:700; color:#334a68;">${esc(c.name || 'Unknown')}</div>
-                ${c.title ? `<div style="font-size:12px; color:#607490;">${esc(c.title)}</div>` : ''}
-                ${c.email ? `<div style="font-size:12px; color:#607490;">📧 ${esc(c.email)}</div>` : ''}
-                ${c.phone ? `<div style="font-size:12px; color:#607490;">📞 ${esc(c.phone)}</div>` : ''}
-                ${twitter ? `<div style="font-size:12px; color:#607490;">𝕏 ${esc(twitter)} ${c.follows_player_on_twitter ? '★' : ''}</div>` : ''}
-                ${instagram ? `<div style="font-size:12px; color:#607490;">📷 ${esc(instagram)} ${c.follows_player_on_instagram ? '★' : ''}</div>` : ''}
+                <div class="contact-name">${esc(c.name || 'Unknown')}</div>
+                ${c.title ? `<div class="contact-title">${esc(c.title)}</div>` : ''}
+                ${c.email ? `<div class="contact-detail">📧 ${esc(c.email)}</div>` : ''}
+                ${c.phone ? `<div class="contact-detail">📞 ${esc(c.phone)}</div>` : ''}
+                ${twitter ? `<div class="contact-detail">𝕏 ${esc(twitter)} ${c.follows_player_on_twitter ? '<span style="display:inline-block; margin-left:6px; color:#f4b400; font-weight:700;">★</span>' : '<span style="display:inline-block; margin-left:6px; color:#b8c4d4; font-weight:700;">☆</span>'}</div>` : ''}
+                ${instagram ? `<div class="contact-detail">📷 ${esc(instagram)} ${c.follows_player_on_instagram ? '<span style="display:inline-block; margin-left:6px; color:#f4b400; font-weight:700;">★</span>' : '<span style="display:inline-block; margin-left:6px; color:#b8c4d4; font-weight:700;">☆</span>'}</div>` : ''}
               </div>
               <div style="display:flex; gap:6px;">
-                <button class="btn-sm" onclick="editContact(JSON.parse(decodeURIComponent('${cData}')))">Edit</button>
-                <button class="btn-sm" onclick="deleteContact(${c.id})">Delete</button>
+                <button class="btn-sm-edit" onclick="editContact(JSON.parse(decodeURIComponent('${cData}')))">Edit</button>
+                <button class="btn-sm-danger" onclick="deleteContact(${c.id})">Delete</button>
               </div>
             </div>
           </div>`;
@@ -490,14 +501,14 @@
         }
         list.innerHTML = notes.map((n) => `
           <div class="note-card" id="note-${n.id}">
-            <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
-              <div style="font-size:12px; color:#5f7390;">${n.visit_date ? `📅 ${esc(n.visit_date)}` : '📝 Note'}</div>
+            <div class="note-card-header">
+              <div class="note-date">${n.visit_date ? `📅 ${esc(n.visit_date)}` : '📝 Note'}</div>
               <div style="display:flex; gap:6px;">
-                <button class="btn-sm" onclick="editNote(${n.id}, ${esc(JSON.stringify({note:n.note, visitDate:n.visit_date || ''})).replace(/\"/g,'&quot;')})">Edit</button>
-                <button class="btn-sm" onclick="deleteNote(${n.id})">Delete</button>
+                <button class="btn-sm-edit" onclick="editNote(${n.id}, ${esc(JSON.stringify({note:n.note, visitDate:n.visit_date || ''})).replace(/\"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm-danger" onclick="deleteNote(${n.id})">Delete</button>
               </div>
             </div>
-            <div style="font-size:13px; color:#334a68; white-space:pre-wrap;">${esc(n.note)}</div>
+            <div class="note-text">${esc(n.note)}</div>
           </div>`).join('');
       } catch (err) {
         list.innerHTML = `<div style="color:#c62828;">${esc(err.message)}</div>`;
@@ -544,8 +555,8 @@
         <input id="editNoteDate-${noteId}" type="date" value="${esc(parsed.visitDate || '')}" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
         <textarea id="editNoteText-${noteId}" rows="4" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;">${esc(parsed.note || '')}</textarea>
         <div class="form-actions">
-          <button class="btn-sm" onclick="loadNotes()">Cancel</button>
-          <button class="btn-sm primary" onclick="saveNote(${noteId})">Save</button>
+          <button class="btn-sm-danger" onclick="loadNotes()">Cancel</button>
+          <button class="btn-sm-edit" onclick="saveNote(${noteId})">Save</button>
         </div>`;
     }
 
