@@ -290,6 +290,92 @@
       box-shadow: 0 4px 15px rgba(30, 60, 114, 0.45);
     }
 
+    .btn-preview {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-modal-content {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .preview-header h3 {
+      margin: 0;
+      color: #333;
+      font-family: 'Oswald', Arial, sans-serif;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .close-preview {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+      width: 30px;
+      height: 30px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .preview-body {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .preview-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .preview-cancel-btn,
+    .preview-export-btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      border: 1px solid #e0e0e0;
+    }
+
+    .preview-cancel-btn {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .preview-export-btn {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #fff;
+      border: none;
+    }
+
     .btn-back {
       position: fixed;
       left: 20px;
@@ -389,6 +475,26 @@
         padding: 8px 10px;
         font-size: 11px;
       }
+
+      .preview-modal-content {
+        width: calc(100% - 16px);
+        max-width: none;
+      }
+
+      .preview-header,
+      .preview-body,
+      .preview-footer {
+        padding: 14px;
+      }
+
+      .preview-footer {
+        justify-content: stretch;
+      }
+
+      .preview-cancel-btn,
+      .preview-export-btn {
+        flex: 1;
+      }
     }
 
     @media print {
@@ -402,7 +508,24 @@
 <body>
   <button class="card-btn btn-back" type="button" onclick="goBack()">Back</button>
   <div class="button-bar">
+    <button class="card-btn btn-preview" id="previewBtn" type="button" onclick="openPreviewImage()">Preview</button>
     <button class="card-btn btn-export" id="exportBtn" type="button" onclick="exportTeamCard()">Export</button>
+  </div>
+
+  <div id="previewModal" class="preview-modal" style="display: none;">
+    <div class="preview-modal-content">
+      <div class="preview-header">
+        <h3>Export Preview</h3>
+        <button onclick="closePreview()" class="close-preview">✕</button>
+      </div>
+      <div class="preview-body">
+        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+      </div>
+      <div class="preview-footer">
+        <button onclick="closePreview()" class="preview-cancel-btn">Close</button>
+        <button onclick="exportFromPreview()" id="previewExportBtn" class="preview-export-btn">Export This Image</button>
+      </div>
+    </div>
   </div>
 
   <div class="card-container" id="teamCard">
@@ -430,6 +553,7 @@
   <script>
     let teamData = null;
     let rosterData = [];
+    let previewObjectUrl = null;
 
     function escHtml(value) {
       return String(value || '')
@@ -587,25 +711,90 @@
       }
     }
 
-    async function exportTeamCard() {
-      const btn = document.getElementById('exportBtn');
+    async function renderCardToCanvas() {
       const card = document.getElementById('teamCard');
       if (!card || !window.html2canvas) {
-        alert('Export is not available on this page.');
-        return;
+        throw new Error('Export is not available on this page.');
       }
+
+      return html2canvas(card, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null
+      });
+    }
+
+    async function openPreviewImage() {
+      const previewBtn = document.getElementById('previewBtn');
+      const originalText = previewBtn.textContent;
+      previewBtn.disabled = true;
+      previewBtn.textContent = 'Preparing...';
+
+      try {
+        const canvas = await renderCardToCanvas();
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((value) => {
+            if (value) resolve(value);
+            else reject(new Error('Preview generation failed.'));
+          }, 'image/png');
+        });
+
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+        }
+        previewObjectUrl = URL.createObjectURL(blob);
+        document.getElementById('previewImage').src = previewObjectUrl;
+        document.getElementById('previewModal').style.display = 'flex';
+      } catch (error) {
+        alert(error && error.message ? error.message : 'Could not generate preview.');
+      } finally {
+        previewBtn.disabled = false;
+        previewBtn.textContent = originalText;
+      }
+    }
+
+    function closePreview() {
+      document.getElementById('previewModal').style.display = 'none';
+      document.getElementById('previewImage').src = '';
+      if (previewObjectUrl) {
+        URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+      }
+    }
+
+    async function exportFromPreview() {
+      const previewExportBtn = document.getElementById('previewExportBtn');
+      const originalText = previewExportBtn.textContent;
+      previewExportBtn.disabled = true;
+      previewExportBtn.textContent = 'Exporting...';
+
+      try {
+        if (!previewObjectUrl) {
+          throw new Error('No preview is available yet.');
+        }
+        const link = document.createElement('a');
+        const name = slugify((teamData && teamData.team_name) || 'team-card');
+        link.download = name + '-card.png';
+        link.href = previewObjectUrl;
+        link.click();
+      } catch (error) {
+        alert(error && error.message ? error.message : 'Could not export preview image.');
+      } finally {
+        previewExportBtn.disabled = false;
+        previewExportBtn.textContent = originalText;
+      }
+    }
+
+    async function exportTeamCard() {
+      const btn = document.getElementById('exportBtn');
 
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = 'Exporting...';
 
       try {
-        const canvas = await html2canvas(card, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: null
-        });
+        const canvas = await renderCardToCanvas();
 
         const link = document.createElement('a');
         const name = slugify((teamData && teamData.team_name) || 'team-card');
