@@ -131,7 +131,7 @@
     .players-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      gap: 18px;
     }
 
     .player-tile {
@@ -142,6 +142,7 @@
       display: grid;
       grid-template-columns: 72px 1fr;
       gap: 12px;
+      align-items: start;
     }
 
     .player-photo {
@@ -209,25 +210,29 @@
     .offers-grid {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 6px;
+      column-gap: 6px;
+      row-gap: 10px;
+      align-items: center;
     }
 
     .offer-logo {
-      height: 28px;
+      height: 34px;
       border-radius: 6px;
       background: rgba(255, 255, 255, 0.96);
       border: 1px solid rgba(11, 27, 54, 0.28);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 3px;
+      padding: 4px;
       box-sizing: border-box;
+      overflow: hidden;
     }
 
     .offer-logo img {
-      max-width: 100%;
-      max-height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
+      display: block;
     }
 
     .offers-more {
@@ -459,6 +464,7 @@
 
       .offers-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
+        row-gap: 8px;
       }
 
       .btn-back {
