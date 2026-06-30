@@ -719,12 +719,82 @@
         throw new Error('Export is not available on this page.');
       }
 
-      return html2canvas(card, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null
-      });
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (_) {}
+      }
+
+      const EXPORT_CARD_WIDTH = 1080;
+      const EXPORT_CARD_HEIGHT = 1350;
+      const attempts = [2, 1.5, 1];
+      let lastError = null;
+
+      for (const scale of attempts) {
+        const exportRoot = document.createElement('div');
+        exportRoot.style.position = 'fixed';
+        exportRoot.style.left = '-100000px';
+        exportRoot.style.top = '0';
+        exportRoot.style.width = EXPORT_CARD_WIDTH + 'px';
+        exportRoot.style.height = EXPORT_CARD_HEIGHT + 'px';
+        exportRoot.style.overflow = 'hidden';
+        exportRoot.style.pointerEvents = 'none';
+        exportRoot.style.zIndex = '-1';
+        exportRoot.style.display = 'flex';
+        exportRoot.style.justifyContent = 'center';
+        exportRoot.style.alignItems = 'flex-start';
+        exportRoot.style.backgroundColor = '#0a1628';
+        exportRoot.style.backgroundImage = "url('/images/PlayerCardBackground.png')";
+        exportRoot.style.backgroundRepeat = 'no-repeat';
+        exportRoot.style.backgroundPosition = 'center top';
+        exportRoot.style.backgroundSize = 'cover';
+
+        const clonedCard = card.cloneNode(true);
+        clonedCard.id = 'teamCardExportClone';
+        clonedCard.style.width = EXPORT_CARD_WIDTH + 'px';
+        clonedCard.style.maxWidth = 'none';
+        clonedCard.style.height = 'auto';
+        clonedCard.style.minHeight = EXPORT_CARD_HEIGHT + 'px';
+        clonedCard.style.margin = '0';
+        clonedCard.style.borderRadius = '0';
+        clonedCard.style.boxShadow = 'none';
+
+        exportRoot.appendChild(clonedCard);
+        document.body.appendChild(exportRoot);
+
+        try {
+          const canvas = await html2canvas(exportRoot, {
+            backgroundColor: '#0a1628',
+            scale,
+            logging: false,
+            useCORS: true,
+            allowTaint: false,
+            imageTimeout: 15000,
+            width: EXPORT_CARD_WIDTH,
+            height: EXPORT_CARD_HEIGHT,
+            windowWidth: EXPORT_CARD_WIDTH,
+            windowHeight: EXPORT_CARD_HEIGHT,
+            scrollX: 0,
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+              const clonedExportCard = clonedDoc.getElementById('teamCardExportClone');
+              if (clonedExportCard) {
+                clonedExportCard.style.margin = '0';
+                clonedExportCard.style.height = 'auto';
+                clonedExportCard.style.minHeight = EXPORT_CARD_HEIGHT + 'px';
+                clonedExportCard.style.boxShadow = 'none';
+                clonedExportCard.style.borderRadius = '0';
+              }
+            }
+          });
+
+          document.body.removeChild(exportRoot);
+          return canvas;
+        } catch (error) {
+          lastError = error;
+          document.body.removeChild(exportRoot);
+        }
+      }
+
+      throw lastError || new Error('Unable to render team card');
     }
 
     async function openPreviewImage() {
