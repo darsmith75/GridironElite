@@ -101,9 +101,12 @@
   <div id="detailModal" class="modal-overlay">
     <div class="modal-box" style="width:min(900px,92vw);">
       <div class="detail-modal-header">
-        <div>
-          <h2 id="detailName" style="margin:0; font-size:20px;"></h2>
-          <div id="detailMeta" style="font-size:12px; opacity:.9;"></div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div id="detailLogo"></div>
+          <div>
+            <h2 id="detailName" style="margin:0; font-size:20px; color:#fff;"></h2>
+            <div id="detailMeta" style="font-size:13px; color:rgba(255,255,255,0.85);"></div>
+          </div>
         </div>
         <button class="modal-close" style="color:#fff;" onclick="closeDetailModal()">&times;</button>
       </div>
@@ -325,6 +328,12 @@
       currentCollegeId = collegeId;
       const school = allSchools.find((s) => s.id === collegeId);
       if (!school) return;
+      const logoEl = document.getElementById('detailLogo');
+      if (school.logo) {
+        logoEl.innerHTML = `<img src="/${esc(school.logo)}" style="width:44px; height:44px; object-fit:contain; border-radius:8px; background:#fff; padding:3px;">`;
+      } else {
+        logoEl.innerHTML = '<div style="width:44px; height:44px; background:rgba(255,255,255,0.2); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:22px;">🏫</div>';
+      }
       document.getElementById('detailName').textContent = school.name;
       document.getElementById('detailMeta').textContent = [normalizeDivision(school.division), school.conference, school.team].filter(Boolean).join(' · ');
       document.getElementById('detailModal').style.display = 'block';
