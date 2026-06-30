@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Card</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="/vendor/html2canvas.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      font-family: 'Arial Black', Arial, sans-serif;
+      color: #fff;
+    }
+
+    .card-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      border-radius: 20px;
+      overflow: hidden;
+      background: url('/images/PlayerCardBackground.png') no-repeat center center;
+      background-size: cover;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      background: rgba(26, 41, 66, 0.68);
+      padding: 28px 34px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .header-top {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .school-logo {
+      width: 78px;
+      height: 78px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      object-fit: contain;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .school-logo-fallback {
+      width: 78px;
+      height: 78px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-family: 'Oswald', Arial, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.95);
+      background: rgba(8, 16, 28, 0.55);
+    }
+
+    .team-name {
+      margin: 0;
+      font-size: 52px;
+      line-height: 1.04;
+      font-family: 'Russo One', 'Arial Black', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 20px rgba(42, 82, 152, 0.85), 0 0 40px rgba(42, 82, 152, 0.35), 2px 2px 4px rgba(0, 0, 0, 0.55);
+    }
+
+    .school-line {
+      margin-top: 6px;
+      font-size: 16px;
+      font-family: 'Oswald', Arial, sans-serif;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .team-meta {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: 'Oswald', Arial, sans-serif;
+      font-size: 13px;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .meta-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .card-body {
+      background: rgba(26, 41, 66, 0.68);
+      padding: 24px 28px 28px;
+    }
+
+    .section-title {
+      margin: 0 0 14px 0;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .player-tile {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      background: rgba(10, 20, 35, 0.62);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+    }
+
+    .player-photo {
+      width: 72px;
+      height: 88px;
+      border-radius: 9px;
+      object-fit: cover;
+      background: rgba(5, 12, 22, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .player-name {
+      margin: 0;
+      font-size: 18px;
+      font-family: 'Oswald', Arial, sans-serif;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .player-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #d3ddef;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .offers-wrap {
+      margin-top: 8px;
+    }
+
+    .offers-title {
+      font-size: 11px;
+      color: #9eb4dd;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .offers-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .offer-logo {
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(11, 27, 54, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px;
+      box-sizing: border-box;
+    }
+
+    .offer-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .offers-more {
+      margin-top: 5px;
+      font-size: 11px;
+      color: #b8c8e6;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .no-offers {
+      font-size: 11px;
+      color: #a8bddf;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+    }
+
+    .empty-roster {
+      text-align: center;
+      padding: 34px 16px;
+      color: #c0d1ee;
+      border: 1px dashed rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .button-bar {
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .card-btn {
+      padding: 10px 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      font-family: 'Oswald', Arial, sans-serif;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .card-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-export {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 15px rgba(30, 60, 114, 0.45);
+    }
+
+    .btn-back {
+      position: fixed;
+      left: 20px;
+      top: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .team-name {
+        font-size: 38px;
+      }
+
+      .players-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .offers-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+
+      .card-container {
+        border-radius: 14px;
+        margin-bottom: 70px;
+      }
+
+      .card-header {
+        padding: 18px 14px;
+      }
+
+      .card-body {
+        padding: 14px;
+      }
+
+      .header-top {
+        grid-template-columns: 58px 1fr;
+        gap: 10px;
+      }
+
+      .school-logo,
+      .school-logo-fallback {
+        width: 58px;
+        height: 58px;
+        border-radius: 9px;
+      }
+
+      .team-name {
+        font-size: 27px;
+        letter-spacing: 1px;
+      }
+
+      .school-line {
+        font-size: 12px;
+      }
+
+      .team-meta {
+        margin-top: 10px;
+        gap: 8px;
+        font-size: 11px;
+      }
+
+      .player-tile {
+        grid-template-columns: 56px 1fr;
+        padding: 10px;
+      }
+
+      .player-photo {
+        width: 56px;
+        height: 72px;
+      }
+
+      .player-name {
+        font-size: 16px;
+      }
+
+      .offers-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .btn-back {
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+      }
+
+      .button-bar {
+        top: auto;
+        bottom: 12px;
+        right: 12px;
+      }
+
+      .card-btn {
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .btn-back,
+      .button-bar { display: none; }
+      .card-container { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <button class="card-btn btn-back" type="button" onclick="goBack()">Back</button>
+  <div class="button-bar">
+    <button class="card-btn btn-export" id="exportBtn" type="button" onclick="exportTeamCard()">Export</button>
+  </div>
+
+  <div class="card-container" id="teamCard">
+    <div class="card-header">
+      <div class="header-top">
+        <div id="schoolLogoContainer" class="school-logo-fallback">HS</div>
+        <div>
+          <h1 class="team-name" id="teamName">Loading Team...</h1>
+          <div class="school-line" id="schoolLine">Loading school...</div>
+        </div>
+      </div>
+      <div class="team-meta">
+        <span class="meta-pill" id="metaLocation">Location: --</span>
+        <span class="meta-pill" id="metaPlayers">Players: 0</span>
+        <span class="meta-pill" id="metaOffers">Total Offer Logos: 0</span>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="section-title">Team Roster</div>
+      <div id="playersContainer" class="players-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    let teamData = null;
+    let rosterData = [];
+
+    function escHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function slugify(value) {
+      return String(value || 'team-card')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'team-card';
+    }
+
+    function resolveImageUrl(rawPath) {
+      const path = String(rawPath || '').trim();
+      if (!path) return '';
+      if (/^https?:\/\//i.test(path)) return path;
+      if (path.startsWith('/')) return path;
+      return '/api/upload-proxy?path=' + encodeURIComponent(path);
+    }
+
+    function parseOffers(player) {
+      const raw = player && player.college_offer_schools;
+      if (!raw) return [];
+
+      let parsed = raw;
+      if (typeof parsed === 'string') {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch (_) {
+          return [];
+        }
+      }
+
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((offer) => offer && offer.logo);
+    }
+
+    function formatPlayerMeta(player) {
+      const pieces = [];
+      if (player.position) pieces.push(String(player.position));
+      if (player.graduation_year) pieces.push('Class ' + String(player.graduation_year));
+      if (player.height) pieces.push(String(player.height));
+      if (player.weight) pieces.push(String(player.weight) + ' lbs');
+      return pieces.length ? pieces.join(' | ') : 'No measurable data';
+    }
+
+    function renderSchoolLogo() {
+      const container = document.getElementById('schoolLogoContainer');
+      const logoSrc = resolveImageUrl(teamData && teamData.school_logo);
+      if (logoSrc) {
+        container.outerHTML = '<img id="schoolLogoContainer" class="school-logo" src="' + escHtml(logoSrc) + '" alt="School Logo" onerror="this.style.display=\'none\'">';
+      } else {
+        const schoolName = String((teamData && teamData.school_name) || '').trim();
+        const initials = schoolName
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part.charAt(0).toUpperCase())
+          .join('') || 'HS';
+        container.textContent = initials;
+      }
+    }
+
+    function renderHeader() {
+      const teamName = (teamData && teamData.team_name) || 'Team';
+      const schoolName = (teamData && teamData.school_name) || 'School';
+      const city = (teamData && teamData.city) || '';
+      const state = (teamData && teamData.state) || '';
+      const location = [city, state].filter(Boolean).join(', ') || '--';
+
+      document.getElementById('teamName').textContent = teamName;
+      document.getElementById('schoolLine').textContent = schoolName;
+      document.getElementById('metaLocation').textContent = 'Location: ' + location;
+      document.getElementById('metaPlayers').textContent = 'Players: ' + rosterData.length;
+
+      const totalOffers = rosterData.reduce((sum, player) => sum + parseOffers(player).length, 0);
+      document.getElementById('metaOffers').textContent = 'Total Offer Logos: ' + totalOffers;
+
+      renderSchoolLogo();
+    }
+
+    function renderPlayers() {
+      const container = document.getElementById('playersContainer');
+      if (!rosterData.length) {
+        container.innerHTML = '<div class="empty-roster">No players currently in this roster.</div>';
+        return;
+      }
+
+      container.innerHTML = rosterData.map((player) => {
+        const photoSrc = resolveImageUrl(player.card_photo || player.profile_picture || '');
+        const name = escHtml(player.full_name || 'Player');
+        const meta = escHtml(formatPlayerMeta(player));
+        const offers = parseOffers(player);
+
+        let offersHtml = '';
+        if (offers.length) {
+          const logosToShow = offers.slice(0, 12);
+          offersHtml = '<div class="offers-wrap"><div class="offers-title">Offer Logos</div><div class="offers-grid">' +
+            logosToShow.map((offer) => {
+              const src = offer.logo ? ('/' + String(offer.logo).replace(/^\/+/, '')) : '';
+              return '<div class="offer-logo"><img src="' + escHtml(src) + '" alt="' + escHtml(offer.name || 'College') + '"></div>';
+            }).join('') +
+            '</div>' +
+            (offers.length > 12 ? ('<div class="offers-more">+' + (offers.length - 12) + ' more</div>') : '') +
+            '</div>';
+        } else {
+          offersHtml = '<div class="offers-wrap"><div class="no-offers">No offer logos</div></div>';
+        }
+
+        const photoHtml = photoSrc
+          ? '<img class="player-photo" src="' + escHtml(photoSrc) + '" alt="' + name + '" onerror="this.onerror=null;this.src=\'/images/silhouette-avatar.svg\';">'
+          : '<img class="player-photo" src="/images/silhouette-avatar.svg" alt="No Photo">';
+
+        return '<div class="player-tile">' +
+          photoHtml +
+          '<div>' +
+            '<h3 class="player-name">' + name + '</h3>' +
+            '<div class="player-meta">' + meta + '</div>' +
+            offersHtml +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function loadTeamCard() {
+      try {
+        const [teamRes, rosterRes] = await Promise.all([
+          fetch('/api/coach/team'),
+          fetch('/api/coach/team/roster')
+        ]);
+
+        if (!teamRes.ok) throw new Error('Unable to load team data.');
+        if (!rosterRes.ok) throw new Error('Unable to load roster data.');
+
+        teamData = await teamRes.json();
+        rosterData = await rosterRes.json();
+        if (!Array.isArray(rosterData)) rosterData = [];
+
+        renderHeader();
+        renderPlayers();
+      } catch (error) {
+        alert(error && error.message ? error.message : 'Failed to load team card.');
+      }
+    }
+
+    async function exportTeamCard() {
+      const btn = document.getElementById('exportBtn');
+      const card = document.getElementById('teamCard');
+      if (!card || !window.html2canvas) {
+        alert('Export is not available on this page.');
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Exporting...';
+
+      try {
+        const canvas = await html2canvas(card, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null
+        });
+
+        const link = document.createElement('a');
+        const name = slugify((teamData && teamData.team_name) || 'team-card');
+        link.download = name + '-card.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (_) {
+        alert('Could not export the team card.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    function goBack() {
+      if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
+        history.back();
+      } else {
+        window.location.href = 'coach-dashboard.html';
+      }
+    }
+
+    loadTeamCard();
+  </script>
+</body>
+</html>

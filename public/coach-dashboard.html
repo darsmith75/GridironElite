@@ -86,6 +86,33 @@
          1px  1px 0 #000,
          0 2px 6px rgba(0, 0, 0, 0.45);
     }
+    .team-banner-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+    }
+    .team-banner-card-btn {
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: rgba(6, 19, 40, 0.34);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.15s ease, transform 0.15s ease;
+      box-shadow: none;
+    }
+    .team-banner-card-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    .team-banner-card-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
     /* ── Tabs ── */
     .coach-tabs {
       display: flex;
@@ -172,6 +199,11 @@
     }
     @media (max-width: 700px) {
       .team-banner { flex-direction: column; text-align: center; }
+      .team-banner-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+      }
       .team-banner .team-name {
         font-size: 32px;
         white-space: normal;
@@ -1190,6 +1222,9 @@
           <div class="school-name" id="schoolNameDisplay"></div>
           <div class="team-location" id="teamLocationDisplay"></div>
         </div>
+        <div class="team-banner-actions">
+          <button class="team-banner-card-btn" type="button" onclick="openTeamCard()">Team Card</button>
+        </div>
       </div>
 
       <!-- Coach tabs -->
@@ -1206,7 +1241,10 @@
       <!-- Tab: Team Roster -->
       <div id="tab-coach-roster" class="coach-tab-panel">
         <div class="roster-section">
-          <div class="section-title" style="margin:0 0 12px;">Team Roster</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;">
+            <div class="section-title" style="margin:0;">Team Roster</div>
+            <button class="share-btn share-btn-primary" type="button" onclick="openTeamCard()">Team Card</button>
+          </div>
 
           <div class="share-toolbar">
             <div class="share-toolbar-top">
@@ -2224,6 +2262,10 @@
         updateShareSelectionUI();
         applyRosterFilters();
       } catch (_) {}
+    }
+
+    function openTeamCard() {
+      window.location.href = 'team-card.html';
     }
 
     function updateShareSelectionUI() {
