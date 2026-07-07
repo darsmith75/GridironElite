@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="player-profile-theme">
   <div class="dashboard-wrapper">
     <header class="dashboard-header">
       <div class="header-content">
@@ -64,7 +67,7 @@
       <!-- Top 5 Schools by Rating -->
       <div id="topSchoolsSection" style="display:none;">
         <div class="profile-section">
-          <h2 class="section-title-small">🏆 MY TOP 5 SCHOOLS</h2>
+          <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.3 4.7 5.2.8-3.7 3.6.9 5.1-4.7-2-4.7 2 .9-5.1-3.7-3.6 5.2-.8L12 3z"></path></svg></span>MY TOP 5 SCHOOLS</h2>
           <div id="topSchoolsList"></div>
         </div>
       </div>
@@ -90,7 +93,7 @@
 
       <!-- Profile Form -->
       <div class="profile-section">
-        <h2 class="section-title-small">UPDATE PROFILE</h2>
+        <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg></span>UPDATE PROFILE</h2>
         <form id="profileForm" enctype="multipart/form-data">
           <div class="form-grid">
             <div class="form-section">
@@ -483,8 +486,8 @@
     <div style="max-width:980px; margin:40px auto; background:#fff; border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,0.24); overflow:hidden;">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px; border-bottom:1px solid #e4ebf3;">
         <div>
-          <h2 style="margin:0; color:#1e3c72; font-size:22px;">Compare Metrics</h2>
-          <p style="margin:6px 0 0; color:#6c7b8f; font-size:14px;">Compare this athlete against benchmark groups.</p>
+          <h2 style="margin:0; color:#1e3c72; font-size:22px;">Compare Performance</h2>
+          <p style="margin:6px 0 0; color:#6c7b8f; font-size:14px;">Compare this athlete against college and NFL benchmark groups.</p>
         </div>
         <button type="button" onclick="closeCompareModal()" style="border:none; background:#eef3f9; color:#385884; width:38px; height:38px; border-radius:10px; font-size:20px; cursor:pointer;">×</button>
       </div>
@@ -1526,6 +1529,26 @@
       document.body.style.overflow = '';
     }
 
+    function getMetricCardIcon(metricKey) {
+      const iconMap = {
+        forty_yard_dash: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16c1.8-3.2 4.2-4.9 7.1-4.9"></path><path d="M11 8.5l2-2"></path><path d="M12.8 10.4l2.7 2"></path><path d="M8.6 12.6l1.8 1.8"></path><circle cx="14.8" cy="6.8" r="1.4"></circle></svg>`,
+        shuttle_5_10_5: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14"></path><path d="M8 18v-5"></path><path d="M16 18v-7"></path><path d="M5 13h3"></path><path d="M16 11h3"></path><path d="M7 8l3-2"></path><path d="M17 6l2-1"></path></svg>`,
+        l_drill: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12"></path><path d="M6 18l2-6h8l2 6"></path><path d="M9.5 12V7.8"></path><path d="M14.5 12V6.6"></path><path d="M8.8 8h1.4"></path><path d="M13.8 6.8h1.4"></path></svg>`,
+        vertical_jump: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4"></path><path d="M8.5 7.5L12 4l3.5 3.5"></path><path d="M8.5 16.5L12 20l3.5-3.5"></path><path d="M5 7h2"></path><path d="M17 17h2"></path></svg>`,
+        broad_jump: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17h16"></path><path d="M6 17v-3"></path><path d="M10 17v-5"></path><path d="M14 17v-4"></path><path d="M18 17v-6"></path><path d="M6 10l12-3"></path></svg>`,
+        bench_press: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
+        squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="22" y2="8"></line><line x1="4" y1="8" x2="4" y2="16"></line><line x1="20" y1="8" x2="20" y2="16"></line><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
+        power_clean: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M10 12a2 2 0 1 0 4 0"></path></svg>`,
+        single_leg_squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M12 12v4"></path><path d="M10.5 16h3"></path></svg>`,
+        catapult: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14"></path><path d="M8 18v-7"></path><circle cx="16" cy="7" r="2"></circle><path d="M8 11l8-4"></path></svg>`,
+        metric_1080: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`,
+        hand_size: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18V9"></path><path d="M10 18V7"></path><path d="M13 18V8"></path><path d="M16 18V10"></path><path d="M7 18h9"></path></svg>`,
+        wingspan: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><path d="M6 9l-3 3 3 3"></path><path d="M18 9l3 3-3 3"></path></svg>`
+      };
+
+      return iconMap[metricKey] || `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`;
+    }
+
     function buildMetricCard(metric, metricVideoMap, profile) {
       const value = profile ? profile[metric.key] : null;
       if (!value) return '';
@@ -1541,18 +1564,51 @@
         : `${value}${metric.suffix}`;
       return `
         <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
+          <div class="metric-card-icon-wrap" aria-hidden="true">${getMetricCardIcon(metric.key)}</div>
           <div class="metric-label-row">
             <div class="metric-label">${metric.label}</div>
             <span class="metric-tip-icon" data-tip-key="${metric.key}" aria-label="Pro tip" role="button" tabindex="0" onclick="event.stopPropagation();">i</span>
             ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
           </div>
           <div class="metric-value">${displayValue}</div>
-          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? 'View Video' : '&nbsp;'}</div>
+          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? '<span class="metric-video-play" aria-hidden="true">▶</span> View Video' : '&nbsp;'}</div>
         </div>
       `;
     }
 
+    function getTeamHeroBackgroundStyle(profile) {
+      if (!profile || !profile.hs_team) return '';
+
+      if (profile.hs_team.banner_image) {
+        return `background: url('/uploads/${profile.hs_team.banner_image}') center/cover no-repeat;`;
+      }
+
+      if (profile.hs_team.banner_color_start && profile.hs_team.banner_color_end) {
+        return `background: linear-gradient(135deg, ${profile.hs_team.banner_color_start} 0%, ${profile.hs_team.banner_color_end} 100%);`;
+      }
+
+      return '';
+    }
+
+    function applyTeamHeroBackground(profile) {
+      const heroStyle = getTeamHeroBackgroundStyle(profile);
+      const heroGradients = [
+        document.querySelector('#profileViewMode .hero-gradient'),
+        document.querySelector('#profileEditMode .hero-gradient')
+      ].filter(Boolean);
+
+      for (const heroGradient of heroGradients) {
+        if (heroStyle) {
+          heroGradient.setAttribute('style', heroStyle);
+        } else {
+          heroGradient.removeAttribute('style');
+        }
+      }
+    }
+
     function renderViewMode(profile) {
+      applyTeamHeroBackground(profile);
+
       // Hero photo
       if (profile.profile_picture) {
         document.getElementById('viewHeroPhoto').innerHTML = `
@@ -1563,6 +1619,14 @@
            <img src="/images/silhouette-avatar.svg" alt="No Photo" class="profile-photo-large silhouette-photo">
         `;
       }
+
+      const gpaNumericValue = Number(profile.gpa);
+      const gpaDisplayValue = profile.gpa != null && String(profile.gpa).trim() !== '' ? String(profile.gpa) : 'N/A';
+      const honorsDisplay = (profile.achievement && String(profile.achievement).trim())
+        ? String(profile.achievement).trim()
+        : (Number.isFinite(gpaNumericValue)
+          ? (gpaNumericValue >= 3.5 ? 'High Honors' : (gpaNumericValue >= 3.0 ? 'Honors' : ''))
+          : '');
 
       // Header info with name, badges, and action buttons
       document.getElementById('viewHeaderInfo').innerHTML = `
@@ -1589,44 +1653,85 @@
           </div>
         ` : ''}
         <h1 class="player-name-large">${profile.full_name || 'Your Name'}</h1>
-        <div class="meta-badges">
-          ${profile.position ? `<span class="meta-badge">${profile.position}</span>` : ''}
-          ${profile.birth_date ? `<span class="meta-badge">DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
-          ${profile.graduation_year ? `<span class="meta-badge">Class of ${profile.graduation_year}</span>` : ''}
-          ${profile.high_school ? `<span class="meta-badge">${profile.high_school}</span>` : ''}
-          ${profile.height ? `<span class="meta-badge">${formatHeightDisplay(profile.height)}</span>` : ''}
-          ${profile.weight ? `<span class="meta-badge">${profile.weight} lbs</span>` : ''}
-          <span class="meta-badge">Profile Views: ${Number(profile.profile_view_count || 0)}</span>
-          ${profile.gpa ? `<span class="meta-badge ${profile.report_card_image ? 'clickable-gpa' : ''}" ${profile.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openImageLightbox('/uploads/${profile.report_card_image}', 'Report Card');}"` : ''}>GPA: ${profile.gpa}${profile.report_card_image ? ' (View)' : ''}</span>` : ''}
+        <div class="meta-badges profile-meta-badges-themed">
+          ${profile.position ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 15.8 6.7 18l1-5.8-4.2-4.1 5.9-.9L12 2z"></path></svg></span><span>${profile.position}</span></span>` : ''}
+          ${profile.birth_date ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span><span>DOB: ${new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span></span>` : ''}
+          ${profile.graduation_year ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span><span>Class of ${profile.graduation_year}</span></span>` : ''}
+          ${profile.high_school ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-4 7 4v13"></path><path d="M9 21v-4h6v4"></path><path d="M9 10h.01"></path><path d="M12 10h.01"></path><path d="M15 10h.01"></path></svg></span><span>${profile.high_school}</span></span>` : ''}
+          ${profile.height ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"></line><polyline points="8 7 12 3 16 7"></polyline><polyline points="8 17 12 21 16 17"></polyline></svg></span><span>${formatHeightDisplay(profile.height)}</span></span>` : ''}
+          ${profile.weight ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg></span><span>${profile.weight} lbs</span></span>` : ''}
         </div>
-        <div style="margin-top: 20px;">
-          <button onclick="showEditMode()" class="message-btn">✏️ Edit Profile</button>
-          <button onclick="window.location.href='player-card.html'" class="player-card-btn" style="margin-left: 10px;">🏈 Player Card</button>
-          <button onclick="window.location.href='player-recruiting.html'" class="player-card-btn" style="margin-left: 10px;">📘 Recruiting 101</button>
-          <button onclick="window.location.href='player-metrics.html'" class="player-card-btn" style="margin-left: 10px;">Performance</button>
-          <button onclick="window.location.href='resources.html'" class="player-card-btn" style="margin-left: 10px;">Resources</button>
-          <button onclick="openSchoolsModal()" class="player-card-btn" style="margin-left: 10px;">🏫 Schools</button>
+        <div class="profile-action-grid">
+          <button onclick="showEditMode()" class="profile-action-card" type="button">
+            <span class="profile-action-icon profile-action-icon-plain icon-edit-profile" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="7" r="3.5"></circle><path d="M2.8 18c0-3 2.5-5.4 5.7-5.4 1.6 0 3.1.6 4.2 1.6"></path><path class="icon-accent-stroke" d="M13.3 18.8l5.1-5.1a1.5 1.5 0 1 0-2.1-2.1l-5.1 5.1-.6 2.7z"></path></svg></span>
+            <span class="profile-action-title">Edit Profile</span>
+            <span class="profile-action-desc">Manage your personal info and settings.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
+          <button onclick="window.location.href='player-card.html'" class="profile-action-card" type="button">
+            <span class="profile-action-icon profile-action-icon-plain icon-player-card" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><circle class="icon-accent-fill" cx="10" cy="10" r="2.2"></circle><path class="icon-accent-fill" d="M6.8 16.3c.8-1.3 1.9-1.9 3.2-1.9 1.2 0 2.3.6 3.1 1.9"></path><line x1="15" y1="8.5" x2="17.8" y2="8.5"></line><line x1="15" y1="11.5" x2="17.8" y2="11.5"></line></svg></span>
+            <span class="profile-action-title">Player Card</span>
+            <span class="profile-action-desc">View and share your digital player card.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
+          <button onclick="window.location.href='player-recruiting.html'" class="profile-action-card" type="button">
+            <span class="profile-action-icon profile-action-icon-chip icon-recruiting" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="6" x2="9.4" y2="8.4"></line><line x1="9.4" y1="6" x2="7" y2="8.4"></line><line x1="14.6" y1="6" x2="17" y2="8.4"></line><line x1="17" y1="6" x2="14.6" y2="8.4"></line><circle cx="8" cy="15.7" r="1.4"></circle><circle cx="16" cy="15.7" r="1.4"></circle><path d="M9.5 15.7h5"></path><path d="M8 14.2V11"></path><path d="M16 14.2V11"></path><path d="M8 11h8"></path></svg></span>
+            <span class="profile-action-title">Recruiting 101</span>
+            <span class="profile-action-desc">Learn recruiting steps and best practices.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
+          <button onclick="window.location.href='player-metrics.html'" class="profile-action-card" type="button">
+            <span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><line x1="12" y1="13" x2="16" y2="11"></line><line x1="12" y1="5" x2="12" y2="3"></line><line x1="9" y1="3" x2="15" y2="3"></line></svg></span>
+            <span class="profile-action-title">Performance</span>
+            <span class="profile-action-desc">Track workouts, stats, and testing.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
+          <button onclick="window.location.href='resources.html'" class="profile-action-card" type="button">
+            <span class="profile-action-icon profile-action-icon-plain icon-resources" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h5.5L11 10.5H21v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"></path><rect x="12.5" y="4.2" width="8" height="10" rx="1.5"></rect><line class="icon-accent-stroke" x1="14.2" y1="8" x2="18.8" y2="8"></line><line class="icon-accent-stroke" x1="14.2" y1="10.8" x2="18.8" y2="10.8"></line></svg></span>
+            <span class="profile-action-title">Resources</span>
+            <span class="profile-action-desc">Access guides, videos, and tools.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
+          <button onclick="openSchoolsModal()" class="profile-action-card" type="button">
+            <span class="profile-action-icon profile-action-icon-plain icon-schools" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5h18"></path><path d="M4 9.5L12 4l8 5.5"></path><line x1="6" y1="10" x2="6" y2="17.5"></line><line x1="10" y1="10" x2="10" y2="17.5"></line><line x1="14" y1="10" x2="14" y2="17.5"></line><line x1="18" y1="10" x2="18" y2="17.5"></line><path d="M3 17.5h18"></path><path d="M2.8 20h18.4"></path></svg></span>
+            <span class="profile-action-title">Schools</span>
+            <span class="profile-action-desc">Manage your followed schools and offers.</span>
+            <span class="profile-action-arrow">›</span>
+          </button>
         </div>
       `;
 
       // Build content sections
       let html = '';
 
-      // Bio
-      if (profile.bio) {
-        html += `
-          <div class="profile-section">
-            <h2 class="section-title-small">ABOUT</h2>
-            <p class="bio-text">${profile.bio}</p>
+      html += `
+        <div class="profile-section profile-about-academics-section">
+          <div class="profile-about-academics-grid">
+            <div class="profile-about-panel">
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>ABOUT</h2>
+              <p class="bio-text">${profile.bio || 'Add your story, strengths, and goals to help recruiters understand who you are off the field.'}</p>
+            </div>
+            <div class="profile-academics-stack">
+              <div class="profile-academic-card profile-academic-primary">
+                <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span> ACADEMICS</div>
+                <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
+                <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>
+              </div>
+              <div class="profile-academic-card profile-academic-primary">
+                <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> PROFILE VIEWS</div>
+                <div class="profile-academic-value">${Number(profile.profile_view_count || 0)}</div>
+                <div class="profile-academic-sub">Total Views</div>
+              </div>
+            </div>
           </div>
-        `;
-      }
+        </div>
+      `;
 
       // My Ratings
       html += `
         <div class="profile-section" id="myRatingsSection">
           <div class="rating-section-header">
-            <h2 class="section-title-small">MY RATINGS</h2>
+            <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="12" width="3" height="8" rx="1"></rect><rect x="11" y="8" width="3" height="12" rx="1"></rect><rect x="17" y="5" width="3" height="15" rx="1"></rect></svg></span>MY RATINGS</h2>
           </div>
           <div class="rating-tab-content" role="tabpanel">
             <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
@@ -1639,12 +1744,12 @@
       const hasMetrics = METRIC_DEFINITIONS.some(metric => profile[metric.key]);
       if (hasMetrics) {
         html += `
-          <div class="profile-section">
+          <div class="profile-section profile-performance-section">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
-              <h2 class="section-title-small" style="margin-bottom:0;">PLAYER PERFORMANCE</h2>
-              <button id="compareMetricsBtn" type="button" onclick="openCompareModal()" class="player-card-btn">Compare Performance</button>
+              <h2 class="section-title-small profile-unified-title" style="margin-bottom:0;"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="11" width="3" height="9" rx="1"></rect><rect x="11" y="7" width="3" height="13" rx="1"></rect><rect x="17" y="4" width="3" height="16" rx="1"></rect></svg></span>PLAYER PERFORMANCE</h2>
+              <button id="compareMetricsBtn" type="button" onclick="openCompareModal()" class="player-card-btn compare-performance-btn"><span class="compare-btn-icon" aria-hidden="true">⚖</span>Compare Performance</button>
             </div>
-            <div class="metrics-grid">
+            <div class="metrics-grid profile-metrics-grid">
               ${METRIC_DEFINITIONS.map(metric => buildMetricCard(metric, metricVideoMap, profile)).join('')}
             </div>
           </div>
@@ -1655,7 +1760,7 @@
       const hasUploadedVideos = profile.highlight_videos && JSON.parse(profile.highlight_videos).length > 0;
       const hasVideoLinks = profile.video_links && JSON.parse(profile.video_links).length > 0;
       if (hasUploadedVideos || hasVideoLinks) {
-        html += `<div class="profile-section"><h2 class="section-title-small">HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
+        html += `<div class="profile-section profile-highlight-videos-section"><h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"></rect><polygon points="12,12 8.5,9.8 8.5,14.2"></polygon><path d="M17 9l4-2v10l-4-2"></path></svg></span>HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
         if (hasUploadedVideos) {
           const videos = JSON.parse(profile.highlight_videos);
           html += videos.map(video => `<video controls src="/uploads/${video}" class="profile-video"></video>`).join('');
@@ -1683,7 +1788,7 @@
         if (offers.length > 0) {
           html += `
             <div class="profile-section">
-              <h2 class="section-title-small">COLLEGE OFFERS</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"></path><path d="M4 10l8-5 8 5"></path><line x1="6" y1="10" x2="6" y2="17"></line><line x1="10" y1="10" x2="10" y2="17"></line><line x1="14" y1="10" x2="14" y2="17"></line><line x1="18" y1="10" x2="18" y2="17"></line><path d="M3 17h18"></path></svg></span>COLLEGE OFFERS</h2>
               <div class="college-offers-grid-profile" data-college-group="offers">
                 ${offers.map(offer => `
                      <div class="college-logo-card" style="position:relative; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center;"
@@ -1715,7 +1820,7 @@
         if (favorites.length > 0) {
           html += `
             <div class="profile-section">
-              <h2 class="section-title-small">FOLLOWING</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"></path><path d="M4 10l8-5 8 5"></path><line x1="6" y1="10" x2="6" y2="17"></line><line x1="10" y1="10" x2="10" y2="17"></line><line x1="14" y1="10" x2="14" y2="17"></line><line x1="18" y1="10" x2="18" y2="17"></line><path d="M3 17h18"></path></svg></span>FOLLOWING</h2>
               <div class="college-offers-grid-profile" data-college-group="favorites">
                 ${favorites.map(fav => `
                      <div class="college-logo-card" style="position:relative; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center;"
@@ -1744,7 +1849,7 @@
       if (profile.report_card_image) {
         html += `
           <div class="profile-section">
-            <h2 class="section-title-small">REPORT CARD</h2>
+            <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"></rect><line x1="8" y1="8" x2="16" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg></span>REPORT CARD</h2>
             <div class="images-grid-profile">
               <img src="/uploads/${profile.report_card_image}" alt="Report card" class="profile-image">
             </div>
@@ -1756,7 +1861,7 @@
       if (profile.father_name || profile.mother_name || profile.coach_name) {
         html += `
           <div class="profile-section">
-            <h2 class="section-title-small">CONTACT INFORMATION</h2>
+            <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>CONTACT INFORMATION</h2>
             <div class="contact-info-grid">
               ${profile.father_name ? `
                 <div class="contact-card">
@@ -1799,7 +1904,7 @@
         if (images.length > 0) {
           html += `
             <div class="profile-section">
-              <h2 class="section-title-small">IMAGES</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="M21 16l-5-5-4 4-2-2-5 5"></path></svg></span>IMAGES</h2>
               <div class="images-grid-profile">
                 ${images.map(img => `<img src="/uploads/${img}" alt="Player image" class="profile-image">`).join('')}
               </div>
@@ -2173,6 +2278,7 @@
       const res = await fetch('/api/player/profile');
       const profile = await res.json();
       playerProfileData = profile;
+      applyTeamHeroBackground(profile);
       collegeLogoOrderState = parseCollegeLogoOrderState(profile.college_logo_order);
       if (collegeLogoOrderState && Object.keys(collegeLogoOrderState).length > 0) {
         saveCollegeLogoOrderState(collegeLogoOrderState);
@@ -2197,7 +2303,7 @@
       
       // Display current profile media
       if (profile.id) {
-        let mediaHTML = '<div class="profile-section"><h2 class="section-title-small">CURRENT MEDIA</h2>';
+        let mediaHTML = '<div class="profile-section"><h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="M21 16l-5-5-4 4-2-2-5 5"></path></svg></span>CURRENT MEDIA</h2>';
         
         mediaHTML += '<div class="current-media">';
 

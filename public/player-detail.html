@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Player Profile</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     .top-nav-menu {
       visibility: hidden;
@@ -18,7 +21,7 @@
     }
   </style>
 </head>
-<body>
+<body class="player-profile-theme">
   <div class="dashboard-wrapper">
     <header class="dashboard-header">
       <div class="header-content">
@@ -57,8 +60,8 @@
     <div style="max-width:980px; margin:40px auto; background:#fff; border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,0.24); overflow:hidden;">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 24px; border-bottom:1px solid #e4ebf3;">
         <div>
-          <h2 style="margin:0; color:#1e3c72; font-size:22px;">Compare Metrics</h2>
-          <p style="margin:6px 0 0; color:#6c7b8f; font-size:14px;">Compare this athlete against benchmark groups without any AI calls.</p>
+          <h2 style="margin:0; color:#1e3c72; font-size:22px;">Compare Performance</h2>
+          <p style="margin:6px 0 0; color:#6c7b8f; font-size:14px;">Compare this athlete against college and NFL benchmark groups.</p>
         </div>
         <button type="button" onclick="closeCompareModal()" style="border:none; background:#eef3f9; color:#385884; width:38px; height:38px; border-radius:10px; font-size:20px; cursor:pointer;">×</button>
       </div>
@@ -275,6 +278,21 @@
       return `${feet}' ${inchesText}"`;
     }
 
+    function getMetricCardIcon(metricKey) {
+      const iconMap = {
+        forty_yard_dash: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16c1.8-3.2 4.2-4.9 7.1-4.9"></path><path d="M11 8.5l2-2"></path><path d="M12.8 10.4l2.7 2"></path><path d="M8.6 12.6l1.8 1.8"></path><circle cx="14.8" cy="6.8" r="1.4"></circle></svg>`,
+        shuttle_5_10_5: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14"></path><path d="M8 18v-5"></path><path d="M16 18v-7"></path><path d="M5 13h3"></path><path d="M16 11h3"></path><path d="M7 8l3-2"></path><path d="M17 6l2-1"></path></svg>`,
+        l_drill: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12"></path><path d="M6 18l2-6h8l2 6"></path><path d="M9.5 12V7.8"></path><path d="M14.5 12V6.6"></path><path d="M8.8 8h1.4"></path><path d="M13.8 6.8h1.4"></path></svg>`,
+        vertical_jump: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4"></path><path d="M8.5 7.5L12 4l3.5 3.5"></path><path d="M8.5 16.5L12 20l3.5-3.5"></path><path d="M5 7h2"></path><path d="M17 17h2"></path></svg>`,
+        broad_jump: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17h16"></path><path d="M6 17v-3"></path><path d="M10 17v-5"></path><path d="M14 17v-4"></path><path d="M18 17v-6"></path><path d="M6 10l12-3"></path></svg>`,
+        bench_press: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
+        squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="22" y2="8"></line><line x1="4" y1="8" x2="4" y2="16"></line><line x1="20" y1="8" x2="20" y2="16"></line><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
+        power_clean: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M10 12a2 2 0 1 0 4 0"></path></svg>`,
+        single_leg_squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M12 12v4"></path><path d="M10.5 16h3"></path></svg>`
+      };
+      return iconMap[metricKey] || `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`;
+    }
+
     function buildDetailMetricCard(player, metric, metricVideoMap) {
       const value = player[metric.key];
       if (!value) return '';
@@ -285,21 +303,18 @@
       const displayValue = metric.key === 'broad_jump'
         ? formatBroadJumpFeetInches(value)
         : `${value}${metric.suffix}`;
-      const recordedAt = media && media.recorded_at
-        ? new Date(media.recorded_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
-        : null;
       const cardAttrs = hasVideo
         ? ` role="button" tabindex="0" aria-label="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
       return `
         <div class="metric-item ${hasVideo ? 'metric-item-clickable' : ''}"${cardAttrs}>
+          <div class="metric-card-icon-wrap" aria-hidden="true">${getMetricCardIcon(metric.key)}</div>
           <div class="metric-label-row">
             <div class="metric-label">${metric.label}</div>
             ${isVerified ? `<span class="metric-verified-star" title="${verifiedBy}">★</span>` : ''}
           </div>
           <div class="metric-value">${displayValue}</div>
-          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? 'View Video' : '&nbsp;'}</div>
-          ${recordedAt ? `<div class="metric-recorded-date">${recordedAt}</div>` : ''}
+          <div class="metric-video-hint ${hasVideo ? '' : 'metric-video-hint-empty'}">${hasVideo ? '<span class="metric-video-play" aria-hidden="true">▶</span> View Video' : '&nbsp;'}</div>
         </div>
       `;
     }
@@ -882,6 +897,13 @@
       const player = await res.json();
       currentPlayerData = player;
       const metricVideoMap = getMetricVideoMap(player);
+      const gpaNumericValue = Number(player.gpa);
+      const gpaDisplayValue = player.gpa != null && String(player.gpa).trim() !== '' ? String(player.gpa) : 'N/A';
+      const honorsDisplay = (player.achievement && String(player.achievement).trim())
+        ? String(player.achievement).trim()
+        : (Number.isFinite(gpaNumericValue)
+          ? (gpaNumericValue >= 3.5 ? 'High Honors' : (gpaNumericValue >= 3.0 ? 'Honors' : ''))
+          : '');
 
       const heroStyle = player.hs_team?.banner_image
         ? 'background: url(\'/uploads/' + player.hs_team.banner_image + '\') center/cover no-repeat;'
@@ -926,21 +948,19 @@
               </div>
             ` : ''}
             <h1 class="player-name-large">${player.full_name}</h1>
-            <div class="meta-badges">
-              ${player.position ? `<span class="meta-badge">${player.position}</span>` : ''}
-              ${player.birth_date ? `<span class="meta-badge">DOB: ${new Date(player.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span>` : ''}
-              ${player.graduation_year ? `<span class="meta-badge">Class of ${player.graduation_year}</span>` : ''}
-              ${player.high_school ? `<span class="meta-badge">${player.high_school}</span>` : ''}
-              ${player.height ? `<span class="meta-badge">${formatHeightDisplay(player.height)}</span>` : ''}
-              ${player.weight ? `<span class="meta-badge">${player.weight} lbs</span>` : ''}
-              ${player.gpa ? `<span class="meta-badge ${player.report_card_image ? 'clickable-gpa' : ''}" ${player.report_card_image ? `role="button" tabindex="0" title="Click to view full size" aria-label="View report card image" onclick="openLightbox('/uploads/${player.report_card_image}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); openLightbox('/uploads/${player.report_card_image}');}"` : ''}>GPA: ${player.gpa}${player.report_card_image ? ' (View)' : ''}</span>` : ''}
-              ${player.achievement ? `<span class="meta-badge">${player.achievement}</span>` : ''}
+            <div class="meta-badges profile-meta-badges-themed">
+              ${player.position ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 15.8 6.7 18l1-5.8-4.2-4.1 5.9-.9L12 2z"></path></svg></span><span>${player.position}</span></span>` : ''}
+              ${player.birth_date ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span><span>DOB: ${new Date(player.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}</span></span>` : ''}
+              ${player.graduation_year ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span><span>Class of ${player.graduation_year}</span></span>` : ''}
+              ${player.high_school ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-4 7 4v13"></path><path d="M9 21v-4h6v4"></path><path d="M9 10h.01"></path><path d="M12 10h.01"></path><path d="M15 10h.01"></path></svg></span><span>${player.high_school}</span></span>` : ''}
+              ${player.height ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"></line><polyline points="8 7 12 3 16 7"></polyline><polyline points="8 17 12 21 16 17"></polyline></svg></span><span>${formatHeightDisplay(player.height)}</span></span>` : ''}
+              ${player.weight ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg></span><span>${player.weight} lbs</span></span>` : ''}
             </div>
-            <div style="margin-top: 20px;">
-              <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn" id="favoriteBtn">
+            <div class="profile-detail-quick-actions">
+              <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn profile-detail-favorite-btn" id="favoriteBtn">
                 <span id="favoriteBtnIcon">☆</span> <span id="favoriteBtnText">Favorite</span>
               </button>
-              <button onclick="viewPlayerCard()" class="player-card-btn" style="margin-left: 10px;">🏈 Player Card</button>
+              <button onclick="viewPlayerCard()" class="player-card-btn profile-detail-player-card-btn">🏈 Player Card</button>
             </div>
           </div>
 
@@ -948,17 +968,31 @@
             Sponsored Space 728 x 90
           </div>
           
-          ${player.bio ? `
-            <div class="profile-section">
-              <h2 class="section-title-small">ABOUT</h2>
-              <p class="bio-text">${player.bio}</p>
+          <div class="profile-section profile-about-academics-section">
+            <div class="profile-about-academics-grid">
+              <div class="profile-about-panel">
+                <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>ABOUT</h2>
+                <p class="bio-text">${player.bio || 'Add your story, strengths, and goals to help recruiters understand who you are off the field.'}</p>
+              </div>
+              <div class="profile-academics-stack">
+                <div class="profile-academic-card profile-academic-primary">
+                  <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span> ACADEMICS</div>
+                  <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
+                  <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>
+                </div>
+                <div class="profile-academic-card profile-academic-primary">
+                  <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> PROFILE VIEWS</div>
+                  <div class="profile-academic-value">${Number(player.profile_view_count || 0)}</div>
+                  <div class="profile-academic-sub">Total Views</div>
+                </div>
+              </div>
             </div>
-          ` : ''}
+          </div>
 
           <!-- Player Rating (AI only) -->
           <div id="ratingSection" class="profile-section">
             <div class="rating-section-header" style="justify-content:space-between; gap:10px; flex-wrap:wrap;">
-              <h2 class="section-title-small" style="margin-bottom:0;">PLAYER RATING</h2>
+              <h2 class="section-title-small profile-unified-title" style="margin-bottom:0;"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="12" width="3" height="8" rx="1"></rect><rect x="11" y="8" width="3" height="12" rx="1"></rect><rect x="17" y="5" width="3" height="15" rx="1"></rect></svg></span>PLAYER RATING</h2>
               <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
             </div>
             <div class="rating-tab-content" role="tabpanel">
@@ -967,12 +1001,12 @@
           </div>
 
           <!-- Athletic Metrics Grid -->
-          <div class="profile-section">
+          <div class="profile-section profile-performance-section">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
-              <h2 class="section-title-small" style="margin-bottom:0;">PLAYER PERFORMANCE</h2>
-              <button id="compareMetricsBtn" type="button" onclick="openCompareModal()" class="player-card-btn">Compare Performance</button>
+              <h2 class="section-title-small profile-unified-title" style="margin-bottom:0;"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="11" width="3" height="9" rx="1"></rect><rect x="11" y="7" width="3" height="13" rx="1"></rect><rect x="17" y="4" width="3" height="16" rx="1"></rect></svg></span>PLAYER PERFORMANCE</h2>
+              <button id="compareMetricsBtn" type="button" onclick="openCompareModal()" class="player-card-btn compare-performance-btn"><span class="compare-btn-icon" aria-hidden="true">⚖</span>Compare Performance</button>
             </div>
-            <div class="metrics-grid">
+            <div class="metrics-grid profile-metrics-grid">
               ${DETAIL_METRICS.map(metric => buildDetailMetricCard(player, metric, metricVideoMap)).join('')}
             </div>
           </div>
@@ -985,7 +1019,7 @@
             const hasUploaded = player.highlight_videos && JSON.parse(player.highlight_videos).length > 0;
             const hasLinks = player.video_links && JSON.parse(player.video_links).length > 0;
             if (!hasUploaded && !hasLinks) return '';
-            let videoHTML = `<div class="profile-section"><h2 class="section-title-small">HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
+            let videoHTML = `<div class="profile-section profile-highlight-videos-section"><h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"></rect><polygon points="12,12 8.5,9.8 8.5,14.2"></polygon><path d="M17 9l4-2v10l-4-2"></path></svg></span>HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
             if (hasUploaded) {
               videoHTML += JSON.parse(player.highlight_videos).map(video =>
                 `<video controls src="/uploads/${video}" class="profile-video"></video>`
@@ -1012,7 +1046,7 @@
             const offers = applySavedCollegeOrder('offers', offersRaw);
             return offers.length > 0 ? `
             <div class="profile-section">
-              <h2 class="section-title-small">COLLEGE OFFERS</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"></path><path d="M4 10l8-5 8 5"></path><line x1="6" y1="10" x2="6" y2="17"></line><line x1="10" y1="10" x2="10" y2="17"></line><line x1="14" y1="10" x2="14" y2="17"></line><line x1="18" y1="10" x2="18" y2="17"></line><path d="M3 17h18"></path></svg></span>COLLEGE OFFERS</h2>
               <div class="college-offers-grid-profile">
                 ${offers.map(offer => 
                   `<div class="college-logo-card" title="${offer.name || ''}">
@@ -1030,7 +1064,7 @@
           <!-- Contact Information -->
           ${(player.father_name || player.mother_name || player.coach_name) ? `
             <div class="profile-section">
-              <h2 class="section-title-small">CONTACT INFORMATION</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>CONTACT INFORMATION</h2>
               <div class="contact-info-grid">
                 ${player.father_name ? `
                   <div class="contact-card">
@@ -1068,7 +1102,7 @@
 
           ${player.additional_images ? `
             <div class="profile-section">
-              <h2 class="section-title-small">IMAGES</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="M21 16l-5-5-4 4-2-2-5 5"></path></svg></span>IMAGES</h2>
               <div class="images-grid-profile">
                 ${JSON.parse(player.additional_images).map(img => 
                   `<img src="/uploads/${img}" alt="Player image" class="profile-image">`
@@ -1078,7 +1112,7 @@
           ` : ''}
 
             <div id="coachCommentsSection" style="display:none;" class="profile-section">
-              <h2 class="section-title-small">COACH'S COMMENT</h2>
+              <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H7l-3 3V5z"></path></svg></span>COACH'S COMMENT</h2>
               <div id="coachCommentsList"></div>
               <div id="coachCommentForm" style="display:none; margin-top:14px;">
                 <textarea id="coachCommentInput" rows="4" maxlength="2000" placeholder="Write your comment about this player..." style="width:100%; box-sizing:border-box; padding:10px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; resize:vertical;"></textarea>

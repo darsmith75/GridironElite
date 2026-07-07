@@ -108,6 +108,33 @@ router.get('/player/profile', requireAuth, async (req, res) => {
   const profile = await db.prepare('SELECT * FROM player_profiles WHERE user_id = ?').get(req.session.userId);
   const user = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
   await enrichPlayerProfile(profile);
+
+  if (profile) {
+    let teamRow = await db.prepare(`
+      SELECT ht.team_name, ht.school_name, ht.banner_image, ht.banner_color_start, ht.banner_color_end, ht.school_logo
+      FROM team_players tp
+      JOIN hs_teams ht ON ht.id = tp.team_id
+      WHERE tp.player_id = ?
+      LIMIT 1
+    `).get(req.session.userId);
+
+    // Fallback: if roster link is missing, try matching by player's high school name.
+    if (!teamRow && profile.high_school && String(profile.high_school).trim()) {
+      teamRow = await db.prepare(`
+        SELECT ht.team_name, ht.school_name, ht.banner_image, ht.banner_color_start, ht.banner_color_end, ht.school_logo
+        FROM hs_teams ht
+        WHERE LOWER(TRIM(ht.school_name)) = LOWER(TRIM(?))
+           OR LOWER(TRIM(ht.team_name)) = LOWER(TRIM(?))
+        ORDER BY ht.id DESC
+        LIMIT 1
+      `).get(profile.high_school, profile.high_school);
+    }
+
+    if (teamRow) {
+      profile.hs_team = teamRow;
+    }
+  }
+
   res.json({ ...(profile || {}), email: user?.email || '' });
 });
 
