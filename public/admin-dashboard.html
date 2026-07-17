@@ -597,6 +597,7 @@
         <button class="admin-tab" onclick="switchTab('teams')">Teams</button>
         <button class="admin-tab" onclick="switchTab('colleges')">College Management</button>
         <button class="admin-tab" onclick="switchTab('protips')">Metric Pro Tips</button>
+        <button class="admin-tab" onclick="switchTab('position-guides')">Position Guides</button>
         <button class="admin-tab" onclick="switchTab('school-ratings')">School Ratings</button>
         <button class="admin-tab" onclick="switchTab('ads')">Advertising</button>
       </div>
@@ -672,6 +673,36 @@
           <p style="margin:0 0 16px; color:#666; font-size:14px;">These tips appear when athletes click the info icon beside each metric on their profile form.</p>
           <div id="proTipGrid" class="pro-tip-grid"></div>
           <div id="proTipStatus" class="pro-tip-status"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-position-guides">
+        <div class="admin-table-wrapper">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Position Highlight Guides</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn-ghost" onclick="addPositionGuideRow()">+ Add Guide</button>
+              <button class="btn-save" onclick="savePositionHighlightGuides()">Save Guides</button>
+            </div>
+          </div>
+          <p style="margin:0 0 16px; color:#666; font-size:14px;">Controls position-specific image guides used on the Player Recruiting page. Set image paths like <code>/images/positionHighlight/quarterBack.JPEG</code>.</p>
+          <div style="overflow-x:auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width:80px;">Order</th>
+                  <th style="min-width:120px;">Key</th>
+                  <th style="min-width:180px;">Display Name</th>
+                  <th style="min-width:300px;">Image Path</th>
+                  <th style="min-width:220px;">Aliases (comma-separated)</th>
+                  <th style="width:100px;">Active</th>
+                  <th style="width:100px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="positionGuidesBody"></tbody>
+            </table>
+          </div>
+          <div id="positionGuidesStatus" class="school-ratings-status"></div>
         </div>
       </div>
 
@@ -1094,6 +1125,7 @@
     let teamsCurrentPage = 1;
     let teamsPagination = { page: 1, limit: TEAMS_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
     let schoolRatingCategories = [];
+    let positionHighlightGuides = [];
     let adSlotConfig = [];
     let adSlots = {};
     let b2QueueAutoRefreshTimer = null;
@@ -1593,6 +1625,7 @@
       document.getElementById('tab-' + tab).classList.add('active');
       if (tab === 'colleges') loadColleges();
       if (tab === 'protips') loadMetricTips();
+      if (tab === 'position-guides') loadPositionHighlightGuides();
       if (tab === 'school-ratings') loadSchoolRatingCategories();
       if (tab === 'ads') loadAdSlotsConfig();
       if (tab === 'coaches') loadCoaches();
@@ -1818,6 +1851,118 @@
         if (status) status.textContent = 'Saved successfully.';
       } catch (error) {
         if (status) status.textContent = 'Failed to save pro tips.';
+      }
+    }
+
+    function renderPositionHighlightGuides() {
+      const tbody = document.getElementById('positionGuidesBody');
+      if (!tbody) return;
+
+      if (!positionHighlightGuides.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#76849b;padding:20px;">No guides yet. Click + Add Guide.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = positionHighlightGuides.map((item, index) => `
+        <tr data-row-index="${index}" data-guide-id="${item.id ? Number(item.id) : ''}">
+          <td><input type="number" min="1" value="${Number(item.sortOrder || (index + 1))}"></td>
+          <td><input type="text" value="${escapeHtml(item.positionKey || '')}" placeholder="qb"></td>
+          <td><input type="text" value="${escapeHtml(item.displayName || '')}" placeholder="Quarterback"></td>
+          <td><input type="text" value="${escapeHtml(item.imagePath || '')}" placeholder="/images/positionHighlight/quarterBack.JPEG"></td>
+          <td><input type="text" value="${escapeHtml(item.aliasesCsv || '')}" placeholder="qb, quarterback"></td>
+          <td>
+            <select>
+              <option value="true" ${item.isActive !== false ? 'selected' : ''}>Yes</option>
+              <option value="false" ${item.isActive === false ? 'selected' : ''}>No</option>
+            </select>
+          </td>
+          <td><button class="action-btn delete" onclick="removePositionGuideRow(${index})">Remove</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function addPositionGuideRow() {
+      positionHighlightGuides.push({
+        positionKey: '',
+        displayName: '',
+        imagePath: '',
+        aliasesCsv: '',
+        isActive: true,
+        sortOrder: positionHighlightGuides.length + 1
+      });
+      renderPositionHighlightGuides();
+      const status = document.getElementById('positionGuidesStatus');
+      if (status) status.textContent = '';
+    }
+
+    function removePositionGuideRow(index) {
+      positionHighlightGuides = positionHighlightGuides.filter((_, i) => i !== index);
+      renderPositionHighlightGuides();
+      const status = document.getElementById('positionGuidesStatus');
+      if (status) status.textContent = '';
+    }
+
+    async function loadPositionHighlightGuides() {
+      const status = document.getElementById('positionGuidesStatus');
+      if (status) status.textContent = 'Loading guides...';
+
+      try {
+        const res = await fetch('/api/admin/position-highlight-guides');
+        if (!res.ok) {
+          if (status) status.textContent = 'Failed to load guides.';
+          return;
+        }
+
+        const data = await res.json();
+        positionHighlightGuides = Array.isArray(data.guides) ? data.guides : [];
+        renderPositionHighlightGuides();
+        if (status) status.textContent = '';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to load guides.';
+      }
+    }
+
+    async function savePositionHighlightGuides() {
+      const status = document.getElementById('positionGuidesStatus');
+      const rows = document.querySelectorAll('#positionGuidesBody tr[data-row-index]');
+      const payload = { guides: [] };
+
+      rows.forEach((row, index) => {
+        const inputs = row.querySelectorAll('input, select');
+        const parsedId = parseInt(row.dataset.guideId, 10);
+        const sortOrder = parseInt(inputs[0]?.value, 10);
+        payload.guides.push({
+          id: Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null,
+          sortOrder: Number.isInteger(sortOrder) ? sortOrder : (index + 1),
+          positionKey: (inputs[1]?.value || '').trim(),
+          displayName: (inputs[2]?.value || '').trim(),
+          imagePath: (inputs[3]?.value || '').trim(),
+          aliasesCsv: (inputs[4]?.value || '').trim(),
+          isActive: (inputs[5]?.value || 'true') === 'true'
+        });
+      });
+
+      if (status) status.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/api/admin/position-highlight-guides', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (status) status.textContent = err.error || 'Failed to save guides.';
+          return;
+        }
+
+        const data = await res.json();
+        positionHighlightGuides = Array.isArray(data.guides) ? data.guides : payload.guides;
+        renderPositionHighlightGuides();
+        if (status) status.textContent = 'Saved successfully.';
+      } catch (_) {
+        if (status) status.textContent = 'Failed to save guides.';
       }
     }
 

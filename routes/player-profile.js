@@ -20,6 +20,7 @@ const {
 } = require('../utils/file-mgmt');
 const { enrichPlayerProfile } = require('../utils/enrich-player');
 const { parseHeightToInches } = require('../utils/height');
+const { normalizePositionToken, parseAliasesCsv, guideMatchesPosition } = require('../utils/position-highlights');
 
 const router = express.Router();
 
@@ -152,6 +153,50 @@ router.get('/player/metric-pro-tips', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Player get metric pro tips error:', error);
     res.status(500).json({ error: 'Failed to load metric tips' });
+  }
+});
+
+router.get('/player/position-highlight-guide', requireAuth, async (req, res) => {
+  try {
+    const requestedPosition = String(req.query?.position || '').trim();
+    let effectivePosition = requestedPosition;
+
+    if (!effectivePosition && req.session.role === 'player') {
+      const playerProfile = await db.prepare('SELECT position FROM player_profiles WHERE user_id = ?').get(req.session.userId);
+      effectivePosition = String(playerProfile?.position || '').trim();
+    }
+
+    const rows = await db.prepare(`
+      SELECT id, position_key, display_name, image_path, aliases_csv, is_active, sort_order, updated_at
+      FROM position_highlight_guides
+      WHERE is_active = true
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    const guides = rows.map((row) => ({
+      id: row.id,
+      positionKey: row.position_key,
+      displayName: row.display_name,
+      imagePath: row.image_path,
+      aliases: parseAliasesCsv(row.aliases_csv || ''),
+      aliasesCsv: row.aliases_csv || '',
+      sortOrder: Number(row.sort_order || 0),
+      updatedAt: row.updated_at || null
+    }));
+
+    const target = normalizePositionToken(effectivePosition);
+    const exactMatch = guides.find((item) => normalizePositionToken(item.positionKey) === target);
+    const aliasMatch = guides.find((item) => guideMatchesPosition(item, target));
+    const guide = exactMatch || aliasMatch || null;
+
+    res.json({
+      requestedPosition: requestedPosition || null,
+      resolvedPosition: effectivePosition || null,
+      guide
+    });
+  } catch (error) {
+    console.error('Player get position highlight guide error:', error);
+    res.status(500).json({ error: 'Failed to load position highlight guide' });
   }
 });
 

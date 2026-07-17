@@ -375,6 +375,86 @@
     .category-guidance-card li + li {
       margin-top: 6px;
     }
+    .position-guide-link {
+      color: #1e3c72;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .position-guide-link:hover {
+      color: #17315f;
+    }
+    .position-guide-meta {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #4f607a;
+      line-height: 1.45;
+    }
+    .position-guide-error {
+      color: #a12727;
+    }
+    .position-guide-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10060;
+      background: rgba(9, 17, 29, 0.72);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .position-guide-modal.active {
+      display: flex;
+    }
+    .position-guide-modal-content {
+      width: min(960px, 100%);
+      max-height: 90vh;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 20px 55px rgba(7, 16, 30, 0.45);
+      display: flex;
+      flex-direction: column;
+    }
+    .position-guide-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #dde6f2;
+      background: #f6faff;
+    }
+    .position-guide-modal-header h3 {
+      margin: 0;
+      color: #1e3c72;
+      font-size: 17px;
+    }
+    .position-guide-close {
+      border: none;
+      background: #e7eefb;
+      color: #1e3c72;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .position-guide-modal-body {
+      padding: 10px;
+      overflow: auto;
+      text-align: center;
+      background: #f0f5ff;
+    }
+    .position-guide-modal-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(18, 39, 75, 0.22);
+      background: #fff;
+    }
     @media (max-width: 720px) {
       .resources-hero { padding: 20px; }
       .resources-hero h1 { font-size: 23px; }
@@ -815,7 +895,12 @@
                 <li>WR/TE: release vs press, route pacing, separation, contested catches, and run-after-catch.</li>
                 <li>RB: vision, contact balance, pass protection reps, and burst through tight windows.</li>
                 <li>OL/DL/LB/DB: hand usage, leverage, pursuit effort, and finish through whistle.</li>
+                <li>
+                  Need a template for your own position?
+                  <a href="#" id="positionGuideLink" class="position-guide-link" style="display:none;">View my position highlight guide</a>
+                </li>
               </ul>
+              <p id="positionGuideMeta" class="position-guide-meta">Loading your position guide...</p>
             </article>
             <article class="resource-card">
               <h3>Common Mistakes</h3>
@@ -1190,9 +1275,22 @@
     </div>
   </div>
 
+  <div id="positionGuideModal" class="position-guide-modal" role="dialog" aria-modal="true" aria-labelledby="positionGuideModalTitle">
+    <div class="position-guide-modal-content">
+      <div class="position-guide-modal-header">
+        <h3 id="positionGuideModalTitle">Position Highlight Guide</h3>
+        <button type="button" class="position-guide-close" onclick="closePositionGuideModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="position-guide-modal-body">
+        <img id="positionGuideModalImage" alt="Position highlight guide" src="">
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     const timelineYearOrder = ['freshman', 'sophomore', 'junior', 'senior'];
+    let activePositionGuide = null;
 
     const recruitingTimelineData = {
       freshman: {
@@ -1301,6 +1399,81 @@
       node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
     });
 
+    function renderPositionGuideState(guide, resolvedPosition, errorMessage) {
+      const link = document.getElementById('positionGuideLink');
+      const meta = document.getElementById('positionGuideMeta');
+      if (!link || !meta) return;
+
+      activePositionGuide = guide || null;
+      if (!activePositionGuide) {
+        link.style.display = 'none';
+        if (errorMessage) {
+          meta.textContent = errorMessage;
+          meta.classList.add('position-guide-error');
+        } else if (resolvedPosition) {
+          meta.textContent = `No guide configured yet for ${resolvedPosition}. Ask admin to add one in Position Guides.`;
+          meta.classList.remove('position-guide-error');
+        } else {
+          meta.textContent = 'Add a position to your profile to unlock a position-specific highlight guide.';
+          meta.classList.remove('position-guide-error');
+        }
+        return;
+      }
+
+      link.style.display = 'inline';
+      meta.textContent = `${activePositionGuide.displayName} guide is ready. Click the link to preview the image template.`;
+      meta.classList.remove('position-guide-error');
+    }
+
+    async function loadPositionGuideForProfile(positionValue) {
+      const query = positionValue ? `?position=${encodeURIComponent(positionValue)}` : '';
+      try {
+        const res = await fetch('/api/player/position-highlight-guide' + query);
+        if (!res.ok) {
+          renderPositionGuideState(null, positionValue || '', 'Failed to load position guide right now.');
+          return;
+        }
+        const data = await res.json();
+        renderPositionGuideState(data.guide || null, data.resolvedPosition || positionValue || '', '');
+      } catch (_) {
+        renderPositionGuideState(null, positionValue || '', 'Failed to load position guide right now.');
+      }
+    }
+
+    function openPositionGuideModal() {
+      if (!activePositionGuide || !activePositionGuide.imagePath) return;
+      const modal = document.getElementById('positionGuideModal');
+      const title = document.getElementById('positionGuideModalTitle');
+      const image = document.getElementById('positionGuideModalImage');
+      if (!modal || !title || !image) return;
+
+      title.textContent = activePositionGuide.displayName || 'Position Highlight Guide';
+      image.src = activePositionGuide.imagePath;
+      image.alt = `${activePositionGuide.displayName || 'Position'} highlight guide`;
+      modal.classList.add('active');
+    }
+
+    function closePositionGuideModal() {
+      const modal = document.getElementById('positionGuideModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+    }
+
+    document.addEventListener('click', (event) => {
+      if (event.target && event.target.id === 'positionGuideLink') {
+        event.preventDefault();
+        openPositionGuideModal();
+      }
+      const modal = document.getElementById('positionGuideModal');
+      if (modal && event.target === modal) {
+        closePositionGuideModal();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closePositionGuideModal();
+    });
+
     function mapGraduationYearToTimelineYear(graduationYear, nowDate) {
       if (!Number.isInteger(graduationYear)) return null;
       const now = nowDate || new Date();
@@ -1328,8 +1501,13 @@
           const gradYear = Number(profile && profile.graduation_year);
           const mappedYear = mapGraduationYearToTimelineYear(gradYear, new Date());
           if (mappedYear) initialTimelineYear = mappedYear;
+          await loadPositionGuideForProfile(String(profile?.position || '').trim());
+        } else {
+          renderPositionGuideState(null, '', 'Unable to load your profile position right now.');
         }
-      } catch (_) {}
+      } catch (_) {
+        renderPositionGuideState(null, '', 'Unable to load your profile position right now.');
+      }
 
       renderTimelineYear(initialTimelineYear);
       logPageView('player_resources');

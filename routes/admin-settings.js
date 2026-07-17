@@ -4,6 +4,10 @@ const { requireAdmin } = require('../middleware/auth');
 const { METRIC_TIP_CONFIG, METRIC_TIP_KEYS, AD_SLOT_CONFIG, AD_SLOT_KEYS } = require('../utils/constants');
 const { getAdSlotsMap } = require('../utils/helpers');
 const { getMetricTipsMap, getMetricYoutubeUrlsMap } = require('../utils/ai-helpers');
+const {
+  normalizePositionToken,
+  parseAliasesCsv
+} = require('../utils/position-highlights');
 
 const router = express.Router();
 
@@ -18,6 +22,28 @@ function sanitizeYoutubeUrl(url) {
     }
   } catch (_) {}
   return '';
+}
+
+function sanitizeImagePath(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('/images/') || raw.startsWith('/uploads/')) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return '';
+}
+
+function mapPositionGuideRow(row) {
+  return {
+    id: row.id,
+    positionKey: row.position_key,
+    displayName: row.display_name,
+    imagePath: row.image_path,
+    aliases: parseAliasesCsv(row.aliases_csv || ''),
+    aliasesCsv: row.aliases_csv || '',
+    isActive: !!row.is_active,
+    sortOrder: Number(row.sort_order || 0),
+    updatedAt: row.updated_at || null
+  };
 }
 
 // Admin: Get all metric pro tips
@@ -268,6 +294,162 @@ router.put('/admin/ad-slots', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Admin save ad slots error:', error);
     res.status(500).json({ error: 'Failed to save ad slots' });
+  }
+});
+
+// Admin: Get position highlight guides
+router.get('/admin/position-highlight-guides', requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.prepare(`
+      SELECT id, position_key, display_name, image_path, aliases_csv, is_active, sort_order, updated_at
+      FROM position_highlight_guides
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({ guides: rows.map(mapPositionGuideRow) });
+  } catch (error) {
+    console.error('Admin get position highlight guides error:', error);
+    res.status(500).json({ error: 'Failed to load position highlight guides' });
+  }
+});
+
+// Admin: Save position highlight guides
+router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) => {
+  const incomingGuides = req.body?.guides;
+
+  if (!Array.isArray(incomingGuides)) {
+    return res.status(400).json({ error: 'Invalid guides payload' });
+  }
+
+  if (incomingGuides.length > 100) {
+    return res.status(400).json({ error: 'Too many guides submitted' });
+  }
+
+  const normalizedGuides = [];
+  const seenKeys = new Set();
+  for (let i = 0; i < incomingGuides.length; i++) {
+    const item = incomingGuides[i] || {};
+    const parsedId = parseInt(item.id, 10);
+    const id = Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null;
+    const positionKey = normalizePositionToken(item.positionKey).slice(0, 64);
+    const displayName = String(item.displayName || '').trim().slice(0, 120);
+    const imagePath = sanitizeImagePath(item.imagePath);
+    const aliases = Array.isArray(item.aliases)
+      ? item.aliases
+      : parseAliasesCsv(item.aliasesCsv || '');
+    const aliasesCsv = aliases
+      .map((alias) => normalizePositionToken(alias))
+      .filter(Boolean)
+      .join(', ')
+      .slice(0, 500);
+    const parsedSortOrder = parseInt(item.sortOrder, 10);
+    const sortOrder = Number.isInteger(parsedSortOrder) ? parsedSortOrder : (i + 1);
+
+    if (!positionKey || !displayName || !imagePath) {
+      return res.status(400).json({ error: 'Each guide must include position key, display name, and image path.' });
+    }
+    if (seenKeys.has(positionKey)) {
+      return res.status(400).json({ error: `Duplicate position key: ${positionKey}` });
+    }
+    seenKeys.add(positionKey);
+
+    normalizedGuides.push({
+      id,
+      positionKey,
+      displayName,
+      imagePath,
+      aliasesCsv,
+      isActive: item.isActive !== false,
+      sortOrder
+    });
+  }
+
+  try {
+    await db.withTransaction(async (tx) => {
+      const existingRows = await tx.prepare('SELECT id FROM position_highlight_guides').all();
+      const existingIds = new Set(existingRows.map(row => Number(row.id)));
+      const updateItems = normalizedGuides.filter((item) => item.id && existingIds.has(item.id));
+      const insertItems = normalizedGuides.filter((item) => !item.id || !existingIds.has(item.id));
+      const keptIds = updateItems.map((item) => item.id);
+
+      if (updateItems.length > 0) {
+        const valuesClause = updateItems.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+        const valuesParams = updateItems.flatMap((item) => [
+          item.id,
+          item.positionKey,
+          item.displayName,
+          item.imagePath,
+          item.aliasesCsv,
+          item.isActive,
+          item.sortOrder
+        ]);
+
+        await tx.prepare(`
+          UPDATE position_highlight_guides src
+          SET position_key = v.position_key,
+            display_name = v.display_name,
+            image_path = v.image_path,
+            aliases_csv = v.aliases_csv,
+            is_active = v.is_active,
+            sort_order = v.sort_order,
+            updated_by_user_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          FROM (VALUES ${valuesClause}) AS v(id, position_key, display_name, image_path, aliases_csv, is_active, sort_order)
+          WHERE src.id = v.id
+        `).run(req.session.userId, ...valuesParams);
+      }
+
+      if (insertItems.length > 0) {
+        const insertValuesClause = insertItems.map(() => '(?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)').join(', ');
+        const insertParams = insertItems.flatMap((item) => [
+          item.positionKey,
+          item.displayName,
+          item.imagePath,
+          item.aliasesCsv,
+          item.isActive,
+          item.sortOrder,
+          req.session.userId
+        ]);
+
+        const insertedRows = await tx.prepare(`
+          INSERT INTO position_highlight_guides (
+            position_key,
+            display_name,
+            image_path,
+            aliases_csv,
+            is_active,
+            sort_order,
+            updated_by_user_id,
+            updated_at
+          )
+          VALUES ${insertValuesClause}
+          RETURNING id
+        `).all(...insertParams);
+
+        for (const row of insertedRows || []) {
+          const insertedId = Number(row.id);
+          if (Number.isInteger(insertedId) && insertedId > 0) keptIds.push(insertedId);
+        }
+      }
+
+      if (keptIds.length > 0) {
+        const placeholders = keptIds.map(() => '?').join(', ');
+        await tx.prepare(`DELETE FROM position_highlight_guides WHERE id NOT IN (${placeholders})`).run(...keptIds);
+      } else {
+        await tx.prepare('DELETE FROM position_highlight_guides').run();
+      }
+    });
+
+    const rows = await db.prepare(`
+      SELECT id, position_key, display_name, image_path, aliases_csv, is_active, sort_order, updated_at
+      FROM position_highlight_guides
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    res.json({ success: true, guides: rows.map(mapPositionGuideRow) });
+  } catch (error) {
+    console.error('Admin save position highlight guides error:', error);
+    res.status(500).json({ error: 'Failed to save position highlight guides' });
   }
 });
 

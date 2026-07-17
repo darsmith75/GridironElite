@@ -2,6 +2,7 @@ try { require('dotenv').config(); } catch (_) {}
 
 const { Pool } = require('pg');
 const { parseHeightToInches } = require('./utils/height');
+const { DEFAULT_POSITION_HIGHLIGHTS, toAliasesCsv } = require('./utils/position-highlights');
 
 const dbHost = process.env.DB_HOST || 'localhost';
 const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(String(dbHost).toLowerCase());
@@ -219,6 +220,19 @@ const createTablesSQL = `
     slot_key VARCHAR(120) UNIQUE NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT FALSE,
     content_html TEXT,
+    updated_by_user_id INTEGER,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS position_highlight_guides (
+    id SERIAL PRIMARY KEY,
+    position_key VARCHAR(64) UNIQUE NOT NULL,
+    display_name VARCHAR(120) NOT NULL,
+    image_path TEXT NOT NULL,
+    aliases_csv TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INTEGER NOT NULL DEFAULT 1,
     updated_by_user_id INTEGER,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -614,6 +628,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
   CREATE INDEX IF NOT EXISTS idx_player_metric_pro_tips_player ON player_metric_pro_tips(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_site_ad_slots_key ON site_ad_slots(slot_key);
+  CREATE INDEX IF NOT EXISTS idx_position_highlight_guides_sort_active ON position_highlight_guides(is_active, sort_order);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_type ON site_traffic_events(event_type);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_created_at ON site_traffic_events(created_at);
   CREATE INDEX IF NOT EXISTS idx_site_traffic_events_type_created ON site_traffic_events(event_type, created_at DESC);
@@ -840,6 +855,32 @@ async function initialize() {
         category.whyItMatters,
         category.sortOrder
       );
+    }
+  }
+
+  const existingPositionGuides = await prepare('SELECT COUNT(*)::int AS count FROM position_highlight_guides').get();
+  if ((existingPositionGuides?.count || 0) === 0) {
+    let sortOrder = 1;
+    for (const guide of DEFAULT_POSITION_HIGHLIGHTS) {
+      await prepare(`
+        INSERT INTO position_highlight_guides (
+          position_key,
+          display_name,
+          image_path,
+          aliases_csv,
+          is_active,
+          sort_order,
+          updated_at
+        )
+        VALUES (?, ?, ?, ?, true, ?, CURRENT_TIMESTAMP)
+      `).run(
+        guide.positionKey,
+        guide.displayName,
+        guide.imagePath,
+        toAliasesCsv(guide.aliases || []),
+        sortOrder
+      );
+      sortOrder += 1;
     }
   }
 }
