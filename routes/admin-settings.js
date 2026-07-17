@@ -430,30 +430,31 @@ router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
       const keptIds = updateItems.map((item) => item.id);
 
       if (updateItems.length > 0) {
-        const valuesClause = updateItems.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
-        const valuesParams = updateItems.flatMap((item) => [
-          item.id,
-          item.positionKey,
-          item.displayName,
-          item.imagePath,
-          item.aliasesCsv,
-          item.isActive,
-          item.sortOrder
-        ]);
-
-        await tx.prepare(`
-          UPDATE position_highlight_guides src
-          SET position_key = v.position_key,
-            display_name = v.display_name,
-            image_path = v.image_path,
-            aliases_csv = v.aliases_csv,
-            is_active = v.is_active,
-            sort_order = v.sort_order,
+        const updateStmt = tx.prepare(`
+          UPDATE position_highlight_guides
+          SET position_key = ?,
+            display_name = ?,
+            image_path = ?,
+            aliases_csv = ?,
+            is_active = ?,
+            sort_order = ?,
             updated_by_user_id = ?,
             updated_at = CURRENT_TIMESTAMP
-          FROM (VALUES ${valuesClause}) AS v(id, position_key, display_name, image_path, aliases_csv, is_active, sort_order)
-          WHERE src.id = v.id
-        `).run(req.session.userId, ...valuesParams);
+          WHERE id = ?
+        `);
+
+        for (const item of updateItems) {
+          await updateStmt.run(
+            item.positionKey,
+            item.displayName,
+            item.imagePath,
+            item.aliasesCsv,
+            item.isActive,
+            item.sortOrder,
+            req.session.userId,
+            item.id
+          );
+        }
       }
 
       if (insertItems.length > 0) {
