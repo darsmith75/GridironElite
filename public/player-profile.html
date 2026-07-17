@@ -1628,9 +1628,9 @@
           ? (gpaNumericValue >= 3.5 ? 'High Honors' : (gpaNumericValue >= 3.0 ? 'Honors' : ''))
           : '');
       const reportCardImageUrl = profile.report_card_image ? `/uploads/${profile.report_card_image}` : '';
-      const reportCardImageArg = reportCardImageUrl ? JSON.stringify(reportCardImageUrl) : '';
+      const reportCardImageArg = reportCardImageUrl ? reportCardImageUrl.replace(/'/g, "\\'") : '';
       const academicsCardAttrs = reportCardImageUrl
-        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openImageLightbox(${reportCardImageArg}, 'Report card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openImageLightbox(${reportCardImageArg}, 'Report card');}" onmouseenter="showReportCardPreview(event, ${reportCardImageArg})" onmousemove="moveReportCardPreview(event)" onmouseleave="hideReportCardPreview()" onblur="hideReportCardPreview()"`
+        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openImageLightbox('${reportCardImageArg}', 'Report card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openImageLightbox('${reportCardImageArg}', 'Report card');}" onmouseenter="showReportCardPreview(event, '${reportCardImageArg}')" onmousemove="moveReportCardPreview(event)" onmouseleave="hideReportCardPreview()" onblur="hideReportCardPreview()"`
         : '';
 
       // Header info with name, badges, and action buttons

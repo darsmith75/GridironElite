@@ -905,9 +905,9 @@
           ? (gpaNumericValue >= 3.5 ? 'High Honors' : (gpaNumericValue >= 3.0 ? 'Honors' : ''))
           : '');
       const reportCardImageUrl = player.report_card_image ? `/uploads/${player.report_card_image}` : '';
-      const reportCardImageArg = reportCardImageUrl ? JSON.stringify(reportCardImageUrl) : '';
+      const reportCardImageArg = reportCardImageUrl ? reportCardImageUrl.replace(/'/g, "\\'") : '';
       const academicsCardAttrs = reportCardImageUrl
-        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openLightbox(${reportCardImageArg})" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openLightbox(${reportCardImageArg});}" onmouseenter="showReportCardPreview(event, ${reportCardImageArg})" onmousemove="moveReportCardPreview(event)" onmouseleave="hideReportCardPreview()" onblur="hideReportCardPreview()"`
+        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openLightbox('${reportCardImageArg}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openLightbox('${reportCardImageArg}');}" onmouseenter="showReportCardPreview(event, '${reportCardImageArg}')" onmousemove="moveReportCardPreview(event)" onmouseleave="hideReportCardPreview()" onblur="hideReportCardPreview()"`
         : '';
 
       const heroStyle = player.hs_team?.banner_image
