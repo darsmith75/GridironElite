@@ -5,8 +5,10 @@ const { METRIC_TIP_CONFIG, METRIC_TIP_KEYS, AD_SLOT_CONFIG, AD_SLOT_KEYS } = req
 const { getAdSlotsMap } = require('../utils/helpers');
 const { getMetricTipsMap, getMetricYoutubeUrlsMap } = require('../utils/ai-helpers');
 const {
+  DEFAULT_POSITION_HIGHLIGHTS,
   normalizePositionToken,
-  parseAliasesCsv
+  parseAliasesCsv,
+  toAliasesCsv
 } = require('../utils/position-highlights');
 
 const router = express.Router();
@@ -44,6 +46,52 @@ function mapPositionGuideRow(row) {
     sortOrder: Number(row.sort_order || 0),
     updatedAt: row.updated_at || null
   };
+}
+
+async function ensurePositionHighlightGuidesReady() {
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS position_highlight_guides (
+      id SERIAL PRIMARY KEY,
+      position_key VARCHAR(64) UNIQUE NOT NULL,
+      display_name VARCHAR(120) NOT NULL,
+      image_path TEXT NOT NULL,
+      aliases_csv TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      sort_order INTEGER NOT NULL DEFAULT 1,
+      updated_by_user_id INTEGER,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_position_highlight_guides_sort_active
+      ON position_highlight_guides(is_active, sort_order);
+  `);
+
+  const existing = await db.prepare('SELECT COUNT(*)::int AS count FROM position_highlight_guides').get();
+  if ((existing?.count || 0) > 0) return;
+
+  let sortOrder = 1;
+  for (const guide of DEFAULT_POSITION_HIGHLIGHTS) {
+    await db.prepare(`
+      INSERT INTO position_highlight_guides (
+        position_key,
+        display_name,
+        image_path,
+        aliases_csv,
+        is_active,
+        sort_order,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, true, ?, CURRENT_TIMESTAMP)
+    `).run(
+      guide.positionKey,
+      guide.displayName,
+      guide.imagePath,
+      toAliasesCsv(guide.aliases || []),
+      sortOrder
+    );
+    sortOrder += 1;
+  }
 }
 
 // Admin: Get all metric pro tips
@@ -300,6 +348,7 @@ router.put('/admin/ad-slots', requireAdmin, async (req, res) => {
 // Admin: Get position highlight guides
 router.get('/admin/position-highlight-guides', requireAdmin, async (req, res) => {
   try {
+    await ensurePositionHighlightGuidesReady();
     const rows = await db.prepare(`
       SELECT id, position_key, display_name, image_path, aliases_csv, is_active, sort_order, updated_at
       FROM position_highlight_guides
@@ -365,6 +414,7 @@ router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
   }
 
   try {
+    await ensurePositionHighlightGuidesReady();
     await db.withTransaction(async (tx) => {
       const existingRows = await tx.prepare('SELECT id FROM position_highlight_guides').all();
       const existingIds = new Set(existingRows.map(row => Number(row.id)));

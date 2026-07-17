@@ -1952,8 +1952,14 @@
         });
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          if (status) status.textContent = err.error || 'Failed to save guides.';
+          let err = {};
+          try {
+            err = await res.json();
+          } catch (_) {
+            const raw = await res.text().catch(() => '');
+            err = { error: raw || `Failed to save guides (${res.status})` };
+          }
+          if (status) status.textContent = err.error || `Failed to save guides (${res.status}).`;
           return;
         }
 
