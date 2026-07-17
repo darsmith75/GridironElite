@@ -455,6 +455,29 @@
       box-shadow: 0 10px 28px rgba(18, 39, 75, 0.22);
       background: #fff;
     }
+    .resource-inline-link {
+      color: #1e3c72;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .resource-inline-link:hover {
+      color: #17315f;
+    }
+    .resource-modal-print-btn {
+      border: none;
+      background: #1e3c72;
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .resource-modal-print-btn:hover {
+      background: #17315f;
+    }
     @media (max-width: 720px) {
       .resources-hero { padding: 20px; }
       .resources-hero h1 { font-size: 23px; }
@@ -785,6 +808,7 @@
                 <li>Meet current players in your position room and ask what daily life is really like.</li>
                 <li>Review distance from home, travel logistics, weather, and housing.</li>
                 <li>Write notes right after the visit before details fade.</li>
+                <li><a href="#" id="visitChecklistFormLink" class="resource-inline-link">Open Printable Campus Visit Checklist</a></li>
               </ul>
             </article>
             <article class="resource-card">
@@ -1287,6 +1311,21 @@
     </div>
   </div>
 
+  <div id="visitChecklistModal" class="position-guide-modal" role="dialog" aria-modal="true" aria-labelledby="visitChecklistModalTitle">
+    <div class="position-guide-modal-content">
+      <div class="position-guide-modal-header">
+        <h3 id="visitChecklistModalTitle">Campus Visit Checklist</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="resource-modal-print-btn" onclick="printVisitChecklistForm()">Print</button>
+          <button type="button" class="position-guide-close" onclick="closeVisitChecklistModal()" aria-label="Close">&times;</button>
+        </div>
+      </div>
+      <div class="position-guide-modal-body">
+        <img id="visitChecklistModalImage" alt="Campus Visit Checklist printable form" src="/images/printableForms/visitCheckList.png">
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     const timelineYearOrder = ['freshman', 'sophomore', 'junior', 'senior'];
@@ -1459,19 +1498,80 @@
       modal.classList.remove('active');
     }
 
+    function openVisitChecklistModal() {
+      const modal = document.getElementById('visitChecklistModal');
+      if (!modal) return;
+      modal.classList.add('active');
+    }
+
+    function closeVisitChecklistModal() {
+      const modal = document.getElementById('visitChecklistModal');
+      if (!modal) return;
+      modal.classList.remove('active');
+    }
+
+    function printVisitChecklistForm() {
+      const imageSrc = '/images/printableForms/visitCheckList.png';
+      const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
+      if (!printWindow) return;
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Campus Visit Checklist</title>
+          <style>
+            html, body { margin: 0; padding: 0; background: #fff; }
+            .wrap { padding: 12px; display: flex; justify-content: center; }
+            img { max-width: 100%; height: auto; }
+            @media print {
+              .wrap { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            <img src="${imageSrc}" alt="Campus Visit Checklist">
+          </div>
+          <script>
+            window.onload = function () {
+              setTimeout(function () {
+                window.print();
+              }, 200);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+    }
+
     document.addEventListener('click', (event) => {
       if (event.target && event.target.id === 'positionGuideLink') {
         event.preventDefault();
         openPositionGuideModal();
       }
+      if (event.target && event.target.id === 'visitChecklistFormLink') {
+        event.preventDefault();
+        openVisitChecklistModal();
+      }
       const modal = document.getElementById('positionGuideModal');
       if (modal && event.target === modal) {
         closePositionGuideModal();
       }
+      const checklistModal = document.getElementById('visitChecklistModal');
+      if (checklistModal && event.target === checklistModal) {
+        closeVisitChecklistModal();
+      }
     });
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closePositionGuideModal();
+      if (event.key === 'Escape') {
+        closePositionGuideModal();
+        closeVisitChecklistModal();
+      }
     });
 
     function mapGraduationYearToTimelineYear(graduationYear, nowDate) {
