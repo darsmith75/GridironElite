@@ -1126,6 +1126,7 @@
     let teamsPagination = { page: 1, limit: TEAMS_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
     let schoolRatingCategories = [];
     let positionHighlightGuides = [];
+    let positionGuideOptions = [];
     let adSlotConfig = [];
     let adSlots = {};
     let b2QueueAutoRefreshTimer = null;
@@ -1858,6 +1859,25 @@
       const tbody = document.getElementById('positionGuidesBody');
       if (!tbody) return;
 
+      const fallbackOptions = [
+        { value: 'QB', label: 'Quarterback (QB)' },
+        { value: 'RB', label: 'Running Back (RB)' },
+        { value: 'WR', label: 'Wide Receiver (WR)' },
+        { value: 'TE', label: 'Tight End (TE)' },
+        { value: 'OL', label: 'Offensive Line (OL)' },
+        { value: 'OT', label: 'Tackle (OT)' },
+        { value: 'OG', label: 'Guard (OG)' },
+        { value: 'C', label: 'Center (C)' },
+        { value: 'DL', label: 'Defensive Line (DL)' },
+        { value: 'EDGE', label: 'EDGE (EDGE)' },
+        { value: 'LB', label: 'Linebacker (LB)' },
+        { value: 'CB', label: 'Cornerback (CB)' },
+        { value: 'S', label: 'Safety (S)' },
+        { value: 'K', label: 'Kicker (K)' }
+      ];
+      const options = positionGuideOptions.length ? positionGuideOptions : fallbackOptions;
+      const optionHtml = options.map((opt) => `<option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label || opt.value)}</option>`).join('');
+
       if (!positionHighlightGuides.length) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#76849b;padding:20px;">No guides yet. Click + Add Guide.</td></tr>';
         return;
@@ -1866,7 +1886,12 @@
       tbody.innerHTML = positionHighlightGuides.map((item, index) => `
         <tr data-row-index="${index}" data-guide-id="${item.id ? Number(item.id) : ''}">
           <td><input type="number" min="1" value="${Number(item.sortOrder || (index + 1))}"></td>
-          <td><input type="text" value="${escapeHtml(item.positionKey || '')}" placeholder="qb"></td>
+          <td>
+            <select>
+              <option value="">Select</option>
+              ${optionHtml}
+            </select>
+          </td>
           <td><input type="text" value="${escapeHtml(item.displayName || '')}" placeholder="Quarterback"></td>
           <td><input type="text" value="${escapeHtml(item.imagePath || '')}" placeholder="/images/positionHighlight/quarterBack.JPEG"></td>
           <td><input type="text" value="${escapeHtml(item.aliasesCsv || '')}" placeholder="qb, quarterback"></td>
@@ -1879,6 +1904,14 @@
           <td><button class="action-btn delete" onclick="removePositionGuideRow(${index})">Remove</button></td>
         </tr>
       `).join('');
+
+      tbody.querySelectorAll('tr[data-row-index]').forEach((row, index) => {
+        const select = row.querySelector('select');
+        if (select) {
+          const key = String(positionHighlightGuides[index]?.positionKey || '').trim().toUpperCase();
+          select.value = key;
+        }
+      });
     }
 
     function addPositionGuideRow() {
@@ -1915,6 +1948,7 @@
 
         const data = await res.json();
         positionHighlightGuides = Array.isArray(data.guides) ? data.guides : [];
+        positionGuideOptions = Array.isArray(data.positionOptions) ? data.positionOptions : positionGuideOptions;
         renderPositionHighlightGuides();
         if (status) status.textContent = '';
       } catch (_) {
@@ -1965,6 +1999,7 @@
 
         const data = await res.json();
         positionHighlightGuides = Array.isArray(data.guides) ? data.guides : payload.guides;
+        positionGuideOptions = Array.isArray(data.positionOptions) ? data.positionOptions : positionGuideOptions;
         renderPositionHighlightGuides();
         if (status) status.textContent = 'Saved successfully.';
       } catch (_) {

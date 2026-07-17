@@ -6,6 +6,9 @@ const { getAdSlotsMap } = require('../utils/helpers');
 const { getMetricTipsMap, getMetricYoutubeUrlsMap } = require('../utils/ai-helpers');
 const {
   DEFAULT_POSITION_HIGHLIGHTS,
+  PLAYER_POSITION_OPTIONS,
+  PLAYER_POSITION_KEYS,
+  canonicalizePositionKey,
   normalizePositionToken,
   parseAliasesCsv,
   toAliasesCsv
@@ -35,9 +38,10 @@ function sanitizeImagePath(value) {
 }
 
 function mapPositionGuideRow(row) {
+  const canonicalKey = canonicalizePositionKey(row.position_key) || String(row.position_key || '').trim().toUpperCase();
   return {
     id: row.id,
-    positionKey: row.position_key,
+    positionKey: canonicalKey,
     displayName: row.display_name,
     imagePath: row.image_path,
     aliases: parseAliasesCsv(row.aliases_csv || ''),
@@ -355,7 +359,7 @@ router.get('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
       ORDER BY sort_order ASC, id ASC
     `).all();
 
-    res.json({ guides: rows.map(mapPositionGuideRow) });
+    res.json({ guides: rows.map(mapPositionGuideRow), positionOptions: PLAYER_POSITION_OPTIONS });
   } catch (error) {
     console.error('Admin get position highlight guides error:', error);
     res.status(500).json({ error: 'Failed to load position highlight guides' });
@@ -380,7 +384,7 @@ router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
     const item = incomingGuides[i] || {};
     const parsedId = parseInt(item.id, 10);
     const id = Number.isInteger(parsedId) && parsedId > 0 ? parsedId : null;
-    const positionKey = normalizePositionToken(item.positionKey).slice(0, 64);
+    const positionKey = canonicalizePositionKey(item.positionKey).slice(0, 64);
     const displayName = String(item.displayName || '').trim().slice(0, 120);
     const imagePath = sanitizeImagePath(item.imagePath);
     const aliases = Array.isArray(item.aliases)
@@ -396,6 +400,9 @@ router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
 
     if (!positionKey || !displayName || !imagePath) {
       return res.status(400).json({ error: 'Each guide must include position key, display name, and image path.' });
+    }
+    if (!PLAYER_POSITION_KEYS.has(positionKey)) {
+      return res.status(400).json({ error: `Invalid position key: ${positionKey}` });
     }
     if (seenKeys.has(positionKey)) {
       return res.status(400).json({ error: `Duplicate position key: ${positionKey}` });
@@ -496,7 +503,7 @@ router.put('/admin/position-highlight-guides', requireAdmin, async (req, res) =>
       ORDER BY sort_order ASC, id ASC
     `).all();
 
-    res.json({ success: true, guides: rows.map(mapPositionGuideRow) });
+    res.json({ success: true, guides: rows.map(mapPositionGuideRow), positionOptions: PLAYER_POSITION_OPTIONS });
   } catch (error) {
     console.error('Admin save position highlight guides error:', error);
     res.status(500).json({ error: 'Failed to save position highlight guides' });

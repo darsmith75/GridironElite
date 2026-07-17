@@ -22,6 +22,7 @@ const { enrichPlayerProfile } = require('../utils/enrich-player');
 const { parseHeightToInches } = require('../utils/height');
 const {
   DEFAULT_POSITION_HIGHLIGHTS,
+  canonicalizePositionKey,
   normalizePositionToken,
   parseAliasesCsv,
   guideMatchesPosition,
@@ -228,7 +229,7 @@ router.get('/player/position-highlight-guide', requireAuth, async (req, res) => 
 
     const guides = rows.map((row) => ({
       id: row.id,
-      positionKey: row.position_key,
+      positionKey: canonicalizePositionKey(row.position_key) || row.position_key,
       displayName: row.display_name,
       imagePath: row.image_path,
       aliases: parseAliasesCsv(row.aliases_csv || ''),
@@ -237,8 +238,11 @@ router.get('/player/position-highlight-guide', requireAuth, async (req, res) => 
       updatedAt: row.updated_at || null
     }));
 
-    const target = normalizePositionToken(effectivePosition);
-    const exactMatch = guides.find((item) => normalizePositionToken(item.positionKey) === target);
+    const target = canonicalizePositionKey(effectivePosition) || normalizePositionToken(effectivePosition);
+    const exactMatch = guides.find((item) => {
+      const key = canonicalizePositionKey(item.positionKey) || normalizePositionToken(item.positionKey);
+      return key === target;
+    });
     const aliasMatch = guides.find((item) => guideMatchesPosition(item, target));
     const guide = exactMatch || aliasMatch || null;
 
