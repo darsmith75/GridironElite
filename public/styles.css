@@ -4956,6 +4956,7 @@ body.player-profile-theme .profile-academic-card {
 
 body.player-profile-theme .profile-academic-card.profile-academic-clickable {
   cursor: pointer;
+  position: relative;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
@@ -4968,6 +4969,33 @@ body.player-profile-theme .profile-academic-card.profile-academic-clickable:hove
 body.player-profile-theme .profile-academic-card.profile-academic-clickable:focus-visible {
   outline: 2px solid #f5c542;
   outline-offset: 2px;
+}
+
+body.player-profile-theme .profile-academic-card.profile-academic-clickable::after {
+  content: attr(data-report-card-hint);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  background: rgba(5, 19, 51, 0.96);
+  color: #ffffff;
+  border: 1px solid rgba(245, 197, 66, 0.55);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 12;
+}
+
+body.player-profile-theme .profile-academic-card.profile-academic-clickable:hover::after,
+body.player-profile-theme .profile-academic-card.profile-academic-clickable:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
 }
 
 body.player-profile-theme .profile-academic-primary {

@@ -906,9 +906,8 @@
           : '');
       const reportCardImageUrl = player.report_card_image ? `/uploads/${player.report_card_image}` : '';
       const reportCardImageArg = reportCardImageUrl ? reportCardImageUrl.replace(/'/g, "\\'") : '';
-      const academicsSubText = reportCardImageUrl ? 'View Report Card' : (honorsDisplay || '&nbsp;');
       const academicsCardAttrs = reportCardImageUrl
-        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openLightbox('${reportCardImageArg}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openLightbox('${reportCardImageArg}');}"`
+        ? ` role="button" tabindex="0" aria-label="View report card" data-report-card-hint="View Report Card" onclick="openLightbox('${reportCardImageArg}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openLightbox('${reportCardImageArg}');}"`
         : '';
 
       const heroStyle = player.hs_team?.banner_image
@@ -984,7 +983,7 @@
                   <div class="profile-academic-card profile-academic-primary ${reportCardImageUrl ? 'profile-academic-clickable' : ''}"${academicsCardAttrs}>
                   <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span> ACADEMICS</div>
                   <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
-                    <div class="profile-academic-sub">${academicsSubText}</div>
+                      <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>
                 </div>
                 <div class="profile-academic-card profile-academic-primary">
                   <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> PROFILE VIEWS</div>
