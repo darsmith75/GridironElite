@@ -136,6 +136,13 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+
+    .verified-metric-star {
+      color: #f5c542;
+      margin-left: 6px;
+      font-size: 11px;
+      vertical-align: middle;
+    }
     
     .info-value {
       font-size: 16px;
@@ -926,6 +933,20 @@
       
       const player = await res.json();
       currentPlayerData = player;
+
+      const verifiedMetricKeys = new Set();
+      if (player.metric_videos) {
+        try {
+          const metricVideos = JSON.parse(player.metric_videos);
+          if (Array.isArray(metricVideos)) {
+            metricVideos.forEach((item) => {
+              if (item && item.metric_key && item.is_verified) {
+                verifiedMetricKeys.add(String(item.metric_key));
+              }
+            });
+          }
+        } catch (_) {}
+      }
       
       // Header
       document.getElementById('playerName').textContent = player.full_name || 'Unknown Player';
@@ -939,24 +960,27 @@
       const hasMetricValue = (value) => value !== null && value !== undefined && String(value).trim() !== '';
 
       const measurableFields = [
-        { label: '40-Yard Dash', rawValue: player.forty_yard_dash, value: String(player.forty_yard_dash || '') },
-        { label: '5-10-5 Shuttle', rawValue: player.shuttle_5_10_5, value: String(player.shuttle_5_10_5 || '') },
-        { label: 'L-Drill', rawValue: player.l_drill, value: String(player.l_drill || '') },
-        { label: 'Broad Jump', rawValue: player.broad_jump, value: formatInchesAsFeetAndInches(player.broad_jump) || '' },
-        { label: 'Vertical', rawValue: player.vertical_jump, value: hasMetricValue(player.vertical_jump) ? `${player.vertical_jump}"` : '' },
-        { label: 'Bench Press', rawValue: player.bench_press, value: hasMetricValue(player.bench_press) ? `${player.bench_press} lbs` : '' },
-        { label: 'Squat', rawValue: player.squat, value: hasMetricValue(player.squat) ? `${player.squat} lbs` : '' },
-        { label: 'Power Clean', rawValue: player.power_clean, value: hasMetricValue(player.power_clean) ? `${player.power_clean} lbs` : '' },
-        { label: 'Single Leg Squat', rawValue: player.single_leg_squat, value: hasMetricValue(player.single_leg_squat) ? `${player.single_leg_squat} lbs` : '' },
-        { label: 'Catapult', rawValue: player.catapult, value: String(player.catapult || '') },
-        { label: '1080', rawValue: player.metric_1080, value: String(player.metric_1080 || '') },
-        { label: 'Hand Size', rawValue: player.hand_size, value: hasMetricValue(player.hand_size) ? `${player.hand_size}"` : '' },
-        { label: 'Wingspan', rawValue: player.wingspan, value: hasMetricValue(player.wingspan) ? `${player.wingspan}"` : '' }
+        { key: 'forty_yard_dash', label: '40-Yard Dash', rawValue: player.forty_yard_dash, value: String(player.forty_yard_dash || '') },
+        { key: 'shuttle_5_10_5', label: '5-10-5 Shuttle', rawValue: player.shuttle_5_10_5, value: String(player.shuttle_5_10_5 || '') },
+        { key: 'l_drill', label: 'L-Drill', rawValue: player.l_drill, value: String(player.l_drill || '') },
+        { key: 'broad_jump', label: 'Broad Jump', rawValue: player.broad_jump, value: formatInchesAsFeetAndInches(player.broad_jump) || '' },
+        { key: 'vertical_jump', label: 'Vertical', rawValue: player.vertical_jump, value: hasMetricValue(player.vertical_jump) ? `${player.vertical_jump}"` : '' },
+        { key: 'bench_press', label: 'Bench Press', rawValue: player.bench_press, value: hasMetricValue(player.bench_press) ? `${player.bench_press} lbs` : '' },
+        { key: 'squat', label: 'Squat', rawValue: player.squat, value: hasMetricValue(player.squat) ? `${player.squat} lbs` : '' },
+        { key: 'power_clean', label: 'Power Clean', rawValue: player.power_clean, value: hasMetricValue(player.power_clean) ? `${player.power_clean} lbs` : '' },
+        { key: 'single_leg_squat', label: 'Single Leg Squat', rawValue: player.single_leg_squat, value: hasMetricValue(player.single_leg_squat) ? `${player.single_leg_squat} lbs` : '' },
+        { key: 'catapult', label: 'Catapult', rawValue: player.catapult, value: String(player.catapult || '') },
+        { key: 'metric_1080', label: '1080', rawValue: player.metric_1080, value: String(player.metric_1080 || '') },
+        { key: 'hand_size', label: 'Hand Size', rawValue: player.hand_size, value: hasMetricValue(player.hand_size) ? `${player.hand_size}"` : '' },
+        { key: 'wingspan', label: 'Wingspan', rawValue: player.wingspan, value: hasMetricValue(player.wingspan) ? `${player.wingspan}"` : '' }
       ].filter((field) => hasMetricValue(field.rawValue));
 
       let metricsHTML = '';
       measurableFields.forEach((f) => {
-        metricsHTML += `<div class="info-row"><span class="info-label">${f.label}</span><span class="info-value">${f.value}</span></div>`;
+        const verifiedStar = verifiedMetricKeys.has(String(f.key))
+          ? '<span class="verified-metric-star" title="Verified metric" aria-label="Verified metric">★</span>'
+          : '';
+        metricsHTML += `<div class="info-row"><span class="info-label">${f.label}${verifiedStar}</span><span class="info-value">${f.value}</span></div>`;
       });
       document.getElementById('measurables').innerHTML = metricsHTML;
       

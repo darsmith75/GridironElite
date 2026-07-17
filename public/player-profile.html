@@ -1627,6 +1627,11 @@
         : (Number.isFinite(gpaNumericValue)
           ? (gpaNumericValue >= 3.5 ? 'High Honors' : (gpaNumericValue >= 3.0 ? 'Honors' : ''))
           : '');
+      const reportCardImageUrl = profile.report_card_image ? `/uploads/${profile.report_card_image}` : '';
+      const reportCardImageArg = reportCardImageUrl ? JSON.stringify(reportCardImageUrl) : '';
+      const academicsCardAttrs = reportCardImageUrl
+        ? ` role="button" tabindex="0" aria-label="View report card" onclick="openImageLightbox(${reportCardImageArg}, 'Report card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openImageLightbox(${reportCardImageArg}, 'Report card');}" onmouseenter="showReportCardPreview(event, ${reportCardImageArg})" onmousemove="moveReportCardPreview(event)" onmouseleave="hideReportCardPreview()" onblur="hideReportCardPreview()"`
+        : '';
 
       // Header info with name, badges, and action buttons
       document.getElementById('viewHeaderInfo').innerHTML = `
@@ -1712,7 +1717,7 @@
               <p class="bio-text">${profile.bio || 'Add your story, strengths, and goals to help recruiters understand who you are off the field.'}</p>
             </div>
             <div class="profile-academics-stack">
-              <div class="profile-academic-card profile-academic-primary">
+              <div class="profile-academic-card profile-academic-primary ${reportCardImageUrl ? 'profile-academic-clickable' : ''}"${academicsCardAttrs}>
                 <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span> ACADEMICS</div>
                 <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
                 <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>

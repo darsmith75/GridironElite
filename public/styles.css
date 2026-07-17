@@ -4954,6 +4954,22 @@ body.player-profile-theme .profile-academic-card {
   box-shadow: 0 6px 18px rgba(8, 31, 84, 0.32);
 }
 
+body.player-profile-theme .profile-academic-card.profile-academic-clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+body.player-profile-theme .profile-academic-card.profile-academic-clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(8, 31, 84, 0.38);
+  filter: brightness(1.04);
+}
+
+body.player-profile-theme .profile-academic-card.profile-academic-clickable:focus-visible {
+  outline: 2px solid #f5c542;
+  outline-offset: 2px;
+}
+
 body.player-profile-theme .profile-academic-primary {
   background: linear-gradient(135deg, #051f56 0%, #0a2f7c 100%);
   color: #ffffff;
