@@ -1511,41 +1511,11 @@
     }
 
     function printVisitChecklistForm() {
-      const imageSrc = '/images/printableForms/visitCheckList.png';
-      const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
-      if (!printWindow) return;
-
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Campus Visit Checklist</title>
-          <style>
-            html, body { margin: 0; padding: 0; background: #fff; }
-            .wrap { padding: 12px; display: flex; justify-content: center; }
-            img { max-width: 100%; height: auto; }
-            @media print {
-              .wrap { padding: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="wrap">
-            <img src="${imageSrc}" alt="Campus Visit Checklist">
-          </div>
-          <script>
-            window.onload = function () {
-              setTimeout(function () {
-                window.print();
-              }, 200);
-            };
-          <\/script>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
+      const printUrl = '/print-visit-checklist.html';
+      const printWindow = window.open(printUrl, '_blank');
+      if (!printWindow) {
+        alert('Pop-up blocked. Please allow pop-ups for this site to print the checklist.');
+      }
     }
 
     document.addEventListener('click', (event) => {

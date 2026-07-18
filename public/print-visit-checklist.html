@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Visit Checklist</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+    .print-wrap {
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .error {
+      color: #7f1d1d;
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin: 16px;
+      display: none;
+    }
+    @media print {
+      .print-wrap {
+        padding: 0;
+      }
+      .error {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="printError" class="error">Unable to load checklist image for printing.</div>
+  <div class="print-wrap">
+    <img id="checklistImage" src="/images/printableForms/visitCheckList.png" alt="Campus Visit Checklist">
+  </div>
+
+  <script>
+    (function () {
+      const image = document.getElementById('checklistImage');
+      const error = document.getElementById('printError');
+
+      function triggerPrint() {
+        setTimeout(function () {
+          window.print();
+        }, 150);
+      }
+
+      if (!image) {
+        if (error) error.style.display = 'block';
+        return;
+      }
+
+      if (image.complete && image.naturalWidth > 0) {
+        triggerPrint();
+      } else {
+        image.onload = triggerPrint;
+        image.onerror = function () {
+          if (error) error.style.display = 'block';
+        };
+      }
+    })();
+  </script>
+</body>
+</html>
