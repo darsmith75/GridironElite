@@ -1836,63 +1836,60 @@
       return Math.round((completedTasks.length / tasks.length) * 100);
     }
 
-    function renderRoadmap() {
+    function renderRoadmap(yearKey = 'freshman') {
       const container = document.getElementById('roadmapContainer');
       if (!container) return;
       
-      let roadmapHTML = '';
+      const yearData = recruitingTimelineData[yearKey];
+      if (!yearData) return;
       
-      Object.keys(recruitingTimelineData).forEach((yearKey, idx) => {
-        const yearData = recruitingTimelineData[yearKey];
-        roadmapHTML += `
-          <div class="year-roadmap" data-year="${yearKey}">
-            <div class="year-roadmap-header" onclick="toggleYearRoadmap('${yearKey}', event)">
-              <div class="year-roadmap-header-left">
-                <div class="year-roadmap-icon">${yearData.icon}</div>
-                <div class="year-roadmap-info">
-                  <h3>${yearData.title}</h3>
-                  <p>${yearData.yearMission}</p>
-                </div>
+      let roadmapHTML = `
+        <div class="year-roadmap active" data-year="${yearKey}">
+          <div class="year-roadmap-header">
+            <div class="year-roadmap-header-left">
+              <div class="year-roadmap-icon">${yearData.icon}</div>
+              <div class="year-roadmap-info">
+                <h3>${yearData.title}</h3>
+                <p>${yearData.yearMission}</p>
               </div>
-              <button class="year-roadmap-toggle" type="button">▼</button>
-            </div>
-            <div class="year-roadmap-content">
-              <div class="season-tabs">
-                ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => `
-                  <button class="season-tab ${sIdx === 0 ? 'active' : ''}" onclick="switchSeason('${yearKey}', '${seasonKey}')" type="button">
-                    ${yearData.seasons[seasonKey].label.split(' ')[0]} ${yearData.seasons[seasonKey].label.split('(')[1].split('-')[0].trim()}
-                  </button>
-                `).join('')}
-              </div>
-              ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => {
-                const season = yearData.seasons[seasonKey];
-                return `
-                  <div class="season-content ${sIdx === 0 ? 'active' : ''}" data-season="${seasonKey}">
-                    <div class="season-mission">
-                      <strong>Mission:</strong> ${season.mission}
-                    </div>
-                    <div class="season-task-list">
-                      ${season.tasks.map((task, tIdx) => `
-                        <label class="season-task">
-                          <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}">
-                          <span>${task}</span>
-                        </label>
-                      `).join('')}
-                    </div>
-                    <div class="season-progress">
-                      <div class="progress-bar">
-                        <div class="progress-bar-fill" style="width: 0%"></div>
-                      </div>
-                      <div class="progress-text">0%</div>
-                    </div>
-                    <div class="season-badge">⭐ ${season.label.split('(')[0].trim()} Season Badge</div>
-                  </div>
-                `;
-              }).join('')}
             </div>
           </div>
-        `;
-      });
+          <div class="year-roadmap-content">
+            <div class="season-tabs">
+              ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => `
+                <button class="season-tab ${sIdx === 0 ? 'active' : ''}" onclick="switchSeason('${yearKey}', '${seasonKey}')" type="button">
+                  ${yearData.seasons[seasonKey].label.split(' ')[0]} ${yearData.seasons[seasonKey].label.split('(')[1].split('-')[0].trim()}
+                </button>
+              `).join('')}
+            </div>
+            ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => {
+              const season = yearData.seasons[seasonKey];
+              return `
+                <div class="season-content ${sIdx === 0 ? 'active' : ''}" data-season="${seasonKey}">
+                  <div class="season-mission">
+                    <strong>Mission:</strong> ${season.mission}
+                  </div>
+                  <div class="season-task-list">
+                    ${season.tasks.map((task, tIdx) => `
+                      <label class="season-task">
+                        <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}">
+                        <span>${task}</span>
+                      </label>
+                    `).join('')}
+                  </div>
+                  <div class="season-progress">
+                    <div class="progress-bar">
+                      <div class="progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">0%</div>
+                  </div>
+                  <div class="season-badge">⭐ ${season.label.split('(')[0].trim()} Season Badge</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
       
       container.innerHTML = roadmapHTML;
       
@@ -1900,28 +1897,26 @@
       container.querySelectorAll('.task-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', (e) => updateTaskProgress(e.target));
       });
-      
-      // First year starts open
-      document.querySelector('[data-year="freshman"]').classList.add('active');
     }
 
     function toggleYearRoadmap(yearKey, event) {
-      const yearRoadmap = document.querySelector(`[data-year="${yearKey}"]`);
-      if (!yearRoadmap) return;
-      yearRoadmap.classList.toggle('active');
+      // No longer needed - roadmap is always expanded
+      event?.preventDefault();
     }
 
     function switchSeason(yearKey, seasonKey) {
-      const yearRoadmap = document.querySelector(`[data-year="${yearKey}"]`);
-      if (!yearRoadmap) return;
+      const container = document.getElementById('roadmapContainer');
+      if (!container) return;
       
-      // Deactivate all season tabs and content
-      yearRoadmap.querySelectorAll('.season-tab').forEach(tab => tab.classList.remove('active'));
-      yearRoadmap.querySelectorAll('.season-content').forEach(content => content.classList.remove('active'));
+      // Deactivate all season tabs and content in the roadmap container
+      container.querySelectorAll('.season-tab').forEach(tab => tab.classList.remove('active'));
+      container.querySelectorAll('.season-content').forEach(content => content.classList.remove('active'));
       
       // Activate selected season
-      yearRoadmap.querySelector(`.season-tab[onclick*="${seasonKey}"]`).classList.add('active');
-      yearRoadmap.querySelector(`[data-season="${seasonKey}"]`).classList.add('active');
+      const buttons = container.querySelectorAll(`.season-tab[onclick*="${seasonKey}"]`);
+      if (buttons.length > 0) buttons[0].classList.add('active');
+      const contents = container.querySelectorAll(`[data-season="${seasonKey}"]`);
+      if (contents.length > 0) contents[0].classList.add('active');
     }
 
     function updateTaskProgress(checkbox) {
@@ -1956,6 +1951,10 @@
         node.classList.toggle('active', isActive);
         node.setAttribute('aria-pressed', isActive ? 'true' : 'false');
       });
+      
+      // Render the roadmap for the selected year
+      renderRoadmap(yearKey);
+      });
     }
 
     function activateResourcesTab(tabName) {
@@ -1968,7 +1967,7 @@
       
       // Render roadmap when timeline tab is activated
       if (tabName === 'timeline') {
-        setTimeout(() => renderRoadmap(), 100);
+        setTimeout(() => renderRoadmap('freshman'), 100);
       }
     }
 
@@ -1981,12 +1980,12 @@
         node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
       });
 
-      // Initialize: set freshman as active for old timeline UI
+      // Initialize: set freshman as active for old timeline UI and render roadmap
       renderTimelineYear('freshman');
 
       // Render roadmap if timeline tab is active on load
       if (document.getElementById('panel-timeline').classList.contains('active')) {
-        renderRoadmap();
+        renderRoadmap('freshman');
       }
     }
 
