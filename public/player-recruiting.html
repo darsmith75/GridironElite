@@ -268,38 +268,244 @@
       text-align: center;
     }
     .timeline-detail {
+      display: none;
+    }
+    .roadmap-container {
+      display: block;
+    }
+    .year-roadmap {
       border: 1px solid #d7e2f1;
-      border-radius: 12px;
-      background: #fbfdff;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(14,34,74,0.08);
+    }
+    .year-roadmap-header {
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(135deg, #f3f8ff 0%, #ecf3ff 100%);
+      border-bottom: 1px solid #d9e5f3;
+      transition: background 0.2s ease;
+    }
+    .year-roadmap-header:hover {
+      background: linear-gradient(135deg, #ecf3ff 0%, #e3ebff 100%);
+    }
+    .year-roadmap.active .year-roadmap-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2f62b6 100%);
+      border-bottom-color: #1e3c72;
+    }
+    .year-roadmap-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .year-roadmap-icon {
+      font-size: 24px;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .year-roadmap-info h3 {
+      margin: 0 0 3px;
+      font-size: 17px;
+      color: #1e3c72;
+      font-weight: 700;
+    }
+    .year-roadmap.active .year-roadmap-info h3 {
+      color: #fff;
+    }
+    .year-roadmap-info p {
+      margin: 0;
+      font-size: 12px;
+      color: #5f7493;
+      line-height: 1.3;
+    }
+    .year-roadmap.active .year-roadmap-info p {
+      color: rgba(255,255,255,0.88);
+    }
+    .year-roadmap-toggle {
+      border: none;
+      background: transparent;
+      color: #1e3c72;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+    .year-roadmap.active .year-roadmap-toggle {
+      color: #fff;
+      transform: rotate(180deg);
+    }
+    .year-roadmap-content {
+      display: none;
+      padding: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .year-roadmap.active .year-roadmap-content {
+      display: block;
+      max-height: 3000px;
+      padding: 12px;
+    }
+    .season-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .season-tab {
+      border: 1px solid #d5dce8;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
+      color: #1e3c72;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .season-tab:hover {
+      border-color: #c9d2e0;
+      background: #f0f5ff;
+    }
+    .season-tab.active {
+      border-color: #c9962e;
+      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
+      color: #0b1f4b;
+      box-shadow: 0 0 0 2px rgba(201,150,46,0.2);
+    }
+    .season-content {
+      display: none;
+    }
+    .season-content.active {
+      display: block;
+    }
+    .season-mission {
+      background: linear-gradient(135deg, #fffdf5 0%, #fdf4e0 100%);
+      border: 1px solid rgba(201,150,46,0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #3a2e00;
+      line-height: 1.5;
+    }
+    .season-mission strong {
+      color: #7a5800;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .season-task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .season-task {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #e2e8f2;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #364a67;
+      line-height: 1.45;
+      transition: all 0.2s ease;
+    }
+    .season-task:hover {
+      border-color: #caa355;
+      background: #fdfaf2;
+    }
+    .season-task input[type="checkbox"] {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: #c9962e;
+    }
+    .season-task.completed {
+      opacity: 0.7;
+    }
+    .season-task.completed label {
+      text-decoration: line-through;
+      color: #9aa5b8;
+    }
+    .season-task label {
+      flex: 1;
+      cursor: pointer;
+    }
+    .season-progress {
+      margin-top: 12px;
+      padding: 12px;
+      background: linear-gradient(180deg, #f3f8ff 0%, #eef5ff 100%);
+      border: 1px solid #d9e5f3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: #d9e5f3;
+      border-radius: 999px;
       overflow: hidden;
     }
-    .timeline-detail-header {
-      background: linear-gradient(135deg, #1e3c72 0%, #2f62b6 100%);
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #c9962e 0%, #d4b876 100%);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+    .progress-text {
+      font-size: 12px;
+      color: #5f7493;
+      font-weight: 600;
+      white-space: nowrap;
+      min-width: 50px;
+      text-align: right;
+    }
+    .season-badge {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(135deg, #c9962e 0%, #d4b876 100%);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
       color: #fff;
-      padding: 14px 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
-    .timeline-detail-header h3 {
-      margin: 0;
-      font-size: 18px;
-      color: #fff;
-    }
-    .timeline-detail-header p {
-      margin: 4px 0 0;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .timeline-detail-body {
-      padding: 14px 16px 16px;
-    }
-    .timeline-detail-body ul {
-      margin: 0;
-      padding-left: 18px;
-      color: #334563;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .timeline-detail-body li + li {
-      margin-top: 6px;
+    @media (max-width: 720px) {
+      .season-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .year-roadmap-header {
+        padding: 14px 14px;
+      }
+      .year-roadmap-info h3 {
+        font-size: 15px;
+      }
+      .year-roadmap.active .year-roadmap-content {
+        padding: 10px;
+      }
     }
     .do-dont-grid {
       display: grid;
@@ -598,6 +804,8 @@
               <ul id="timelineDetailList"></ul>
             </div>
           </div>
+
+          <div class="roadmap-container" id="roadmapContainer"></div>
         </section>
 
         <section id="panel-considerations" class="resources-panel">
@@ -1335,71 +1543,401 @@
     const recruitingTimelineData = {
       freshman: {
         title: 'Freshman Year',
-        subtitle: 'Foundation phase',
-        items: [
-          'Build strong grades from day one and meet with counselors early.',
-          'Develop proper lifting, speed, and mobility fundamentals.',
-          'Set up your player profile with accurate basics and contact info.',
-          'Start collecting game film and measurable stats after each season.',
-          'Learn how to communicate professionally with coaches and mentors.',
-          'Freshman fall football is still a development phase, so chase as many quality reps as possible across varsity and JV opportunities.',
-          'Focus on being the best teammate and practice player on the team.',
-          'Use the Dec/Jan/Feb contact period to start building early recruiting communication habits.',
-          'In the off-season, cross-train and compete in other sports when possible because programs value athletes who love to compete.',
-          'When summer camps and combines start, be strategic about where you go and who is truly evaluating you.'
-        ]
+        subtitle: 'Build Foundation',
+        yearMission: 'Arrive at your first high school practice prepared physically, academically, and mentally.',
+        icon: '📘',
+        seasons: {
+          summer: {
+            label: '☀️ Summer (June–Aug)',
+            mission: 'Build Your Foundation',
+            tasks: [
+              'Complete Your Athlete Profile on GridIron',
+              'Record Your Baseline Athletic Testing on GridIron',
+              'Create Your Academic Plan',
+              'Build Your Summer Strength Program',
+              'Develop Speed & Mobility',
+              'Master Position Fundamentals',
+              'Build Nutrition Habits',
+              'Create a Professional Online Presence',
+              'Learn Football IQ',
+              'Set Your Freshman Goals'
+            ]
+          },
+          fall: {
+            label: '🏈 Fall (Aug–Nov)',
+            mission: 'Become a Great Teammate and Student-Athlete',
+            tasks: [
+              'Maintain Your GPA',
+              'Be Coachable',
+              'Learn the Playbook',
+              'Record Every Game',
+              'Track Your Season Stats',
+              'Continue Strength & Recovery',
+              'Build Leadership Habits',
+              'Meet With Your Coaches',
+              'Keep Your GridIron Profile Updated',
+              'Reflect on the Season'
+            ]
+          },
+          winter: {
+            label: '❄️ Winter (Dec–Mar)',
+            mission: 'Become Bigger, Faster, and Stronger',
+            tasks: [
+              'Complete Winter Athletic Testing',
+              'Start a Structured Strength Program',
+              'Improve Speed & Explosiveness',
+              'Create Your First Highlight Film',
+              'Meet With Your Position Coach',
+              'Build Better Nutrition Habits',
+              'Study Football Weekly',
+              'Attend Position Training',
+              'Build Recovery Habits',
+              'Update Your GridIron Recruiting Profile'
+            ]
+          },
+          spring: {
+            label: '🌱 Spring (Apr–Jun)',
+            mission: 'Prepare for a Breakout Sophomore Year',
+            tasks: [
+              'Complete Spring Athletic Testing',
+              'Attend One or Two Development Camps',
+              'Visit a College Campus',
+              'Continue Strength & Speed Training',
+              'Refine Position Skills',
+              'Set Sophomore Goals',
+              'Review Your Freshman Year',
+              'Build Relationships',
+              'Prepare for Summer Training',
+              'Update Your Athlete Profile'
+            ]
+          }
+        }
       },
       sophomore: {
         title: 'Sophomore Year',
-        subtitle: 'Exposure phase',
-        items: [
-          'Attend camps and combines where your position skills are tested.',
-          'Build focused highlight film that matches your true role.',
-          'Begin outreach to schools with concise intro messages and film links.',
-          'Track every school interaction so you can follow up consistently.',
-          'Keep academics steady as recruiting attention starts to increase.',
-          'As sophomore season progresses, keep sending updated film links to schools you care about.',
-          'If schools invite you for unofficial game visits, be intentional about where and when you go.',
-          'After fall season, the combine and clinic circuit begins, so be selective and prepared for the events that fit you best.',
-          'Summer camps are a major in-person evaluation point because coaches want to see how you compete and how you take instruction.',
-          'Use camps to ask smart questions about role fit and which skills or drills they want you to improve.'
-        ]
+        subtitle: 'Get on College Coaches\' Radar',
+        yearMission: 'Build relationships and prove you\'re improving. Don\'t chase offers—earn attention.',
+        icon: '📣',
+        seasons: {
+          summer: {
+            label: '☀️ Summer (Jun–Aug)',
+            mission: 'Build Exposure',
+            tasks: [
+              'Update Your Recruiting Profile',
+              'Update Your X/Twitter Profile',
+              'Complete Athletic Testing',
+              'Attend College Camps',
+              'Create a Target School List on GridIron',
+              'Introduce Yourself to Coaches',
+              'Visit College Campuses',
+              'Improve Your Athletic Performance and Skills',
+              'Set Sophomore Goals',
+              'Build Leadership'
+            ]
+          },
+          fall: {
+            label: '🏈 Fall (Sep–Nov)',
+            mission: 'Produce on Friday Nights',
+            tasks: [
+              'Maintain Your GPA',
+              'Update Hudl Weekly',
+              'Record Season Statistics',
+              'Build Relationships With Coaches',
+              'Continue Strength Training',
+              'Respond to Recruiting Messages',
+              'Be a Great Teammate',
+              'Review Game Film Weekly',
+              'Update Your Athlete Profile',
+              'Set Offseason Improvement Goals'
+            ]
+          },
+          winter: {
+            label: '❄️ Winter (Dec–Mar)',
+            mission: 'Become an Elite Athlete',
+            tasks: [
+              'Build Maximum Strength',
+              'Improve Speed',
+              'Create Updated Highlight Film',
+              'Continue Building Relationships Via X/Twitter',
+              'Attend Combines',
+              'Update Recruiting Profile',
+              'Continue Contacting Coaches',
+              'Improve Nutrition',
+              'Improve Recovery',
+              'Set Spring Camp Schedule'
+            ]
+          },
+          spring: {
+            label: '🌱 Spring (Apr–Jun)',
+            mission: 'Build Recruiting Momentum',
+            tasks: [
+              'Attend Junior Days',
+              'Schedule Unofficial Visits',
+              'Attend Showcase Camps',
+              'Retest Measurables',
+              'Continue Reaching Out to Coaches',
+              'Build Top 50 Schools List',
+              'Evaluate Camp Invitations',
+              'Improve Football IQ',
+              'Set Summer Recruiting Goals',
+              'Prepare for Junior Season'
+            ]
+          }
+        }
       },
       junior: {
         title: 'Junior Year',
-        subtitle: 'Decision-building phase',
-        items: [
-          'Take SAT/ACT early enough to improve scores if needed.',
-          'Create a serious target list and update your rankings monthly.',
-          'Visit campuses and ask direct football + academic fit questions.',
-          'Compare programs by development path, scheme, and opportunity.',
-          'Stay disciplined on training while managing higher communication volume.',
-          'Junior varsity film is often the most important evaluation film because schools use it to lock in where you fit on their board.',
-          'Fall game visits matter most at schools that have offered or are showing real interest, so spend extra time with your position coach when possible.',
-          'Combines and off-season events can raise or lower your stock, so only attend when healthy and fully prepared.',
-          'Winter and spring unofficial visits, Junior Days, and spring practice visits are strong chances to see real program culture with players and coaches.',
-          'During the college contact period, meet as many coaches as possible but only host in-home visits with schools you are seriously considering.',
-          'Late May and June official visits are key for learning the staff, players, and families in your recruiting class.'
-        ]
+        subtitle: 'Earn Scholarships',
+        yearMission: 'Every decision matters. This is your most important recruiting year.',
+        icon: '🎯',
+        seasons: {
+          summer: {
+            label: '☀️ Summer (Jun–Aug)',
+            mission: 'Maximize Exposure',
+            tasks: [
+              'Attend Priority College Camps',
+              'Update Recruiting Profile',
+              'Create New Highlight Film',
+              'Contact Every Target School',
+              'Build Top 10 School List',
+              'Visit Campuses',
+              'Complete Athletic Testing',
+              'Improve Speed and Strength',
+              'Prepare for Fall Season',
+              'Build Recruiting Calendar'
+            ]
+          },
+          fall: {
+            label: '🏈 Fall (Sep–Nov)',
+            mission: 'Earn Offers',
+            tasks: [
+              'Produce Varsity Film',
+              'Update Hudl & X Weekly',
+              'Track Offers',
+              'Stay in Weekly Contact With Coaches',
+              'Schedule Game-Day Visits',
+              'Maintain GPA',
+              'Respond Quickly to Coaches',
+              'Update Athlete Profile',
+              'Build Top 6 Schools',
+              'Evaluate Every Opportunity'
+            ]
+          },
+          winter: {
+            label: '❄️ Winter (Dec–Mar)',
+            mission: 'Narrow Your Choices',
+            tasks: [
+              'Build Top 6 Schools',
+              'Create New Highlight Film',
+              'Meet With Recruiting Coordinator',
+              'Continue Unofficial & Spring Practice Visits',
+              'Attend Junior Days',
+              'Improve Athletic Testing',
+              'Review Offers With Family',
+              'Meet Academic Advisors',
+              'Build Questions for Coaches',
+              'Prepare for Official Visit Season'
+            ]
+          },
+          spring: {
+            label: '🌱 Spring (Apr–Jun)',
+            mission: 'Find the Best Fit',
+            tasks: [
+              'Schedule Official Visits',
+              'Compare Schools',
+              'Evaluate Coaching Staffs',
+              'Evaluate Academics',
+              'Evaluate NIL Opportunities',
+              'Evaluate NFL Development',
+              'Continue Communication',
+              'Narrow to Top 4',
+              'Set Commitment Timeline',
+              'Prepare for Senior Year'
+            ]
+          }
+        }
       },
       senior: {
         title: 'Senior Year',
-        subtitle: 'Commitment phase',
-        items: [
-          'Continue strong grades and avoid senior-year academic drop-off.',
-          'Evaluate offers using long-term fit, not just logo or hype.',
-          'Review scholarship terms, total costs, and support resources.',
-          'Keep communication respectful and timely with all programs.',
-          'Commit with confidence once you have a clear overall fit.',
-          'Senior fall film still matters because front offices continue evaluating and updating your profile throughout the season.',
-          'Fall game visits remain important, so be strategic with travel, timing, and where you spend your energy.',
-          'By signing day, make sure your application, admissions items, scholarship agreement, and any NIL paperwork are fully complete.',
-          'Know the mid-year January report date if you are enrolling early.',
-          'Spring semester starts fast with classes, strength work, and football practice, so plan that transition ahead of time.',
-          'If you report in June or summer school, understand that it begins a major eight-week strength and football development block.'
-        ]
+        subtitle: 'Choose Your Future',
+        yearMission: 'Choose the school that gives you the best chance to succeed in football and in life.',
+        icon: '🏆',
+        seasons: {
+          summer: {
+            label: '☀️ Summer (Jun–Aug)',
+            mission: 'Final Recruiting Push',
+            tasks: [
+              'Finalize Your Commitment',
+              'Attend Remaining Camps',
+              'Update Highlight Film',
+              'Retest Athletic Measurements',
+              'Continue Coach Communication',
+              'Schedule Official Visits',
+              'Complete Recruiting Calendar',
+              'Prepare Senior Goals',
+              'Improve Leadership',
+              'Arrive in Peak Condition'
+            ]
+          },
+          fall: {
+            label: '🏈 Fall (Sep–Nov)',
+            mission: 'Make Your Decision',
+            tasks: [
+              'Take Official Visits',
+              'Compare Scholarship Offers',
+              'Talk With Current Players',
+              'Meet Academic Departments',
+              'Evaluate Depth Charts',
+              'Continue Strong Senior Season',
+              'Maintain GPA',
+              'Build Relationships',
+              'Commit When Ready',
+              'Thank Every Coaching Staff'
+            ]
+          },
+          winter: {
+            label: '❄️ Winter (Dec–Feb)',
+            mission: 'Finish Strong',
+            tasks: [
+              'Sign National Letter of Intent',
+              'Finish Academics Strong',
+              'Complete NCAA Eligibility Center Requirements',
+              'Continue Training',
+              'Stay Healthy',
+              'Complete Housing Paperwork',
+              'Register for Orientation',
+              'Meet College Strength Coach',
+              'Receive Summer Workouts',
+              'Prepare for Graduation'
+            ]
+          },
+          spring: {
+            label: '🌱 Spring (Mar–Jun)',
+            mission: 'Become College Ready',
+            tasks: [
+              'Graduate High School',
+              'Maintain Training',
+              'Complete Nutrition Plan',
+              'Improve Mobility',
+              'Prepare Mentally',
+              'Learn College Playbook if Available',
+              'Connect With Future Teammates',
+              'Attend Orientation',
+              'Build Summer Routine',
+              'Report to Campus Ready to Compete'
+            ]
+          }
+        }
       }
     };
+
+    function calculateSeasonProgress(tasks, completedTasks) {
+      if (!tasks || tasks.length === 0) return 0;
+      return Math.round((completedTasks.length / tasks.length) * 100);
+    }
+
+    function renderRoadmap() {
+      const container = document.getElementById('roadmapContainer');
+      if (!container) return;
+      
+      let roadmapHTML = '';
+      
+      Object.keys(recruitingTimelineData).forEach((yearKey, idx) => {
+        const yearData = recruitingTimelineData[yearKey];
+        roadmapHTML += `
+          <div class="year-roadmap" data-year="${yearKey}">
+            <div class="year-roadmap-header" onclick="toggleYearRoadmap('${yearKey}', event)">
+              <div class="year-roadmap-header-left">
+                <div class="year-roadmap-icon">${yearData.icon}</div>
+                <div class="year-roadmap-info">
+                  <h3>${yearData.title}</h3>
+                  <p>${yearData.yearMission}</p>
+                </div>
+              </div>
+              <button class="year-roadmap-toggle" type="button">▼</button>
+            </div>
+            <div class="year-roadmap-content">
+              <div class="season-tabs">
+                ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => `
+                  <button class="season-tab ${sIdx === 0 ? 'active' : ''}" onclick="switchSeason('${yearKey}', '${seasonKey}')" type="button">
+                    ${yearData.seasons[seasonKey].label.split(' ')[0]} ${yearData.seasons[seasonKey].label.split('(')[1].split('-')[0].trim()}
+                  </button>
+                `).join('')}
+              </div>
+              ${Object.keys(yearData.seasons).map((seasonKey, sIdx) => {
+                const season = yearData.seasons[seasonKey];
+                return `
+                  <div class="season-content ${sIdx === 0 ? 'active' : ''}" data-season="${seasonKey}">
+                    <div class="season-mission">
+                      <strong>Mission:</strong> ${season.mission}
+                    </div>
+                    <div class="season-task-list">
+                      ${season.tasks.map((task, tIdx) => `
+                        <label class="season-task">
+                          <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}">
+                          <span>${task}</span>
+                        </label>
+                      `).join('')}
+                    </div>
+                    <div class="season-progress">
+                      <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: 0%"></div>
+                      </div>
+                      <div class="progress-text">0%</div>
+                    </div>
+                    <div class="season-badge">⭐ ${season.label.split('(')[0].trim()} Season Badge</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = roadmapHTML;
+      
+      // Attach checkbox listeners
+      container.querySelectorAll('.task-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => updateTaskProgress(e.target));
+      });
+      
+      // First year starts open
+      document.querySelector('[data-year="freshman"]').classList.add('active');
+    }
+
+    function toggleYearRoadmap(yearKey, event) {
+      const yearRoadmap = document.querySelector(`[data-year="${yearKey}"]`);
+      if (!yearRoadmap) return;
+      yearRoadmap.classList.toggle('active');
+    }
+
+    function switchSeason(yearKey, seasonKey) {
+      const yearRoadmap = document.querySelector(`[data-year="${yearKey}"]`);
+      if (!yearRoadmap) return;
+      
+      // Deactivate all season tabs and content
+      yearRoadmap.querySelectorAll('.season-tab').forEach(tab => tab.classList.remove('active'));
+      yearRoadmap.querySelectorAll('.season-content').forEach(content => content.classList.remove('active'));
+      
+      // Activate selected season
+      yearRoadmap.querySelector(`.season-tab[onclick*="${seasonKey}"]`).classList.add('active');
+      yearRoadmap.querySelector(`[data-season="${seasonKey}"]`).classList.add('active');
+    }
+
+    function updateTaskProgress(checkbox) {
+      const season = checkbox.closest('.season-content');
+      if (!season) return;
+      
+      const tasks = season.querySelectorAll('.season-task');
+      const completed = season.querySelectorAll('.task-checkbox:checked').length;
+      const percentage = Math.round((completed / tasks.length) * 100);
+      
+      season.querySelector('.progress-bar-fill').style.width = percentage + '%';
+      season.querySelector('.progress-text').textContent = percentage + '%';
+      
+      // Update task label styles
+      checkbox.closest('.season-task').classList.toggle('completed', checkbox.checked);
+    }
 
     function renderTimelineYear(yearKey) {
       const yearData = recruitingTimelineData[yearKey];
@@ -1412,9 +1950,7 @@
       }
       document.getElementById('timelineDetailTitle').textContent = yearData.title;
       document.getElementById('timelineDetailSubtitle').textContent = yearData.subtitle;
-      document.getElementById('timelineDetailList').innerHTML = yearData.items
-        .map((item) => `<li>${item}</li>`)
-        .join('');
+      document.getElementById('timelineDetailList').innerHTML = '';
       document.querySelectorAll('.year-node').forEach((node) => {
         const isActive = node.dataset.year === yearKey;
         node.classList.toggle('active', isActive);
@@ -1429,6 +1965,11 @@
       document.querySelectorAll('.resources-panel').forEach((panel) => {
         panel.classList.toggle('active', panel.id === 'panel-' + tabName);
       });
+      
+      // Render roadmap when timeline tab is activated
+      if (tabName === 'timeline') {
+        setTimeout(() => renderRoadmap(), 100);
+      }
     }
 
     document.querySelectorAll('.resources-tab').forEach((btn) => {
@@ -1437,6 +1978,13 @@
 
     document.querySelectorAll('.year-node').forEach((node) => {
       node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
+    });
+
+    // Initial render
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.getElementById('roadmapContainer')) {
+        renderRoadmap();
+      }
     });
 
     function renderPositionGuideState(guide, resolvedPosition, errorMessage) {
