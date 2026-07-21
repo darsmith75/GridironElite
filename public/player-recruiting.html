@@ -1972,20 +1972,26 @@
       }
     }
 
-    document.querySelectorAll('.resources-tab').forEach((btn) => {
-      btn.addEventListener('click', () => activateResourcesTab(btn.dataset.tab));
-    });
+    function initializeResourcesTab() {
+      document.querySelectorAll('.resources-tab').forEach((btn) => {
+        btn.addEventListener('click', () => activateResourcesTab(btn.dataset.tab));
+      });
 
-    document.querySelectorAll('.year-node').forEach((node) => {
-      node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
-    });
+      document.querySelectorAll('.year-node').forEach((node) => {
+        node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
+      });
 
-    // Initial render
-    document.addEventListener('DOMContentLoaded', () => {
-      if (document.getElementById('roadmapContainer')) {
+      // Initialize: set freshman as active for old timeline UI
+      renderTimelineYear('freshman');
+
+      // Render roadmap if timeline tab is active on load
+      if (document.getElementById('panel-timeline').classList.contains('active')) {
         renderRoadmap();
       }
-    });
+    }
+
+    // Call initialization immediately (script is at bottom of page)
+    initializeResourcesTab();
 
     function renderPositionGuideState(guide, resolvedPosition, errorMessage) {
       const link = document.getElementById('positionGuideLink');
