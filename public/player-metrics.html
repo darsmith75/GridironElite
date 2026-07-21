@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Player Athletic Metrics</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     .metrics-shell {
       max-width: 1100px;
@@ -25,31 +28,32 @@
       text-decoration: underline;
     }
     .metrics-hero {
-      background: linear-gradient(135deg, #17315f 0%, #27549a 60%, #4f7cc6 100%);
+      background: linear-gradient(135deg, #051f56 0%, #0a2f7c 60%, #1a4fa8 100%);
       border-radius: 14px;
       color: #fff;
       padding: 26px 28px;
-      margin-bottom: 18px;
-      box-shadow: 0 8px 24px rgba(19, 40, 78, 0.28);
+      margin-bottom: 22px;
+      box-shadow: 0 8px 28px rgba(5,20,70,0.35);
     }
     .metrics-hero h1 {
       margin: 0 0 6px;
-      font-size: 28px;
-      letter-spacing: 0.4px;
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(26px, 3.5vw, 38px);
+      letter-spacing: 0.6px;
       color: #fff;
     }
     .metrics-hero p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255,255,255,0.88);
       font-size: 14px;
       line-height: 1.5;
       max-width: 760px;
     }
     .metrics-tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
     }
     .partner-spotlight {
       display: grid;
@@ -89,10 +93,12 @@
     }
     .partner-title {
       margin: 0;
-      font-size: 17px;
-      color: #163261;
-      font-weight: 800;
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      color: #0b1f4b;
+      font-weight: 600;
       line-height: 1.25;
+      letter-spacing: 0.2px;
     }
     .partner-copy {
       margin: 4px 0 0;
@@ -111,73 +117,70 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      border: none;
-      border-radius: 999px;
-      background: #1e3c72;
-      color: #fff;
-      padding: 10px 14px;
-      font-size: 12px;
-      font-weight: 800;
+      border: 1px solid #163f8f;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #041f58 0%, #082d79 100%);
+      color: #f8fbff;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
       letter-spacing: 0.03em;
       white-space: nowrap;
-      box-shadow: 0 8px 16px rgba(30, 60, 114, 0.28);
+      box-shadow: 0 4px 12px rgba(7,25,66,0.26);
       transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     }
     .partner-cta:hover {
-      background: #163261;
+      background: linear-gradient(135deg, #0a2b73 0%, #1142a4 100%);
+      border-color: #295ab3;
       transform: translateY(-1px);
-      box-shadow: 0 10px 18px rgba(22, 50, 97, 0.35);
+      box-shadow: 0 8px 18px rgba(7,25,66,0.32);
     }
     .metrics-tab {
-      border: 1px solid #c7d0da;
-      background: #f7faff;
-      color: #234170;
-      border-radius: 999px;
-      padding: 9px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
+      border: 1px solid #d9dfe8;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
+      padding: 12px 12px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f1f3f;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(14,34,74,0.08);
     }
     .metrics-tab:hover {
-      border-color: #9fb5d5;
-      background: #eef4ff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(6,23,63,0.12);
+      border-color: #caa355;
     }
     .metrics-tab.active {
-      background: #1e3c72;
-      border-color: #1e3c72;
-      color: #fff;
-      box-shadow: 0 5px 16px rgba(30, 60, 114, 0.28);
+      border-color: #c9962e;
+      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
+      box-shadow: 0 0 0 2px rgba(201,150,46,0.25), 0 6px 16px rgba(6,23,63,0.1);
+      color: #0b1f4b;
     }
     .metrics-panel {
-      background: #fff;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
       border: 1px solid #d5deea;
       border-radius: 14px;
       padding: 20px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    }
-    .metric-title-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
+      box-shadow: 0 4px 14px rgba(14,34,74,0.1);
     }
     .metric-title-row h2 {
       margin: 0;
-      color: #1e3c72;
+      color: #0b1f4b;
+      font-family: 'Oswald', sans-serif;
       font-size: 22px;
+      letter-spacing: 0.3px;
     }
     .metric-performance-card {
       margin-top: 12px;
       margin-bottom: 12px;
       border-radius: 12px;
       border: 1px solid #d1def1;
-      background: linear-gradient(135deg, #f3f7ff 0%, #edf4ff 100%);
+      background: linear-gradient(135deg, #fffdf5 0%, #fef8e8 100%);
       padding: 14px 16px;
-      box-shadow: 0 4px 14px rgba(30, 60, 114, 0.1);
+      box-shadow: 0 4px 12px rgba(201,150,46,0.1);
     }
     .metric-performance-label {
       margin: 0;
@@ -185,21 +188,21 @@
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #47618a;
+      color: #7a5800;
     }
     .metric-performance-value {
       margin: 5px 0 0;
       font-size: 34px;
       line-height: 1.05;
       font-weight: 900;
-      color: #13346a;
+      color: #c9962e;
       letter-spacing: 0.01em;
     }
     .metric-performance-sub {
       margin: 7px 0 0;
       font-size: 12px;
       font-weight: 700;
-      color: #2e4c79;
+      color: #8a6600;
     }
     .metric-performance-card.no-value {
       border-color: #d5deea;
@@ -224,15 +227,23 @@
     .metric-help-card {
       border: 1px solid #dbe5f3;
       border-radius: 10px;
-      background: #f8fbff;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
       padding: 12px;
+      box-shadow: 0 2px 6px rgba(14,34,74,0.06);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .metric-help-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(6,23,63,0.09);
     }
     .metric-help-card h3 {
       margin: 0 0 7px;
       font-size: 14px;
-      color: #1e3c72;
+      color: #0b1f4b;
+      font-family: 'Oswald', sans-serif;
       letter-spacing: 0.2px;
       text-transform: uppercase;
+      font-weight: 600;
     }
     .metric-help-card p {
       margin: 0;
@@ -288,7 +299,10 @@
         padding: 20px;
       }
       .metrics-hero h1 {
-        font-size: 23px;
+        font-size: 24px;
+      }
+      .metrics-tabs {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       }
       .partner-spotlight {
         grid-template-columns: 1fr;
@@ -309,7 +323,7 @@
     }
   </style>
 </head>
-<body>
+<body class="player-profile-theme">
   <div class="dashboard-wrapper">
     <header class="dashboard-header">
       <div class="header-content">
