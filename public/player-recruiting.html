@@ -1954,7 +1954,38 @@
       
       // Render the roadmap for the selected year
       renderRoadmap(yearKey);
-      });
+    }
+
+    function getPlayerTimelineYear() {
+      // Try to get player's graduation year from profile
+      try {
+        const gradYearEl = document.querySelector('[data-player-graduation-year]');
+        if (gradYearEl) {
+          const gradYear = parseInt(gradYearEl.getAttribute('data-player-graduation-year'));
+          return mapGraduationYearToTimelineYear(gradYear, new Date());
+        }
+      } catch (e) {
+        // Fall back to freshman
+      }
+      return 'freshman';
+    }
+
+    function mapGraduationYearToTimelineYear(graduationYear, nowDate) {
+      if (!Number.isInteger(graduationYear)) return 'freshman';
+      const now = nowDate || new Date();
+      const currentYear = now.getFullYear();
+      const month = now.getMonth(); // 0-based (0=January, 6=July, etc.)
+      
+      // Assume graduation is in June/July, so:
+      // - If now is before July, check current school year
+      // - If now is July or after, next school year starts in fall
+      const schoolYearStart = month >= 6 ? currentYear + 1 : currentYear;
+      const yearsUntilGraduation = graduationYear - schoolYearStart;
+      
+      if (yearsUntilGraduation <= 0) return 'senior';
+      if (yearsUntilGraduation === 1) return 'junior';
+      if (yearsUntilGraduation === 2) return 'sophomore';
+      return 'freshman';
     }
 
     function activateResourcesTab(tabName) {
@@ -1967,7 +1998,8 @@
       
       // Render roadmap when timeline tab is activated
       if (tabName === 'timeline') {
-        setTimeout(() => renderRoadmap('freshman'), 100);
+        const playerYear = getPlayerTimelineYear();
+        setTimeout(() => renderRoadmap(playerYear), 100);
       }
     }
 
@@ -1980,12 +2012,13 @@
         node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
       });
 
-      // Initialize: set freshman as active for old timeline UI and render roadmap
-      renderTimelineYear('freshman');
+      // Initialize: determine player's year and render roadmap
+      const playerYear = getPlayerTimelineYear();
+      renderTimelineYear(playerYear);
 
       // Render roadmap if timeline tab is active on load
       if (document.getElementById('panel-timeline').classList.contains('active')) {
-        renderRoadmap('freshman');
+        renderRoadmap(playerYear);
       }
     }
 
