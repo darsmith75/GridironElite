@@ -1316,6 +1316,7 @@
       <div class="position-guide-modal-header">
         <h3 id="visitChecklistModalTitle">Campus Visit Checklist</h3>
         <div style="display:flex; align-items:center; gap:8px;">
+          <a href="/images/printableForms/visitCheckList.pdf" download="CampusVisitChecklist.pdf" class="resource-modal-print-btn" style="text-decoration:none;">Download PDF</a>
           <button type="button" class="resource-modal-print-btn" onclick="printVisitChecklistForm()">Print</button>
           <button type="button" class="position-guide-close" onclick="closeVisitChecklistModal()" aria-label="Close">&times;</button>
         </div>
@@ -1511,8 +1512,7 @@
     }
 
     function printVisitChecklistForm() {
-      const printUrl = '/print-visit-checklist.html';
-      const printWindow = window.open(printUrl, '_blank');
+      const printWindow = window.open('/images/printableForms/visitCheckList.pdf', '_blank');
       if (!printWindow) {
         alert('Pop-up blocked. Please allow pop-ups for this site to print the checklist.');
       }
