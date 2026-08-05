@@ -662,6 +662,8 @@
           <input type="text" id="noteSearchFilter" placeholder="Search notes..." oninput="filterNotes()" style="width:100%; padding:8px 14px; border:1px solid #c7d0da; border-radius:8px; font-size:14px; box-sizing:border-box;">
           <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" id="noteFilterVisitsBtn" onclick="toggleNoteTypeFilter('visits')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Visits</button>
+            <button type="button" id="noteFilterEmailsBtn" onclick="toggleNoteTypeFilter('emails')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Emails</button>
+            <button type="button" id="noteFilterCallsBtn" onclick="toggleNoteTypeFilter('calls')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Calls</button>
             <button type="button" id="noteFilterGeneralBtn" onclick="toggleNoteTypeFilter('general')" style="padding:6px 12px; border:1px solid #1e3c72; border-radius:999px; background:#1e3c72; color:#fff; cursor:pointer; font-size:12px; font-weight:700;">Notes</button>
           </div>
         </div>
@@ -669,9 +671,14 @@
         <div id="addNoteForm" style="display:none; background:#f8f9fa; border:1px solid #c7d0da; border-radius:8px; padding:16px; margin-bottom:16px;">
           <h4 style="margin:0 0 12px; color:#333; font-size:14px;" id="noteFormTitle">Add New Note</h4>
           <input type="hidden" id="editNoteId">
-          <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="noteIsVisit" onchange="handleVisitToggleChange()" style="width:16px; height:16px; cursor:pointer;">
-            <label for="noteIsVisit" style="font-size:13px; color:#333; cursor:pointer;">This entry was a visit</label>
+          <div style="margin-bottom:10px;">
+            <label for="noteEntryType" style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Entry Type</label>
+            <select id="noteEntryType" onchange="handleNoteEntryTypeChange()" style="padding:8px 12px; border:1px solid #c7d0da; border-radius:6px; font-size:14px; min-width:220px;">
+              <option value="general">General Note</option>
+              <option value="visit">Visit</option>
+              <option value="email">Email</option>
+              <option value="call">Call</option>
+            </select>
           </div>
           <div id="noteVisitDateWrap" style="margin-bottom:10px; display:none;">
             <label style="font-size:12px; color:#666; display:block; margin-bottom:4px;">Visit Date *</label>
@@ -3884,15 +3891,31 @@
     // ---- NOTES ----
     let currentSchoolNotes = [];
     let noteFilterShowVisits = true;
+    let noteFilterShowEmails = true;
+    let noteFilterShowCalls = true;
     let noteFilterShowGeneral = true;
+
+    function getNoteEntryType(note) {
+      const normalized = String(note?.note_type || '').trim().toLowerCase();
+      if (normalized === 'visit' || normalized === 'email' || normalized === 'call' || normalized === 'general') {
+        return normalized;
+      }
+      return note?.visit_date ? 'visit' : 'general';
+    }
 
     function renderNoteFilterButtons() {
       const visitsBtn = document.getElementById('noteFilterVisitsBtn');
+      const emailsBtn = document.getElementById('noteFilterEmailsBtn');
+      const callsBtn = document.getElementById('noteFilterCallsBtn');
       const generalBtn = document.getElementById('noteFilterGeneralBtn');
-      if (!visitsBtn || !generalBtn) return;
+      if (!visitsBtn || !emailsBtn || !callsBtn || !generalBtn) return;
 
       visitsBtn.style.background = noteFilterShowVisits ? '#1e3c72' : '#fff';
       visitsBtn.style.color = noteFilterShowVisits ? '#fff' : '#1e3c72';
+      emailsBtn.style.background = noteFilterShowEmails ? '#1e3c72' : '#fff';
+      emailsBtn.style.color = noteFilterShowEmails ? '#fff' : '#1e3c72';
+      callsBtn.style.background = noteFilterShowCalls ? '#1e3c72' : '#fff';
+      callsBtn.style.color = noteFilterShowCalls ? '#fff' : '#1e3c72';
       generalBtn.style.background = noteFilterShowGeneral ? '#1e3c72' : '#fff';
       generalBtn.style.color = noteFilterShowGeneral ? '#fff' : '#1e3c72';
     }
@@ -3900,6 +3923,10 @@
     function toggleNoteTypeFilter(type) {
       if (type === 'visits') {
         noteFilterShowVisits = !noteFilterShowVisits;
+      } else if (type === 'emails') {
+        noteFilterShowEmails = !noteFilterShowEmails;
+      } else if (type === 'calls') {
+        noteFilterShowCalls = !noteFilterShowCalls;
       } else if (type === 'general') {
         noteFilterShowGeneral = !noteFilterShowGeneral;
       }
@@ -3914,6 +3941,8 @@
         currentSchoolNotes = await res.json();
         document.getElementById('noteSearchFilter').value = '';
         noteFilterShowVisits = true;
+        noteFilterShowEmails = true;
+        noteFilterShowCalls = true;
         noteFilterShowGeneral = true;
         renderNoteFilterButtons();
         renderNotes(currentSchoolNotes);
@@ -3923,11 +3952,14 @@
     function filterNotes() {
       const query = document.getElementById('noteSearchFilter').value.toLowerCase().trim();
       const filtered = currentSchoolNotes.filter(n => {
-        const isVisit = !!n.visit_date;
-        if (isVisit && !noteFilterShowVisits) return false;
-        if (!isVisit && !noteFilterShowGeneral) return false;
+        const noteType = getNoteEntryType(n);
+        if (noteType === 'visit' && !noteFilterShowVisits) return false;
+        if (noteType === 'email' && !noteFilterShowEmails) return false;
+        if (noteType === 'call' && !noteFilterShowCalls) return false;
+        if (noteType === 'general' && !noteFilterShowGeneral) return false;
         if (!query) return true;
         return n.note.toLowerCase().includes(query) ||
+          noteType.includes(query) ||
           (n.visit_date && n.visit_date.toLowerCase().includes(query));
       });
       renderNotes(filtered, true);
@@ -3937,16 +3969,22 @@
       const el = document.getElementById('notesList');
       if (notes.length === 0) {
         if (isFiltered && currentSchoolNotes.length > 0) {
-          el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No matching entries for your current Visits/Notes filters and search.</p>';
+          el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No matching entries for your current filters and search.</p>';
         } else {
           el.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">No notes yet. Click "+ Add Note" to record your thoughts about this school.</p>';
         }
         return;
       }
       el.innerHTML = notes.map(n => {
-        const dateLabel = n.visit_date
-          ? `<span style="display:inline-block; background:#e8edf5; color:#1e3c72; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:600;">📅 Visit: ${escapeHtmlDetail(n.visit_date)}</span>`
-          : `<span style="display:inline-block; background:#f0f0f0; color:#666; padding:2px 10px; border-radius:4px; font-size:12px;">💬 General Note</span>`;
+        const noteType = getNoteEntryType(n);
+        let dateLabel = `<span style="display:inline-block; background:#f0f0f0; color:#666; padding:2px 10px; border-radius:4px; font-size:12px;">💬 General Note</span>`;
+        if (noteType === 'visit') {
+          dateLabel = `<span style="display:inline-block; background:#e8edf5; color:#1e3c72; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:600;">📅 Visit: ${escapeHtmlDetail(n.visit_date || 'No date')}</span>`;
+        } else if (noteType === 'email') {
+          dateLabel = `<span style="display:inline-block; background:#e8f5ec; color:#1f7a3f; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:600;">✉️ Email</span>`;
+        } else if (noteType === 'call') {
+          dateLabel = `<span style="display:inline-block; background:#fff2e0; color:#9a5b00; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:600;">📞 Call</span>`;
+        }
         const createdDate = new Date(n.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         return `
           <div style="padding:14px; border:1px solid #e8e8e8; border-radius:8px; margin-bottom:10px; background:#fafafa;">
@@ -3954,7 +3992,7 @@
               <div>${dateLabel}</div>
               <div style="display:flex; gap:4px; align-items:center;">
                 <span style="font-size:11px; color:#999;">${createdDate}</span>
-                <button onclick="editNote(${n.id}, '${escapeHtmlDetail(n.visit_date || '')}', \`${escapeHtmlDetail(n.note).replace(/`/g, '\\`')}\`)" style="padding:4px 10px; background:none; border:1px solid #c7d0da; border-radius:4px; cursor:pointer; font-size:12px;" title="Edit">✏️</button>
+                <button onclick="editNote(${n.id})" style="padding:4px 10px; background:none; border:1px solid #c7d0da; border-radius:4px; cursor:pointer; font-size:12px;" title="Edit">✏️</button>
                 <button onclick="deleteNote(${n.id})" style="padding:4px 10px; background:none; border:1px solid #c7d0da; border-radius:4px; cursor:pointer; font-size:12px;" title="Delete">🗑️</button>
               </div>
             </div>
@@ -3966,29 +4004,32 @@
 
     function showAddNoteForm() {
       document.getElementById('editNoteId').value = '';
-      document.getElementById('noteIsVisit').checked = false;
+      document.getElementById('noteEntryType').value = 'general';
       document.getElementById('noteVisitDate').value = '';
       document.getElementById('noteText').value = '';
       document.getElementById('noteFormTitle').textContent = 'Add New Note';
-      handleVisitToggleChange();
+      handleNoteEntryTypeChange();
       document.getElementById('addNoteForm').style.display = 'block';
       document.getElementById('noteText').focus();
     }
 
-    function editNote(id, visitDate, note) {
+    function editNote(id) {
+      const noteEntry = currentSchoolNotes.find(n => Number(n.id) === Number(id));
+      if (!noteEntry) return;
       document.getElementById('editNoteId').value = id;
-      const hasVisit = !!visitDate;
-      document.getElementById('noteIsVisit').checked = hasVisit;
-      document.getElementById('noteVisitDate').value = visitDate || '';
-      document.getElementById('noteText').value = note;
+      const noteType = getNoteEntryType(noteEntry);
+      document.getElementById('noteEntryType').value = noteType;
+      document.getElementById('noteVisitDate').value = noteType === 'visit' ? (noteEntry.visit_date || '') : '';
+      document.getElementById('noteText').value = noteEntry.note || '';
       document.getElementById('noteFormTitle').textContent = 'Edit Note';
-      handleVisitToggleChange();
+      handleNoteEntryTypeChange();
       document.getElementById('addNoteForm').style.display = 'block';
       document.getElementById('noteText').focus();
     }
 
-    function handleVisitToggleChange() {
-      const isVisit = document.getElementById('noteIsVisit').checked;
+    function handleNoteEntryTypeChange() {
+      const entryType = document.getElementById('noteEntryType').value;
+      const isVisit = entryType === 'visit';
       const dateWrap = document.getElementById('noteVisitDateWrap');
       const dateInput = document.getElementById('noteVisitDate');
       if (!dateWrap || !dateInput) return;
@@ -4004,7 +4045,8 @@
 
     async function saveNote() {
       const note = document.getElementById('noteText').value.trim();
-      const isVisit = document.getElementById('noteIsVisit').checked;
+      const noteType = document.getElementById('noteEntryType').value;
+      const isVisit = noteType === 'visit';
       const visitDate = document.getElementById('noteVisitDate').value;
       const visitDateToSave = isVisit ? visitDate : null;
       const editId = document.getElementById('editNoteId').value;
@@ -4020,7 +4062,7 @@
         const res = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate: visitDateToSave })
+          body: JSON.stringify({ note, noteType, visitDate: visitDateToSave })
         });
         if (!res.ok) { const err = await res.json(); alert(err.error || 'Failed to save note'); return; }
         cancelNoteForm();

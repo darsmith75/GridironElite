@@ -12,6 +12,17 @@ const { sendTeamInviteEmail } = require('../utils/email');
 
 const router = express.Router();
 
+const ALLOWED_NOTE_TYPES = new Set(['general', 'visit', 'email', 'call']);
+
+function resolveNoteType(noteTypeValue, visitDateValue) {
+  const normalizedNoteType = String(noteTypeValue || '').trim().toLowerCase();
+  if (ALLOWED_NOTE_TYPES.has(normalizedNoteType)) return normalizedNoteType;
+
+  const visitDateText = String(visitDateValue || '').trim();
+  if (visitDateText) return 'visit';
+  return 'general';
+}
+
 function trimOrNull(value) {
   const trimmed = String(value || '').trim();
   return trimmed ? trimmed : null;
@@ -946,11 +957,17 @@ router.post('/coach/colleges/:collegeId/notes', requireCoach, async (req, res) =
   try {
     const collegeId = parseInt(req.params.collegeId, 10);
     if (isNaN(collegeId)) return res.status(400).json({ error: 'Invalid college ID' });
-    const { note, visitDate } = req.body;
+    const { note, visitDate, noteType } = req.body;
     if (!note || !note.trim()) return res.status(400).json({ error: 'Note text is required' });
+    const resolvedType = resolveNoteType(noteType, visitDate);
+    const resolvedVisitDate = resolvedType === 'visit' ? String(visitDate || '').trim() : '';
+    if (resolvedType === 'visit' && !resolvedVisitDate) {
+      return res.status(400).json({ error: 'Visit date is required for visit entries' });
+    }
     const college = await db.prepare('SELECT id FROM colleges WHERE id = ?').get(collegeId);
     if (!college) return res.status(404).json({ error: 'College not found' });
-    const result = await db.prepare('INSERT INTO school_notes (user_id, college_id, note, visit_date) VALUES (?, ?, ?, ?)').run(req.session.userId, collegeId, note.trim(), visitDate || null);
+    const result = await db.prepare('INSERT INTO school_notes (user_id, college_id, note, note_type, visit_date) VALUES (?, ?, ?, ?, ?)')
+      .run(req.session.userId, collegeId, note.trim(), resolvedType, resolvedVisitDate || null);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Coach add school note error:', error);
@@ -963,11 +980,17 @@ router.put('/coach/colleges/:collegeId/notes/:noteId', requireCoach, async (req,
   try {
     const noteId = parseInt(req.params.noteId, 10);
     if (isNaN(noteId)) return res.status(400).json({ error: 'Invalid note ID' });
-    const { note, visitDate } = req.body;
+    const { note, visitDate, noteType } = req.body;
     if (!note || !note.trim()) return res.status(400).json({ error: 'Note text is required' });
+    const resolvedType = resolveNoteType(noteType, visitDate);
+    const resolvedVisitDate = resolvedType === 'visit' ? String(visitDate || '').trim() : '';
+    if (resolvedType === 'visit' && !resolvedVisitDate) {
+      return res.status(400).json({ error: 'Visit date is required for visit entries' });
+    }
     const existing = await db.prepare('SELECT id FROM school_notes WHERE id = ? AND user_id = ?').get(noteId, req.session.userId);
     if (!existing) return res.status(404).json({ error: 'Note not found' });
-    await db.prepare('UPDATE school_notes SET note = ?, visit_date = ? WHERE id = ?').run(note.trim(), visitDate || null, noteId);
+    await db.prepare('UPDATE school_notes SET note = ?, note_type = ?, visit_date = ? WHERE id = ?')
+      .run(note.trim(), resolvedType, resolvedVisitDate || null, noteId);
     res.json({ success: true });
   } catch (error) {
     console.error('Coach update school note error:', error);

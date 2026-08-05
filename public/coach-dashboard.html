@@ -1771,7 +1771,15 @@
           <details style="border:1px solid #e0e8f5; border-radius:10px; padding:12px 14px;">
             <summary style="cursor:pointer; font-size:14px; font-weight:600; color:#1e3c72;">+ Add Note</summary>
             <div style="margin-top:12px;">
-              <input type="date" id="coachNoteDate" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+              <select id="coachNoteType" onchange="toggleCoachNoteDateForAdd()" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+                <option value="general">General Note</option>
+                <option value="visit">Visit</option>
+                <option value="email">Email</option>
+                <option value="call">Call</option>
+              </select>
+              <div id="coachNoteDateWrap" style="display:none; margin-bottom:8px;">
+                <input type="date" id="coachNoteDate" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; box-sizing:border-box;">
+              </div>
               <textarea id="coachNoteText" rows="4" placeholder="Write your notes about this school..." style="width:100%; padding:10px 12px; border:1px solid #c7d0da; border-radius:8px; font-size:13px; resize:vertical; box-sizing:border-box;"></textarea>
               <div style="display:flex; justify-content:flex-end; margin-top:8px;">
                 <button class="btn-invite" onclick="addCoachNote()">Add Note</button>
@@ -3563,6 +3571,44 @@
     }
 
     // ---- Notes ----
+    let coachCurrentNotes = [];
+
+    function getCoachNoteType(note) {
+      const normalized = String(note?.note_type || '').trim().toLowerCase();
+      if (normalized === 'visit' || normalized === 'email' || normalized === 'call' || normalized === 'general') {
+        return normalized;
+      }
+      return note?.visit_date ? 'visit' : 'general';
+    }
+
+    function formatCoachNoteTypeLabel(note) {
+      const type = getCoachNoteType(note);
+      if (type === 'visit') return note.visit_date ? '📅 ' + escC(note.visit_date) : '📅 Visit';
+      if (type === 'email') return '✉️ Email';
+      if (type === 'call') return '📞 Call';
+      return '📝 Note';
+    }
+
+    function toggleCoachNoteDateForAdd() {
+      const type = document.getElementById('coachNoteType')?.value || 'general';
+      const wrap = document.getElementById('coachNoteDateWrap');
+      const dateInput = document.getElementById('coachNoteDate');
+      if (!wrap || !dateInput) return;
+      const show = type === 'visit';
+      wrap.style.display = show ? 'block' : 'none';
+      if (!show) dateInput.value = '';
+    }
+
+    function toggleCoachNoteDateForEdit(noteId) {
+      const type = document.getElementById(`editNType-${noteId}`)?.value || 'general';
+      const wrap = document.getElementById(`editNDateWrap-${noteId}`);
+      const dateInput = document.getElementById(`editNDate-${noteId}`);
+      if (!wrap || !dateInput) return;
+      const show = type === 'visit';
+      wrap.style.display = show ? 'block' : 'none';
+      if (!show) dateInput.value = '';
+    }
+
     async function loadCoachNotes() {
       const list = document.getElementById('coachNotesList');
       list.innerHTML = '<div style="color:#999;font-size:13px;">Loading...</div>';
@@ -3570,6 +3616,8 @@
         const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes`);
         if (!res.ok) { list.innerHTML = '<div style="color:#c62828;font-size:13px;">Failed to load notes.</div>'; return; }
         const notes = await res.json();
+        coachCurrentNotes = Array.isArray(notes) ? notes : [];
+        toggleCoachNoteDateForAdd();
         if (!notes.length) {
           list.innerHTML = '<div style="color:#999;font-size:13px;font-style:italic;">No notes added yet.</div>';
           return;
@@ -3577,9 +3625,9 @@
         list.innerHTML = notes.map(n => `
           <div class="note-card" id="note-card-${n.id}">
             <div class="note-card-header">
-              <div class="note-date">${n.visit_date ? '📅 ' + escC(n.visit_date) : '📝 Note'}</div>
+              <div class="note-date">${formatCoachNoteTypeLabel(n)}</div>
               <div style="display:flex;gap:6px;flex-shrink:0;">
-                <button class="btn-sm-edit" onclick="editCoachNote(${n.id}, ${escC(JSON.stringify({note:n.note,visitDate:n.visit_date||''})).replace(/"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm-edit" onclick="editCoachNote(${n.id})">Edit</button>
                 <button class="btn-sm-danger" onclick="deleteCoachNote(${n.id})">Delete</button>
               </div>
             </div>
@@ -3592,31 +3640,46 @@
 
     async function addCoachNote() {
       const note = document.getElementById('coachNoteText').value.trim();
+      const noteType = document.getElementById('coachNoteType').value;
       const visitDate = document.getElementById('coachNoteDate').value.trim();
       const msg = document.getElementById('coachNoteMsg');
       if (!note) { msg.style.color = '#c62828'; msg.textContent = 'Note text is required.'; return; }
+      if (noteType === 'visit' && !visitDate) { msg.style.color = '#c62828'; msg.textContent = 'Visit date is required for visit entries.'; return; }
       try {
         const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate })
+          body: JSON.stringify({ note, noteType, visitDate: noteType === 'visit' ? visitDate : null })
         });
         if (!res.ok) { const d = await res.json().catch(() => ({})); msg.style.color = '#c62828'; msg.textContent = d.error || 'Failed to add note.'; return; }
         msg.style.color = '#2e7d32'; msg.textContent = 'Note added.';
         document.getElementById('coachNoteText').value = '';
+        document.getElementById('coachNoteType').value = 'general';
         document.getElementById('coachNoteDate').value = '';
+        toggleCoachNoteDateForAdd();
         loadCoachNotes();
       } catch (err) {
         msg.style.color = '#c62828'; msg.textContent = 'Network error.';
       }
     }
 
-    function editCoachNote(noteId, data) {
+    function editCoachNote(noteId) {
       const card = document.getElementById(`note-card-${noteId}`);
       if (!card) return;
-      const d = typeof data === 'string' ? JSON.parse(data) : data;
+      const d = (coachCurrentNotes || []).find((noteItem) => Number(noteItem.id) === Number(noteId));
+      if (!d) return;
+      const noteType = getCoachNoteType(d);
+      const isVisit = noteType === 'visit';
       card.innerHTML = `
-        <input type="date" value="${escC(d.visitDate)}" id="editNDate-${noteId}" style="width:100%; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+        <select id="editNType-${noteId}" onchange="toggleCoachNoteDateForEdit(${noteId})" style="width:100%; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; box-sizing:border-box; margin-bottom:8px;">
+          <option value="general"${noteType === 'general' ? ' selected' : ''}>General Note</option>
+          <option value="visit"${noteType === 'visit' ? ' selected' : ''}>Visit</option>
+          <option value="email"${noteType === 'email' ? ' selected' : ''}>Email</option>
+          <option value="call"${noteType === 'call' ? ' selected' : ''}>Call</option>
+        </select>
+        <div id="editNDateWrap-${noteId}" style="${isVisit ? '' : 'display:none;'} margin-bottom:8px;">
+          <input type="date" value="${escC(d.visit_date || '')}" id="editNDate-${noteId}" style="width:100%; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; box-sizing:border-box;">
+        </div>
         <textarea id="editNText-${noteId}" rows="4" style="width:100%; padding:9px 12px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; resize:vertical; box-sizing:border-box;">${escC(d.note)}</textarea>
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
           <button class="btn-sm-edit" onclick="saveCoachNote(${noteId})">Save</button>
@@ -3626,13 +3689,15 @@
 
     async function saveCoachNote(noteId) {
       const note = document.getElementById(`editNText-${noteId}`).value.trim();
+      const noteType = document.getElementById(`editNType-${noteId}`).value;
       const visitDate = document.getElementById(`editNDate-${noteId}`).value.trim();
       if (!note) { alert('Note text is required.'); return; }
+      if (noteType === 'visit' && !visitDate) { alert('Visit date is required for visit entries.'); return; }
       try {
         const res = await fetch(`/api/coach/colleges/${coachCurrentSchoolId}/notes/${noteId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate })
+          body: JSON.stringify({ note, noteType, visitDate: noteType === 'visit' ? visitDate : null })
         });
         if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.error || 'Failed to save note.'); return; }
         loadCoachNotes();

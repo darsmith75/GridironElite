@@ -153,7 +153,15 @@
           <h3 style="margin:0 0 10px; color:#1e3c72; font-size:15px;">School Notes</h3>
           <div id="notesList"></div>
           <div class="note-card">
-            <input id="noteDate" type="date" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+            <select id="noteType" onchange="toggleAgentNoteDateForAdd()" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+              <option value="general">General Note</option>
+              <option value="visit">Visit</option>
+              <option value="email">Email</option>
+              <option value="call">Call</option>
+            </select>
+            <div id="noteDateWrap" style="display:none; margin-bottom:8px;">
+              <input id="noteDate" type="date" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;">
+            </div>
             <textarea id="noteText" rows="4" placeholder="Write your note..." style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;"></textarea>
             <div class="form-actions"><button class="btn-invite" onclick="addNote()">Add Note</button></div>
             <div id="noteMsg" class="msg"></div>
@@ -179,6 +187,7 @@
 
     let allSchools = [];
     let currentCollegeId = null;
+  let currentCollegeNotes = [];
 
     function esc(str) {
       if (!str) return '';
@@ -505,6 +514,8 @@
         const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes`);
         if (!res.ok) throw new Error('Failed to load notes');
         const notes = await res.json();
+        currentCollegeNotes = Array.isArray(notes) ? notes : [];
+        toggleAgentNoteDateForAdd();
         if (!notes.length) {
           list.innerHTML = '<div style="color:#76849b;">No notes yet.</div>';
           return;
@@ -512,9 +523,9 @@
         list.innerHTML = notes.map((n) => `
           <div class="note-card" id="note-${n.id}">
             <div class="note-card-header">
-              <div class="note-date">${n.visit_date ? `📅 ${esc(n.visit_date)}` : '📝 Note'}</div>
+              <div class="note-date">${formatAgentNoteTypeLabel(n)}</div>
               <div style="display:flex; gap:6px;">
-                <button class="btn-sm-edit" onclick="editNote(${n.id}, ${esc(JSON.stringify({note:n.note, visitDate:n.visit_date || ''})).replace(/\"/g,'&quot;')})">Edit</button>
+                <button class="btn-sm-edit" onclick="editNote(${n.id})">Edit</button>
                 <button class="btn-sm-danger" onclick="deleteNote(${n.id})">Delete</button>
               </div>
             </div>
@@ -527,6 +538,7 @@
 
     async function addNote() {
       const note = document.getElementById('noteText').value.trim();
+      const noteType = document.getElementById('noteType').value;
       const visitDate = document.getElementById('noteDate').value.trim();
       const msg = document.getElementById('noteMsg');
       if (!note) {
@@ -534,11 +546,16 @@
         msg.textContent = 'Note text is required.';
         return;
       }
+      if (noteType === 'visit' && !visitDate) {
+        msg.style.color = '#c62828';
+        msg.textContent = 'Visit date is required for visit entries.';
+        return;
+      }
       try {
         const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate })
+          body: JSON.stringify({ note, noteType, visitDate: noteType === 'visit' ? visitDate : null })
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -549,7 +566,9 @@
         msg.style.color = '#2e7d32';
         msg.textContent = 'Note added.';
         document.getElementById('noteText').value = '';
+        document.getElementById('noteType').value = 'general';
         document.getElementById('noteDate').value = '';
+        toggleAgentNoteDateForAdd();
         await loadNotes();
       } catch (_) {
         msg.style.color = '#c62828';
@@ -557,12 +576,23 @@
       }
     }
 
-    function editNote(noteId, data) {
-      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    function editNote(noteId) {
+      const parsed = (currentCollegeNotes || []).find((n) => Number(n.id) === Number(noteId));
+      if (!parsed) return;
+      const noteType = getAgentNoteType(parsed);
+      const isVisit = noteType === 'visit';
       const card = document.getElementById(`note-${noteId}`);
       if (!card) return;
       card.innerHTML = `
-        <input id="editNoteDate-${noteId}" type="date" value="${esc(parsed.visitDate || '')}" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+        <select id="editNoteType-${noteId}" onchange="toggleAgentNoteDateForEdit(${noteId})" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px; margin-bottom:8px;">
+          <option value="general"${noteType === 'general' ? ' selected' : ''}>General Note</option>
+          <option value="visit"${noteType === 'visit' ? ' selected' : ''}>Visit</option>
+          <option value="email"${noteType === 'email' ? ' selected' : ''}>Email</option>
+          <option value="call"${noteType === 'call' ? ' selected' : ''}>Call</option>
+        </select>
+        <div id="editNoteDateWrap-${noteId}" style="${isVisit ? '' : 'display:none;'} margin-bottom:8px;">
+          <input id="editNoteDate-${noteId}" type="date" value="${esc(parsed.visit_date || '')}" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;">
+        </div>
         <textarea id="editNoteText-${noteId}" rows="4" style="width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #c7d0da; border-radius:7px; font-size:13px;">${esc(parsed.note || '')}</textarea>
         <div class="form-actions">
           <button class="btn-sm-danger" onclick="loadNotes()">Cancel</button>
@@ -572,13 +602,15 @@
 
     async function saveNote(noteId) {
       const note = document.getElementById(`editNoteText-${noteId}`).value.trim();
+      const noteType = document.getElementById(`editNoteType-${noteId}`).value;
       const visitDate = document.getElementById(`editNoteDate-${noteId}`).value.trim();
       if (!note) { alert('Note text is required.'); return; }
+      if (noteType === 'visit' && !visitDate) { alert('Visit date is required for visit entries.'); return; }
       try {
         const res = await fetch(`/api/agent/colleges/${currentCollegeId}/notes/${noteId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, visitDate })
+          body: JSON.stringify({ note, noteType, visitDate: noteType === 'visit' ? visitDate : null })
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -604,6 +636,42 @@
       } catch (_) {
         alert('Network error while deleting note.');
       }
+    }
+
+    function getAgentNoteType(note) {
+      const normalized = String(note?.note_type || '').trim().toLowerCase();
+      if (normalized === 'visit' || normalized === 'email' || normalized === 'call' || normalized === 'general') {
+        return normalized;
+      }
+      return note?.visit_date ? 'visit' : 'general';
+    }
+
+    function formatAgentNoteTypeLabel(note) {
+      const type = getAgentNoteType(note);
+      if (type === 'visit') return `📅 ${esc(note.visit_date || 'Visit')}`;
+      if (type === 'email') return '✉️ Email';
+      if (type === 'call') return '📞 Call';
+      return '📝 Note';
+    }
+
+    function toggleAgentNoteDateForAdd() {
+      const type = document.getElementById('noteType')?.value || 'general';
+      const wrap = document.getElementById('noteDateWrap');
+      const dateInput = document.getElementById('noteDate');
+      if (!wrap || !dateInput) return;
+      const show = type === 'visit';
+      wrap.style.display = show ? 'block' : 'none';
+      if (!show) dateInput.value = '';
+    }
+
+    function toggleAgentNoteDateForEdit(noteId) {
+      const type = document.getElementById(`editNoteType-${noteId}`)?.value || 'general';
+      const wrap = document.getElementById(`editNoteDateWrap-${noteId}`);
+      const dateInput = document.getElementById(`editNoteDate-${noteId}`);
+      if (!wrap || !dateInput) return;
+      const show = type === 'visit';
+      wrap.style.display = show ? 'block' : 'none';
+      if (!show) dateInput.value = '';
     }
 
     document.getElementById('browseModal').addEventListener('click', (e) => {

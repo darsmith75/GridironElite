@@ -271,6 +271,7 @@ const createTablesSQL = `
     user_id INTEGER NOT NULL,
     college_id INTEGER NOT NULL,
     note TEXT NOT NULL,
+    note_type VARCHAR(20) NOT NULL DEFAULT 'general',
     visit_date VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -557,6 +558,13 @@ const alterTablesSQL = `
   DROP TABLE IF EXISTS ge_player_ratings;
   ALTER TABLE metric_pro_tips ADD COLUMN IF NOT EXISTS youtube_url TEXT;
   ALTER TABLE colleges ADD COLUMN IF NOT EXISTS division VARCHAR(100);
+  ALTER TABLE school_notes ADD COLUMN IF NOT EXISTS note_type VARCHAR(20) NOT NULL DEFAULT 'general';
+  UPDATE school_notes
+  SET note_type = CASE
+    WHEN visit_date IS NOT NULL AND TRIM(visit_date) <> '' THEN 'visit'
+    ELSE 'general'
+  END
+  WHERE note_type IS NULL OR TRIM(note_type) = '';
   DELETE FROM team_invites older
   USING team_invites newer
   WHERE older.id < newer.id
@@ -587,6 +595,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_school_interests_college ON player_school_interests(college_id);
   CREATE INDEX IF NOT EXISTS idx_school_notes_user ON school_notes(user_id);
   CREATE INDEX IF NOT EXISTS idx_school_notes_college ON school_notes(college_id);
+  CREATE INDEX IF NOT EXISTS idx_school_notes_note_type ON school_notes(note_type);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_user ON school_contacts(user_id);
   CREATE INDEX IF NOT EXISTS idx_school_contacts_college ON school_contacts(college_id);
   CREATE INDEX IF NOT EXISTS idx_colleges_division ON colleges(division);
