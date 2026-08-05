@@ -21,9 +21,70 @@ const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES];
+const COACH_IMAGE_MAX_BYTES = parseInt(process.env.MAX_COACH_IMAGE_MB || '8', 10) * 1024 * 1024;
 const MAX_HIGHLIGHT_VIDEO_MB = parseInt(process.env.MAX_HIGHLIGHT_VIDEO_MB || '35', 10);
 const MAX_HIGHLIGHT_VIDEO_BYTES = MAX_HIGHLIGHT_VIDEO_MB * 1024 * 1024;
 const VIDEO_OPTIMIZATION_MODE = String(process.env.VIDEO_OPTIMIZATION_MODE || 'off').toLowerCase();
+
+const IMAGE_ONLY_FIELDS = new Set([
+  'profilePicture',
+  'cardPhoto',
+  'reportCardImage',
+  'additionalImages',
+  'schoolLogo',
+  'bannerImage'
+]);
+
+const VIDEO_ONLY_FIELDS = new Set([
+  'highlightVideos',
+  ...METRIC_VIDEO_CONFIG.map((config) => config.fieldName)
+]);
+
+let fileTypeModulePromise = null;
+function loadFileTypeModule() {
+  if (!fileTypeModulePromise) {
+    fileTypeModulePromise = import('file-type');
+  }
+  return fileTypeModulePromise;
+}
+
+function allowedMimeTypesForField(fieldName) {
+  if (IMAGE_ONLY_FIELDS.has(fieldName)) return ALLOWED_IMAGE_TYPES;
+  if (VIDEO_ONLY_FIELDS.has(fieldName)) return ALLOWED_VIDEO_TYPES;
+  return ALLOWED_TYPES;
+}
+
+async function detectFileMimeType(file) {
+  try {
+    const { fileTypeFromFile, fileTypeFromBuffer } = await loadFileTypeModule();
+    if (file?.path) {
+      const detectedFromFile = await fileTypeFromFile(file.path);
+      if (detectedFromFile?.mime) return detectedFromFile.mime;
+    }
+    if (file?.buffer) {
+      const detectedFromBuffer = await fileTypeFromBuffer(file.buffer);
+      if (detectedFromBuffer?.mime) return detectedFromBuffer.mime;
+    }
+  } catch (_) {
+    // Fallback to declared MIME type only if detector is unavailable.
+  }
+  return null;
+}
+
+async function validateFileSignature(file) {
+  const allowedMimeTypes = allowedMimeTypesForField(file?.fieldname);
+  const detectedMimeType = await detectFileMimeType(file);
+
+  if (detectedMimeType && allowedMimeTypes.includes(detectedMimeType)) {
+    return detectedMimeType;
+  }
+
+  if (!detectedMimeType && allowedMimeTypes.includes(file?.mimetype)) {
+    return file.mimetype;
+  }
+
+  throw new Error('Invalid file content. Uploaded file signature does not match allowed type.');
+}
 
 const IMAGE_PRESETS = {
   reportCardImage: { maxWidth: 2200, quality: 88 },
@@ -226,6 +287,17 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 }, fileFilter });
+const coachImageUpload = multer({
+  storage,
+  limits: { fileSize: COACH_IMAGE_MAX_BYTES },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid image type. Only JPEG, PNG, GIF, and WEBP are allowed.'), false);
+    }
+  }
+});
 
 function playerProfileUploadMiddleware(req, res, next) {
   upload.any()(req, res, (err) => {
@@ -266,10 +338,12 @@ async function processUploadedFiles(userId, reqFiles) {
     });
 
     try {
+      const verifiedMimeType = await validateFileSignature(file);
+      file.mimetype = verifiedMimeType;
       try {
-        if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+        if (ALLOWED_IMAGE_TYPES.includes(verifiedMimeType)) {
           processed = await optimizeImageFile(file);
-        } else if (ALLOWED_VIDEO_TYPES.includes(file.mimetype)) {
+        } else if (ALLOWED_VIDEO_TYPES.includes(verifiedMimeType)) {
           processed = await optimizeVideoFile(file);
         }
       } catch (error) {
@@ -371,6 +445,7 @@ function normalizeOptionalFloat(value) {
 
 module.exports = {
   upload,
+  coachImageUpload,
   PROFILE_UPLOAD_FIELD_MAX_COUNTS,
   MAX_HIGHLIGHT_VIDEO_BYTES,
   MAX_HIGHLIGHT_VIDEO_MB,

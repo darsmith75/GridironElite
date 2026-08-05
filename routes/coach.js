@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const db = require('../database');
 const { requireCoach } = require('../middleware/auth');
 const { enrichPlayerProfiles } = require('../utils/enrich-player');
-const { upload, processUploadedFiles } = require('../utils/upload');
+const { coachImageUpload, processUploadedFiles } = require('../utils/upload');
 const { deleteUploadFile } = require('../utils/file-mgmt');
 const { normalizeHexColor, getPublicAppUrl } = require('../utils/helpers');
 const { normalizeCollegeLogoRows } = require('../utils/college-logo-path');
@@ -97,7 +97,7 @@ router.put('/coach/team', requireCoach, async (req, res) => {
 });
 
 // Coach: Upload/update school logo for team banner customization
-router.post('/coach/team/logo', requireCoach, upload.single('schoolLogo'), async (req, res) => {
+router.post('/coach/team/logo', requireCoach, coachImageUpload.single('schoolLogo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'School logo file is required' });
@@ -122,7 +122,7 @@ router.post('/coach/team/logo', requireCoach, upload.single('schoolLogo'), async
 });
 
 // Coach: Upload/update team page background banner image
-router.post('/coach/team/banner-image', requireCoach, upload.single('bannerImage'), async (req, res) => {
+router.post('/coach/team/banner-image', requireCoach, coachImageUpload.single('bannerImage'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Banner image file is required' });
@@ -829,7 +829,7 @@ router.post('/coach/profile', requireCoach, async (req, res) => {
 });
 
 // Coach: Upload/update profile photo
-router.post('/coach/profile/photo', requireCoach, upload.single('profilePicture'), async (req, res) => {
+router.post('/coach/profile/photo', requireCoach, coachImageUpload.single('profilePicture'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Profile picture file is required' });

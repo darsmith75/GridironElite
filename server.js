@@ -31,6 +31,7 @@ const { safeUploadPath, normalizeUploadFilename } = require('./utils/upload');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
+const strictCspReportOnlyEnabled = process.env.STRICT_CSP_REPORT_ONLY !== 'false';
 
 // Fail fast if critical environment variables are missing.
 if (!process.env.SESSION_SECRET) {
@@ -41,25 +42,50 @@ if (!process.env.SESSION_SECRET) {
 // Needed for correct secure-cookie handling behind IIS/reverse proxies.
 app.set('trust proxy', 1);
 
+const baseCspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'", "'unsafe-inline'"],
+  scriptSrcAttr: ["'unsafe-inline'"], // keeps existing inline onclick handlers working for now
+  styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+  fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+  imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+  mediaSrc: ["'self'", 'blob:', 'https:'], // allow <video> from B2 (302 redirect) and HTTPS sources
+  connectSrc: ["'self'"],
+  frameSrc: ["'self'", 'https:'], // allow YouTube, Hudl, and other HTTPS iframe embeds
+  objectSrc: ["'none'"],
+};
+
 // Security headers (helmet).
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      scriptSrcAttr: ["'unsafe-inline'"], // re-enable inline onclick/onerror/etc. (Helmet 8 blocks these by default)
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
-      imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-      mediaSrc: ["'self'", 'blob:', 'https:'], // allow <video> from B2 (302 redirect) and HTTPS sources
-      connectSrc: ["'self'"],
-      frameSrc: ["'self'", 'https:'], // allow YouTube, Hudl, and other HTTPS iframe embeds
-      objectSrc: ["'none'"],
-    }
+    directives: baseCspDirectives
   },
   crossOriginEmbedderPolicy: false, // allow images/videos from external CDNs
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' } // let YouTube/Hudl validate the embedding origin
 }));
+
+// Optional strict CSP dry-run policy so we can remove inline handlers/scripts safely.
+if (strictCspReportOnlyEnabled) {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      reportOnly: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        scriptSrcAttr: ["'none'"],
+        styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        mediaSrc: ["'self'", 'blob:', 'https:'],
+        connectSrc: ["'self'"],
+        frameSrc: ["'self'", 'https:'],
+        objectSrc: ["'none'"],
+        reportUri: ['/api/csp-report']
+      }
+    }
+  }));
+}
 
 // Global rate limiter – broad throttle per IP across API routes.
 // Per-endpoint limiters (login, forgot-password, etc.) apply stricter limits on top.
@@ -180,6 +206,18 @@ async function migrateUploads() {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+app.post('/api/csp-report', express.json({ type: ['application/csp-report', 'application/reports+json', 'application/json'] }), (req, res) => {
+  const report = req.body && (req.body['csp-report'] || req.body);
+  if (report) {
+    console.warn('[csp-report]', {
+      blockedUri: report['blocked-uri'] || report.blockedURL || null,
+      violatedDirective: report['violated-directive'] || report.effectiveDirective || null,
+      sourceFile: report['source-file'] || report.sourceFile || null
+    });
+  }
+  res.status(204).end();
+});
 
 // Root path: show agent-dashboard (public landing page)
 app.get('/', (req, res) => {
@@ -342,12 +380,16 @@ app.use((err, req, res, next) => {
       return res.status(400).json({ error: `Unexpected upload field: ${err.field || 'unknown'}` });
     }
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'A file is too large. Max size is 50MB per file.' });
+      return res.status(400).json({ error: 'A file is too large for this upload route.' });
     }
     return res.status(400).json({ error: err.message || 'Upload failed' });
   }
 
-  if (err?.message === 'Invalid file type. Only images and videos are allowed.') {
+  if (
+    err?.message === 'Invalid file type. Only images and videos are allowed.' ||
+    err?.message === 'Invalid image type. Only JPEG, PNG, GIF, and WEBP are allowed.' ||
+    err?.message === 'Invalid file content. Uploaded file signature does not match allowed type.'
+  ) {
     return res.status(400).json({ error: err.message });
   }
 

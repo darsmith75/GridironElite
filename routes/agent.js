@@ -51,7 +51,7 @@ for (const method of ['get', 'post', 'put', 'delete']) {
 }
 
 // Agent: Get all players with filters
-router.get('/agent/players', async (req, res) => {
+router.get('/agent/players', requireAgent, async (req, res) => {
   if (await isAgentPlayersRateLimited(req)) {
     return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
@@ -256,14 +256,14 @@ router.get('/agent/players', async (req, res) => {
   res.json(payload);
 });
 
-// Agent: Get single player detail (public access)
-router.get('/agent/player/:id', async (req, res) => {
+// Agent: Get single player detail
+router.get('/agent/player/:id', requireAgent, async (req, res) => {
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
 
-  const player = await db.prepare('SELECT pp.*, u.email FROM player_profiles pp JOIN users u ON pp.user_id = u.id WHERE pp.user_id = ?').get(req.params.id);
+  const player = await db.prepare('SELECT pp.* FROM player_profiles pp WHERE pp.user_id = ?').get(req.params.id);
 
   if (!player) {
     return res.status(404).json({ error: 'Player not found' });
@@ -452,13 +452,8 @@ router.delete('/agent/favorites/:playerId', requireAuth, async (req, res) => {
 });
 
 // Agent: Get all favorite player IDs
-router.get('/agent/favorites', async (req, res) => {
+router.get('/agent/favorites', requireAgent, async (req, res) => {
   try {
-    // Return empty array for unauthenticated users
-    if (!req.session.userId) {
-      return res.json([]);
-    }
-
     const favorites = await db.prepare('SELECT user_id FROM agent_favorites WHERE agent_id = ?').all(req.session.userId);
     res.json(favorites.map(f => f.user_id));
   } catch (error) {

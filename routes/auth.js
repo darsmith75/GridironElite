@@ -8,6 +8,10 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+function hashHexToken(token) {
+  return crypto.createHash('sha256').update(String(token || '').trim().toLowerCase()).digest('hex');
+}
+
 function isUsersEmailConflictError(error) {
   const message = String(error?.message || '').toLowerCase();
   return message.includes('users_email_key') || (message.includes('unique') && message.includes('email'));
@@ -29,10 +33,11 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = hashHexToken(verificationToken);
     await db.withTransaction(async (tx) => {
       const result = await tx.prepare(
         'INSERT INTO users (email, password, role, email_verified, email_verification_token) VALUES (?, ?, ?, false, ?)'
-      ).run(email, hashedPassword, role, verificationToken);
+      ).run(email, hashedPassword, role, verificationTokenHash);
 
       if (role === 'player') {
         await tx.prepare('INSERT INTO player_profiles (user_id, full_name) VALUES (?, ?)').run(result.lastInsertRowid, fullName);
@@ -68,7 +73,11 @@ router.get('/verify-email', async (req, res) => {
     return res.redirect('/?verified=invalid');
   }
   try {
-    const user = await db.prepare('SELECT id, email_verified FROM users WHERE email_verification_token = ?').get(token);
+    const normalizedToken = token.trim().toLowerCase();
+    const tokenHash = hashHexToken(normalizedToken);
+    const user = await db.prepare(
+      'SELECT id, email_verified FROM users WHERE email_verification_token = ? OR email_verification_token = ?'
+    ).get(tokenHash, normalizedToken);
     if (!user) {
       return res.redirect('/?verified=invalid');
     }
@@ -97,8 +106,9 @@ router.post('/forgot-password', async (req, res) => {
     const user = await db.prepare('SELECT id, email FROM users WHERE LOWER(email) = ?').get(email);
     if (user) {
       const token = crypto.randomBytes(32).toString('hex');
+      const tokenHash = hashHexToken(token);
       const expiresAt = new Date(Date.now() + (60 * 60 * 1000));
-      await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(token, expiresAt.toISOString(), user.id);
+      await db.prepare('UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?').run(tokenHash, expiresAt.toISOString(), user.id);
       try {
         await sendPasswordResetEmail(user.email, token, req);
       } catch (emailErr) {
@@ -159,9 +169,10 @@ router.post('/reset-password', async (req, res) => {
   }
 
   try {
+    const tokenHash = hashHexToken(token);
     const user = await db.prepare(
-      'SELECT id, password_reset_expires FROM users WHERE password_reset_token = ?'
-    ).get(token);
+      'SELECT id, password_reset_expires FROM users WHERE password_reset_token = ? OR password_reset_token = ?'
+    ).get(tokenHash, token);
 
     if (!user) {
       return res.status(400).json({ error: 'Reset link is invalid or expired' });
