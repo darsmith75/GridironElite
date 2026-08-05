@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const db = require('../database');
 const { requireAuth } = require('../middleware/auth');
 const { METRIC_VIDEO_CONFIG, METRIC_TIP_CONFIG } = require('../utils/constants');
@@ -281,6 +282,36 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
   console.log('Update request for user:', req.session.userId);
 
   try {
+    const currentPassword = String(data.currentPassword || '').trim();
+    const newPassword = String(data.newPassword || '').trim();
+    const confirmNewPassword = String(data.confirmNewPassword || '').trim();
+    const wantsPasswordChange = !!(currentPassword || newPassword || confirmNewPassword);
+    let nextPasswordHash = null;
+
+    if (wantsPasswordChange) {
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return res.status(400).json({
+          error: 'To change password, provide current password, new password, and confirmation.'
+        });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+      }
+      if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ error: 'New password and confirmation do not match.' });
+      }
+      if (newPassword === currentPassword) {
+        return res.status(400).json({ error: 'New password must be different from current password.' });
+      }
+
+      const currentUser = await db.prepare('SELECT password FROM users WHERE id = ?').get(req.session.userId);
+      if (!currentUser || !(await bcrypt.compare(currentPassword, currentUser.password))) {
+        return res.status(400).json({ error: 'Current password is incorrect.' });
+      }
+
+      nextPasswordHash = await bcrypt.hash(newPassword, 10);
+    }
+
     if (files?.highlightVideos && files.highlightVideos.length > 1) {
       return res.status(400).json({
         error: 'Please upload only one highlight video at a time.'
@@ -421,6 +452,12 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
             recorded_at = EXCLUDED.recorded_at,
             updated_at = CURRENT_TIMESTAMP
         `).run(req.session.userId, config.key, resolvedFilename, isVerified, verifiedBy, recordedAt);
+      }
+
+      if (nextPasswordHash) {
+        await tx.prepare(
+          'UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?'
+        ).run(nextPasswordHash, req.session.userId);
       }
 
       return updateResult;

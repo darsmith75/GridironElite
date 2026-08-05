@@ -374,6 +374,25 @@
             </div>
 
             <div class="form-section full-width">
+              <h3>Change Password</h3>
+              <p class="hint-text">Leave these blank to keep your current password.</p>
+              <div class="contact-grid">
+                <div class="contact-person">
+                  <label>Current Password:</label>
+                  <input type="password" name="currentPassword" autocomplete="current-password" placeholder="Current password">
+                </div>
+                <div class="contact-person">
+                  <label>New Password:</label>
+                  <input type="password" name="newPassword" minlength="8" autocomplete="new-password" placeholder="New password (min 8 characters)">
+                </div>
+                <div class="contact-person">
+                  <label>Confirm New Password:</label>
+                  <input type="password" name="confirmNewPassword" minlength="8" autocomplete="new-password" placeholder="Re-enter new password">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section full-width">
               <h3>Media</h3>
               <div class="media-upload-grid">
 
@@ -2809,6 +2828,29 @@
         }
       }
 
+      const currentPasswordInput = e.target.querySelector('input[name="currentPassword"]');
+      const newPasswordInput = e.target.querySelector('input[name="newPassword"]');
+      const confirmNewPasswordInput = e.target.querySelector('input[name="confirmNewPassword"]');
+      const currentPassword = (currentPasswordInput?.value || '').trim();
+      const newPassword = (newPasswordInput?.value || '').trim();
+      const confirmNewPassword = (confirmNewPasswordInput?.value || '').trim();
+      const changingPassword = !!(currentPassword || newPassword || confirmNewPassword);
+
+      if (changingPassword) {
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+          showProfileResult('To change password, fill in current password, new password, and confirm new password.', 'error');
+          return;
+        }
+        if (newPassword.length < 8) {
+          showProfileResult('New password must be at least 8 characters long.', 'error');
+          return;
+        }
+        if (newPassword !== confirmNewPassword) {
+          showProfileResult('New password and confirmation do not match.', 'error');
+          return;
+        }
+      }
+
       isSavingProfile = true;
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const statusEl = document.getElementById('profileSaveStatus');
@@ -2845,7 +2887,12 @@
         clearTimeout(timeoutId);
 
         if (res.ok) {
-          showProfileResult('Profile saved successfully.', 'success');
+          if (changingPassword) {
+            if (currentPasswordInput) currentPasswordInput.value = '';
+            if (newPasswordInput) newPasswordInput.value = '';
+            if (confirmNewPasswordInput) confirmNewPasswordInput.value = '';
+          }
+          showProfileResult(changingPassword ? 'Profile and password updated successfully.' : 'Profile saved successfully.', 'success');
           await loadPlayerProfile();
           showViewMode();
         } else {
