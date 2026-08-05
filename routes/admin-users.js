@@ -21,6 +21,24 @@ function parsePagination(query) {
   return { page, limit, offset };
 }
 
+function normalizeEmailOrEmpty(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function findUserByEmail(email, excludeUserId = null) {
+  const normalizedEmail = normalizeEmailOrEmpty(email);
+  if (!normalizedEmail) return null;
+  if (excludeUserId === null || excludeUserId === undefined) {
+    return db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(normalizedEmail);
+  }
+  return db.prepare('SELECT id FROM users WHERE LOWER(email) = ? AND id <> ?').get(normalizedEmail, excludeUserId);
+}
+
+function isUsersEmailConflictError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('users_email_key') || (message.includes('unique') && message.includes('email'));
+}
+
 // Admin: Get own profile
 router.get('/admin/profile', requireAdmin, async (req, res) => {
   try {
@@ -42,6 +60,15 @@ router.post('/admin/profile', requireAdmin, upload.fields([
   const { fullName, email, phone, organization, title, experience, bio } = req.body;
   const files = req.files;
   try {
+    const normalizedEmail = normalizeEmailOrEmpty(email);
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    const duplicate = await findUserByEmail(normalizedEmail, req.session.userId);
+    if (duplicate) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
+
     await processUploadedFiles(req.session.userId, files);
     const existingAdmin = await db.prepare('SELECT profile_picture FROM users WHERE id = ?').get(req.session.userId);
     let profilePicFilename = existingAdmin?.profile_picture || null;
@@ -50,7 +77,7 @@ router.post('/admin/profile', requireAdmin, upload.fields([
     }
 
     await db.prepare(`UPDATE users SET full_name = ?, email = ?, phone = ?, organization = ?, title = ?, experience = ?, bio = ? WHERE id = ?`)
-      .run(fullName, email, phone, organization, title, experience, bio, req.session.userId);
+      .run(fullName, normalizedEmail, phone, organization, title, experience, bio, req.session.userId);
 
     if (files && files.profilePicture && files.profilePicture[0]) {
       await replaceUserFile(req.session.userId, 'profile_picture', profilePicFilename);
@@ -59,6 +86,9 @@ router.post('/admin/profile', requireAdmin, upload.fields([
     res.json({ success: true });
   } catch (error) {
     console.error('Admin update own profile error:', error);
+    if (isUsersEmailConflictError(error)) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });
@@ -146,9 +176,9 @@ router.post('/admin/users', requireAdmin, async (req, res) => {
   }
 
   try {
-    const existing = await db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?)').get(normalizedEmail);
+    const existing = await findUserByEmail(normalizedEmail);
     if (existing) {
-      return res.status(400).json({ error: 'Email already exists' });
+      return res.status(400).json({ error: 'Email is already in use by another user' });
     }
 
     const hashedPassword = await bcrypt.hash(String(password), 10);
@@ -174,6 +204,9 @@ router.post('/admin/users', requireAdmin, async (req, res) => {
     res.status(201).json({ success: true, user });
   } catch (error) {
     console.error('Admin create user error:', error);
+    if (isUsersEmailConflictError(error)) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
@@ -200,14 +233,32 @@ router.get('/admin/users/:id', requireAdmin, async (req, res) => {
 router.put('/admin/users/:id', requireAdmin, async (req, res) => {
   const { email, full_name, role, phone, organization } = req.body;
   try {
-    const existing = await db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'Invalid user id' });
+    }
+
+    const normalizedEmail = normalizeEmailOrEmpty(email);
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const existing = await db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
     if (!existing) return res.status(404).json({ error: 'User not found' });
 
+    const duplicate = await findUserByEmail(normalizedEmail, userId);
+    if (duplicate) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
+
     await db.prepare('UPDATE users SET email = ?, full_name = ?, role = ?, phone = ?, organization = ? WHERE id = ?')
-      .run(email, full_name, role, phone || null, organization || null, req.params.id);
+      .run(normalizedEmail, full_name, role, phone || null, organization || null, userId);
     res.json({ success: true });
   } catch (error) {
     console.error('Admin update user error:', error);
+    if (isUsersEmailConflictError(error)) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
     res.status(500).json({ error: 'Failed to update user' });
   }
 });

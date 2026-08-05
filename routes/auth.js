@@ -8,6 +8,11 @@ const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+function isUsersEmailConflictError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('users_email_key') || (message.includes('unique') && message.includes('email'));
+}
+
 // Register
 router.post('/register', async (req, res) => {
   const { email: rawEmail, password, role, fullName } = req.body;
@@ -17,6 +22,11 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ error: 'Invalid role' });
   }
   try {
+    const existingUser = await db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(email);
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
     await db.withTransaction(async (tx) => {
@@ -44,7 +54,10 @@ router.post('/register', async (req, res) => {
     res.json({ success: true, message: 'Registration successful! Please check your email to verify your account.' });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(400).json({ error: 'Email already exists or registration failed' });
+    if (isUsersEmailConflictError(error)) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
+    res.status(400).json({ error: 'Registration failed' });
   }
 });
 

@@ -15,6 +15,11 @@ const { parseHeightToInches, formatHeightFromInches } = require('../utils/height
 
 const router = express.Router();
 
+function isUsersEmailConflictError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('users_email_key') || (message.includes('unique') && message.includes('email'));
+}
+
 function wrapAsync(handler) {
   return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 }
@@ -332,6 +337,18 @@ router.post('/agent/profile', requireAuth, upload.fields([
   const data = req.body;
   const files = req.files;
   try {
+    const normalizedEmail = String(data.email || '').trim().toLowerCase();
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    const existingEmailOwner = await db.prepare('SELECT id FROM users WHERE LOWER(email) = ? AND id <> ?').get(
+      normalizedEmail,
+      req.session.userId
+    );
+    if (existingEmailOwner) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
+
     const normalizedExperience = normalizeOptionalInteger(data.experience);
     // Upload any incoming files to B2 (or local disk if B2 not configured)
     await processUploadedFiles(req.session.userId, files);
@@ -347,7 +364,7 @@ router.post('/agent/profile', requireAuth, upload.fields([
     console.log('Agent profile update:', {
       userId: req.session.userId,
       fullName: data.fullName,
-      email: data.email,
+      email: normalizedEmail,
       phone: data.phone,
       organization: data.organization,
       title: data.title,
@@ -357,7 +374,7 @@ router.post('/agent/profile', requireAuth, upload.fields([
     });
     const result = await db.prepare(`UPDATE users SET full_name = ?, email = ?, phone = ?, organization = ?, title = ?, experience = ?, bio = ? WHERE id = ?`).run(
       data.fullName?.trim() || null,
-      data.email?.trim() || null,
+      normalizedEmail,
       data.phone?.trim() || null,
       data.organization?.trim() || null,
       data.title?.trim() || null,
@@ -372,6 +389,9 @@ router.post('/agent/profile', requireAuth, upload.fields([
     res.json({ success: true });
   } catch (error) {
     console.error('Agent update profile error:', error);
+    if (isUsersEmailConflictError(error)) {
+      return res.status(400).json({ error: 'Email is already in use by another user' });
+    }
     res.status(500).json({ error: 'Failed to update profile' });
   }
 });

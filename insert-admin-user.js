@@ -2,12 +2,12 @@ const bcrypt = require('bcryptjs');
 const db = require('./database');
 
 async function insertAdminUser() {
-  const email = process.env.ADMIN_EMAIL || 'admin@gridironelite.com';
+  const email = (process.env.ADMIN_EMAIL || 'admin@gridironelite.com').trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD || 'admin123?';
   const fullName = process.env.ADMIN_FULL_NAME || 'Admin User';
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const existing = await db.prepare('SELECT id FROM users WHERE LOWER(email) = ?').get(email);
 
   if (existing) {
     await db.prepare(`
