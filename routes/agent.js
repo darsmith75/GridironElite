@@ -51,7 +51,7 @@ for (const method of ['get', 'post', 'put', 'delete']) {
 }
 
 // Agent: Get all players with filters
-router.get('/agent/players', requireAgent, async (req, res) => {
+router.get('/agent/players', async (req, res) => {
   if (await isAgentPlayersRateLimited(req)) {
     return res.status(429).json({ error: 'Too many requests. Please slow down.' });
   }
@@ -257,7 +257,7 @@ router.get('/agent/players', requireAgent, async (req, res) => {
 });
 
 // Agent: Get single player detail
-router.get('/agent/player/:id', requireAgent, async (req, res) => {
+router.get('/agent/player/:id', async (req, res) => {
   // Disable caching
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
