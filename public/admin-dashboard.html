@@ -1113,6 +1113,7 @@
     let metricTipConfig = [];
     let metricTips = {};
     let metricYoutubeUrls = {};
+    let userSearchHasUserIntent = false;
     const USERS_PAGE_SIZE = 50;
     let usersCurrentPage = 1;
     let usersPagination = { page: 1, limit: USERS_PAGE_SIZE, total: 0, totalPages: 1, hasPrev: false, hasNext: false };
@@ -1328,7 +1329,12 @@
     }
 
     async function loadUsers(page = usersCurrentPage) {
-      const search = document.getElementById('userSearch').value.trim();
+      const userSearchInput = document.getElementById('userSearch');
+      const rawSearch = userSearchInput ? userSearchInput.value.trim() : '';
+      const search = userSearchHasUserIntent ? rawSearch : '';
+      if (!userSearchHasUserIntent && rawSearch && userSearchInput) {
+        userSearchInput.value = '';
+      }
       const role = document.getElementById('roleFilter').value;
       const params = new URLSearchParams({ page: String(page), limit: String(USERS_PAGE_SIZE) });
       if (search) params.set('search', search);
@@ -1446,10 +1452,30 @@
       // Some browsers/password managers may autofill this generic text field on first load.
       // Always start User Management unfiltered unless the admin types a search.
       searchInput.value = '';
+      userSearchHasUserIntent = false;
     }
 
     // Search and filter listeners
-    document.getElementById('userSearch').addEventListener('input', () => { usersCurrentPage = 1; loadUsers(1); });
+    const userSearchInput = document.getElementById('userSearch');
+    userSearchInput.addEventListener('keydown', () => {
+      userSearchHasUserIntent = true;
+    });
+    userSearchInput.addEventListener('paste', () => {
+      userSearchHasUserIntent = true;
+    });
+    userSearchInput.addEventListener('input', () => {
+      // Ignore autofill-like input that occurs without this field being active.
+      if (document.activeElement !== userSearchInput) {
+        userSearchInput.value = '';
+        userSearchHasUserIntent = false;
+        usersCurrentPage = 1;
+        loadUsers(1);
+        return;
+      }
+      userSearchHasUserIntent = true;
+      usersCurrentPage = 1;
+      loadUsers(1);
+    });
     document.getElementById('roleFilter').addEventListener('change', () => { usersCurrentPage = 1; loadUsers(1); });
     document.getElementById('coachSearch').addEventListener('input', () => { coachesCurrentPage = 1; loadCoaches(1); });
     document.getElementById('coachStateFilter').addEventListener('change', () => { coachesCurrentPage = 1; loadCoaches(1); });
