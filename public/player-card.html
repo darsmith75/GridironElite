@@ -1017,13 +1017,13 @@
       const fatherDetails = [];
       if (player.father_email) fatherDetails.push(player.father_email);
       if (player.father_phone) fatherDetails.push(player.father_phone);
-      contactHTML += `<div class="contact-item"><strong>Father – ${fatherName}</strong>${fatherDetails.length ? fatherDetails.join(' | ') : '—'}</div>`;
+      contactHTML += `<div class="contact-item"><strong>Parent – ${fatherName}</strong>${fatherDetails.length ? fatherDetails.join(' | ') : '—'}</div>`;
       
       const motherName = player.mother_name || '—';
       const motherDetails = [];
       if (player.mother_email) motherDetails.push(player.mother_email);
       if (player.mother_phone) motherDetails.push(player.mother_phone);
-      contactHTML += `<div class="contact-item"><strong>Mother – ${motherName}</strong>${motherDetails.length ? motherDetails.join(' | ') : '—'}</div>`;
+      contactHTML += `<div class="contact-item"><strong>Agent – ${motherName}</strong>${motherDetails.length ? motherDetails.join(' | ') : '—'}</div>`;
       
       const coachName = player.coach_name || '—';
       const coachDetails = [];

@@ -342,23 +342,23 @@
               <h3>Contact Information</h3>
               <div class="contact-grid">
                 <div class="contact-person">
-                  <h4>Father</h4>
+                  <h4>Parent</h4>
                   <label>Name:</label>
-                  <input type="text" name="fatherName" placeholder="Father's Name">
+                  <input type="text" name="fatherName" placeholder="Parent's Name">
                   <label>Email:</label>
-                  <input type="email" name="fatherEmail" placeholder="Father's Email">
+                  <input type="email" name="fatherEmail" placeholder="Parent's Email">
                   <label>Phone:</label>
-                  <input type="tel" name="fatherPhone" placeholder="Father's Phone">
+                  <input type="tel" name="fatherPhone" placeholder="Parent's Phone">
                 </div>
                 
                 <div class="contact-person">
-                  <h4>Mother</h4>
+                  <h4>Agent</h4>
                   <label>Name:</label>
-                  <input type="text" name="motherName" placeholder="Mother's Name">
+                  <input type="text" name="motherName" placeholder="Agent's Name">
                   <label>Email:</label>
-                  <input type="email" name="motherEmail" placeholder="Mother's Email">
+                  <input type="email" name="motherEmail" placeholder="Agent's Email">
                   <label>Phone:</label>
-                  <input type="tel" name="motherPhone" placeholder="Mother's Phone">
+                  <input type="tel" name="motherPhone" placeholder="Agent's Phone">
                 </div>
                 
                 <div class="contact-person">
@@ -1896,7 +1896,7 @@
             <div class="contact-info-grid">
               ${profile.father_name ? `
                 <div class="contact-card">
-                  <h4>Father</h4>
+                  <h4>Parent</h4>
                   <div class="contact-details">
                     <p><strong>Name:</strong> ${profile.father_name}</p>
                     ${profile.father_email ? `<p><strong>Email:</strong> <a href="mailto:${profile.father_email}">${profile.father_email}</a></p>` : ''}
@@ -1906,7 +1906,7 @@
               ` : ''}
               ${profile.mother_name ? `
                 <div class="contact-card">
-                  <h4>Mother</h4>
+                  <h4>Agent</h4>
                   <div class="contact-details">
                     <p><strong>Name:</strong> ${profile.mother_name}</p>
                     ${profile.mother_email ? `<p><strong>Email:</strong> <a href="mailto:${profile.mother_email}">${profile.mother_email}</a></p>` : ''}
