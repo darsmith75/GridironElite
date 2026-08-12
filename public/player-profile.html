@@ -1597,7 +1597,7 @@
         ? ` role="button" tabindex="0" aria-label="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
       const displayValue = isVideoOnlyMetric
-        ? 'Video Added'
+        ? ''
         : metric.key === 'broad_jump'
         ? formatBroadJumpFeetInches(value)
         : `${value}${metric.suffix}`;
