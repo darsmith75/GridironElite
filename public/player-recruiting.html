@@ -1541,6 +1541,7 @@
   <script>
     const timelineYearOrder = ['freshman', 'sophomore', 'junior', 'senior'];
     let activePositionGuide = null;
+    let recruitingTaskState = new Map();
 
     const recruitingTimelineData = {
       freshman: {
@@ -1838,6 +1839,53 @@
       return Math.round((completedTasks.length / tasks.length) * 100);
     }
 
+    function getRecruitingTaskKey(yearKey, seasonKey, taskIndex) {
+      return `${yearKey}:${seasonKey}:${taskIndex}`;
+    }
+
+    function getRecruitingTaskState(taskKey) {
+      return recruitingTaskState.get(taskKey) || { completed: false };
+    }
+
+    function setRecruitingTaskState(taskKey, state) {
+      recruitingTaskState.set(taskKey, {
+        completed: !!state?.completed,
+        completed_at: state?.completed_at || null,
+        updated_at: state?.updated_at || null
+      });
+    }
+
+    function persistRecruitingTaskState(taskKey, completed) {
+      return fetch('/api/player/recruiting-task-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskKey, completed })
+      });
+    }
+
+    function updateSeasonProgressDisplay(seasonEl) {
+      if (!seasonEl) return;
+      const tasks = seasonEl.querySelectorAll('.season-task');
+      const completed = seasonEl.querySelectorAll('.task-checkbox:checked').length;
+      const percentage = Math.round((completed / tasks.length) * 100);
+      const fill = seasonEl.querySelector('.progress-bar-fill');
+      const text = seasonEl.querySelector('.progress-text');
+      if (fill) fill.style.width = percentage + '%';
+      if (text) text.textContent = percentage + '%';
+    }
+
+    async function loadRecruitingTaskProgress() {
+      try {
+        const res = await fetch('/api/player/recruiting-task-progress');
+        if (!res.ok) return;
+        const data = await res.json();
+        recruitingTaskState = new Map();
+        (data.tasks || []).forEach((item) => {
+          setRecruitingTaskState(item.task_key, item);
+        });
+      } catch (_) {}
+    }
+
     function renderRoadmap(yearKey = 'freshman') {
       const container = document.getElementById('roadmapContainer');
       if (!container) return;
@@ -1874,7 +1922,7 @@
                   <div class="season-task-list">
                     ${season.tasks.map((task, tIdx) => `
                       <label class="season-task">
-                        <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}">
+                        <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}" data-task-key="${getRecruitingTaskKey(yearKey, seasonKey, tIdx)}">
                         <span>${task}</span>
                       </label>
                     `).join('')}
@@ -1897,8 +1945,18 @@
       
       // Attach checkbox listeners
       container.querySelectorAll('.task-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => updateTaskProgress(e.target));
+        const taskKey = checkbox.dataset.taskKey;
+        const saved = taskKey ? getRecruitingTaskState(taskKey) : null;
+        if (saved) {
+          checkbox.checked = !!saved.completed;
+          checkbox.closest('.season-task')?.classList.toggle('completed', checkbox.checked);
+        }
+        checkbox.addEventListener('change', async (e) => {
+          await updateTaskProgress(e.target);
+        });
       });
+
+      container.querySelectorAll('.season-content').forEach((seasonEl) => updateSeasonProgressDisplay(seasonEl));
     }
 
     function toggleYearRoadmap(yearKey, event) {
@@ -1921,19 +1979,35 @@
       if (contents.length > 0) contents[0].classList.add('active');
     }
 
-    function updateTaskProgress(checkbox) {
+    async function updateTaskProgress(checkbox) {
       const season = checkbox.closest('.season-content');
       if (!season) return;
-      
-      const tasks = season.querySelectorAll('.season-task');
-      const completed = season.querySelectorAll('.task-checkbox:checked').length;
-      const percentage = Math.round((completed / tasks.length) * 100);
-      
-      season.querySelector('.progress-bar-fill').style.width = percentage + '%';
-      season.querySelector('.progress-text').textContent = percentage + '%';
+      const taskKey = checkbox.dataset.taskKey;
+
+      if (taskKey) {
+        setRecruitingTaskState(taskKey, {
+          completed: checkbox.checked,
+          updated_at: new Date().toISOString(),
+          completed_at: checkbox.checked ? new Date().toISOString() : null
+        });
+
+        try {
+          const res = await persistRecruitingTaskState(taskKey, checkbox.checked);
+          if (!res.ok) {
+            throw new Error('Failed to save recruiting task progress');
+          }
+        } catch (_) {
+          setRecruitingTaskState(taskKey, { completed: !checkbox.checked });
+          checkbox.checked = !checkbox.checked;
+          checkbox.closest('.season-task').classList.toggle('completed', checkbox.checked);
+          updateSeasonProgressDisplay(season);
+          return;
+        }
+      }
       
       // Update task label styles
       checkbox.closest('.season-task').classList.toggle('completed', checkbox.checked);
+      updateSeasonProgressDisplay(season);
     }
 
     function renderTimelineYear(yearKey) {
@@ -2160,6 +2234,7 @@
           const mappedYear = mapGraduationYearToTimelineYear(gradYear, new Date());
           if (mappedYear) initialTimelineYear = mappedYear;
           await loadPositionGuideForProfile(String(profile?.position || '').trim());
+          await loadRecruitingTaskProgress();
         } else {
           renderPositionGuideState(null, '', 'Unable to load your profile position right now.');
         }

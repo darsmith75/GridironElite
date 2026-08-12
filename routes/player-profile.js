@@ -105,6 +105,252 @@ function parseBooleanField(value) {
   return false;
 }
 
+function normalizeTaskKey(input) {
+  return String(input || '').trim();
+}
+
+function isValidRecruitingYearKey(yearKey) {
+  return ['freshman', 'sophomore', 'junior', 'senior'].includes(String(yearKey || '').trim());
+}
+
+function isValidRecruitingSeasonKey(seasonKey) {
+  return ['summer', 'fall', 'winter', 'spring'].includes(String(seasonKey || '').trim());
+}
+
+function buildRecruitingTaskKey(yearKey, seasonKey, taskIndex) {
+  return `${yearKey}:${seasonKey}:${taskIndex}`;
+}
+
+function getRecruitingTimelineData() {
+  return {
+    freshman: {
+      seasons: {
+        summer: { tasks: [
+          'Complete Your Athlete Profile on GridIron',
+          'Record Your Baseline Athletic Testing on GridIron',
+          'Create Your Academic Plan',
+          'Build Your Summer Strength Program',
+          'Develop Speed & Mobility',
+          'Master Position Fundamentals',
+          'Build Nutrition Habits',
+          'Create a Professional Online Presence',
+          'Learn Football IQ',
+          'Set Your Freshman Goals'
+        ] },
+        fall: { tasks: [
+          'Maintain Your GPA',
+          'Be Coachable',
+          'Learn the Playbook',
+          'Record Every Game',
+          'Track Your Season Stats',
+          'Continue Strength & Recovery',
+          'Build Leadership Habits',
+          'Meet With Your Coaches',
+          'Keep Your GridIron Profile Updated',
+          'Reflect on the Season'
+        ] },
+        winter: { tasks: [
+          'Complete Winter Athletic Testing',
+          'Start a Structured Strength Program',
+          'Improve Speed & Explosiveness',
+          'Create Your First Highlight Film',
+          'Meet With Your Position Coach',
+          'Build Better Nutrition Habits',
+          'Study Football Weekly',
+          'Attend Position Training',
+          'Build Recovery Habits',
+          'Update Your GridIron Recruiting Profile'
+        ] },
+        spring: { tasks: [
+          'Complete Spring Athletic Testing',
+          'Attend One or Two Development Camps',
+          'Visit a College Campus',
+          'Continue Strength & Speed Training',
+          'Refine Position Skills',
+          'Set Sophomore Goals',
+          'Review Your Freshman Year',
+          'Build Relationships',
+          'Prepare for Summer Training',
+          'Update Your Athlete Profile'
+        ] }
+      }
+    },
+    sophomore: {
+      seasons: {
+        summer: { tasks: [
+          'Update Your Recruiting Profile',
+          'Update Your X/Twitter Profile',
+          'Complete Athletic Testing',
+          'Attend College Camps',
+          'Create a Target School List on GridIron',
+          'Introduce Yourself to Coaches',
+          'Visit College Campuses',
+          'Improve Your Athletic Performance and Skills',
+          'Set Sophomore Goals',
+          'Schedule Gameday Visits'
+        ] },
+        fall: { tasks: [
+          'Maintain Your GPA',
+          'Update Hudl Weekly',
+          'Record Season Statistics',
+          'Build Relationships With Coaches',
+          'Continue Strength Training',
+          'Respond to Recruiting Messages',
+          'Be a Great Teammate',
+          'Review Game Film Weekly',
+          'Update Your Athlete Profile',
+          'Set Offseason Improvement Goals'
+        ] },
+        winter: { tasks: [
+          'Build Maximum Strength',
+          'Improve Speed',
+          'Create Updated Highlight Film',
+          'Continue Building Relationships Via X/Twitter',
+          'Attend Combines',
+          'Update Recruiting Profile',
+          'Continue Contacting Coaches',
+          'Improve Nutrition',
+          'Improve Recovery',
+          'Set Spring Camp Schedule'
+        ] },
+        spring: { tasks: [
+          'Attend Junior Days',
+          'Schedule Unofficial Visits',
+          'Attend Showcase Camps',
+          'Retest Measurables',
+          'Continue Reaching Out to Coaches',
+          'Build Top 10 Schools List',
+          'Evaluate Camp Invitations',
+          'Improve Football IQ',
+          'Set Summer Recruiting Goals',
+          'Prepare for Junior Season'
+        ] }
+      }
+    },
+    junior: {
+      seasons: {
+        summer: { tasks: [
+          'Attend Priority College Camps',
+          'Update Recruiting Profile',
+          'Create New Highlight Film',
+          'Contact Every Target School',
+          'Build Top 10 School List',
+          'Visit Campuses',
+          'Complete Athletic Testing',
+          'Improve Speed and Strength',
+          'Prepare for Fall Season',
+          'Build Recruiting Calendar'
+        ] },
+        fall: { tasks: [
+          'Produce Varsity Film',
+          'Update Hudl & X Weekly',
+          'Track Offers',
+          'Stay in Weekly Contact With Coaches',
+          'Schedule Game-Day Visits',
+          'Maintain GPA',
+          'Respond Quickly to Coaches',
+          'Update Athlete Profile',
+          'Build Top 6 Schools',
+          'Evaluate Every Opportunity'
+        ] },
+        winter: { tasks: [
+          'Build Top 6 Schools',
+          'Create New Highlight Film',
+          'Meet With Recruiting Coordinator',
+          'Continue Unofficial & Spring Practice Visits',
+          'Attend Junior Days',
+          'Improve Athletic Testing',
+          'Review Offers With Family',
+          'Meet Academic Advisors',
+          'Build Questions for Coaches',
+          'Prepare for Official Visit Season'
+        ] },
+        spring: { tasks: [
+          'Schedule Official Visits',
+          'Compare Schools',
+          'Evaluate Coaching Staffs',
+          'Evaluate Academics',
+          'Evaluate NIL Opportunities',
+          'Evaluate NFL Development',
+          'Continue Communication',
+          'Narrow to Top 4',
+          'Set Commitment Timeline',
+          'Prepare for Senior Year'
+        ] }
+      }
+    },
+    senior: {
+      seasons: {
+        summer: { tasks: [
+          'Finalize Your Commitment',
+          'Attend Remaining Camps',
+          'Update Highlight Film',
+          'Retest Athletic Measurements',
+          'Continue Coach Communication',
+          'Schedule Official Visits',
+          'Complete Recruiting Calendar',
+          'Prepare Senior Goals',
+          'Improve Leadership',
+          'Arrive in Peak Condition'
+        ] },
+        fall: { tasks: [
+          'Schedule Gameday Visits for Committed Schools',
+          'Compare Scholarship Offers',
+          'Talk With Current Players',
+          'Meet Academic Departments',
+          'Evaluate Depth Charts',
+          'Continue Strong Senior Season',
+          'Maintain GPA',
+          'Build Relationships',
+          'Commit When Ready',
+          'Thank Every Coaching Staff'
+        ] },
+        winter: { tasks: [
+          'Sign National Letter of Intent',
+          'Finish Academics Strong',
+          'Complete NCAA Eligibility Center Requirements',
+          'Continue Training',
+          'Stay Healthy',
+          'Complete Housing Paperwork',
+          'Register for Orientation',
+          'Meet College Strength Coach',
+          'Receive Summer Workouts',
+          'Prepare for Graduation'
+        ] },
+        spring: { tasks: [
+          'Graduate High School',
+          'Maintain Training',
+          'Complete Nutrition Plan',
+          'Improve Mobility',
+          'Prepare Mentally',
+          'Learn College Playbook if Available',
+          'Connect With Future Teammates',
+          'Attend Orientation',
+          'Build Summer Routine',
+          'Report to Campus Ready to Compete'
+        ] }
+      }
+    }
+  };
+}
+
+function getRecruitingTaskByKey(taskKey) {
+  const [yearKey, seasonKey, taskIndexRaw] = String(taskKey || '').split(':');
+  const timeline = getRecruitingTimelineData();
+  const season = timeline[yearKey]?.seasons?.[seasonKey];
+  const taskIndex = Number(taskIndexRaw);
+  if (!season || !Number.isInteger(taskIndex) || taskIndex < 0 || taskIndex >= season.tasks.length) {
+    return null;
+  }
+  return {
+    yearKey,
+    seasonKey,
+    taskIndex,
+    taskLabel: season.tasks[taskIndex],
+    taskKey: buildRecruitingTaskKey(yearKey, seasonKey, taskIndex)
+  };
+}
+
 async function handleDeletePlayerAccount(req, res) {
   if (req.session.role !== 'player') {
     return res.status(403).json({ error: 'Only athletes can delete this account' });
@@ -255,6 +501,74 @@ router.get('/player/position-highlight-guide', requireAuth, async (req, res) => 
   } catch (error) {
     console.error('Player get position highlight guide error:', error);
     res.status(500).json({ error: 'Failed to load position highlight guide' });
+  }
+});
+
+router.get('/player/recruiting-task-progress', requireAuth, async (req, res) => {
+  try {
+    const rows = await db.prepare(`
+      SELECT task_key, year_key, season_key, task_index, task_label, completed, completed_at, updated_at
+      FROM player_recruiting_task_progress
+      WHERE user_id = ?
+      ORDER BY year_key, season_key, task_index, id
+    `).all(req.session.userId);
+
+    res.json({
+      success: true,
+      tasks: rows
+    });
+  } catch (error) {
+    console.error('Get recruiting task progress error:', error);
+    res.status(500).json({ error: 'Failed to load recruiting task progress' });
+  }
+});
+
+router.post('/player/recruiting-task-progress', requireAuth, async (req, res) => {
+  try {
+    const taskKey = normalizeTaskKey(req.body?.taskKey);
+    const completed = parseBooleanField(req.body?.completed);
+    const task = getRecruitingTaskByKey(taskKey);
+
+    if (!task) {
+      return res.status(400).json({ error: 'Invalid recruiting task key' });
+    }
+
+    await db.prepare(`
+      INSERT INTO player_recruiting_task_progress (
+        user_id,
+        task_key,
+        year_key,
+        season_key,
+        task_index,
+        task_label,
+        completed,
+        completed_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id, task_key)
+      DO UPDATE SET
+        year_key = EXCLUDED.year_key,
+        season_key = EXCLUDED.season_key,
+        task_index = EXCLUDED.task_index,
+        task_label = EXCLUDED.task_label,
+        completed = EXCLUDED.completed,
+        completed_at = EXCLUDED.completed_at,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(
+      req.session.userId,
+      task.taskKey,
+      task.yearKey,
+      task.seasonKey,
+      task.taskIndex,
+      task.taskLabel,
+      completed,
+      completed ? new Date().toISOString() : null
+    );
+
+    res.json({ success: true, taskKey: task.taskKey, completed });
+  } catch (error) {
+    console.error('Save recruiting task progress error:', error);
+    res.status(500).json({ error: 'Failed to save recruiting task progress' });
   }
 });
 

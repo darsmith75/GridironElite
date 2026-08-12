@@ -215,6 +215,22 @@ const createTablesSQL = `
     FOREIGN KEY (updated_by_user_id) REFERENCES users(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS player_recruiting_task_progress (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    task_key VARCHAR(128) NOT NULL,
+    year_key VARCHAR(32) NOT NULL,
+    season_key VARCHAR(32) NOT NULL,
+    task_index INTEGER NOT NULL,
+    task_label TEXT NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, task_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS site_ad_slots (
     id SERIAL PRIMARY KEY,
     slot_key VARCHAR(120) UNIQUE NOT NULL,
@@ -634,6 +650,8 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user_verified ON player_metric_videos(user_id, is_verified);
+  CREATE INDEX IF NOT EXISTS idx_player_recruiting_task_progress_user ON player_recruiting_task_progress(user_id);
+  CREATE INDEX IF NOT EXISTS idx_player_recruiting_task_progress_task ON player_recruiting_task_progress(user_id, year_key, season_key);
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
   CREATE INDEX IF NOT EXISTS idx_player_metric_pro_tips_player ON player_metric_pro_tips(player_user_id);
   CREATE INDEX IF NOT EXISTS idx_site_ad_slots_key ON site_ad_slots(slot_key);
