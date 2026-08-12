@@ -297,6 +297,14 @@
                   <label class="metric-proof-date-label">Date Recorded:</label>
                   <input type="date" name="metricRecordedAtWingspan" class="metric-proof-date">
                 </div>
+                <div class="metric-proof-item">
+                  <label>Bend Test Video:</label>
+                  <input type="file" name="metricVideoBend" accept="video/*">
+                  <label class="metric-proof-verify"><input type="checkbox" name="metricVerifiedBend"> Verified by third party</label>
+                  <input type="text" name="metricVerifiedByBend" placeholder="Verified by (name/organization)">
+                  <label class="metric-proof-date-label">Date Recorded:</label>
+                  <input type="date" name="metricRecordedAtBend" class="metric-proof-date">
+                </div>
               </div>
             </div>
 
@@ -833,7 +841,8 @@
       { key: 'catapult', fieldName: 'catapult', label: 'Catapult', suffix: '', videoField: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
       { key: 'metric_1080', fieldName: 'metric1080', label: '1080', suffix: '', videoField: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' },
       { key: 'hand_size', fieldName: 'handSize', label: 'Hand Size', suffix: '"', videoField: 'metricVideoHandSize', verifiedField: 'metricVerifiedHandSize', verifiedByField: 'metricVerifiedByHandSize', recordedAtField: 'metricRecordedAtHandSize' },
-      { key: 'wingspan', fieldName: 'wingspan', label: 'Wingspan', suffix: '"', videoField: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' }
+      { key: 'wingspan', fieldName: 'wingspan', label: 'Wingspan', suffix: '"', videoField: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' },
+      { key: 'bend', fieldName: 'bend', label: 'Bend Test', suffix: '', videoField: 'metricVideoBend', verifiedField: 'metricVerifiedBend', verifiedByField: 'metricVerifiedByBend', recordedAtField: 'metricRecordedAtBend' }
     ];
 
     initGraduationYearPicker();
@@ -1569,7 +1578,8 @@
         catapult: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18h14"></path><path d="M8 18v-7"></path><circle cx="16" cy="7" r="2"></circle><path d="M8 11l8-4"></path></svg>`,
         metric_1080: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`,
         hand_size: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18V9"></path><path d="M10 18V7"></path><path d="M13 18V8"></path><path d="M16 18V10"></path><path d="M7 18h9"></path></svg>`,
-        wingspan: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><path d="M6 9l-3 3 3 3"></path><path d="M18 9l3 3-3 3"></path></svg>`
+        wingspan: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><path d="M6 9l-3 3 3 3"></path><path d="M18 9l3 3-3 3"></path></svg>`,
+        bend: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6v12"></path><path d="M18 6v12"></path><path d="M6 12h6"></path><path d="M12 12l6 6"></path></svg>`
       };
 
       return iconMap[metricKey] || `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`;
@@ -1577,15 +1587,18 @@
 
     function buildMetricCard(metric, metricVideoMap, profile) {
       const value = profile ? profile[metric.key] : null;
-      if (!value) return '';
       const media = metricVideoMap[metric.key] || null;
       const hasVideo = !!(media && media.video_filename);
+      const isVideoOnlyMetric = metric.key === 'bend';
+      if (!value && !(isVideoOnlyMetric && hasVideo)) return '';
       const isVerified = !!(media && media.is_verified);
       const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
       const cardAttrs = hasVideo
         ? ` role="button" tabindex="0" aria-label="View ${metric.label} video" onclick="openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openMetricVideoLightbox('/uploads/${media.video_filename}', '${metric.label.replace(/'/g, '&#39;')}');}"`
         : '';
-      const displayValue = metric.key === 'broad_jump'
+      const displayValue = isVideoOnlyMetric
+        ? 'Video Added'
+        : metric.key === 'broad_jump'
         ? formatBroadJumpFeetInches(value)
         : `${value}${metric.suffix}`;
       return `
@@ -1772,7 +1785,12 @@
 
       // Athletic Metrics
       const metricVideoMap = getMetricVideoMap(profile);
-      const hasMetrics = METRIC_DEFINITIONS.some(metric => profile[metric.key]);
+      const hasMetrics = METRIC_DEFINITIONS.some(metric => {
+        if (metric.key === 'bend') {
+          return !!metricVideoMap[metric.key]?.video_filename;
+        }
+        return !!profile[metric.key];
+      });
       if (hasMetrics) {
         html += `
           <div class="profile-section profile-performance-section">

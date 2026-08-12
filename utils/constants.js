@@ -11,7 +11,8 @@ const METRIC_VIDEO_CONFIG = [
   { key: 'catapult', fieldName: 'metricVideoCatapult', verifiedField: 'metricVerifiedCatapult', verifiedByField: 'metricVerifiedByCatapult', recordedAtField: 'metricRecordedAtCatapult' },
   { key: 'metric_1080', fieldName: 'metricVideo1080', verifiedField: 'metricVerified1080', verifiedByField: 'metricVerifiedBy1080', recordedAtField: 'metricRecordedAt1080' },
   { key: 'hand_size', fieldName: 'metricVideoHandSize', verifiedField: 'metricVerifiedHandSize', verifiedByField: 'metricVerifiedByHandSize', recordedAtField: 'metricRecordedAtHandSize' },
-  { key: 'wingspan', fieldName: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' }
+  { key: 'wingspan', fieldName: 'metricVideoWingspan', verifiedField: 'metricVerifiedWingspan', verifiedByField: 'metricVerifiedByWingspan', recordedAtField: 'metricRecordedAtWingspan' },
+  { key: 'bend', fieldName: 'metricVideoBend', verifiedField: 'metricVerifiedBend', verifiedByField: 'metricVerifiedByBend', recordedAtField: 'metricRecordedAtBend' }
 ];
 
 const METRIC_TIP_CONFIG = [
