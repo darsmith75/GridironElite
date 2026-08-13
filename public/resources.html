@@ -144,6 +144,104 @@
       color: #0b1f4b;
       box-shadow: 0 0 0 2px rgba(201,150,46,0.18);
     }
+    .recruiting-secondary-content {
+      display: none;
+      margin-top: 18px;
+      border: 1px solid #d5deea;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      padding: 18px;
+    }
+    .recruiting-secondary-content.active {
+      display: block;
+    }
+    .recruiting-secondary-content .resources-panel {
+      display: block;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+    .recruiting-secondary-content .do-dont-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .recruiting-secondary-content .do-card,
+    .recruiting-secondary-content .dont-card {
+      border-radius: 12px;
+      border: 1px solid #dbe5f3;
+      padding: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
+      box-shadow: 0 4px 12px rgba(14,34,74,0.08);
+    }
+    .recruiting-secondary-content .do-card {
+      background: linear-gradient(180deg, #f3fbf4 0%, #edf8f1 100%);
+      border-color: #cfe8d3;
+    }
+    .recruiting-secondary-content .dont-card {
+      background: linear-gradient(180deg, #fff5f5 0%, #fff0f0 100%);
+      border-color: #f2d5d5;
+    }
+    .recruiting-secondary-content .do-card h3,
+    .recruiting-secondary-content .dont-card h3 {
+      margin: 0 0 8px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .recruiting-secondary-content .do-card h3 { color: #1f6b35; }
+    .recruiting-secondary-content .dont-card h3 { color: #a12727; }
+    .recruiting-secondary-content .do-card ul,
+    .recruiting-secondary-content .dont-card ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #364a67;
+    }
+    .recruiting-secondary-content .do-card li + li,
+    .recruiting-secondary-content .dont-card li + li { margin-top: 6px; }
+    .recruiting-secondary-content .category-guidance-wrap {
+      margin-top: 14px;
+      border-top: 1px solid #e1e8f3;
+      padding-top: 14px;
+    }
+    .recruiting-secondary-content .category-guidance-title {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #1e3c72;
+    }
+    .recruiting-secondary-content .category-guidance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 10px;
+    }
+    .recruiting-secondary-content .category-guidance-card {
+      border: 1px solid #dbe5f3;
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 12px;
+    }
+    .recruiting-secondary-content .category-guidance-card h4 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      color: #1e3c72;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    .recruiting-secondary-content .category-guidance-card ul {
+      margin: 0;
+      padding-left: 17px;
+      color: #364a67;
+      font-size: 13px;
+      line-height: 1.52;
+    }
+    .recruiting-secondary-content .category-guidance-card li + li { margin-top: 6px; }
     .resources-panel {
       display: none;
     }
@@ -381,18 +479,20 @@
         </div>
 
         <div class="resources-secondary-tabs" aria-label="Recruiting resource shortcuts">
-          <button class="resources-secondary-tab" type="button">School Considerations</button>
-          <button class="resources-secondary-tab" type="button">Things To Do / Not To Do</button>
-          <button class="resources-secondary-tab" type="button">College Visits</button>
-          <button class="resources-secondary-tab" type="button">Camps &amp; Showcases</button>
-          <button class="resources-secondary-tab" type="button">Highlight Film</button>
-          <button class="resources-secondary-tab" type="button">Communication</button>
-          <button class="resources-secondary-tab" type="button">Offers &amp; Recruiting Decisions</button>
-          <button class="resources-secondary-tab" type="button">Scholarships &amp; Financial Aid</button>
-          <button class="resources-secondary-tab" type="button">Parent Guide</button>
-          <button class="resources-secondary-tab" type="button">Recruiting Mistakes</button>
-          <button class="resources-secondary-tab" type="button">Frequently Asked Questions</button>
+          <button class="resources-secondary-tab" type="button" data-target="considerations">School Considerations</button>
+          <button class="resources-secondary-tab" type="button" data-target="dos-donts">Things To Do / Not To Do</button>
+          <button class="resources-secondary-tab" type="button" data-target="college-visits">College Visits</button>
+          <button class="resources-secondary-tab" type="button" data-target="camps-showcases">Camps &amp; Showcases</button>
+          <button class="resources-secondary-tab" type="button" data-target="highlight-film">Highlight Film</button>
+          <button class="resources-secondary-tab" type="button" data-target="communication">Communication</button>
+          <button class="resources-secondary-tab" type="button" data-target="offers-decisions">Offers &amp; Recruiting Decisions</button>
+          <button class="resources-secondary-tab" type="button" data-target="scholarships-aid">Scholarships &amp; Financial Aid</button>
+          <button class="resources-secondary-tab" type="button" data-target="parent-guide">Parent Guide</button>
+          <button class="resources-secondary-tab" type="button" data-target="recruiting-mistakes">Recruiting Mistakes</button>
+          <button class="resources-secondary-tab" type="button" data-target="faq">Frequently Asked Questions</button>
         </div>
+
+        <div id="recruiting-secondary-content" class="recruiting-secondary-content" aria-live="polite"></div>
 
         <!-- Nutrition Panel -->
         <section id="panel-nutrition" class="resources-panel active" role="tabpanel">
@@ -715,26 +815,77 @@
   <script>
     checkAuth('player');
 
+    const recruitingSecondaryContainer = document.getElementById('recruiting-secondary-content');
+
+    function hideMainResourcePanels() {
+      document.querySelectorAll('.resources-panel').forEach((panel) => panel.classList.remove('active'));
+      document.querySelectorAll('.resources-tab-card').forEach((tab) => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+      });
+    }
+
+    function showMainResourcePanel(tabName) {
+      hideMainResourcePanels();
+      document.querySelectorAll('.resources-secondary-tab').forEach((b) => b.classList.remove('active'));
+      if (recruitingSecondaryContainer) {
+        recruitingSecondaryContainer.classList.remove('active');
+        recruitingSecondaryContainer.innerHTML = '';
+      }
+
+      const targetTab = document.querySelector(`.resources-tab-card[data-tab="${tabName}"]`);
+      if (targetTab) {
+        targetTab.classList.add('active');
+        targetTab.setAttribute('aria-selected', 'true');
+      }
+
+      const panel = document.getElementById('panel-' + tabName);
+      if (panel) panel.classList.add('active');
+    }
+
     // Tab switching
     document.querySelectorAll('.resources-tab-card').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.resources-tab-card').forEach((b) => {
-          b.classList.remove('active');
-          b.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.resources-panel').forEach((p) => p.classList.remove('active'));
-        btn.classList.add('active');
-        btn.setAttribute('aria-selected', 'true');
-        const panelId = 'panel-' + btn.dataset.tab;
-        const panel = document.getElementById(panelId);
-        if (panel) panel.classList.add('active');
+        showMainResourcePanel(btn.dataset.tab);
       });
     });
 
+    async function loadRecruitingSection(targetId) {
+      if (!recruitingSecondaryContainer) return;
+
+      try {
+        const response = await fetch('player-recruiting.html');
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const section = doc.getElementById('panel-' + targetId);
+
+        if (!section) {
+          recruitingSecondaryContainer.innerHTML = '<div class="tip-box"><strong>Content unavailable:</strong> That recruiting section could not be loaded.</div>';
+          return;
+        }
+
+        const clone = section.cloneNode(true);
+        clone.classList.add('recruiting-inline-section');
+        recruitingSecondaryContainer.innerHTML = '';
+        recruitingSecondaryContainer.appendChild(clone);
+        recruitingSecondaryContainer.classList.add('active');
+      } catch (error) {
+        recruitingSecondaryContainer.innerHTML = '<div class="tip-box"><strong>Content unavailable:</strong> We could not load the recruiting section right now.</div>';
+        recruitingSecondaryContainer.classList.add('active');
+      }
+    }
+
     document.querySelectorAll('.resources-secondary-tab').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         document.querySelectorAll('.resources-secondary-tab').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
+
+        hideMainResourcePanels();
+        const target = btn.dataset.target;
+        if (target) {
+          await loadRecruitingSection(target);
+        }
       });
     });
   </script>
