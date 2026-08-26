@@ -760,6 +760,7 @@
     }
     .season-task {
       display: flex;
+      justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
       padding: 10px;
@@ -775,6 +776,14 @@
       border-color: #caa355;
       background: #fdfaf2;
     }
+    .season-task-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
     .season-task input[type="checkbox"] {
       flex-shrink: 0;
       width: 18px;
@@ -786,13 +795,51 @@
     .season-task.completed {
       opacity: 0.7;
     }
-    .season-task.completed label {
-      text-decoration: line-through;
-      color: #9aa5b8;
-    }
-    .season-task label {
+    .season-task-text {
       flex: 1;
-      cursor: pointer;
+      min-width: 0;
+    }
+    .season-task-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      min-height: 30px;
+      padding: 6px 10px;
+      border: 1px solid rgba(201, 150, 46, 0.42);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fffdf7 0%, #f8efd9 100%);
+      color: #1e3c72;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 2px 7px rgba(14, 34, 74, 0.08);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .season-task-action:hover,
+    .season-task-action:focus-visible {
+      border-color: #c9962e;
+      color: #0b1f4b;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(14, 34, 74, 0.14);
+      text-decoration: none;
+    }
+    .season-task-action::after {
+      content: '→';
+      font-size: 13px;
+      line-height: 1;
+    }
+    @media (max-width: 620px) {
+      .season-task {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .season-task-action {
+        align-self: flex-start;
+      }
     }
     .season-progress {
       margin-top: 12px;
@@ -2143,13 +2190,13 @@
             mission: 'Become a Great Teammate and Student-Athlete',
             tasks: [
               'Maintain Your GPA',
-              'Be Coachable',
+              'Give Maximum Effort in Practice',
               'Learn the Playbook',
-              'Record Every Game',
+              'Add and Upload To Hudl Weekly',
               'Track Your Season Stats',
               'Continue Strength & Recovery',
               'Build Leadership Habits',
-              'Meet With Your Coaches',
+              'Update X/Twitter Weekly',
               'Keep Your GridIron Profile Updated',
               'Reflect on the Season'
             ]
@@ -2161,10 +2208,10 @@
               'Complete Winter Athletic Testing',
               'Start a Structured Strength Program',
               'Improve Speed & Explosiveness',
-              'Create Your First Highlight Film',
+              'Create Your Freshman Season Highlights',
               'Meet With Your Position Coach',
               'Build Better Nutrition Habits',
-              'Study Football Weekly',
+              'Upload Training Videos on X Weekly',
               'Attend Position Training',
               'Build Recovery Habits',
               'Update Your GridIron Recruiting Profile'
@@ -2180,7 +2227,7 @@
               'Continue Strength & Speed Training',
               'Refine Position Skills',
               'Set Sophomore Goals',
-              'Review Your Freshman Year',
+              'Upload Training Videos on X Weekly',
               'Build Relationships',
               'Prepare for Summer Training',
               'Update Your Athlete Profile'
@@ -2220,7 +2267,7 @@
               'Build Relationships With Coaches',
               'Continue Strength Training',
               'Respond to Recruiting Messages',
-              'Be a Great Teammate',
+              'Build Recovery Habits',
               'Review Game Film Weekly',
               'Update Your Athlete Profile',
               'Set Offseason Improvement Goals'
@@ -2272,13 +2319,13 @@
             tasks: [
               'Attend Priority College Camps',
               'Update Recruiting Profile',
-              'Create New Highlight Film',
-              'Contact Every Target School',
+              'Check the NCAA Eligibility Status',
+              'Contact Every Target School (Add & Log Notes)',
               'Build Top 10 School List',
               'Visit Campuses',
-              'Complete Athletic Testing',
+              'Meet With Your Guidance Counselor',
               'Improve Speed and Strength',
-              'Prepare for Fall Season',
+              'Improve Recovery and Nutrition',
               'Build Recruiting Calendar'
             ]
           },
@@ -2292,7 +2339,7 @@
               'Stay in Weekly Contact With Coaches',
               'Schedule Game-Day Visits',
               'Maintain GPA',
-              'Respond Quickly to Coaches',
+              'Stay Up To Date With Your Nutrition & Recovery Weekly',
               'Update Athlete Profile',
               'Build Top 6 Schools',
               'Evaluate Every Opportunity'
@@ -2302,8 +2349,8 @@
             label: '❄️ Winter (Dec–Mar)',
             mission: 'Narrow Your Choices',
             tasks: [
-              'Build Top 6 Schools',
-              'Create New Highlight Film',
+              'Find NIL Representation',
+              'Create Junior Season Highlights',
               'Meet With Recruiting Coordinator',
               'Continue Unofficial & Spring Practice Visits',
               'Attend Junior Days',
@@ -2351,7 +2398,7 @@
               'Complete Recruiting Calendar',
               'Prepare Senior Goals',
               'Improve Leadership',
-              'Arrive in Peak Condition'
+              { text: 'Arrive in Peak Condition', href: 'player-metrics.html', linkLabel: 'Performance' }
             ]
           },
           fall: {
@@ -2413,6 +2460,30 @@
 
     function getRecruitingTaskKey(yearKey, seasonKey, taskIndex) {
       return `${yearKey}:${seasonKey}:${taskIndex}`;
+    }
+
+    function normalizeRecruitingTaskText(task) {
+      if (typeof task === 'string') return task;
+      return String(task?.text || '');
+    }
+
+    function getRecruitingTaskLink(task) {
+      if (task && typeof task === 'object' && task.href) {
+        return {
+          href: task.href,
+          label: task.linkLabel || 'Open'
+        };
+      }
+      return null;
+    }
+
+    function escapeRecruitingTaskHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     function getRecruitingTaskState(taskKey) {
@@ -2492,12 +2563,20 @@
                     <strong>Mission:</strong> ${season.mission}
                   </div>
                   <div class="season-task-list">
-                    ${season.tasks.map((task, tIdx) => `
-                      <label class="season-task">
-                        <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}" data-task-key="${getRecruitingTaskKey(yearKey, seasonKey, tIdx)}">
-                        <span>${task}</span>
-                      </label>
-                    `).join('')}
+                    ${season.tasks.map((task, tIdx) => {
+                      const taskText = normalizeRecruitingTaskText(task);
+                      const taskLink = getRecruitingTaskLink(task);
+                      const actionLink = taskLink ? `<a class="season-task-action" href="${escapeRecruitingTaskHtml(taskLink.href)}" aria-label="Open ${escapeRecruitingTaskHtml(taskLink.label)} for ${escapeRecruitingTaskHtml(taskText)}">${escapeRecruitingTaskHtml(taskLink.label)}</a>` : '';
+                      return `
+                        <div class="season-task">
+                          <label class="season-task-check">
+                            <input type="checkbox" class="task-checkbox" data-year="${yearKey}" data-season="${seasonKey}" data-task="${tIdx}" data-task-key="${getRecruitingTaskKey(yearKey, seasonKey, tIdx)}">
+                            <span class="season-task-text">${escapeRecruitingTaskHtml(taskText)}</span>
+                          </label>
+                          ${actionLink}
+                        </div>
+                      `;
+                    }).join('')}
                   </div>
                   <div class="season-progress">
                     <div class="progress-bar">
