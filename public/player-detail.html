@@ -113,7 +113,8 @@
       { key: 'catapult', label: 'Catapult', suffix: '' },
       { key: 'metric_1080', label: '1080', suffix: '' },
       { key: 'hand_size', label: 'Hand Size', suffix: '"' },
-      { key: 'wingspan', label: 'Wingspan', suffix: '"' }
+      { key: 'wingspan', label: 'Wingspan', suffix: '"' },
+      { key: 'bend', label: 'Bend Test', suffix: '' }
     ];
     const COMPARE_METRIC_ORDER = [
       'height_inches',
@@ -289,19 +290,23 @@
         bench_press: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
         squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="22" y2="8"></line><line x1="4" y1="8" x2="4" y2="16"></line><line x1="20" y1="8" x2="20" y2="16"></line><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg>`,
         power_clean: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M10 12a2 2 0 1 0 4 0"></path></svg>`,
-        single_leg_squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M12 12v4"></path><path d="M10.5 16h3"></path></svg>`
+        single_leg_squat: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><rect x="5" y="9" width="2" height="6" rx="1"></rect><rect x="17" y="9" width="2" height="6" rx="1"></rect><path d="M12 12v4"></path><path d="M10.5 16h3"></path></svg>`,
+        bend: `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6v12"></path><path d="M18 6v12"></path><path d="M6 12h6"></path><path d="M12 12l6 6"></path></svg>`
       };
       return iconMap[metricKey] || `<svg class="metric-card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"></circle><path d="M12 8v4l3 2"></path></svg>`;
     }
 
     function buildDetailMetricCard(player, metric, metricVideoMap) {
       const value = player[metric.key];
-      if (!value) return '';
       const media = metricVideoMap[metric.key] || null;
       const hasVideo = !!(media && media.video_filename);
+      const isVideoOnlyMetric = metric.key === 'bend';
+      if (!value && !(isVideoOnlyMetric && hasVideo)) return '';
       const isVerified = !!(media && media.is_verified);
       const verifiedBy = media && media.verified_by ? `Verified by ${media.verified_by}` : 'Verified by third party';
-      const displayValue = metric.key === 'broad_jump'
+      const displayValue = isVideoOnlyMetric
+        ? ''
+        : metric.key === 'broad_jump'
         ? formatBroadJumpFeetInches(value)
         : `${value}${metric.suffix}`;
       const cardAttrs = hasVideo
