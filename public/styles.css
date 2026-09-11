@@ -3872,6 +3872,77 @@ textarea {
   animation: tabFadeIn 0.18s ease;
 }
 
+/* ─── Profile Edit Tabs ─────────────────────────────────────────────────── */
+
+.edit-tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.edit-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9dfe8;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
+  padding: 14px 10px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  font-family: inherit;
+}
+
+.edit-tab-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(14, 34, 74, 0.12);
+  border-color: #4a6fa5;
+}
+
+.edit-tab-btn.active {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  border-color: #1e3c72;
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.25);
+}
+
+.edit-tab-btn.active .edit-tab-title,
+.edit-tab-btn.active .edit-tab-icon {
+  color: #ffffff;
+}
+
+.edit-tab-icon {
+  color: #1e3c72;
+  display: flex;
+}
+
+.edit-tab-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.edit-tab-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e3c72;
+  text-align: center;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+}
+
+@media (max-width: 900px) {
+  .edit-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .edit-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .rating-layout {
   display: grid;
   grid-template-columns: 120px minmax(0, 1fr);
