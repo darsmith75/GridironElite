@@ -185,7 +185,7 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20260911-players-retry"></script>
   <script>
     const VIEW_MODE_STORAGE_KEY = 'agentDashboardViewMode';
     let viewMode = getDefaultViewMode();
@@ -483,7 +483,7 @@
       let favoriteIds = [];
 
       try {
-        const res = await fetch('/api/agent/players?' + params, {
+        const res = await fetchWithTransientRetry('/api/agent/players?' + params, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache',
@@ -492,7 +492,8 @@
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to load players (${res.status})`);
+          const errorPayload = await res.json().catch(() => ({}));
+          throw new Error(errorPayload.error || `Failed to load players (${res.status})`);
         }
 
         const payload = await res.json();
@@ -510,7 +511,7 @@
         document.getElementById('playersList').innerHTML = `
           <div class="no-results error-state">
             <h3>Unable to Load Players</h3>
-            <p>Please try again in a moment.</p>
+            <p>${escapeHtml(error.message || 'Please try again in a moment.')}</p>
             <button class="clear-btn" onclick="loadPlayers(${safePage})">Retry</button>
           </div>
         `;

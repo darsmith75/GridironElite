@@ -95,7 +95,7 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again later.' },
-  skip: (req) => req.path === '/health' || req.path === '/ready'
+  skip: (req) => req.path === '/health' || req.path === '/ready' || req.path === '/csp-report'
 });
 app.use('/api', globalLimiter);
 
@@ -400,6 +400,9 @@ app.use((err, req, res, next) => {
   console.error('Unhandled route error:', err);
   if (res.headersSent) {
     return next(err);
+  }
+  if (db.isTransientError(err)) {
+    return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
   return res.status(500).json({ error: 'Internal server error' });
 });

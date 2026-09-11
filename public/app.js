@@ -340,6 +340,29 @@ async function tryAuth() {
   }
 }
 
+async function fetchWithTransientRetry(input, init = {}, options = {}) {
+  const retries = Math.max(0, Number(options.retries ?? 1));
+  const retryDelayMs = Math.max(0, Number(options.retryDelayMs ?? 300));
+  const method = String(init.method || 'GET').toUpperCase();
+  const retryableStatuses = new Set([500, 502, 503, 504]);
+
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      const response = await fetch(input, init);
+      if (method !== 'GET' || !retryableStatuses.has(response.status) || attempt >= retries) {
+        return response;
+      }
+      if (response.body) {
+        await response.body.cancel().catch(() => {});
+      }
+    } catch (error) {
+      if (method !== 'GET' || attempt >= retries) throw error;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+  }
+}
+
 // Apply nav for unauthenticated users (shows Login button)
 function applyPublicTopNav() {
   const nav = document.querySelector('.top-nav-menu');

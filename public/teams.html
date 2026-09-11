@@ -263,7 +263,7 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20260911-players-retry"></script>
   <script>
     let allTeams = [];
     let currentUser = null;
@@ -301,8 +301,11 @@
         if (scopeValue === 'mine') params.set('myTeams', '1');
         const endpoint = params.toString() ? `/api/teams?${params.toString()}` : '/api/teams';
 
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error('Failed to load teams');
+        const res = await fetchWithTransientRetry(endpoint);
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload.error || `Failed to load teams (${res.status})`);
+        }
         allTeams = await res.json();
         populateStateFilter(allTeams);
         renderTeams();

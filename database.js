@@ -801,6 +801,21 @@ async function query(sql, params = []) {
   return pool.query(normalizeSql(sql), params);
 }
 
+function isTransientError(error) {
+  const code = String(error?.code || '');
+  const transientCodes = new Set([
+    '08000', '08001', '08003', '08004', '08006', '08007', '08P01',
+    '53300', '57P01', '57P02', '57P03'
+  ]);
+  if (transientCodes.has(code)) return true;
+
+  const message = String(error?.message || '').toLowerCase();
+  return message.includes('timeout exceeded when trying to connect') ||
+    message.includes('connection terminated') ||
+    message.includes('connection reset') ||
+    message.includes('econnreset');
+}
+
 async function exec(sql) {
   const client = await pool.connect();
   try {
@@ -958,6 +973,7 @@ async function close() {
 module.exports = {
   prepare,
   query,
+  isTransientError,
   exec,
   withTransaction,
   initialize,

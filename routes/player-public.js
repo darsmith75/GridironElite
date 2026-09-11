@@ -36,7 +36,8 @@ router.get('/teams', async (req, res) => {
     res.json(teams);
   } catch (error) {
     console.error('Get public teams error:', error);
-    res.status(500).json({ error: 'Failed to load teams' });
+    const status = db.isTransientError(error) ? 503 : 500;
+    res.status(status).json({ error: status === 503 ? 'Teams are temporarily unavailable' : 'Failed to load teams' });
   }
 });
 
