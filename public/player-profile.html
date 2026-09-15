@@ -2991,10 +2991,12 @@
       const currentPasswordInput = e.target.querySelector('input[name="currentPassword"]');
       const newPasswordInput = e.target.querySelector('input[name="newPassword"]');
       const confirmNewPasswordInput = e.target.querySelector('input[name="confirmNewPassword"]');
-      const currentPassword = (currentPasswordInput?.value || '').trim();
-      const newPassword = (newPasswordInput?.value || '').trim();
-      const confirmNewPassword = (confirmNewPasswordInput?.value || '').trim();
-      const changingPassword = !!(currentPassword || newPassword || confirmNewPassword);
+      const passwordSection = e.target.querySelector('.form-section[data-tab="settings"]');
+      const passwordTabIsActive = !!passwordSection && passwordSection.style.display !== 'none';
+      const currentPassword = passwordTabIsActive ? (currentPasswordInput?.value || '').trim() : '';
+      const newPassword = passwordTabIsActive ? (newPasswordInput?.value || '').trim() : '';
+      const confirmNewPassword = passwordTabIsActive ? (confirmNewPasswordInput?.value || '').trim() : '';
+      const changingPassword = passwordTabIsActive && !!(currentPassword || newPassword || confirmNewPassword);
 
       if (changingPassword) {
         if (!currentPassword || !newPassword || !confirmNewPassword) {
@@ -3037,6 +3039,11 @@
         syncHeightCombined();
         syncBroadJumpTotalInches();
         const formData = new FormData(e.target);
+        if (!passwordTabIsActive) {
+          formData.delete('currentPassword');
+          formData.delete('newPassword');
+          formData.delete('confirmNewPassword');
+        }
         METRIC_DEFINITIONS.forEach(metric => {
           formData.delete(metric.videoField);
         });
