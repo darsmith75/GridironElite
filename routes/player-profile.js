@@ -638,6 +638,12 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
       });
     }
 
+    if (files?.characterVideo?.[0] && files.characterVideo[0].size > MAX_HIGHLIGHT_VIDEO_BYTES) {
+      return res.status(400).json({
+        error: `Character video is too large. Maximum allowed is ${Math.round(MAX_HIGHLIGHT_VIDEO_BYTES / (1024 * 1024))}MB.`
+      });
+    }
+
     const hasIncomingMedia = Object.values(files || {}).some(arr => Array.isArray(arr) && arr.length > 0);
     if (hasIncomingMedia) {
       const now = Date.now();
@@ -799,6 +805,10 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
       await replacePlayerProfileFile(req.session.userId, 'report_card_image', userPrefix + files.reportCardImage[0].filename);
     }
 
+    if (files?.characterVideo) {
+      await replacePlayerProfileFile(req.session.userId, 'character_video', userPrefix + files.characterVideo[0].filename);
+    }
+
     const updated = await db.prepare('SELECT gpa, vertical_jump FROM player_profiles WHERE user_id = ?').get(req.session.userId);
     console.log('Verified data in DB:', updated);
 
@@ -905,6 +915,16 @@ router.post('/player/report-card/delete', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Delete report card image error:', error);
     res.status(500).json({ error: 'Failed to delete report card image' });
+  }
+});
+
+router.post('/player/character-video/delete', requireAuth, async (req, res) => {
+  try {
+    await clearPlayerProfileFile(req.session.userId, 'character_video');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete character video error:', error);
+    res.status(500).json({ error: 'Failed to delete character video' });
   }
 });
 

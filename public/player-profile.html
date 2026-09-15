@@ -449,6 +449,13 @@
                   <div class="file-input-wrapper">
                     <input type="file" name="reportCardImage" accept="image/*">
                   </div>
+
+                  <label>Character / Introduction Video:</label>
+                  <div class="file-input-wrapper">
+                    <input type="file" name="characterVideo" id="characterVideoInput" accept="video/*" onchange="enforceSingleCharacterVideo(this)">
+                  </div>
+                  <p class="hint-text">Upload a short video introducing yourself and your character. Max 35MB.</p>
+                  <p id="characterVideoSizeHint" class="hint-text"></p>
                 </div>
 
                 <div class="media-upload-col">
@@ -1270,6 +1277,10 @@
       });
     }
 
+    function openCharacterVideoLightbox(videoSrc) {
+      openMetricVideoLightbox(videoSrc, 'Character / Introduction Video');
+    }
+
     function formatBroadJumpFeetInches(totalInchesValue) {
       const total = Number(totalInchesValue);
       if (!Number.isFinite(total) || total <= 0) return '';
@@ -1720,6 +1731,8 @@
           : '');
       const reportCardImageUrl = profile.report_card_image ? `/uploads/${profile.report_card_image}` : '';
       const reportCardImageArg = reportCardImageUrl ? reportCardImageUrl.replace(/'/g, "\\'") : '';
+      const characterVideoUrl = profile.character_video ? `/uploads/${profile.character_video}` : '';
+      const characterVideoArg = characterVideoUrl ? characterVideoUrl.replace(/'/g, "\\'") : '';
       const academicsCardAttrs = reportCardImageUrl
         ? ` role="button" tabindex="0" aria-label="View report card" data-report-card-hint="View Report Card" onclick="openImageLightbox('${reportCardImageArg}', 'Report card')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openImageLightbox('${reportCardImageArg}', 'Report card');}"`
         : '';
@@ -1813,11 +1826,13 @@
                 <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
                 <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>
               </div>
-              <div class="profile-academic-card profile-academic-primary">
-                <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> PROFILE VIEWS</div>
-                <div class="profile-academic-value">${Number(profile.profile_view_count || 0)}</div>
-                <div class="profile-academic-sub">Total Views</div>
-              </div>
+              ${characterVideoUrl ? `
+                <button type="button" class="profile-character-video-card" onclick="openCharacterVideoLightbox('${characterVideoArg}')" aria-label="Expand character introduction video">
+                  <span class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><polygon points="10,9 16,12 10,15"></polygon></svg></span> CHARACTER VIDEO</span>
+                  <video src="${characterVideoUrl}" muted playsinline preload="metadata" class="profile-character-video-preview"></video>
+                  <span class="profile-character-video-hint">Click to expand</span>
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -2013,6 +2028,12 @@
           `;
         }
       }
+      html += `
+        <div class="profile-view-count-footer" aria-label="Profile views">
+          <span class="profile-view-count-label">Profile Views</span>
+          <strong>${Number(profile.profile_view_count || 0)}</strong>
+        </div>
+      `;
       document.getElementById('viewProfileContent').innerHTML = html;
       applyMetricTipsToIcons();
       initCollegeLogoDragAndDrop();
@@ -2114,7 +2135,7 @@
     }
 
     function clearMediaUploadInputs() {
-      const mediaInputNames = ['profilePicture', 'cardPhoto', 'reportCardImage', 'highlightVideos', 'additionalImages'];
+      const mediaInputNames = ['profilePicture', 'cardPhoto', 'reportCardImage', 'characterVideo', 'highlightVideos', 'additionalImages'];
       METRIC_DEFINITIONS.forEach(metric => mediaInputNames.push(metric.videoField));
       mediaInputNames.forEach(name => {
         const input = document.querySelector(`input[type="file"][name="${name}"]`);
@@ -2165,6 +2186,30 @@
         hint.classList.add('warning');
       } else {
         hint.classList.remove('warning');
+      }
+    }
+
+    function enforceSingleCharacterVideo(input) {
+      if (!input || !input.files) return;
+      const maxMb = 35;
+      const hint = document.getElementById('characterVideoSizeHint');
+      if (input.files.length > 1) {
+        alert('Please select only one character video.');
+        input.value = '';
+        if (hint) hint.textContent = '';
+        return;
+      }
+      if (!input.files.length) {
+        if (hint) hint.textContent = '';
+        return;
+      }
+      const file = input.files[0];
+      const sizeMb = file.size / (1024 * 1024);
+      if (hint) hint.textContent = `Selected: ${file.name} (${sizeMb.toFixed(1)} MB)`;
+      if (sizeMb > maxMb) {
+        if (hint) hint.textContent += ` - Exceeds ${maxMb}MB limit.`;
+        alert(`This video is ${sizeMb.toFixed(1)} MB. Max allowed is ${maxMb} MB.`);
+        input.value = '';
       }
     }
 
@@ -2472,6 +2517,15 @@
         let videosHTML = '<div class="profile-section"><h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"></rect><polygon points="12,12 8.5,9.8 8.5,14.2"></polygon><path d="M17 9l4-2v10l-4-2"></path></svg></span>CURRENT VIDEOS</h2>';
         videosHTML += '<div class="current-media">';
 
+        if (profile.character_video) {
+          videosHTML += `<div class="media-item full-width"><h3>Character / Introduction Video</h3><div class="media-grid">
+            <div class="media-item-wrapper">
+              <video controls src="/uploads/${profile.character_video}" class="current-video"></video>
+              <button onclick="deleteCharacterVideo()" class="delete-media-btn">Delete</button>
+            </div>
+          </div></div>`;
+        }
+
         if (profile.highlight_videos) {
           const videos = JSON.parse(profile.highlight_videos);
           if (videos.length > 0) {
@@ -2623,6 +2677,19 @@
       } else {
         const err = await res.json().catch(() => ({}));
         alert(err.error || 'Failed to delete video');
+      }
+    }
+
+    async function deleteCharacterVideo() {
+      if (!confirm('Are you sure you want to delete your character / introduction video?')) return;
+
+      const res = await fetch('/api/player/character-video/delete', { method: 'POST' });
+      if (res.ok) {
+        alert('Character video deleted successfully');
+        loadPlayerProfile();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to delete character video');
       }
     }
 
@@ -2892,6 +2959,7 @@
       const MAX_HIGHLIGHT_VIDEO_MB = 35;
 
       const highlightInput = e.target.querySelector('input[name="highlightVideos"]');
+      const characterVideoInput = e.target.querySelector('input[name="characterVideo"]');
       if (highlightInput && highlightInput.files && highlightInput.files.length > 1) {
         alert('Please upload only one highlight video at a time.');
         return;
@@ -2909,6 +2977,13 @@
             `Heads up: this video is ${sizeMb.toFixed(1)} MB. Upload may take a while while it is optimized.`
           );
         }
+      }
+
+      const selectedCharacterVideo = characterVideoInput?.files?.[0];
+      if (selectedCharacterVideo && selectedCharacterVideo.size > MAX_HIGHLIGHT_VIDEO_MB * 1024 * 1024) {
+        const sizeMb = selectedCharacterVideo.size / (1024 * 1024);
+        alert(`This character video is ${sizeMb.toFixed(1)} MB. Maximum allowed is ${MAX_HIGHLIGHT_VIDEO_MB} MB.`);
+        return;
       }
 
       const currentPasswordInput = e.target.querySelector('input[name="currentPassword"]');
@@ -2937,7 +3012,10 @@
       isSavingProfile = true;
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const statusEl = document.getElementById('profileSaveStatus');
-      const hasVideoUpload = !!(highlightInput && highlightInput.files && highlightInput.files.length === 1);
+      const hasVideoUpload = !!(
+        (highlightInput && highlightInput.files && highlightInput.files.length === 1) ||
+        (characterVideoInput && characterVideoInput.files && characterVideoInput.files.length === 1)
+      );
       showProfileResult('', 'success');
       const originalBtnText = submitBtn ? submitBtn.textContent : '';
       if (submitBtn) {

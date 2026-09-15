@@ -111,6 +111,7 @@ const createTablesSQL = `
     profile_picture TEXT,
     card_photo TEXT,
     report_card_image TEXT,
+    character_video TEXT,
     phone VARCHAR(20),
     bio TEXT,
     hudl_link TEXT,
@@ -535,6 +536,7 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS instagram_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS twitter_username TEXT;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS achievement TEXT;
+  ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS character_video TEXT;
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS profile_view_count INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS last_viewed_at TIMESTAMP;
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS college_logo_order JSONB DEFAULT '{}'::jsonb;

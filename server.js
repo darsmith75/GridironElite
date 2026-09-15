@@ -123,7 +123,7 @@ async function ensureRuntimeDirectories() {
 async function migrateUploads() {
   try {
     const [pp, pv, pi, pmv] = await Promise.all([
-      db.prepare("SELECT 1 FROM player_profiles WHERE (profile_picture IS NOT NULL AND profile_picture NOT LIKE '%/%') OR (card_photo IS NOT NULL AND card_photo NOT LIKE '%/%') OR (report_card_image IS NOT NULL AND report_card_image NOT LIKE '%/%') LIMIT 1").get(),
+      db.prepare("SELECT 1 FROM player_profiles WHERE (profile_picture IS NOT NULL AND profile_picture NOT LIKE '%/%') OR (card_photo IS NOT NULL AND card_photo NOT LIKE '%/%') OR (report_card_image IS NOT NULL AND report_card_image NOT LIKE '%/%') OR (character_video IS NOT NULL AND character_video NOT LIKE '%/%') LIMIT 1").get(),
       db.prepare("SELECT 1 FROM player_videos WHERE filename NOT LIKE '%/%' LIMIT 1").get(),
       db.prepare("SELECT 1 FROM player_images WHERE filename NOT LIKE '%/%' LIMIT 1").get(),
       db.prepare("SELECT 1 FROM player_metric_videos WHERE video_filename IS NOT NULL AND video_filename NOT LIKE '%/%' LIMIT 1").get(),
@@ -134,10 +134,10 @@ async function migrateUploads() {
       return;
     }
 
-    // Migrate profile_picture, card_photo, and report_card_image
-    const profiles = await db.prepare('SELECT user_id, profile_picture, card_photo, report_card_image FROM player_profiles').all();
+    // Migrate single-file profile media
+    const profiles = await db.prepare('SELECT user_id, profile_picture, card_photo, report_card_image, character_video FROM player_profiles').all();
     for (const p of profiles) {
-      for (const col of ['profile_picture', 'card_photo', 'report_card_image']) {
+      for (const col of ['profile_picture', 'card_photo', 'report_card_image', 'character_video']) {
         const filename = p[col];
         if (filename && !filename.includes('/')) {
           const src = path.join('uploads', filename);

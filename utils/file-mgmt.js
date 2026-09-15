@@ -123,9 +123,9 @@ async function deletePlayerAccountAndAssociatedData(playerId) {
   }
 
   const profileMedia = await db.prepare(
-    'SELECT profile_picture, card_photo, report_card_image FROM player_profiles WHERE user_id = ?'
+    'SELECT profile_picture, card_photo, report_card_image, character_video FROM player_profiles WHERE user_id = ?'
   ).get(playerId);
-  ['profile_picture', 'card_photo', 'report_card_image'].forEach(key => {
+  ['profile_picture', 'card_photo', 'report_card_image', 'character_video'].forEach(key => {
     if (profileMedia?.[key]) mediaFiles.add(profileMedia[key]);
   });
 

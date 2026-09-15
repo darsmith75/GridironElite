@@ -13,6 +13,7 @@ const PROFILE_UPLOAD_FIELD_MAX_COUNTS = {
   profilePicture: 1,
   cardPhoto: 1,
   reportCardImage: 1,
+  characterVideo: 1,
   highlightVideos: 5,
   additionalImages: 10,
   ...Object.fromEntries(METRIC_VIDEO_CONFIG.map(config => [config.fieldName, 1]))
@@ -36,6 +37,7 @@ const IMAGE_ONLY_FIELDS = new Set([
 ]);
 
 const VIDEO_ONLY_FIELDS = new Set([
+  'characterVideo',
   'highlightVideos',
   ...METRIC_VIDEO_CONFIG.map((config) => config.fieldName)
 ]);
