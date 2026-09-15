@@ -23,6 +23,8 @@ const PUBLIC_URL = (
 ).replace(/\/$/, '');
 
 let s3Client = null;
+let nativeAuthPromise = null;
+let nativeBucketIdPromise = null;
 if (b2Enabled) {
   s3Client = new S3Client({
     endpoint: `https://s3.${REGION}.backblazeb2.com`,
@@ -59,9 +61,98 @@ async function b2ObjectExists(key) {
   }
 }
 
+async function getNativeB2Auth() {
+  if (!nativeAuthPromise) {
+    nativeAuthPromise = fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${KEY_ID}:${APP_KEY}`).toString('base64')}`
+      }
+    }).then(async response => {
+      if (!response.ok) throw new Error(`B2 authorization failed (${response.status})`);
+      return response.json();
+    }).catch(error => {
+      nativeAuthPromise = null;
+      throw error;
+    });
+  }
+  return nativeAuthPromise;
+}
+
+async function getNativeB2BucketId(auth) {
+  if (!nativeBucketIdPromise) {
+    nativeBucketIdPromise = fetch(`${auth.apiUrl}/b2api/v2/b2_list_buckets`, {
+      method: 'POST',
+      headers: {
+        Authorization: auth.authorizationToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ accountId: auth.accountId, bucketName: BUCKET })
+    }).then(async response => {
+      if (!response.ok) throw new Error(`B2 bucket lookup failed (${response.status})`);
+      const data = await response.json();
+      const bucket = (data.buckets || []).find(item => item.bucketName === BUCKET);
+      if (!bucket?.bucketId) throw new Error(`B2 bucket not found: ${BUCKET}`);
+      return bucket.bucketId;
+    }).catch(error => {
+      nativeBucketIdPromise = null;
+      throw error;
+    });
+  }
+  return nativeBucketIdPromise;
+}
+
+async function deleteAllNativeB2Versions(key) {
+  const auth = await getNativeB2Auth();
+  const bucketId = await getNativeB2BucketId(auth);
+  let startFileName = key;
+  let startFileId;
+  let deleted = 0;
+
+  do {
+    const response = await fetch(`${auth.apiUrl}/b2api/v2/b2_list_file_versions`, {
+      method: 'POST',
+      headers: {
+        Authorization: auth.authorizationToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        bucketId,
+        startFileName,
+        startFileId,
+        maxFileCount: 1000
+      })
+    });
+    if (!response.ok) throw new Error(`B2 version listing failed (${response.status})`);
+    const data = await response.json();
+    const matches = (data.files || []).filter(file => file.fileName === key);
+
+    for (const file of matches) {
+      const deleteResponse = await fetch(`${auth.apiUrl}/b2api/v2/b2_delete_file_version`, {
+        method: 'POST',
+        headers: {
+          Authorization: auth.authorizationToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fileName: file.fileName, fileId: file.fileId })
+      });
+      if (!deleteResponse.ok) throw new Error(`B2 version deletion failed (${deleteResponse.status})`);
+      deleted += 1;
+    }
+
+    if (!data.nextFileName || data.nextFileName !== key) break;
+    startFileName = data.nextFileName;
+    startFileId = data.nextFileId;
+  } while (true);
+
+  return deleted > 0;
+}
+
 /** Delete a single object from B2 and return whether delete was attempted. */
 async function deleteFromB2(key) {
   try {
+    const nativeDeleted = await deleteAllNativeB2Versions(key);
+    if (nativeDeleted) return true;
+
     let keyMarker;
     let versionIdMarker;
     let foundVersion = false;
