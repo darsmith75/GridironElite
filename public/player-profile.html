@@ -72,6 +72,7 @@
           <div id="topSchoolsList"></div>
         </div>
       </div>
+      <div id="profileViewCountFooter" class="profile-view-count-footer" aria-label="Profile views"></div>
     </div>
 
     <!-- ============ EDIT MODE ============ -->
@@ -2028,13 +2029,14 @@
           `;
         }
       }
-      html += `
-        <div class="profile-view-count-footer" aria-label="Profile views">
+      document.getElementById('viewProfileContent').innerHTML = html;
+      const profileViewCountFooter = document.getElementById('profileViewCountFooter');
+      if (profileViewCountFooter) {
+        profileViewCountFooter.innerHTML = `
           <span class="profile-view-count-label">Profile Views</span>
           <strong>${Number(profile.profile_view_count || 0)}</strong>
-        </div>
-      `;
-      document.getElementById('viewProfileContent').innerHTML = html;
+        `;
+      }
       applyMetricTipsToIcons();
       initCollegeLogoDragAndDrop();
     }
