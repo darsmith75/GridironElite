@@ -1815,7 +1815,7 @@
 
       html += `
         <div class="profile-section profile-about-academics-section">
-          <div class="profile-about-academics-grid">
+          <div class="profile-about-academics-grid ${characterVideoUrl ? 'has-character-video' : 'without-character-video'}">
             <div class="profile-about-panel">
               <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>ABOUT</h2>
               <p class="bio-text">${profile.bio || 'Add your story, strengths, and goals to help recruiters understand who you are off the field.'}</p>
