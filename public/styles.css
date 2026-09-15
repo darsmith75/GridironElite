@@ -5021,8 +5021,12 @@ body.player-profile-theme .profile-title-icon {
 
 body.player-profile-theme .profile-academics-stack {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
+}
+
+body.player-profile-theme .profile-academics-stack.has-character-video {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 body.player-profile-theme .profile-academic-card {
@@ -5217,6 +5221,10 @@ body.player-profile-theme .contact-details strong {
   }
 
   body.player-profile-theme .profile-academics-stack {
+    grid-template-columns: 1fr;
+  }
+
+  body.player-profile-theme .profile-academics-stack.has-character-video {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
