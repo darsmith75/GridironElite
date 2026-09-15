@@ -38,7 +38,7 @@ async function deleteUploadFile(filename) {
   const safePath = safeUploadPath(normalizedFilename);
   if (safePath && await pathExists(safePath)) {
     try { await fsPromises.unlink(safePath); } catch (_) {}
-    return true;
+    return b2Enabled ? deletedInB2 : true;
   }
 
   if (b2Enabled) return deletedInB2;
@@ -59,7 +59,10 @@ async function clearPlayerProfileFile(userId, columnName) {
   const current = await db.prepare(`SELECT ${columnName} AS filename FROM player_profiles WHERE user_id = ?`).get(userId);
 
   if (current?.filename) {
-    await deleteUploadFile(current.filename);
+    const deleted = await deleteUploadFile(current.filename);
+    if (!deleted) {
+      throw new Error(`Failed to delete stored profile media: ${columnName}`);
+    }
     await db.prepare(`UPDATE player_profiles SET ${columnName} = NULL WHERE user_id = ?`).run(userId);
   }
 }

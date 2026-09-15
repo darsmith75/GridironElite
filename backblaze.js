@@ -4,6 +4,7 @@ const {
   DeleteObjectCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
+  ListObjectVersionsCommand,
 } = require('@aws-sdk/client-s3');
 
 const BUCKET  = process.env.B2_BUCKET_NAME   || '';
@@ -61,14 +62,53 @@ async function b2ObjectExists(key) {
 /** Delete a single object from B2 and return whether delete was attempted. */
 async function deleteFromB2(key) {
   try {
-    const exists = await b2ObjectExists(key);
-    // Missing object is effectively already deleted.
-    if (!exists) return true;
-    await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+    let keyMarker;
+    let versionIdMarker;
+    let foundVersion = false;
+
+    do {
+      const response = await s3Client.send(new ListObjectVersionsCommand({
+        Bucket: BUCKET,
+        Prefix: key,
+        KeyMarker: keyMarker,
+        VersionIdMarker: versionIdMarker,
+      }));
+      const versions = [
+        ...(response.Versions || []),
+        ...(response.DeleteMarkers || [])
+      ].filter(version => version.Key === key && version.VersionId);
+
+      for (const version of versions) {
+        foundVersion = true;
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: BUCKET,
+          Key: key,
+          VersionId: version.VersionId,
+        }));
+      }
+
+      if (!response.IsTruncated) break;
+      keyMarker = response.NextKeyMarker;
+      versionIdMarker = response.NextVersionIdMarker;
+    } while (keyMarker || versionIdMarker);
+
+    if (!foundVersion) {
+      const exists = await b2ObjectExists(key);
+      if (!exists) return true;
+      await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+    }
     return true;
   } catch (err) {
     console.error(`B2 delete error bucket="${BUCKET}" key="${key}":`, err.message);
-    return false;
+    try {
+      const exists = await b2ObjectExists(key);
+      if (!exists) return true;
+      await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+      return true;
+    } catch (fallbackError) {
+      console.error(`B2 fallback delete error bucket="${BUCKET}" key="${key}":`, fallbackError.message);
+      return false;
+    }
   }
 }
 

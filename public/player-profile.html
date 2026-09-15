@@ -112,7 +112,7 @@
             </button>
             <button type="button" class="edit-tab-btn" data-tab-btn="videos" onclick="showEditTab('videos')" role="tab" aria-selected="false">
               <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg></span>
-              <span class="edit-tab-title">Metric Videos</span>
+              <span class="edit-tab-title">Videos</span>
             </button>
             <button type="button" class="edit-tab-btn" data-tab-btn="media" onclick="showEditTab('media')" role="tab" aria-selected="false">
               <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span>
@@ -218,8 +218,16 @@
             </div>
 
             <div class="form-section full-width" data-tab="videos">
-              <h3>Metric Videos & Verification</h3>
+              <h3>Videos</h3>
               <p class="hint-text">Attach proof videos for each metric. If verified by a trainer/coach, check the box and include who verified it.</p>
+              <div class="video-upload-feature">
+                <label>Character / Introduction Video:</label>
+                <div class="file-input-wrapper">
+                  <input type="file" name="characterVideo" id="characterVideoInput" accept="video/*" onchange="enforceSingleCharacterVideo(this)">
+                </div>
+                <p class="hint-text">Upload a short video introducing yourself and your character. Max 35MB.</p>
+                <p id="characterVideoSizeHint" class="hint-text"></p>
+              </div>
               <div class="metric-proof-grid">
                 <div class="metric-proof-item">
                   <label>40-Yard Dash Video:</label>
@@ -451,12 +459,6 @@
                     <input type="file" name="reportCardImage" accept="image/*">
                   </div>
 
-                  <label>Character / Introduction Video:</label>
-                  <div class="file-input-wrapper">
-                    <input type="file" name="characterVideo" id="characterVideoInput" accept="video/*" onchange="enforceSingleCharacterVideo(this)">
-                  </div>
-                  <p class="hint-text">Upload a short video introducing yourself and your character. Max 35MB.</p>
-                  <p id="characterVideoSizeHint" class="hint-text"></p>
                 </div>
 
                 <div class="media-upload-col">
