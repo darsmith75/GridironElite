@@ -915,6 +915,8 @@
       const academicsCardAttrs = reportCardImageUrl
         ? ` role="button" tabindex="0" aria-label="View report card" data-report-card-hint="View Report Card" onclick="openLightbox('${reportCardImageArg}')" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();openLightbox('${reportCardImageArg}');}"`
         : '';
+      const characterVideoUrl = player.character_video ? `/uploads/${player.character_video}` : '';
+      const characterVideoArg = characterVideoUrl ? characterVideoUrl.replace(/'/g, "\\'") : '';
 
       const heroStyle = player.hs_team?.banner_image
         ? 'background: url(\'/uploads/' + player.hs_team.banner_image + '\') center/cover no-repeat;'
@@ -980,22 +982,24 @@
           </div>
           
           <div class="profile-section profile-about-academics-section">
-            <div class="profile-about-academics-grid">
+            <div class="profile-about-academics-grid ${characterVideoUrl ? 'has-character-video' : 'without-character-video'}">
               <div class="profile-about-panel">
                 <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>ABOUT</h2>
                 <p class="bio-text">${player.bio || 'Add your story, strengths, and goals to help recruiters understand who you are off the field.'}</p>
               </div>
-              <div class="profile-academics-stack">
+              <div class="profile-academics-stack ${characterVideoUrl ? 'has-character-video' : ''}">
                   <div class="profile-academic-card profile-academic-primary ${reportCardImageUrl ? 'profile-academic-clickable' : ''}"${academicsCardAttrs}>
                   <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span> ACADEMICS</div>
                   <div class="profile-academic-value">${gpaDisplayValue} <span>GPA</span></div>
                       <div class="profile-academic-sub">${honorsDisplay || '&nbsp;'}</div>
                 </div>
-                <div class="profile-academic-card profile-academic-primary">
-                  <div class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> PROFILE VIEWS</div>
-                  <div class="profile-academic-value">${Number(player.profile_view_count || 0)}</div>
-                  <div class="profile-academic-sub">Total Views</div>
-                </div>
+                ${characterVideoUrl ? `
+                <button type="button" class="profile-character-video-card" onclick="openCharacterVideoLightbox('${characterVideoArg}')" aria-label="Expand character introduction video">
+                  <span class="profile-academic-label"><span class="profile-title-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><polygon points="10,9 16,12 10,15"></polygon></svg></span> CHARACTER VIDEO</span>
+                  <video src="${characterVideoUrl}" muted playsinline preload="metadata" class="profile-character-video-preview"></video>
+                  <span class="profile-character-video-hint">Click to expand</span>
+                </button>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -1134,6 +1138,11 @@
                 <div id="coachCommentStatus" style="margin-top:6px; font-size:13px; color:#28a745;"></div>
               </div>
             </div>
+
+          <div class="profile-view-count-footer" aria-label="Profile views">
+            <span class="profile-view-count-label">Profile Views</span>
+            <strong>${Number(player.profile_view_count || 0)}</strong>
+          </div>
         </div>
       `;
 
@@ -1255,6 +1264,10 @@
           if (lb) document.body.removeChild(lb);
         }
       });
+    }
+
+    function openCharacterVideoLightbox(videoSrc) {
+      openMetricVideoLightbox(videoSrc, 'Character / Introduction Video');
     }
     
     // Add click handlers to images after they're loaded

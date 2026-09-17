@@ -4997,6 +4997,11 @@ body.player-profile-theme .profile-about-academics-grid.without-character-video 
   grid-template-columns: 2fr minmax(180px, 0.4fr);
 }
 
+body.player-profile-theme .profile-about-academics-grid.has-character-video,
+body.player-profile-theme .profile-about-academics-grid.without-character-video {
+  align-items: start;
+}
+
 body.player-profile-theme .profile-about-panel {
   background: transparent;
   border: 0;
@@ -5058,8 +5063,10 @@ body.player-profile-theme .profile-academic-card.profile-academic-clickable:focu
 }
 
 body.player-profile-theme .profile-character-video-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
   min-width: 0;
   padding: 13px;
   border: 1px solid #2d4a90;
@@ -5068,6 +5075,11 @@ body.player-profile-theme .profile-character-video-card {
   color: #fff;
   text-align: left;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  line-height: inherit;
+  margin: 0;
   box-shadow: 0 6px 18px rgba(8, 31, 84, 0.32);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
@@ -5088,12 +5100,14 @@ body.player-profile-theme .profile-character-video-card .profile-academic-label 
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 0 0 auto;
 }
 
 body.player-profile-theme .profile-character-video-preview {
   display: block;
   width: 100%;
-  height: 74px;
+  flex: 1 1 auto;
+  min-height: 108px;
   margin-top: 9px;
   border-radius: 8px;
   object-fit: cover;
@@ -5102,6 +5116,7 @@ body.player-profile-theme .profile-character-video-preview {
 
 body.player-profile-theme .profile-character-video-hint {
   display: block;
+  flex: 0 0 auto;
   margin-top: 7px;
   color: rgba(255, 255, 255, 0.78);
   font-size: 11px;
