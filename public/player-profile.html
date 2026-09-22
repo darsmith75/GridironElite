@@ -110,6 +110,10 @@
               <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span>
               <span class="edit-tab-title">Academic</span>
             </button>
+            <button type="button" class="edit-tab-btn" data-tab-btn="game-stats" onclick="showEditTab('game-stats')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M7 15l3-4 3 2 4-6"></path><path d="M17 7h2v2"></path></svg></span>
+              <span class="edit-tab-title">Game Statistics</span>
+            </button>
             <button type="button" class="edit-tab-btn" data-tab-btn="videos" onclick="showEditTab('videos')" role="tab" aria-selected="false">
               <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg></span>
               <span class="edit-tab-title">Videos</span>
@@ -489,6 +493,23 @@
             </div>
 
             <div id="currentMediaPhotos" data-tab="media"></div>
+          </div>
+
+          <div class="form-section full-width" data-tab="game-stats">
+            <h3>Game Statistics</h3>
+            <p class="hint-text">Enter one row after each game. Your five selected stats stay consistent across all four years.</p>
+            <div class="game-stat-slot-card">
+              <h4>Choose Your 5 Stats</h4>
+              <p class="hint-text">These labels become the five columns for every game.</p>
+              <div id="playerStatSlotEditor" class="stat-slot-editor"></div>
+              <button type="button" class="btn-add-link game-stat-save-slots-btn" onclick="savePlayerStatSlots()">Save Stat Choices</button>
+              <div id="playerStatSlotStatus" class="metric-upload-status" aria-live="polite"></div>
+            </div>
+            <div id="playerGameStatTabs" class="edit-tabs" role="tablist" aria-label="Game stat seasons"></div>
+            <div id="playerGameStatTotals" class="game-stat-totals"></div>
+            <div id="playerGameStatEditor" class="game-stat-editor"></div>
+            <div id="playerGameStatList" class="game-stat-list"></div>
+            <div id="playerGameStatStatus" class="metric-upload-status" aria-live="polite"></div>
           </div>
 
           <button type="submit" class="submit-btn">Save Profile</button>
@@ -903,6 +924,281 @@
       }
     }
 
+    const PLAYER_TRACKING_STATS = [
+      'Completion %',
+      'FG %',
+      'FG Made',
+      'Forced Fumbles',
+      'Games Started',
+      'Inside 20',
+      'INTs',
+      'Knockdowns',
+      'Long FG',
+      'Long Punt',
+      'Long Reception',
+      'Long Return',
+      'Net Average',
+      'Pancakes',
+      'Pass Breakups',
+      'Pass TDs',
+      'Pass Yards',
+      'PAT %',
+      'Pressures Allowed',
+      'Punt Average',
+      'Punts',
+      'QB Hurries',
+      'Rec TDs',
+      'Rec Yards',
+      'Receptions',
+      'Return Average',
+      'Return TDs',
+      'Return Yards',
+      'Rush TDs',
+      'Rush Yards',
+      'Sacks',
+      'Sacks Allowed',
+      'Tackles',
+      'TDs Allowed',
+      'TFLs',
+      'Total Returns',
+      'Total Tackles',
+      'Total TDs',
+      'Touchbacks',
+      'Yards/Carry',
+      'Yards/Catch'
+    ];
+
+    function buildStatSlotSelect(name, value, options) {
+      const selectedValue = value || '';
+      return `
+        <div class="stat-slot-row">
+          <label for="${name}" class="stat-slot-label">Stat ${name.replace('statSlot', '')}</label>
+          <select name="${name}" id="${name}" class="stat-slot-select">
+            <option value="">Select a stat</option>
+            ${options.map(option => `
+              <option value="${option}" ${option === selectedValue ? 'selected' : ''}>${option}</option>
+            `).join('')}
+          </select>
+        </div>
+      `;
+    }
+
+    function renderPlayerStatSlots(profile = {}) {
+      const container = document.getElementById('playerStatSlotEditor');
+      if (!container) return;
+      const slots = profile.stat_slots || {};
+      const slotValues = [
+        slots.slot_1_label || '',
+        slots.slot_2_label || '',
+        slots.slot_3_label || '',
+        slots.slot_4_label || '',
+        slots.slot_5_label || ''
+      ];
+      container.innerHTML = [1, 2, 3, 4, 5].map(i => buildStatSlotSelect(`statSlot${i}`, slotValues[i - 1], PLAYER_TRACKING_STATS)).join('');
+      const selects = container.querySelectorAll('select');
+      selects.forEach(select => {
+        select.addEventListener('change', () => {
+          const values = [...selects].map(el => el.value).filter(Boolean);
+          const seen = new Set();
+          const duplicates = values.filter(value => {
+            if (seen.has(value)) return true;
+            seen.add(value);
+            return false;
+          });
+          const status = document.getElementById('playerStatSlotStatus');
+          if (duplicates.length > 0) {
+            status.textContent = 'Each stat can only be selected once.';
+            status.className = 'metric-upload-status error';
+            return;
+          }
+          status.textContent = values.length === 5 ? 'Ready to save your 5 tracked stats.' : 'Choose 5 unique stats.';
+          status.className = 'metric-upload-status success';
+          renderGameStatEditor();
+          renderGameStatList();
+        });
+      });
+    }
+
+    async function savePlayerStatSlots() {
+      const selects = document.querySelectorAll('#playerStatSlotEditor select');
+      const payload = {};
+      selects.forEach((sel, index) => {
+        payload[`statSlot${index + 1}`] = sel.value || '';
+      });
+
+      const status = document.getElementById('playerStatSlotStatus');
+      try {
+        const response = await fetch('/api/player/stat-slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save tracked stats');
+        }
+        status.textContent = 'Tracked stats saved successfully.';
+        status.className = 'metric-upload-status success';
+        renderGameStatEditor();
+        renderGameStatList();
+        return data;
+      } catch (error) {
+        status.textContent = error.message || 'Failed to save tracked stats.';
+        status.className = 'metric-upload-status error';
+        throw error;
+      }
+    }
+
+    const PLAYER_STAT_SEASONS = [
+      { key: 'freshman', label: 'Freshman' },
+      { key: 'sophomore', label: 'Sophomore' },
+      { key: 'junior', label: 'Junior' },
+      { key: 'senior', label: 'Senior' }
+    ];
+    let activeGameStatSeason = 'freshman';
+    let gameStatsSeasonInitialized = false;
+    let playerGameStats = [];
+    let editingGameStatId = null;
+
+    function getCurrentGameStatSeason(profile = playerProfileData) {
+      const graduationYear = Number(profile?.graduation_year);
+      if (!Number.isInteger(graduationYear)) return 'freshman';
+
+      const now = new Date();
+      const schoolYear = now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+      const yearsUntilGraduation = graduationYear - schoolYear;
+      const seasonByYearsUntilGraduation = {
+        3: 'freshman',
+        2: 'sophomore',
+        1: 'junior',
+        0: 'senior'
+      };
+      return seasonByYearsUntilGraduation[yearsUntilGraduation] || 'freshman';
+    }
+
+    function initializeCurrentGameStatSeason() {
+      if (gameStatsSeasonInitialized || !playerProfileData) return;
+      activeGameStatSeason = getCurrentGameStatSeason();
+      gameStatsSeasonInitialized = true;
+    }
+
+    function getPlayerStatSlotLabels() {
+      return [1, 2, 3, 4, 5].map(index => document.getElementById(`statSlot${index}`)?.value || `Stat ${index}`);
+    }
+
+    function escapeGameStatText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character]));
+    }
+
+    function renderGameStatTabs() {
+      const tabs = document.getElementById('playerGameStatTabs');
+      if (!tabs) return;
+      tabs.innerHTML = PLAYER_STAT_SEASONS.map(season => `
+        <button type="button" class="edit-tab-btn ${season.key === activeGameStatSeason ? 'active' : ''}" onclick="selectGameStatSeason('${season.key}')" aria-selected="${season.key === activeGameStatSeason}">
+          <span class="edit-tab-title">${season.label}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderGameStatEditor() {
+      const editor = document.getElementById('playerGameStatEditor');
+      if (!editor) return;
+      const labels = getPlayerStatSlotLabels();
+      const editingGame = playerGameStats.find(stat => Number(stat.id) === Number(editingGameStatId));
+      editor.innerHTML = `
+        <div class="game-stat-input-row">
+          <label>Date<input type="date" id="gameStatDate" value="${editingGame?.game_date ? String(editingGame.game_date).substring(0, 10) : ''}"></label>
+          <label>Opponent<input type="text" id="gameStatOpponent" maxlength="255" placeholder="Opponent" value="${editingGame ? escapeGameStatText(editingGame.opponent) : ''}" required></label>
+          ${labels.map((label, index) => `<label>${escapeGameStatText(label)}<input type="text" inputmode="decimal" pattern="[0-9]*([.][0-9]+)?" id="gameStatValue${index + 1}" placeholder="0" value="${editingGame?.[`slot_${index + 1}_value`] ?? ''}"></label>`).join('')}
+          <div class="game-stat-form-actions">
+            <button type="button" class="btn-add-link" onclick="savePlayerGameStat()">${editingGame ? 'Save Changes' : 'Add Game'}</button>
+            ${editingGame ? '<button type="button" class="game-stat-cancel-btn" onclick="cancelEditPlayerGameStat()">Cancel</button>' : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGameStatList() {
+      const list = document.getElementById('playerGameStatList');
+      const totals = document.getElementById('playerGameStatTotals');
+      if (!list || !totals) return;
+      const labels = getPlayerStatSlotLabels();
+      const seasonStats = playerGameStats
+        .filter(stat => stat.season_key === activeGameStatSeason)
+        .sort((left, right) => {
+          const leftDate = left.game_date ? String(left.game_date).substring(0, 10) : '9999-12-31';
+          const rightDate = right.game_date ? String(right.game_date).substring(0, 10) : '9999-12-31';
+          return leftDate.localeCompare(rightDate) || Number(left.id) - Number(right.id);
+        });
+      const totalValues = [1, 2, 3, 4, 5].map(index => seasonStats.reduce((sum, stat) => sum + Number(stat[`slot_${index}_value`] || 0), 0));
+      totals.innerHTML = `<div class="game-stat-total-title">${PLAYER_STAT_SEASONS.find(season => season.key === activeGameStatSeason).label} totals</div>${labels.map((label, index) => `<div><strong>${label}</strong><span>${totalValues[index]}</span></div>`).join('')}`;
+      list.innerHTML = seasonStats.length ? `
+        <div class="game-stat-table-wrap"><table class="game-stat-table"><thead><tr><th>Date</th><th>Opponent</th>${labels.map(label => `<th>${label}</th>`).join('')}<th></th></tr></thead><tbody>
+          ${seasonStats.map(stat => `<tr><td>${stat.game_date ? String(stat.game_date).substring(0, 10) : '-'}</td><td>${escapeGameStatText(stat.opponent)}</td>${[1, 2, 3, 4, 5].map(index => `<td>${stat[`slot_${index}_value`] ?? '-'}</td>`).join('')}<td class="game-stat-row-actions"><button type="button" class="game-stat-edit-btn" onclick="editPlayerGameStat(${stat.id})">Edit</button><button type="button" class="game-stat-delete-btn" onclick="deletePlayerGameStat(${stat.id})" aria-label="Delete game" title="Delete game">×</button></td></tr>`).join('')}
+        </tbody></table></div>` : '<p class="hint-text">No games recorded for this year yet.</p>';
+    }
+
+    function selectGameStatSeason(seasonKey) {
+      activeGameStatSeason = seasonKey;
+      renderGameStatTabs();
+      renderGameStatEditor();
+      renderGameStatList();
+    }
+
+    async function loadPlayerGameStats() {
+      const response = await fetch('/api/player/game-stats');
+      if (!response.ok) throw new Error('Failed to load game stats.');
+      const data = await response.json();
+      playerGameStats = data.stats || [];
+      renderGameStatTabs();
+      renderGameStatEditor();
+      renderGameStatList();
+    }
+
+    async function savePlayerGameStat() {
+      const opponent = document.getElementById('gameStatOpponent')?.value.trim();
+      const status = document.getElementById('playerGameStatStatus');
+      if (!opponent) { status.textContent = 'Opponent is required.'; status.className = 'metric-upload-status error'; return; }
+      const payload = { id: editingGameStatId, seasonKey: activeGameStatSeason, opponent, gameDate: document.getElementById('gameStatDate')?.value || '' };
+      [1, 2, 3, 4, 5].forEach(index => { payload[`slot${index}Value`] = document.getElementById(`gameStatValue${index}`)?.value || ''; });
+      const response = await fetch('/api/player/game-stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) { status.textContent = data.error || 'Failed to save game stats.'; status.className = 'metric-upload-status error'; return; }
+      status.textContent = 'Game stats saved.'; status.className = 'metric-upload-status success';
+      editingGameStatId = null;
+      await loadPlayerGameStats();
+    }
+
+    function editPlayerGameStat(id) {
+      const game = playerGameStats.find(stat => Number(stat.id) === Number(id));
+      if (!game) return;
+      editingGameStatId = Number(id);
+      activeGameStatSeason = game.season_key;
+      renderGameStatTabs();
+      renderGameStatEditor();
+      renderGameStatList();
+      document.getElementById('playerGameStatEditor')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function cancelEditPlayerGameStat() {
+      editingGameStatId = null;
+      renderGameStatEditor();
+    }
+
+    async function deletePlayerGameStat(id) {
+      if (!confirm('Delete this game stat entry?')) return;
+      const response = await fetch(`/api/player/game-stats/${id}`, { method: 'DELETE' });
+      if (!response.ok) return;
+      if (Number(editingGameStatId) === Number(id)) editingGameStatId = null;
+      await loadPlayerGameStats();
+    }
+
     function getMetricUploadStatusEl(metricKey, createIfMissing = true) {
       const metric = METRIC_DEFINITIONS.find(item => item.key === metricKey);
       if (!metric) return null;
@@ -1127,10 +1423,16 @@
     }
 
     function showEditTab(tabName) {
+      if (tabName === 'game-stats') {
+        initializeCurrentGameStatSeason();
+        renderGameStatTabs();
+        renderGameStatEditor();
+        renderGameStatList();
+      }
       document.querySelectorAll('#profileForm [data-tab]').forEach(el => {
         el.style.display = el.getAttribute('data-tab') === tabName ? '' : 'none';
       });
-      document.querySelectorAll('.edit-tab-btn').forEach(btn => {
+      document.querySelectorAll('#profileForm > .edit-tabs .edit-tab-btn').forEach(btn => {
         const isActive = btn.getAttribute('data-tab-btn') === tabName;
         btn.classList.toggle('active', isActive);
         btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -2591,6 +2893,15 @@
         document.getElementById('currentMediaVideos').innerHTML = videosHTML;
       }
       
+      renderPlayerStatSlots(profile);
+      loadPlayerGameStats().catch(error => {
+        const status = document.getElementById('playerGameStatStatus');
+        if (status) {
+          status.textContent = error.message || 'Failed to load game stats.';
+          status.className = 'metric-upload-status error';
+        }
+      });
+
       // Populate form fields
       if (profile.id) {
         document.querySelector('[name="fullName"]').value = profile.full_name || '';
@@ -2989,6 +3300,18 @@
         alert(`This character video is ${sizeMb.toFixed(1)} MB. Maximum allowed is ${MAX_HIGHLIGHT_VIDEO_MB} MB.`);
         return;
       }
+
+      const statSlotSelects = e.target.querySelectorAll('#playerStatSlotEditor select');
+      const statSlotValues = [...statSlotSelects].map(sel => sel.value).filter(Boolean);
+      if (statSlotSelects.length && statSlotValues.length !== 5) {
+        showProfileResult('Please choose 5 unique tracked stats before saving.', 'error');
+        return;
+      }
+      if (statSlotSelects.length && new Set(statSlotValues).size !== statSlotValues.length) {
+        showProfileResult('Tracked stats must be unique.', 'error');
+        return;
+      }
+      await savePlayerStatSlots();
 
       const currentPasswordInput = e.target.querySelector('input[name="currentPassword"]');
       const newPasswordInput = e.target.querySelector('input[name="newPassword"]');

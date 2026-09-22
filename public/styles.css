@@ -1882,6 +1882,23 @@ textarea {
   font-weight: 700;
 }
 
+.video-upload-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.video-upload-feature label,
+.video-upload-feature .hint-text {
+  margin-bottom: 0;
+}
+
+.video-upload-feature .hint-text {
+  margin-top: 0;
+  line-height: 1.45;
+}
+
 .bio-ai-actions {
   margin-top: 10px;
   display: flex;
@@ -3174,6 +3191,197 @@ textarea {
 
 .metric-upload-status.error {
   color: #b91c1c;
+}
+
+.game-stat-totals {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid #d9e1ef;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.game-stat-slot-card {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid #d9e1ef;
+  border-radius: 10px;
+  background: #fbfdff;
+}
+
+.game-stat-slot-card h4 {
+  margin: 0 0 4px;
+  color: #1e3c72;
+  font-size: 15px;
+}
+
+.game-stat-slot-card .hint-text {
+  margin: 0 0 12px;
+}
+
+.stat-slot-editor {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.stat-slot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-slot-label {
+  color: #53647b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stat-slot-select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #c7d0da;
+  border-radius: 7px;
+  background: #fff;
+  color: #263b5b;
+}
+
+.game-stat-save-slots-btn {
+  margin-top: 12px;
+}
+
+.game-stat-total-title {
+  grid-column: 1 / -1;
+  color: #1e3c72;
+  font-weight: 700;
+}
+
+.game-stat-totals div:not(.game-stat-total-title) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #66758a;
+}
+
+.game-stat-totals span {
+  color: #1e3c72;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.game-stat-input-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.game-stat-form-actions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.game-stat-cancel-btn,
+.game-stat-edit-btn,
+.game-stat-delete-btn {
+  border: 1px solid #c7d0da;
+  border-radius: 7px;
+  background: #fff;
+  color: #385884;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.game-stat-cancel-btn {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+.game-stat-edit-btn {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+.game-stat-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin-left: 4px;
+  color: #b91c1c;
+  font-size: 18px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.game-stat-delete-btn:hover {
+  background: #fff1f2;
+  border-color: #f3a5ad;
+}
+
+.game-stat-row-actions {
+  text-align: right !important;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.game-stat-input-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #53647b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.game-stat-input-row input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid #c7d0da;
+  border-radius: 7px;
+}
+
+.game-stat-table-wrap {
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.game-stat-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.game-stat-table th,
+.game-stat-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid #e4eaf2;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.game-stat-table th {
+  color: #53647b;
+  background: #f8fbff;
+}
+
+@media (max-width: 700px) {
+  .stat-slot-editor,
+  .game-stat-totals,
+  .game-stat-input-row {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
 }
 
 .metric-proof-preview {

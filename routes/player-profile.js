@@ -21,6 +21,7 @@ const {
 } = require('../utils/file-mgmt');
 const { enrichPlayerProfile } = require('../utils/enrich-player');
 const { parseHeightToInches } = require('../utils/height');
+const { PLAYER_TRACKING_STATS, normalizeStatSlots } = require('../utils/stat-slots');
 const {
   DEFAULT_POSITION_HIGHLIGHTS,
   canonicalizePositionKey,
@@ -115,6 +116,33 @@ function isValidRecruitingYearKey(yearKey) {
 
 function isValidRecruitingSeasonKey(seasonKey) {
   return ['summer', 'fall', 'winter', 'spring'].includes(String(seasonKey || '').trim());
+}
+
+const PLAYER_STAT_SEASONS = ['freshman', 'sophomore', 'junior', 'senior'];
+
+function normalizeGameStatValue(value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue < 0 || numericValue > 9999999999) {
+    throw new Error('Game stat values must be non-negative numbers.');
+  }
+  return numericValue;
+}
+
+function normalizeGameStatsInput(input) {
+  const seasonKey = String(input?.seasonKey || '').trim().toLowerCase();
+  const opponent = String(input?.opponent || '').trim();
+  if (!PLAYER_STAT_SEASONS.includes(seasonKey)) throw new Error('Invalid season.');
+  if (!opponent || opponent.length > 255) throw new Error('Opponent is required.');
+  const gameDate = input?.gameDate ? String(input.gameDate).trim() : null;
+  if (gameDate && !/^\d{4}-\d{2}-\d{2}$/.test(gameDate)) throw new Error('Game date must be YYYY-MM-DD.');
+  return {
+    id: input?.id ? Number(input.id) : null,
+    seasonKey,
+    gameDate: gameDate || null,
+    opponent,
+    values: [1, 2, 3, 4, 5].map(index => normalizeGameStatValue(input?.[`slot${index}Value`]))
+  };
 }
 
 function buildRecruitingTaskKey(yearKey, seasonKey, taskIndex) {
@@ -407,6 +435,7 @@ router.delete('/player/account', requireAuth, handleDeletePlayerAccount);
 // Get player profile
 router.get('/player/profile', requireAuth, async (req, res) => {
   const profile = await db.prepare('SELECT * FROM player_profiles WHERE user_id = ?').get(req.session.userId);
+  const statSlots = await db.prepare('SELECT * FROM player_stat_slots WHERE user_id = ?').get(req.session.userId);
   const user = await db.prepare('SELECT email FROM users WHERE id = ?').get(req.session.userId);
   await enrichPlayerProfile(profile);
 
@@ -436,7 +465,139 @@ router.get('/player/profile', requireAuth, async (req, res) => {
     }
   }
 
-  res.json({ ...(profile || {}), email: user?.email || '' });
+  res.json({
+    ...(profile || {}),
+    email: user?.email || '',
+    stat_slots: statSlots || {
+      slot_1_label: null,
+      slot_2_label: null,
+      slot_3_label: null,
+      slot_4_label: null,
+      slot_5_label: null
+    },
+    available_stats: PLAYER_TRACKING_STATS
+  });
+});
+
+router.post('/player/stat-slots', requireAuth, async (req, res) => {
+  try {
+    const slots = normalizeStatSlots(req.body || {});
+    const row = {
+      user_id: req.session.userId,
+      slot_1_label: slots[0],
+      slot_2_label: slots[1],
+      slot_3_label: slots[2],
+      slot_4_label: slots[3],
+      slot_5_label: slots[4],
+      updated_at: new Date().toISOString()
+    };
+
+    await db.prepare(`
+      INSERT INTO player_stat_slots (
+        user_id,
+        slot_1_label,
+        slot_2_label,
+        slot_3_label,
+        slot_4_label,
+        slot_5_label,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id)
+      DO UPDATE SET
+        slot_1_label = EXCLUDED.slot_1_label,
+        slot_2_label = EXCLUDED.slot_2_label,
+        slot_3_label = EXCLUDED.slot_3_label,
+        slot_4_label = EXCLUDED.slot_4_label,
+        slot_5_label = EXCLUDED.slot_5_label,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(
+      row.user_id,
+      row.slot_1_label,
+      row.slot_2_label,
+      row.slot_3_label,
+      row.slot_4_label,
+      row.slot_5_label
+    );
+
+    res.json({ success: true, slots });
+  } catch (error) {
+    console.error('Save player stat slots error:', error);
+    res.status(400).json({ error: error.message || 'Failed to save stat slots' });
+  }
+});
+
+router.get('/player/game-stats', requireAuth, async (req, res) => {
+  try {
+    const seasonKey = req.query.season ? String(req.query.season).trim().toLowerCase() : null;
+    if (seasonKey && !PLAYER_STAT_SEASONS.includes(seasonKey)) {
+      return res.status(400).json({ error: 'Invalid season.' });
+    }
+
+    const stats = await db.prepare(`
+      SELECT id, season_key, game_date, opponent,
+             slot_1_value, slot_2_value, slot_3_value, slot_4_value, slot_5_value
+      FROM player_game_stats
+      WHERE user_id = ? ${seasonKey ? 'AND season_key = ?' : ''}
+      ORDER BY game_date NULLS LAST, id
+    `).all(...(seasonKey ? [req.session.userId, seasonKey] : [req.session.userId]));
+
+    const totals = await db.prepare(`
+      SELECT COALESCE(SUM(slot_1_value), 0) AS slot_1_total,
+             COALESCE(SUM(slot_2_value), 0) AS slot_2_total,
+             COALESCE(SUM(slot_3_value), 0) AS slot_3_total,
+             COALESCE(SUM(slot_4_value), 0) AS slot_4_total,
+             COALESCE(SUM(slot_5_value), 0) AS slot_5_total
+      FROM player_game_stats
+      WHERE user_id = ? ${seasonKey ? 'AND season_key = ?' : ''}
+    `).get(...(seasonKey ? [req.session.userId, seasonKey] : [req.session.userId]));
+
+    res.json({ stats, totals });
+  } catch (error) {
+    console.error('Get player game stats error:', error);
+    res.status(500).json({ error: 'Failed to load game stats.' });
+  }
+});
+
+router.post('/player/game-stats', requireAuth, async (req, res) => {
+  try {
+    const game = normalizeGameStatsInput(req.body || {});
+    if (game.id && !Number.isInteger(game.id)) throw new Error('Invalid game stat id.');
+
+    if (game.id) {
+      const existing = await db.prepare('SELECT id FROM player_game_stats WHERE id = ? AND user_id = ?').get(game.id, req.session.userId);
+      if (!existing) return res.status(404).json({ error: 'Game stat entry not found.' });
+      await db.prepare(`
+        UPDATE player_game_stats
+        SET season_key = ?, game_date = ?, opponent = ?,
+            slot_1_value = ?, slot_2_value = ?, slot_3_value = ?, slot_4_value = ?, slot_5_value = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+      `).run(game.seasonKey, game.gameDate, game.opponent, ...game.values, game.id, req.session.userId);
+    } else {
+      const created = await db.prepare(`
+        INSERT INTO player_game_stats (
+          user_id, season_key, game_date, opponent,
+          slot_1_value, slot_2_value, slot_3_value, slot_4_value, slot_5_value
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        RETURNING id
+      `).get(req.session.userId, game.seasonKey, game.gameDate, game.opponent, ...game.values);
+      game.id = created.id;
+    }
+
+    res.json({ success: true, id: game.id });
+  } catch (error) {
+    console.error('Save player game stats error:', error);
+    res.status(400).json({ error: error.message || 'Failed to save game stats.' });
+  }
+});
+
+router.delete('/player/game-stats/:id', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid game stat id.' });
+  const result = await db.prepare('DELETE FROM player_game_stats WHERE id = ? AND user_id = ?').run(id, req.session.userId);
+  if (!result || result.rowCount === 0) return res.status(404).json({ error: 'Game stat entry not found.' });
+  res.json({ success: true });
 });
 
 // Player: Get pro tips for athletic metrics

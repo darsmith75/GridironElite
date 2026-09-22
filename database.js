@@ -195,6 +195,34 @@ const createTablesSQL = `
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS player_stat_slots (
+    user_id INTEGER PRIMARY KEY NOT NULL,
+    slot_1_label TEXT,
+    slot_2_label TEXT,
+    slot_3_label TEXT,
+    slot_4_label TEXT,
+    slot_5_label TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS player_game_stats (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    season_key VARCHAR(20) NOT NULL CHECK(season_key IN ('freshman', 'sophomore', 'junior', 'senior')),
+    game_date DATE,
+    opponent VARCHAR(255) NOT NULL,
+    slot_1_value NUMERIC(12,2),
+    slot_2_value NUMERIC(12,2),
+    slot_3_value NUMERIC(12,2),
+    slot_4_value NUMERIC(12,2),
+    slot_5_value NUMERIC(12,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS metric_pro_tips (
     id SERIAL PRIMARY KEY,
     metric_key VARCHAR(64) UNIQUE NOT NULL,
@@ -546,6 +574,11 @@ const alterTablesSQL = `
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS metric_1080 DECIMAL(8,2);
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS hand_size DECIMAL(5,2);
   ALTER TABLE player_profiles ADD COLUMN IF NOT EXISTS wingspan DECIMAL(5,2);
+  ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_1_label TEXT;
+  ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_2_label TEXT;
+  ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_3_label TEXT;
+  ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_4_label TEXT;
+  ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_5_label TEXT;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
@@ -652,6 +685,7 @@ const createIndexesSQL = `
   CREATE INDEX IF NOT EXISTS idx_player_video_links_user ON player_video_links(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user ON player_metric_videos(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_metric_videos_user_verified ON player_metric_videos(user_id, is_verified);
+  CREATE INDEX IF NOT EXISTS idx_player_game_stats_user_season ON player_game_stats(user_id, season_key, game_date, id);
   CREATE INDEX IF NOT EXISTS idx_player_recruiting_task_progress_user ON player_recruiting_task_progress(user_id);
   CREATE INDEX IF NOT EXISTS idx_player_recruiting_task_progress_task ON player_recruiting_task_progress(user_id, year_key, season_key);
   CREATE INDEX IF NOT EXISTS idx_metric_pro_tips_key ON metric_pro_tips(metric_key);
