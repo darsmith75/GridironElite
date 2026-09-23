@@ -1055,6 +1055,107 @@
       { key: 'junior', label: 'Junior' },
       { key: 'senior', label: 'Senior' }
     ];
+
+    // Offset from graduation year: senior year = grad year, freshman year = grad year - 3.
+    const PLAYER_STAT_SEASON_OFFSET_FROM_GRADUATION = {
+      freshman: 3,
+      sophomore: 2,
+      junior: 1,
+      senior: 0
+    };
+
+    function getSeasonCalendarYear(seasonKey, graduationYear) {
+      const gradYear = Number(graduationYear);
+      const offset = PLAYER_STAT_SEASON_OFFSET_FROM_GRADUATION[seasonKey];
+      if (!Number.isInteger(gradYear) || offset === undefined) return null;
+      return gradYear - offset;
+    }
+
+    function formatPlayerStatsSeasonTotal(value) {
+      const numeric = Number(value || 0);
+      return Number.isInteger(numeric) ? String(numeric) : String(Number(numeric.toFixed(2)));
+    }
+
+    function buildPlayerStatsSectionHtml(statSlots, gameStatsList, graduationYear) {
+      const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[character]));
+
+      const labels = [1, 2, 3, 4, 5].map(index => (statSlots && statSlots[`slot_${index}_label`]) || `Stat ${index}`);
+      const games = Array.isArray(gameStatsList) ? gameStatsList : [];
+
+      const seasonCards = PLAYER_STAT_SEASONS
+        .map(season => {
+          const seasonGames = games
+            .filter(game => game.season_key === season.key)
+            .sort((left, right) => {
+              const leftDate = left.game_date ? String(left.game_date).substring(0, 10) : '9999-12-31';
+              const rightDate = right.game_date ? String(right.game_date).substring(0, 10) : '9999-12-31';
+              return leftDate.localeCompare(rightDate) || Number(left.id) - Number(right.id);
+            });
+          if (seasonGames.length === 0) return '';
+
+          const calendarYear = getSeasonCalendarYear(season.key, graduationYear);
+          const headerLabel = calendarYear ? `${calendarYear} SEASON` : `${season.label.toUpperCase()} SEASON`;
+          const totals = [1, 2, 3, 4, 5].map(index => seasonGames.reduce((sum, game) => sum + Number(game[`slot_${index}_value`] || 0), 0));
+
+          return `
+            <div class="player-stats-card">
+              <div class="player-stats-card-header">${esc(headerLabel)}</div>
+              <div class="player-stats-card-body">
+                ${labels.map((label, index) => `
+                  <div class="player-stats-stat">
+                    <div class="player-stats-stat-value">${formatPlayerStatsSeasonTotal(totals[index])}</div>
+                    <div class="player-stats-stat-label">${esc(label)}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="player-stats-card-footer">
+                <span>${seasonGames.length} Game${seasonGames.length === 1 ? '' : 's'}</span>
+                <button type="button" class="player-stats-view-link" onclick="togglePlayerStatsSeasonDetail('${season.key}')" id="playerStatsViewLink-${season.key}">View Full Stats &rarr;</button>
+              </div>
+            </div>
+            <div class="player-stats-detail" id="playerStatsDetail-${season.key}" style="display:none;">
+              <div class="game-stat-table-wrap">
+                <table class="game-stat-table">
+                  <thead><tr><th>Date</th><th>Opponent</th>${labels.map(label => `<th>${esc(label)}</th>`).join('')}</tr></thead>
+                  <tbody>
+                    ${seasonGames.map(game => `
+                      <tr>
+                        <td>${game.game_date ? String(game.game_date).substring(0, 10) : '-'}</td>
+                        <td>${esc(game.opponent)}</td>
+                        ${[1, 2, 3, 4, 5].map(index => `<td>${game[`slot_${index}_value`] ?? '-'}</td>`).join('')}
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      if (!seasonCards) return '';
+
+      return `
+        <div class="profile-section profile-stats-section">
+          <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M7 15l3-4 3 2 4-6"></path></svg></span>STATS</h2>
+          <div class="player-stats-grid">
+            ${seasonCards}
+          </div>
+        </div>
+      `;
+    }
+
+    function togglePlayerStatsSeasonDetail(seasonKey) {
+      const detail = document.getElementById(`playerStatsDetail-${seasonKey}`);
+      const link = document.getElementById(`playerStatsViewLink-${seasonKey}`);
+      if (!detail || !link) return;
+      const isHidden = detail.style.display === 'none';
+      detail.style.display = isHidden ? '' : 'none';
+      link.innerHTML = isHidden ? 'Hide Full Stats &rarr;' : 'View Full Stats &rarr;';
+    }
+
     let activeGameStatSeason = 'freshman';
     let gameStatsSeasonInitialized = false;
     let playerGameStats = [];
@@ -2177,6 +2278,9 @@
         `;
       }
 
+      // Stats (season game-log summary cards)
+      html += buildPlayerStatsSectionHtml(profile.stat_slots, playerGameStats, profile.graduation_year);
+
       // Highlight Videos
       const hasUploadedVideos = profile.highlight_videos && JSON.parse(profile.highlight_videos).length > 0;
       const hasVideoLinks = profile.video_links && JSON.parse(profile.video_links).length > 0;
@@ -2736,6 +2840,16 @@
       if (collegeLogoOrderState && Object.keys(collegeLogoOrderState).length > 0) {
         saveCollegeLogoOrderState(collegeLogoOrderState);
       }
+      renderPlayerStatSlots(profile);
+      try {
+        await loadPlayerGameStats();
+      } catch (error) {
+        const status = document.getElementById('playerGameStatStatus');
+        if (status) {
+          status.textContent = error.message || 'Failed to load game stats.';
+          status.className = 'metric-upload-status error';
+        }
+      }
       // Render view mode
       if (profile.id) {
         renderViewMode(profile);
@@ -2893,15 +3007,6 @@
         document.getElementById('currentMediaVideos').innerHTML = videosHTML;
       }
       
-      renderPlayerStatSlots(profile);
-      loadPlayerGameStats().catch(error => {
-        const status = document.getElementById('playerGameStatStatus');
-        if (status) {
-          status.textContent = error.message || 'Failed to load game stats.';
-          status.className = 'metric-upload-status error';
-        }
-      });
-
       // Populate form fields
       if (profile.id) {
         document.querySelector('[name="fullName"]').value = profile.full_name || '';

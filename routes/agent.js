@@ -315,6 +315,23 @@ router.get('/agent/player/:id', async (req, res) => {
   `).get(req.params.id);
   if (teamRow) player.hs_team = teamRow;
 
+  const statSlots = await db.prepare('SELECT * FROM player_stat_slots WHERE user_id = ?').get(req.params.id);
+  player.stat_slots = statSlots || {
+    slot_1_label: null,
+    slot_2_label: null,
+    slot_3_label: null,
+    slot_4_label: null,
+    slot_5_label: null
+  };
+
+  player.game_stats = await db.prepare(`
+    SELECT id, season_key, game_date, opponent,
+           slot_1_value, slot_2_value, slot_3_value, slot_4_value, slot_5_value
+    FROM player_game_stats
+    WHERE user_id = ?
+    ORDER BY season_key, game_date NULLS LAST, id
+  `).all(req.params.id);
+
   res.json(player);
 });
 

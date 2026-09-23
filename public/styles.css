@@ -3334,6 +3334,93 @@ textarea {
   vertical-align: middle;
 }
 
+.player-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.player-stats-card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.player-stats-card-header {
+  background: #1e3c72;
+  color: #fff;
+  text-align: center;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border-bottom: 3px solid #d4af37;
+}
+
+.player-stats-card-body {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 14px 8px;
+  flex: 1;
+}
+
+.player-stats-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.player-stats-stat-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e3c72;
+}
+
+.player-stats-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #76849b;
+  line-height: 1.2;
+}
+
+.player-stats-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid #eef1f5;
+  font-size: 12px;
+  color: #6c7b8f;
+}
+
+.player-stats-view-link {
+  border: none;
+  background: none;
+  color: #1f4b8f;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.player-stats-view-link:hover {
+  text-decoration: underline;
+}
+
+.player-stats-detail {
+  grid-column: 1 / -1;
+}
+
 .game-stat-input-row label {
   display: flex;
   flex-direction: column;
