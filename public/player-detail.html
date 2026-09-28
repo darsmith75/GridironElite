@@ -332,12 +332,12 @@
       { key: 'senior', label: 'Senior' }
     ];
 
-    // Offset from graduation year: senior year = grad year, freshman year = grad year - 3.
+    // Offset from graduation year: senior season falls the calendar year before graduation.
     const PLAYER_STAT_SEASON_OFFSET_FROM_GRADUATION = {
-      freshman: 3,
-      sophomore: 2,
-      junior: 1,
-      senior: 0
+      freshman: 4,
+      sophomore: 3,
+      junior: 2,
+      senior: 1
     };
 
     function getSeasonCalendarYear(seasonKey, graduationYear) {
