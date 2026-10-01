@@ -47,10 +47,15 @@
       grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 15px;
     }
-    .resources-grid[hidden], .resources-topic[hidden] { display: none; }
+    .resources-topic[hidden], .resources-guide[hidden] { display: none; }
     body.player-profile-theme .resources-card {
       min-height: 206px;
       text-decoration: none;
+    }
+    body.player-profile-theme .resources-card.active {
+      border-color: #c9962e;
+      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
+      box-shadow: 0 0 0 2px rgba(201, 150, 46, 0.2), 0 4px 12px rgba(14, 34, 74, 0.1);
     }
     body.player-profile-theme .resources-card .profile-action-icon {
       margin-bottom: 14px;
@@ -58,7 +63,7 @@
     body.player-profile-theme .resources-card .profile-action-title {
       margin-bottom: 0;
     }
-    .resources-topic { padding: 8px 0; }
+    .resources-topic { padding: 24px 0 8px; }
     .resources-topic h2 {
       margin: 0 0 12px;
       color: #0f1f3f;
@@ -66,6 +71,31 @@
       font-size: 26px;
     }
     .resources-topic p { margin: 0; color: #4f5f7a; font-size: 14px; }
+    .resources-guide {
+      display: grid;
+      gap: 12px;
+    }
+    .resources-guide article {
+      border: 1px solid #d5deea;
+      border-radius: 8px;
+      padding: 18px 20px;
+      background: linear-gradient(180deg, #fff 0%, #f6f8fc 100%);
+      box-shadow: 0 2px 8px rgba(14, 34, 74, 0.07);
+    }
+    .resources-guide h3 {
+      margin: 0 0 10px;
+      color: #0b1f4b;
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+    }
+    .resources-guide ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #3d4e68;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .resources-guide li + li { margin-top: 6px; }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -119,7 +149,168 @@
         </div>
         <section class="resources-topic" id="resources-topic" hidden>
           <h2 id="resources-topic-title"></h2>
-          <p>Content coming soon.</p>
+          <p id="resources-topic-placeholder">Content coming soon.</p>
+          <div class="resources-guide" id="highlight-film-content" hidden>
+            <article>
+              <h3>What Coaches Want to See</h3>
+              <ul>
+                <li>Plays that translate to their level: speed, physicality, technique, and football IQ.</li>
+                <li>Consistent effort, not just one splash play.</li>
+                <li>Clear evidence of your role responsibilities within the scheme.</li>
+                <li>Situational value: third down, red zone, special teams, and late-game reps.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Film Length</h3>
+              <ul>
+                <li>Aim for a concise highlight: typically 3 to 5 minutes.</li>
+                <li>If you have more strong clips, create position-focused versions rather than one long video.</li>
+                <li>Keep full-game film available separately for deeper evaluation.</li>
+                <li>Update throughout the season instead of waiting for year-end.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Best Plays First</h3>
+              <ul>
+                <li>Your first 20 to 30 seconds should show your highest-level traits immediately.</li>
+                <li>Open with 4 to 6 clips that define you as a player.</li>
+                <li>Include variety early: different alignments, situations, and competition levels.</li>
+                <li>Do not bury your best reps at the end.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Position-Specific Examples</h3>
+              <ul>
+                <li>QB: pocket movement, decision speed, accuracy by level, and third-down execution.</li>
+                <li>WR/TE: release vs press, route pacing, separation, contested catches, and run-after-catch.</li>
+                <li>RB: vision, contact balance, pass protection reps, and burst through tight windows.</li>
+                <li>OL/DL/LB/DB: hand usage, leverage, pursuit effort, and finish through whistle.</li>
+                <li>Need a template for your own position?</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Common Mistakes</h3>
+              <ul>
+                <li>Too many low-impact clips and not enough true evaluation reps.</li>
+                <li>No pre-snap indicator or spotlight for where you line up.</li>
+                <li>Overuse of dramatic effects, long intros, or heavy music distractions.</li>
+                <li>Outdated film that does not represent your current size, speed, or role.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="resources-guide" id="communication-content" hidden>
+            <article>
+              <h3>When to Contact Coaches</h3>
+              <ul>
+                <li>Send updates after meaningful events: strong game film, improved test numbers, or GPA wins.</li>
+                <li>Reach out ahead of key windows: camps, visits, and dead/evaluation periods.</li>
+                <li>Avoid random messages with no new value.</li>
+                <li>Be consistent enough to stay visible but not so frequent that messages feel repetitive.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Email Template Structure</h3>
+              <ul>
+                <li>Subject line: name, class year, position, school.</li>
+                <li>Opening: short intro and one-line reason for contacting that specific program.</li>
+                <li>Middle: one update plus film link and core measurables.</li>
+                <li>Close: one clear ask, such as camp attendance or feedback request.</li>
+                <li>Signature: full name, phone, email, high school, coach contact, and profile link.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Texting Etiquette</h3>
+              <ul>
+                <li>Keep messages brief and easy to answer.</li>
+                <li>Use proper grammar and punctuation; avoid slang-heavy messages.</li>
+                <li>Do not text repeatedly if there is no reply yet.</li>
+                <li>Text at reasonable times in the coach's time zone.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Calling Coaches</h3>
+              <ul>
+                <li>Prepare three talking points before you call: update, fit question, and next step.</li>
+                <li>Practice a 20-second introduction so you sound confident and clear.</li>
+                <li>If you get voicemail, leave a concise message and follow up once by text or email.</li>
+                <li>After calls, log notes and action items so you can follow up accurately.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Social Media Best Practices</h3>
+              <ul>
+                <li>Pin key recruiting posts: latest film, measurables, and contact info.</li>
+                <li>Keep posts aligned with your brand as a disciplined student-athlete.</li>
+                <li>Never post content that could raise maturity or character concerns.</li>
+                <li>Engage respectfully when interacting with programs and staff.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Following Up Without Overdoing It</h3>
+              <ul>
+                <li>If no response, wait and follow up with a real update, not just checking in.</li>
+                <li>Space messages based on recruiting calendar and relationship strength.</li>
+                <li>Use one communication lane at a time before switching channels.</li>
+                <li>Always keep your tone professional, patient, and respectful.</li>
+              </ul>
+            </article>
+          </div>
+          <div class="resources-guide" id="camps-content" hidden>
+            <article>
+              <h3>Which Camps Matter?</h3>
+              <ul>
+                <li>Prioritize camps where schools you already communicate with will actually evaluate your position.</li>
+                <li>Focus on quality over quantity: a few strong performances beat a packed but unfocused schedule.</li>
+                <li>Use camp choices to answer your current recruiting question: exposure, validation, or offer movement.</li>
+                <li>Avoid events that do not provide position-specific testing or coach interaction.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Prospect Camps vs. Showcases</h3>
+              <ul>
+                <li>Prospect camps usually involve direct coaching by college staffs and can impact board placement quickly.</li>
+                <li>Showcases can provide broad exposure and testing, but direct school-specific feedback may be limited.</li>
+                <li>If your goal is an offer from School X, their camp often matters more than a general event.</li>
+                <li>Use showcases to create initial awareness, then follow up with targeted school camps.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>How to Prepare</h3>
+              <ul>
+                <li>Train for the exact drills you will perform: starts, transitions, and position movement.</li>
+                <li>Plan hydration, sleep, and nutrition 48 hours before camp day.</li>
+                <li>Arrive with a short self-introduction and your recruiting profile links ready.</li>
+                <li>Set one performance goal and one relationship goal before each event.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>What to Bring</h3>
+              <ul>
+                <li>Cleats, backup cleats, gloves, and weather-appropriate gear.</li>
+                <li>Water, electrolyte options, and simple fuel snacks.</li>
+                <li>Notebook or notes app for coach feedback and next steps.</li>
+                <li>Printable profile sheet or digital QR link for easy follow-up.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Following Up Afterward</h3>
+              <ul>
+                <li>Send a short thank-you message within 24 hours.</li>
+                <li>Reference one specific drill or coaching point to show attention to detail.</li>
+                <li>Share updated film when you apply their feedback in games or workouts.</li>
+                <li>Ask one clear next-step question: visit, call, or camp return date.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>When a Camp Is Worth the Investment</h3>
+              <ul>
+                <li>It has direct access to coaches on your target list.</li>
+                <li>You are healthy and prepared to perform near your best.</li>
+                <li>The event timing supports your recruiting window, not just your schedule.</li>
+                <li>You can clearly explain what outcome you expect from attending.</li>
+              </ul>
+            </article>
+          </div>
         </section>
       </main>
     </div>
@@ -129,17 +320,38 @@
   <script>
     checkAuth('player');
 
-    const topic = new URLSearchParams(window.location.search).get('topic');
-    const selectedCard = [...document.querySelectorAll('.resources-card')].find(card => new URL(card.href).searchParams.get('topic') === topic);
-    if (selectedCard && topic) {
-      document.getElementById('resources-grid').hidden = true;
-      document.getElementById('resources-topic-title').textContent = selectedCard.querySelector('.profile-action-title').textContent;
-      document.getElementById('resources-topic').hidden = false;
-      const backLink = document.getElementById('resources-back');
-      backLink.href = 'resources.html';
-      backLink.textContent = '← All Resources';
-      document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
+    const resourceCards = [...document.querySelectorAll('.resources-card')];
+    function showResourceTopic() {
+      const topic = new URLSearchParams(window.location.search).get('topic');
+      const selectedCard = resourceCards.find(card => new URL(card.href).searchParams.get('topic') === topic);
+      const section = document.getElementById('resources-topic');
+      resourceCards.forEach(card => {
+        card.classList.toggle('active', card === selectedCard);
+        if (card === selectedCard) card.setAttribute('aria-current', 'page');
+        else card.removeAttribute('aria-current');
+      });
+      section.hidden = !selectedCard;
+      if (!selectedCard) {
+        document.title = 'Player Resources';
+        return;
+      }
+      const title = selectedCard.querySelector('.profile-action-title').textContent;
+      document.getElementById('resources-topic-title').textContent = title;
+      document.getElementById('resources-topic-placeholder').hidden = topic === 'highlight-film' || topic === 'social-media-communication' || topic === 'camps-showcases';
+      document.getElementById('highlight-film-content').hidden = topic !== 'highlight-film';
+      document.getElementById('communication-content').hidden = topic !== 'social-media-communication';
+      document.getElementById('camps-content').hidden = topic !== 'camps-showcases';
+      document.title = title + ' | Resources';
     }
+
+    resourceCards.forEach(card => card.addEventListener('click', event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (window.location.href !== card.href) history.pushState(null, '', card.href);
+      showResourceTopic();
+    }));
+    window.addEventListener('popstate', showResourceTopic);
+    showResourceTopic();
   </script>
 </body>
 </html>
