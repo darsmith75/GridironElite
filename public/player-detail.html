@@ -851,17 +851,12 @@
         const overallColor = getRatingColor(data.overallScore);
         const overallLabel = getRatingLabel(data.overallScore);
         const categoriesHtml = (data.categories || []).map(c => buildRatingMeter(c.name, c.score, c.description)).join('');
+        const badge = document.getElementById('playerRatingBadge');
+        badge.style.setProperty('--rating-color', overallColor);
+        badge.setAttribute('aria-label', `Player rating ${data.overallScore}, ${overallLabel}. View breakdown`);
+        badge.innerHTML = `<span class="rating-badge-score">${data.overallScore}</span><span class="rating-badge-label">Player Rating <small>${overallLabel}</small></span>`;
         return `
-          <div class="rating-layout">
-            <div class="rating-summary" style="text-align:center; min-width:90px;">
-              <div style="width:88px; height:88px; border-radius:50%; background:${overallColor}; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 6px;">
-                <span style="font-size:28px; font-weight:800; color:#fff; line-height:1;">${data.overallScore}</span>
-                <span style="font-size:9px; font-weight:600; color:rgba(255,255,255,0.85); letter-spacing:0.5px; text-transform:uppercase;">Overall</span>
-              </div>
-              <span style="font-size:12px; font-weight:600; color:${overallColor};">${overallLabel}</span>
-            </div>
-            <div class="rating-breakdown" style="min-width:220px;">${categoriesHtml}</div>
-          </div>
+          <div class="rating-breakdown">${categoriesHtml}</div>
           <p class="rating-note" style="font-size:11px; color:#b0b8c5;">AI-generated estimate based on reported metrics. Not an official recruiting evaluation.</p>`;
       }
 
@@ -1076,6 +1071,13 @@
               ${player.height ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"></line><polyline points="8 7 12 3 16 7"></polyline><polyline points="8 17 12 21 16 17"></polyline></svg></span><span>${formatHeightDisplay(player.height)}</span></span>` : ''}
               ${player.weight ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg></span><span>${player.weight} lbs</span></span>` : ''}
             </div>
+            <div class="rating-badge-wrap">
+              <button id="playerRatingBadge" type="button" class="rating-badge" aria-label="Player rating, view breakdown"><span class="rating-badge-score">--</span><span class="rating-badge-label">Player Rating <small>Not rated</small></span></button>
+              <div class="rating-popover">
+                <div class="rating-popover-header"><strong>Player Rating</strong><button id="generateRatingBtn" type="button" onclick="generateRating()" class="rating-generate-btn">Generate Rating</button></div>
+                <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>
+              </div>
+            </div>
             <div class="profile-detail-quick-actions">
               <button onclick="toggleFavoriteDetail()" class="favorite-detail-btn profile-detail-favorite-btn" id="favoriteBtn">
                 <span id="favoriteBtnIcon">☆</span> <span id="favoriteBtnText">Favorite</span>
@@ -1108,17 +1110,6 @@
                 </button>
                 ` : ''}
               </div>
-            </div>
-          </div>
-
-          <!-- Player Rating (AI only) -->
-          <div id="ratingSection" class="profile-section">
-            <div class="rating-section-header" style="justify-content:space-between; gap:10px; flex-wrap:wrap;">
-              <h2 class="section-title-small profile-unified-title" style="margin-bottom:0;"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="12" width="3" height="8" rx="1"></rect><rect x="11" y="8" width="3" height="12" rx="1"></rect><rect x="17" y="5" width="3" height="15" rx="1"></rect></svg></span>PLAYER RATING</h2>
-              <button id="generateRatingBtn" onclick="generateRating()" style="background:#1e3c72; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer; letter-spacing:0.5px;">Generate Rating</button>
-            </div>
-            <div class="rating-tab-content" role="tabpanel">
-              <div id="aiRatingContent"><p style="color:#7a8a9e; font-size:13px; margin:0;">Click "Generate Rating" to get an AI-powered evaluation based on this player's physical metrics, position, and class year.</p></div>
             </div>
           </div>
 

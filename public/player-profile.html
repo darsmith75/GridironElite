@@ -2176,6 +2176,13 @@
           ${profile.height ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"></line><polyline points="8 7 12 3 16 7"></polyline><polyline points="8 17 12 21 16 17"></polyline></svg></span><span>${formatHeightDisplay(profile.height)}</span></span>` : ''}
           ${profile.weight ? `<span class="meta-badge profile-meta-badge-themed"><span class="meta-badge-icon" aria-hidden="true"><svg class="profile-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><rect x="6" y="9" width="2" height="6" rx="1"></rect><rect x="16" y="9" width="2" height="6" rx="1"></rect><rect x="8" y="10" width="8" height="4" rx="1"></rect></svg></span><span>${profile.weight} lbs</span></span>` : ''}
         </div>
+        <div class="rating-badge-wrap">
+          <button id="myRatingBadge" type="button" class="rating-badge" aria-label="My rating, view breakdown"><span class="rating-badge-score">--</span><span class="rating-badge-label">My Rating <small>Not rated</small></span></button>
+          <div class="rating-popover">
+            <div class="rating-popover-header"><strong>My Rating</strong></div>
+            <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
+          </div>
+        </div>
         <div class="profile-action-grid">
           <button onclick="showEditMode()" class="profile-action-card" type="button">
             <span class="profile-action-icon" aria-hidden="true"><img class="profile-action-icon-img" src="/images/card-images/action-edit-profile.png" alt=""></span>
@@ -2240,18 +2247,6 @@
                 </button>
               ` : ''}
             </div>
-          </div>
-        </div>
-      `;
-
-      // My Ratings
-      html += `
-        <div class="profile-section" id="myRatingsSection">
-          <div class="rating-section-header">
-            <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="12" width="3" height="8" rx="1"></rect><rect x="11" y="8" width="3" height="12" rx="1"></rect><rect x="17" y="5" width="3" height="15" rx="1"></rect></svg></span>MY RATINGS</h2>
-          </div>
-          <div class="rating-tab-content" role="tabpanel">
-            <div id="myAiRatingContent"><p style="color:#7a8a9e;font-size:13px;margin:0;">Loading...</p></div>
           </div>
         </div>
       `;
@@ -2486,17 +2481,12 @@
       const color = myRatingColor(data.overallScore);
       const label = myRatingLabel(data.overallScore);
       const cats = (data.categories || []).map(c => buildMyRatingMeter(c.name, c.score, c.description)).join('');
+      const badge = document.getElementById('myRatingBadge');
+      badge.style.setProperty('--rating-color', color);
+      badge.setAttribute('aria-label', `My rating ${data.overallScore}, ${label}. View breakdown`);
+      badge.innerHTML = `<span class="rating-badge-score">${data.overallScore}</span><span class="rating-badge-label">My Rating <small>${label}</small></span>`;
       return `
-        <div class="rating-layout">
-          <div class="rating-summary" style="text-align:center;min-width:90px;">
-            <div style="width:88px;height:88px;border-radius:50%;background:${color};display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 6px;">
-              <span style="font-size:28px;font-weight:800;color:#fff;line-height:1;">${data.overallScore}</span>
-              <span style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.5px;text-transform:uppercase;">Overall</span>
-            </div>
-            <span style="font-size:12px;font-weight:600;color:${color};">${label}</span>
-          </div>
-          <div class="rating-breakdown" style="min-width:220px;">${cats}</div>
-        </div>`;
+        <div class="rating-breakdown">${cats}</div>`;
     }
 
     async function loadMyRatings() {
