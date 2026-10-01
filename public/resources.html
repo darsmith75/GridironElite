@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     .resources-shell {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 8px 0 40px;
     }
@@ -25,386 +25,55 @@
       text-decoration: none;
     }
     .resources-back-link:hover { text-decoration: underline; }
+    .resources-back-link:focus-visible,
+    .resources-card:focus-visible { outline: 3px solid #c9962e; outline-offset: 3px; }
     .resources-hero {
       background: linear-gradient(135deg, #051f56 0%, #0a2f7c 60%, #1a4fa8 100%);
-      border-radius: 14px;
+      border-radius: 8px;
       color: #fff;
       padding: 26px 28px;
       margin-bottom: 22px;
-      box-shadow: 0 8px 28px rgba(5,20,70,0.35);
+      box-shadow: 0 8px 28px rgba(5, 20, 70, 0.24);
     }
     .resources-hero h1 {
-      margin: 0 0 6px;
+      margin: 0;
       font-family: 'Oswald', sans-serif;
       font-size: clamp(26px, 3.5vw, 38px);
-      letter-spacing: 0.6px;
+      letter-spacing: 0;
       color: #fff;
     }
-    .resources-hero p {
-      margin: 0;
-      color: rgba(255,255,255,0.88);
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 760px;
-    }
-    /* Tab cards */
-    .resources-tab-grid {
+    .resources-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 15px;
-      margin-bottom: 22px;
     }
-    .resources-tab-card {
-      border: 1px solid #d9dfe8;
-      border-radius: 15px;
-      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
-      padding: 18px 14px 14px;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      min-height: 170px;
-      box-shadow: 0 4px 12px rgba(14,34,74,0.1);
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .resources-tab-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 24px rgba(6,23,63,0.2);
-      border-color: #caa355;
-    }
-    .resources-tab-card.active {
-      border-color: #c9962e;
-      box-shadow: 0 0 0 2px rgba(201,150,46,0.25), 0 10px 24px rgba(6,23,63,0.18);
-      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
-    }
-    .resources-tab-icon-wrap {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--pp-gold, #d1a13a);
-      margin-bottom: 12px;
-    }
-    .resources-tab-icon-svg {
-      width: 42px;
-      height: 42px;
-      display: block;
-      filter: drop-shadow(0 1px 0 rgba(7,26,67,0.18));
-    }
-    .resources-tab-title {
-      font-family: 'Oswald', sans-serif;
-      font-size: 20px;
-      color: #0f1f3f;
-      line-height: 1.12;
-      margin-bottom: 6px;
-    }
-    .resources-tab-desc {
-      font-size: 13px;
-      color: #4f5f7a;
-      line-height: 1.35;
-      font-weight: 600;
-    }
-    .resources-tab-arrow {
-      margin-top: auto;
-      align-self: center;
-      color: var(--pp-gold, #d1a13a);
-      font-size: 28px;
-      line-height: 1;
-      font-weight: 700;
-    }
-    .resources-secondary-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 0 0 22px;
-    }
-    .resources-secondary-tab {
-      border: 1px solid #dfe5f0;
-      background: linear-gradient(180deg, #ffffff 0%, #f3f6fb 100%);
-      color: #1e3c72;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.18px;
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-    }
-    .resources-secondary-tab:hover {
-      transform: translateY(-1px);
-      border-color: #caa355;
-      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
-      box-shadow: 0 4px 12px rgba(201, 150, 46, 0.12);
-    }
-    .resources-secondary-tab.active {
-      background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
-      border-color: #c9962e;
-      color: #0b1f4b;
-      box-shadow: 0 0 0 2px rgba(201,150,46,0.18);
-    }
-    .recruiting-secondary-content {
-      display: none;
-      margin-top: 18px;
-      border: 1px solid #d5deea;
-      border-radius: 14px;
-      background: #fff;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-      padding: 18px;
-    }
-    .recruiting-secondary-content.active {
-      display: block;
-    }
-    .recruiting-secondary-content .resources-panel {
-      display: block;
-      border: none;
-      border-radius: 0;
-      padding: 0;
-      box-shadow: none;
-      background: transparent;
-    }
-    .recruiting-secondary-content .do-dont-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .recruiting-secondary-content .do-card,
-    .recruiting-secondary-content .dont-card {
-      border-radius: 12px;
-      border: 1px solid #dbe5f3;
-      padding: 16px;
-      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
-      box-shadow: 0 4px 12px rgba(14,34,74,0.08);
-    }
-    .recruiting-secondary-content .do-card {
-      background: linear-gradient(180deg, #f3fbf4 0%, #edf8f1 100%);
-      border-color: #cfe8d3;
-    }
-    .recruiting-secondary-content .dont-card {
-      background: linear-gradient(180deg, #fff5f5 0%, #fff0f0 100%);
-      border-color: #f2d5d5;
-    }
-    .recruiting-secondary-content .do-card h3,
-    .recruiting-secondary-content .dont-card h3 {
-      margin: 0 0 8px;
-      font-family: 'Oswald', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-    .recruiting-secondary-content .do-card h3 { color: #1f6b35; }
-    .recruiting-secondary-content .dont-card h3 { color: #a12727; }
-    .recruiting-secondary-content .do-card ul,
-    .recruiting-secondary-content .dont-card ul {
-      margin: 0;
-      padding-left: 18px;
-      font-size: 13px;
-      line-height: 1.55;
-      color: #364a67;
-    }
-    .recruiting-secondary-content .do-card li + li,
-    .recruiting-secondary-content .dont-card li + li { margin-top: 6px; }
-    .recruiting-secondary-content .category-guidance-wrap {
-      margin-top: 14px;
-      border-top: 1px solid #e1e8f3;
-      padding-top: 14px;
-    }
-    .recruiting-secondary-content .category-guidance-title {
-      margin: 0 0 10px;
-      font-size: 15px;
-      color: #1e3c72;
-    }
-    .recruiting-secondary-content .category-guidance-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 10px;
-    }
-    .recruiting-secondary-content .category-guidance-card {
-      border: 1px solid #dbe5f3;
-      border-radius: 10px;
-      background: #f8fbff;
-      padding: 12px;
-    }
-    .recruiting-secondary-content .category-guidance-card h4 {
-      margin: 0 0 7px;
-      font-size: 14px;
-      color: #1e3c72;
-      letter-spacing: 0.2px;
-      text-transform: uppercase;
-    }
-    .recruiting-secondary-content .category-guidance-card ul {
-      margin: 0;
-      padding-left: 17px;
-      color: #364a67;
-      font-size: 13px;
-      line-height: 1.52;
-    }
-    .recruiting-secondary-content .category-guidance-card li + li { margin-top: 6px; }
-    .resources-panel {
-      display: none;
-    }
-    .resources-panel.active {
-      display: block;
-      animation: fadeInPanel 0.2s ease-out;
-    }
-    @keyframes fadeInPanel {
-      from { opacity: 0; transform: translateY(3px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .resource-section-heading {
-      font-family: 'Oswald', sans-serif;
-      font-size: 19px;
-      font-weight: 600;
-      color: #0b1f4b;
-      margin: 0 0 14px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid rgba(201,150,46,0.35);
-      letter-spacing: 0.3px;
-    }
-    .resource-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .resource-card {
-      border: 1px solid #d5deea;
-      border-radius: 12px;
-      padding: 16px;
-      background: linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
-      box-shadow: 0 4px 12px rgba(14,34,74,0.09);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    }
-    .resource-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(6,23,63,0.14);
-      border-color: #caa355;
-    }
-    .resource-card h3 {
-      margin: 0 0 10px;
-      color: #0b1f4b;
-      font-family: 'Oswald', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      letter-spacing: 0.2px;
-    }
-    .resource-card h3 .card-icon {
-      font-size: 17px;
-    }
-    .resource-card ul {
-      margin: 0;
-      padding-left: 18px;
-      color: #3d4e68;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .resource-card li + li { margin-top: 6px; }
-    .resource-card p {
-      margin: 0;
-      color: #3d4e68;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .tip-box {
-      background: linear-gradient(135deg, #fffdf5 0%, #fdf4e0 100%);
-      border: 1px solid rgba(201,150,46,0.4);
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin-bottom: 18px;
-      font-size: 13px;
-      color: #3a2e00;
-      line-height: 1.55;
-    }
-    .tip-box strong { color: #7a5800; }
-    .resources-partner-spotlight {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 18px;
-      background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
-      border: 1px solid #d7e3f5;
-      border-radius: 14px;
-      padding: 14px 16px;
-      box-shadow: 0 6px 18px rgba(23, 49, 95, 0.12);
-    }
-    .resources-partner-logo-wrap {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      border: 1px solid #dde7f5;
-      border-radius: 10px;
-      padding: 8px 10px;
-      min-width: 148px;
-    }
-    .resources-partner-logo-wrap img {
-      display: block;
-      height: 34px;
-      width: auto;
-      object-fit: contain;
-    }
-    .resources-partner-kicker {
-      margin: 0 0 4px;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #3f5e8f;
-    }
-    .resources-partner-title {
-      font-family: 'Oswald', sans-serif;
-      font-size: 19px;
-      color: #0b1f4b;
-      font-weight: 600;
-      line-height: 1.25;
-      letter-spacing: 0.2px;
-    }
-    .resources-partner-copy {
-      margin: 4px 0 0;
-      color: #425978;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .resources-partner-cta {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .resources-grid[hidden], .resources-topic[hidden] { display: none; }
+    body.player-profile-theme .resources-card {
+      min-height: 206px;
       text-decoration: none;
-      border: 1px solid #163f8f;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #041f58 0%, #082d79 100%);
-      color: #f8fbff;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(7,25,66,0.26);
-      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     }
-    .resources-partner-cta:hover {
-      background: linear-gradient(135deg, #0a2b73 0%, #1142a4 100%);
-      border-color: #295ab3;
-      transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(7,25,66,0.32);
+    body.player-profile-theme .resources-card .profile-action-icon {
+      margin-bottom: 14px;
     }
-    @media (max-width: 720px) {
+    body.player-profile-theme .resources-card .profile-action-title {
+      margin-bottom: 0;
+    }
+    .resources-topic { padding: 8px 0; }
+    .resources-topic h2 {
+      margin: 0 0 12px;
+      color: #0f1f3f;
+      font-family: 'Oswald', sans-serif;
+      font-size: 26px;
+    }
+    .resources-topic p { margin: 0; color: #4f5f7a; font-size: 14px; }
+    @media (max-width: 1024px) {
+      .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .resources-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
       .resources-hero { padding: 20px; }
-      .resources-hero h1 { font-size: 24px; }
-      .resources-tab-grid { grid-template-columns: 1fr; }
-      .resources-tab-card { min-height: auto; }
-      .resources-partner-spotlight {
-        grid-template-columns: 1fr;
-        text-align: left;
-      }
-      .resources-partner-logo-wrap { width: fit-content; }
-      .resources-partner-cta { width: fit-content; }
     }
   </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -434,380 +103,25 @@
     </header>
 
     <div class="dashboard-container">
-      <div class="resources-shell">
-        <a href="player-profile.html" class="resources-back-link">← Back to My Profile</a>
-
+      <main class="resources-shell">
+        <a href="player-profile.html" class="resources-back-link" id="resources-back">← Back to My Profile</a>
         <section class="resources-hero">
           <h1>Resources</h1>
-          <p>Practical tools and knowledge to help you perform and recover at your best. Select a category below to explore.</p>
         </section>
 
-        <div class="resources-tab-grid" role="tablist">
-          <button class="resources-tab-card active" data-tab="nutrition" type="button" role="tab" aria-selected="true">
-            <span class="resources-tab-icon-wrap" aria-hidden="true">
-              <svg class="resources-tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 2v6c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                <path d="M7 2v20"/>
-                <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
-                <path d="M21 15v7"/>
-              </svg>
-            </span>
-            <span class="resources-tab-title">Nutrition</span>
-            <span class="resources-tab-desc">Fueling, hydration &amp; daily habits</span>
-            <span class="resources-tab-arrow">›</span>
-          </button>
-          <button class="resources-tab-card" data-tab="recovery" type="button" role="tab" aria-selected="false">
-            <span class="resources-tab-icon-wrap" aria-hidden="true">
-              <svg class="resources-tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-            </span>
-            <span class="resources-tab-title">Recovery</span>
-            <span class="resources-tab-desc">Sleep, cold therapy &amp; scheduling</span>
-            <span class="resources-tab-arrow">›</span>
-          </button>
-          <button class="resources-tab-card" data-tab="positions" type="button" role="tab" aria-selected="false">
-            <span class="resources-tab-icon-wrap" aria-hidden="true">
-              <svg class="resources-tab-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </span>
-            <span class="resources-tab-title">Positions</span>
-            <span class="resources-tab-desc">Role-specific training guides</span>
-            <span class="resources-tab-arrow">›</span>
-          </button>
+        <div class="resources-grid" id="resources-grid">
+          <a class="profile-action-card resources-card" href="resources.html?topic=athletic-development"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><rect x="4" y="8" width="3" height="8" rx="1"/><rect x="17" y="8" width="3" height="8" rx="1"/><path d="M1 10v4m22-4v4"/></svg></span><span class="profile-action-title resources-card-title">Athletic Development</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
+          <a class="profile-action-card resources-card" href="resources.html?topic=highlight-film"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m10 8 6 4-6 4V8Z"/></svg></span><span class="profile-action-title resources-card-title">Highlight Film</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
+          <a class="profile-action-card resources-card" href="resources.html?topic=social-media-communication"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8A8.5 8.5 0 0 1 12.5 20a8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/><path d="M8 11.5h9m-9 3h6"/></svg></span><span class="profile-action-title resources-card-title">Social Media &amp; Communication</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
+          <a class="profile-action-card resources-card" href="resources.html?topic=camps-showcases"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 16H4L12 3Z"/><path d="M12 12v7M2 21h20"/></svg></span><span class="profile-action-title resources-card-title">Camps &amp; Showcases</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
+          <a class="profile-action-card resources-card" href="resources.html?topic=college-visits"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5L2 9Z"/><path d="M5 11v7c4 3 10 3 14 0v-7M22 9v8"/></svg></span><span class="profile-action-title resources-card-title">College Visits</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
+          <a class="profile-action-card resources-card" href="resources.html?topic=recruiting-101"><span class="profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="18" rx="2"/><path d="M9 4V2h6v2m-7 10 2 2 5-5"/></svg></span><span class="profile-action-title resources-card-title">Recruiting 101</span><span class="profile-action-arrow" aria-hidden="true">›</span></a>
         </div>
-
-        <div class="resources-secondary-tabs" aria-label="Recruiting resource shortcuts">
-          <button class="resources-secondary-tab" type="button" data-target="considerations">School Considerations</button>
-          <button class="resources-secondary-tab" type="button" data-target="dos-donts">Things To Do / Not To Do</button>
-          <button class="resources-secondary-tab" type="button" data-target="college-visits">College Visits</button>
-          <button class="resources-secondary-tab" type="button" data-target="camps-showcases">Camps &amp; Showcases</button>
-          <button class="resources-secondary-tab" type="button" data-target="highlight-film">Highlight Film</button>
-          <button class="resources-secondary-tab" type="button" data-target="communication">Communication</button>
-          <button class="resources-secondary-tab" type="button" data-target="offers-decisions">Offers &amp; Recruiting Decisions</button>
-          <button class="resources-secondary-tab" type="button" data-target="scholarships-aid">Scholarships &amp; Financial Aid</button>
-          <button class="resources-secondary-tab" type="button" data-target="parent-guide">Parent Guide</button>
-          <button class="resources-secondary-tab" type="button" data-target="recruiting-mistakes">Recruiting Mistakes</button>
-          <button class="resources-secondary-tab" type="button" data-target="faq">Frequently Asked Questions</button>
-        </div>
-
-        <div id="recruiting-secondary-content" class="recruiting-secondary-content" aria-live="polite"></div>
-
-        <!-- Nutrition Panel -->
-        <section id="panel-nutrition" class="resources-panel active" role="tabpanel">
-          <div class="tip-box">
-            <strong>Quick Tip:</strong> What you eat before, during, and after training directly impacts how fast you improve. Treat nutrition as part of your training plan, not separate from it.
-          </div>
-
-          <h2 class="resource-section-heading">Fueling Your Performance</h2>
-          <div class="resource-grid">
-            <article class="resource-card">
-              <h3><span class="card-icon">🍽️</span> Pre-Workout Nutrition</h3>
-              <ul>
-                <li>Eat a balanced meal 2–3 hours before training (carbs + protein + low fat).</li>
-                <li>If you're short on time, a lighter snack 30–60 minutes before works (banana, rice cake with PB, etc.).</li>
-                <li>Stay hydrated before sessions — start sipping water well before you train.</li>
-                <li>Avoid high-fat or high-fiber foods right before intense sessions as they slow digestion.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">⚡</span> Post-Workout Recovery Nutrition</h3>
-              <ul>
-                <li>Eat within 30–60 minutes of finishing to begin muscle repair.</li>
-                <li>Target 20–40g of quality protein (chicken, eggs, Greek yogurt, protein shake).</li>
-                <li>Pair with fast-digesting carbohydrates to replenish glycogen stores.</li>
-                <li>Don't skip this window — it's one of the most important meals of the day for athletes.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">💧</span> Hydration</h3>
-              <ul>
-                <li>Drink 16–24 oz of water 1–2 hours before practice or games.</li>
-                <li>Replace fluids during activity — don't wait until you're thirsty.</li>
-                <li>Monitor urine color: pale yellow means properly hydrated; dark means drink more.</li>
-                <li>In hot or high-intensity conditions, add electrolytes (sodium, potassium, magnesium).</li>
-                <li>Avoid sugary drinks and energy drinks during activity.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🏋️</span> Building &amp; Maintaining Muscle</h3>
-              <ul>
-                <li>Aim for 0.7–1g of protein per pound of bodyweight daily.</li>
-                <li>Distribute protein across 4–5 meals rather than loading it all at once.</li>
-                <li>Prioritize whole food sources: lean meats, fish, legumes, dairy, eggs.</li>
-                <li>Creatine monohydrate is one of the most researched and effective supplements for power athletes.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🥗</span> Daily Nutrition Habits</h3>
-              <ul>
-                <li>Eat consistent meals throughout the day — skipping meals hurts energy and recovery.</li>
-                <li>Build each plate around lean protein, complex carbs, and vegetables.</li>
-                <li>Healthy fats (avocado, nuts, olive oil) support hormone function and joint health.</li>
-                <li>Limit processed foods, excess sugar, and alcohol — all slow recovery and adaptation.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">📋</span> In-Season vs. Off-Season</h3>
-              <ul>
-                <li>In-season: prioritize calorie maintenance, recovery fueling, and staying consistent.</li>
-                <li>Off-season: this is your window to add lean mass — slightly increase calories and training load.</li>
-                <li>Pre-camp: build up energy stores in the weeks before camp starts.</li>
-                <li>Track what you eat — awareness is the first step to better habits.</li>
-              </ul>
-            </article>
-          </div>
+        <section class="resources-topic" id="resources-topic" hidden>
+          <h2 id="resources-topic-title"></h2>
+          <p>Content coming soon.</p>
         </section>
-
-        <!-- Recovery Panel -->
-        <section id="panel-recovery" class="resources-panel" role="tabpanel">
-          <div class="tip-box">
-            <strong>Quick Tip:</strong> Training breaks your body down. Recovery is where improvement happens. Prioritize sleep, movement quality, and stress management as seriously as your workouts.
-          </div>
-
-          <section class="resources-partner-spotlight" aria-label="MyoLab recovery partner spotlight">
-            <a href="https://www.myolabhq.com/" target="_blank" rel="noopener noreferrer" class="resources-partner-logo-wrap" aria-label="Visit MyoLab website">
-              <img src="/images/logos/MyoLabLogo.jpg" alt="MyoLab">
-            </a>
-            <div>
-              <p class="resources-partner-kicker">Recovery Partner Resource</p>
-              <h2 class="resources-partner-title">Recover Smarter with MyoLab</h2>
-              <p class="resources-partner-copy">Explore MyoLab tools and recovery education to improve how you bounce back between practices, lifts, and games.</p>
-            </div>
-            <a href="https://www.myolabhq.com/" target="_blank" rel="noopener noreferrer" class="resources-partner-cta">Visit MyoLab</a>
-          </section>
-
-          <h2 class="resource-section-heading">Recovery Methods</h2>
-          <div class="resource-grid">
-            <article class="resource-card">
-              <h3><span class="card-icon">😴</span> Sleep</h3>
-              <ul>
-                <li>Sleep is the most powerful recovery tool available — aim for 8–10 hours per night.</li>
-                <li>Prioritize consistent sleep and wake times, even on weekends.</li>
-                <li>Reduce screen time 30–60 minutes before bed to improve sleep quality.</li>
-                <li>Keep your sleep environment cool, dark, and quiet.</li>
-                <li>Naps (20–30 min) can supplement overnight sleep, especially on double-session days.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🧊</span> Cold Therapy</h3>
-              <ul>
-                <li>Ice baths or cold water immersion (10–15 min at 50–59°F) can reduce muscle soreness.</li>
-                <li>Cold therapy is most effective after high-volume or contact-heavy sessions.</li>
-                <li>Contrast therapy (alternating cold and warm) can improve circulation and recovery speed.</li>
-                <li>Cryotherapy chambers are an option at some facilities — short exposure (2–3 min) at extreme cold.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🧘</span> Soft Tissue Work</h3>
-              <ul>
-                <li>Foam rolling (5–10 min post-training) helps reduce tightness and improve range of motion.</li>
-                <li>Massage therapy — even once a month — supports long-term tissue health.</li>
-                <li>Lacrosse balls are great for targeting specific tight spots (feet, glutes, shoulders).</li>
-                <li>Percussion devices (Theragun, Hyperice) can speed up pre and post-session warm-up and cooldown.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🚶</span> Active Recovery</h3>
-              <ul>
-                <li>Light movement on rest days (walking, swimming, cycling) keeps blood flowing without taxing the body.</li>
-                <li>Dynamic stretching before training prepares joints and muscles for load.</li>
-                <li>Static stretching after training (hold 30–60 sec) helps restore flexibility.</li>
-                <li>Yoga or mobility sessions 1–2x/week can significantly reduce injury risk over a season.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🛁</span> Heat Therapy</h3>
-              <ul>
-                <li>Sauna sessions (15–20 min) can support cardiovascular conditioning and relaxation.</li>
-                <li>Heat helps loosen tight muscles before lower-intensity work or mobility sessions.</li>
-                <li>Don't use heat immediately after high-intensity sessions — allow core temp to normalize first.</li>
-                <li>Contrast with cold exposure for amplified circulation and recovery benefits.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🧠</span> Mental Recovery</h3>
-              <ul>
-                <li>Mental fatigue is as real as physical fatigue — schedule time to genuinely unplug.</li>
-                <li>Breathing exercises (box breathing, diaphragmatic breathing) lower cortisol and help with sleep.</li>
-                <li>Visualization and mindfulness practices can sharpen focus and reduce performance anxiety.</li>
-                <li>Talk to coaches, teammates, or counselors if mental load feels unmanageable — it's a strength, not a weakness.</li>
-              </ul>
-            </article>
-          </div>
-
-          <h2 class="resource-section-heading">Recovery Scheduling</h2>
-          <div class="resource-grid">
-            <article class="resource-card">
-              <h3><span class="card-icon">📅</span> During the Season</h3>
-              <ul>
-                <li>Day after game: prioritize sleep, light walking, and nutrition replenishment.</li>
-                <li>Mid-week: controlled soft tissue work and light mobility to keep the body ready.</li>
-                <li>Day before game: avoid anything that leaves you sore — stick to activation and mental prep.</li>
-              </ul>
-            </article>
-            <article class="resource-card">
-              <h3><span class="card-icon">🌱</span> Off-Season Recovery</h3>
-              <ul>
-                <li>Take 2–4 weeks of true rest after the season before starting a new training cycle.</li>
-                <li>Use this window to address nagging injuries, improve mobility, and recharge mentally.</li>
-                <li>Gradually reintroduce volume — don't jump back to full intensity immediately.</li>
-              </ul>
-            </article>
-          </div>
-        </section>
-
-        <!-- Positions Panel -->
-        <section id="panel-positions" class="resources-panel" role="tabpanel">
-          <div class="tip-box">
-            <strong>Quick Tip:</strong> Great players know exactly what their position demands. Train your role first, then build the traits that separate you from everyone else at that spot.
-          </div>
-
-          <h2 class="resource-section-heading">Position Guides</h2>
-          <div class="resource-grid">
-            <article class="resource-card">
-              <h3><span class="card-icon">🎯</span> Quarterback (QB)</h3>
-              <ul>
-                <li>Own pre-snap recognition: identify shell coverage, leverage, and pressure indicators before the snap.</li>
-                <li>Improve footwork timing so drops match route concepts (3-step, 5-step, and movement throws).</li>
-                <li>Build throw consistency under pressure: eyes downfield, balanced base, quick reset mechanics.</li>
-                <li>Target faster processing with film study: coverage ID, progression speed, and checkdown discipline.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">💥</span> Running Back (RB)</h3>
-              <ul>
-                <li>Develop vision and patience to press the aiming point, then explode through the correct gap.</li>
-                <li>Train acceleration and deceleration for one-cut efficiency and better change of direction.</li>
-                <li>Improve pass protection fundamentals: stance, strike timing, and blitz pickup communication.</li>
-                <li>Become a complete back by improving route running and reliable hands out of the backfield.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">👐</span> Wide Receiver (WR)</h3>
-              <ul>
-                <li>Master release packages versus press: foot-fire, split release, and hand-fighting at the line.</li>
-                <li>Sharpen route detail: stem discipline, leverage reading, and violent breaks at the top.</li>
-                <li>Improve ball tracking and late hands to win contested catches without tipping defenders.</li>
-                <li>Target blocking effort and perimeter toughness to create big plays after the catch.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧱</span> Tight End (TE)</h3>
-              <ul>
-                <li>Train as a dual-threat: in-line blocking technique plus receiver-level route precision.</li>
-                <li>Develop hand placement and pad level to anchor against edge defenders in run and pass sets.</li>
-                <li>Improve body control in traffic for catches over the middle and red-zone finishes.</li>
-                <li>Target versatile alignment value: attached, slot, wing, and backfield assignments.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🛡️</span> Offensive Line (OL)</h3>
-              <ul>
-                <li>Win with stance, first step, and pad level before hand combat even begins.</li>
-                <li>Build pass-pro footwork: set points, independent hands, and interior power absorption.</li>
-                <li>Improve run-block finish with leverage, hip roll, and sustained contact control.</li>
-                <li>Target communication on calls, twists, stunts, and front adjustments every rep.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧱</span> Tackle (OT)</h3>
-              <ul>
-                <li>Own edge pass protection: kick-slide depth, width control, and hand placement against speed rushers.</li>
-                <li>Improve anchor strength versus bull rush while keeping chest clean.</li>
-                <li>Develop backside and frontside run-block footwork for zone and gap schemes.</li>
-                <li>Target recovery ability after initial contact to prevent late pressure.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧱</span> Guard (OG)</h3>
-              <ul>
-                <li>Win in tight spaces with pad level, hip power, and violent hand placement.</li>
-                <li>Improve pull and trap timing to hit landmarks at full speed under control.</li>
-                <li>Develop interior pass-pro reactions to twists, stunts, and delayed pressure.</li>
-                <li>Target finish mentality without losing balance or leverage.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧱</span> Center (C)</h3>
-              <ul>
-                <li>Make accurate, fast snaps from multiple stances without losing blocking leverage.</li>
-                <li>Own protection calls and front identification to keep the entire line synced.</li>
-                <li>Improve lateral quickness for reach blocks and second-level fits.</li>
-                <li>Target communication clarity pre-snap on every play.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧨</span> Defensive Line (DL)</h3>
-              <ul>
-                <li>Explode off the ball with consistent get-off timing and low pad entry.</li>
-                <li>Develop a pass-rush plan: primary move, counter, and finish angle to the QB.</li>
-                <li>Improve block destruction with hands, eyes, and hip leverage to control gaps.</li>
-                <li>Target pursuit conditioning so effort and power stays high late in drives.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🗡️</span> EDGE (EDGE)</h3>
-              <ul>
-                <li>Build elite get-off and bend mechanics to threaten the corner every snap.</li>
-                <li>Develop speed-to-power conversion so tackles cannot sit on one move.</li>
-                <li>Improve run-setting discipline: outside arm free, edge integrity, and squeeze technique.</li>
-                <li>Target a planned rush menu with counters for each protection look.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🧭</span> Linebacker (LB)</h3>
-              <ul>
-                <li>Train read steps and key progression (guard flow, back action, and route concepts).</li>
-                <li>Improve tackling consistency: leverage entry, near-foot contact, and wrap-through finish.</li>
-                <li>Develop zone drops and match rules so coverage value matches run-defense impact.</li>
-                <li>Target communication leadership as the front-seven signal caller.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">⚡</span> Cornerback (CB)</h3>
-              <ul>
-                <li>Master press and off-man technique with disciplined eyes and patient footwork.</li>
-                <li>Improve transition speed (backpedal to drive) and recovery ability on vertical routes.</li>
-                <li>Build ball production with late-play timing, high-point skills, and hand-eye work.</li>
-                <li>Target route study by split, formation, and down-and-distance tendencies.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🔒</span> Safety (S)</h3>
-              <ul>
-                <li>Own deep-field angles and communication to eliminate explosive plays.</li>
-                <li>Improve open-field tackling and leverage in alley-fit situations.</li>
-                <li>Develop disguise and post-snap range to affect the QB's first read.</li>
-                <li>Target faster route recognition through formation and motion study.</li>
-              </ul>
-            </article>
-
-            <article class="resource-card">
-              <h3><span class="card-icon">🦵</span> Kicker (K)</h3>
-              <ul>
-                <li>Train repeatable approach steps and plant-foot consistency for ball striking accuracy.</li>
-                <li>Improve leg speed and contact quality for field goal distance and kickoff depth.</li>
-                <li>Develop pressure routines: same breath, same tempo, same setup every rep.</li>
-                <li>Target directional kickoff control to support coverage strategy.</li>
-              </ul>
-            </article>
-          </div>
-        </section>
-      </div>
+      </main>
     </div>
   </div>
 
@@ -815,79 +129,17 @@
   <script>
     checkAuth('player');
 
-    const recruitingSecondaryContainer = document.getElementById('recruiting-secondary-content');
-
-    function hideMainResourcePanels() {
-      document.querySelectorAll('.resources-panel').forEach((panel) => panel.classList.remove('active'));
-      document.querySelectorAll('.resources-tab-card').forEach((tab) => {
-        tab.classList.remove('active');
-        tab.setAttribute('aria-selected', 'false');
-      });
+    const topic = new URLSearchParams(window.location.search).get('topic');
+    const selectedCard = [...document.querySelectorAll('.resources-card')].find(card => new URL(card.href).searchParams.get('topic') === topic);
+    if (selectedCard && topic) {
+      document.getElementById('resources-grid').hidden = true;
+      document.getElementById('resources-topic-title').textContent = selectedCard.querySelector('.profile-action-title').textContent;
+      document.getElementById('resources-topic').hidden = false;
+      const backLink = document.getElementById('resources-back');
+      backLink.href = 'resources.html';
+      backLink.textContent = '← All Resources';
+      document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
     }
-
-    function showMainResourcePanel(tabName) {
-      hideMainResourcePanels();
-      document.querySelectorAll('.resources-secondary-tab').forEach((b) => b.classList.remove('active'));
-      if (recruitingSecondaryContainer) {
-        recruitingSecondaryContainer.classList.remove('active');
-        recruitingSecondaryContainer.innerHTML = '';
-      }
-
-      const targetTab = document.querySelector(`.resources-tab-card[data-tab="${tabName}"]`);
-      if (targetTab) {
-        targetTab.classList.add('active');
-        targetTab.setAttribute('aria-selected', 'true');
-      }
-
-      const panel = document.getElementById('panel-' + tabName);
-      if (panel) panel.classList.add('active');
-    }
-
-    // Tab switching
-    document.querySelectorAll('.resources-tab-card').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        showMainResourcePanel(btn.dataset.tab);
-      });
-    });
-
-    async function loadRecruitingSection(targetId) {
-      if (!recruitingSecondaryContainer) return;
-
-      try {
-        const response = await fetch('player-recruiting.html');
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const section = doc.getElementById('panel-' + targetId);
-
-        if (!section) {
-          recruitingSecondaryContainer.innerHTML = '<div class="tip-box"><strong>Content unavailable:</strong> That recruiting section could not be loaded.</div>';
-          return;
-        }
-
-        const clone = section.cloneNode(true);
-        clone.classList.add('recruiting-inline-section');
-        recruitingSecondaryContainer.innerHTML = '';
-        recruitingSecondaryContainer.appendChild(clone);
-        recruitingSecondaryContainer.classList.add('active');
-      } catch (error) {
-        recruitingSecondaryContainer.innerHTML = '<div class="tip-box"><strong>Content unavailable:</strong> We could not load the recruiting section right now.</div>';
-        recruitingSecondaryContainer.classList.add('active');
-      }
-    }
-
-    document.querySelectorAll('.resources-secondary-tab').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        document.querySelectorAll('.resources-secondary-tab').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        hideMainResourcePanels();
-        const target = btn.dataset.target;
-        if (target) {
-          await loadRecruitingSection(target);
-        }
-      });
-    });
   </script>
 </body>
 </html>
