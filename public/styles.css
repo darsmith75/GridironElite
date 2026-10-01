@@ -5183,6 +5183,44 @@ body.player-profile-theme .profile-action-arrow {
   font-weight: 700;
 }
 
+body.player-profile-theme #profileForm > .edit-tabs {
+  gap: 15px;
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-btn {
+  align-items: flex-start;
+  gap: 0;
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-title {
+  text-align: left;
+  letter-spacing: 0;
+  margin-bottom: 0;
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-icon {
+  margin-bottom: 14px;
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-btn.active {
+  border-color: #c9962e;
+  background: linear-gradient(180deg, #fffdf7 0%, #fdf6e6 100%);
+  box-shadow: 0 0 0 2px rgba(201, 150, 46, 0.2), 0 4px 12px rgba(14, 34, 74, 0.1);
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-btn.active .edit-tab-title {
+  color: var(--pp-text);
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-btn.active .edit-tab-icon {
+  color: var(--pp-gold);
+}
+
+body.player-profile-theme #profileForm > .edit-tabs .edit-tab-btn:focus-visible {
+  outline: 3px solid #c9962e;
+  outline-offset: 3px;
+}
+
 body.player-profile-theme .profile-performance-section,
 body.player-profile-theme .profile-highlight-videos-section {
   border: 1px solid #d7deea;

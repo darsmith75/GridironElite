@@ -98,38 +98,34 @@
         <h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path></svg></span>UPDATE PROFILE</h2>
         <form id="profileForm" enctype="multipart/form-data">
           <div class="edit-tabs" role="tablist" aria-label="Edit profile sections">
-            <button type="button" class="edit-tab-btn active" data-tab-btn="personal" onclick="showEditTab('personal')" role="tab" aria-selected="true">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>
-              <span class="edit-tab-title">Personal Information</span>
+            <button type="button" class="edit-tab-btn profile-action-card active" data-tab-btn="personal" onclick="showEditTab('personal')" role="tab" aria-selected="true">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-3.866 3.582-7 8-7s8 3.134 8 7"></path></svg></span>
+              <span class="edit-tab-title profile-action-title">Personal Information / Administration</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="physical" onclick="showEditTab('physical')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="11" width="3" height="9" rx="1"></rect><rect x="11" y="7" width="3" height="13" rx="1"></rect><rect x="17" y="4" width="3" height="16" rx="1"></rect></svg></span>
-              <span class="edit-tab-title">Physical Metrics</span>
+            <button type="button" class="edit-tab-btn profile-action-card" data-tab-btn="physical" onclick="showEditTab('physical')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="20"></line><rect x="5" y="11" width="3" height="9" rx="1"></rect><rect x="11" y="7" width="3" height="13" rx="1"></rect><rect x="17" y="4" width="3" height="16" rx="1"></rect></svg></span>
+              <span class="edit-tab-title profile-action-title">Physical Metrics</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="academic" onclick="showEditTab('academic')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5-10-5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span>
-              <span class="edit-tab-title">Academic</span>
+            <button type="button" class="edit-tab-btn profile-action-card" data-tab-btn="academic" onclick="showEditTab('academic')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l10-5 10 5-10 5z"></path><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"></path></svg></span>
+              <span class="edit-tab-title profile-action-title">Academic</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="game-stats" onclick="showEditTab('game-stats')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M7 15l3-4 3 2 4-6"></path><path d="M17 7h2v2"></path></svg></span>
-              <span class="edit-tab-title">Game Statistics</span>
+            <button type="button" class="edit-tab-btn profile-action-card" data-tab-btn="game-stats" onclick="showEditTab('game-stats')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M7 15l3-4 3 2 4-6"></path><path d="M17 7h2v2"></path></svg></span>
+              <span class="edit-tab-title profile-action-title">Game Statistics</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="videos" onclick="showEditTab('videos')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg></span>
-              <span class="edit-tab-title">Videos</span>
+            <button type="button" class="edit-tab-btn profile-action-card" data-tab-btn="videos" onclick="showEditTab('videos')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg></span>
+              <span class="edit-tab-title profile-action-title">Videos</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="media" onclick="showEditTab('media')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span>
-              <span class="edit-tab-title">Images/Media</span>
-            </button>
-            <button type="button" class="edit-tab-btn" data-tab-btn="settings" onclick="showEditTab('settings')" role="tab" aria-selected="false">
-              <span class="edit-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg></span>
-              <span class="edit-tab-title">Settings/Administration</span>
+            <button type="button" class="edit-tab-btn profile-action-card" data-tab-btn="media" onclick="showEditTab('media')" role="tab" aria-selected="false">
+              <span class="edit-tab-icon profile-action-icon" aria-hidden="true"><svg class="profile-action-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></span>
+              <span class="edit-tab-title profile-action-title">Images/Media</span><span class="profile-action-arrow" aria-hidden="true">›</span>
             </button>
           </div>
           <div class="form-grid">
             <div class="form-section" data-tab="personal">
-              <h3>Personal Information</h3>
+              <h3>Personal Information / Administration</h3>
               <label>Email:</label>
               <input type="email" name="email" id="playerEmail" disabled style="background: #f0f0f0; cursor: not-allowed;">
               <label>Phone:</label>
@@ -423,7 +419,7 @@
               </div>
             </div>
 
-            <div class="form-section full-width" data-tab="settings">
+            <div class="form-section full-width" data-tab="personal">
               <h3>Change Password</h3>
               <p class="hint-text">Leave these blank to keep your current password.</p>
               <div class="contact-grid">
@@ -440,6 +436,22 @@
                   <input type="password" name="confirmNewPassword" minlength="8" autocomplete="new-password" placeholder="Re-enter new password">
                 </div>
               </div>
+            </div>
+
+            <div class="form-section full-width" data-tab="personal" style="border:1px solid #ffc5c5;background:#fff4f4;border-radius:10px;padding:14px 16px;">
+              <h3 style="margin:0 0 8px 0;color:#9f1f1f;font-size:16px;">Danger Zone</h3>
+              <p style="margin:0 0 10px 0;color:#7b2f2f;font-size:13px;line-height:1.45;">
+                Deleting your athlete account will permanently remove your profile and all associated data, including photos, videos, contacts, school favorites, offers, notes, and ratings.
+              </p>
+              <button
+                type="button"
+                id="deleteAthleteAccountBtn"
+                onclick="confirmDeleteAthleteAccount()"
+                style="padding:10px 14px;background:#b91c1c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
+              >
+                Delete Athlete Account
+              </button>
+              <div id="deleteAthleteAccountStatus" style="margin-top:8px;font-size:13px;font-weight:600;color:#9f1f1f;"></div>
             </div>
 
             <div class="form-section full-width" data-tab="media">
@@ -513,21 +525,6 @@
           </div>
 
           <button type="submit" class="submit-btn">Save Profile</button>
-          <div data-tab="settings" style="margin-top:18px;border:1px solid #ffc5c5;background:#fff4f4;border-radius:10px;padding:14px 16px;">
-            <h3 style="margin:0 0 8px 0;color:#9f1f1f;font-size:16px;">Danger Zone</h3>
-            <p style="margin:0 0 10px 0;color:#7b2f2f;font-size:13px;line-height:1.45;">
-              Deleting your athlete account will permanently remove your profile and all associated data, including photos, videos, contacts, school favorites, offers, notes, and ratings.
-            </p>
-            <button
-              type="button"
-              id="deleteAthleteAccountBtn"
-              onclick="confirmDeleteAthleteAccount()"
-              style="padding:10px 14px;background:#b91c1c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;"
-            >
-              Delete Athlete Account
-            </button>
-            <div id="deleteAthleteAccountStatus" style="margin-top:8px;font-size:13px;font-weight:600;color:#9f1f1f;"></div>
-          </div>
           <div id="profileSaveStatus" class="upload-status" aria-live="polite"></div>
           <div id="profileResultBanner" class="profile-result-banner" aria-live="polite"></div>
         </form>
@@ -3414,12 +3411,12 @@
       const currentPasswordInput = e.target.querySelector('input[name="currentPassword"]');
       const newPasswordInput = e.target.querySelector('input[name="newPassword"]');
       const confirmNewPasswordInput = e.target.querySelector('input[name="confirmNewPassword"]');
-      const passwordSection = e.target.querySelector('.form-section[data-tab="settings"]');
-      const passwordTabIsActive = !!passwordSection && passwordSection.style.display !== 'none';
-      const currentPassword = passwordTabIsActive ? (currentPasswordInput?.value || '').trim() : '';
-      const newPassword = passwordTabIsActive ? (newPasswordInput?.value || '').trim() : '';
-      const confirmNewPassword = passwordTabIsActive ? (confirmNewPasswordInput?.value || '').trim() : '';
-      const changingPassword = passwordTabIsActive && !!(currentPassword || newPassword || confirmNewPassword);
+      const passwordSection = currentPasswordInput?.closest('.form-section');
+      const passwordSectionIsActive = !!passwordSection && passwordSection.style.display !== 'none';
+      const currentPassword = passwordSectionIsActive ? (currentPasswordInput?.value || '').trim() : '';
+      const newPassword = passwordSectionIsActive ? (newPasswordInput?.value || '').trim() : '';
+      const confirmNewPassword = passwordSectionIsActive ? (confirmNewPasswordInput?.value || '').trim() : '';
+      const changingPassword = passwordSectionIsActive && !!(currentPassword || newPassword || confirmNewPassword);
 
       if (changingPassword) {
         if (!currentPassword || !newPassword || !confirmNewPassword) {
@@ -3462,7 +3459,7 @@
         syncHeightCombined();
         syncBroadJumpTotalInches();
         const formData = new FormData(e.target);
-        if (!passwordTabIsActive) {
+        if (!passwordSectionIsActive) {
           formData.delete('currentPassword');
           formData.delete('newPassword');
           formData.delete('confirmNewPassword');
