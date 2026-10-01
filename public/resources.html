@@ -322,7 +322,7 @@
 
     const resourceCards = [...document.querySelectorAll('.resources-card')];
     function showResourceTopic() {
-      const topic = new URLSearchParams(window.location.search).get('topic');
+      const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
       const selectedCard = resourceCards.find(card => new URL(card.href).searchParams.get('topic') === topic);
       const section = document.getElementById('resources-topic');
       resourceCards.forEach(card => {
