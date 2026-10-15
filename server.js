@@ -67,6 +67,7 @@ app.use(helmet({
 // Optional strict CSP dry-run policy so we can remove inline handlers/scripts safely.
 if (strictCspReportOnlyEnabled) {
   app.use(helmet({
+    referrerPolicy: false,
     contentSecurityPolicy: {
       useDefaults: false,
       reportOnly: true,
