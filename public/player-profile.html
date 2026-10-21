@@ -219,7 +219,24 @@
 
             <div class="form-section full-width" data-tab="videos">
               <h3>Videos</h3>
-              <p class="hint-text">Attach proof videos for each metric. If verified by a trainer/coach, check the box and include who verified it.</p>
+              <div class="video-upload-feature">
+                <label>Add Highlight Video (one at a time):</label>
+                <div class="file-input-wrapper">
+                  <input type="file" name="highlightVideos" id="highlightVideosInput" accept="video/*" onchange="enforceSingleHighlightVideo(this)">
+                </div>
+                <p class="hint-text">Upload one highlight video per save. Max 35MB.</p>
+                <p id="videoSizeHint" class="hint-text"></p>
+
+                <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
+                <div id="videoLinkInputs">
+                  <div class="video-link-input-row">
+                    <input type="text" id="videoLinkTitle" placeholder="Title (optional)" class="vl-title">
+                    <input type="url" id="videoLinkUrl" placeholder="https://..." class="vl-url">
+                    <button type="button" onclick="addVideoLink()" class="btn-add-link">+ Add Link</button>
+                  </div>
+                </div>
+                <div id="existingVideoLinks"></div>
+              </div>
               <div class="video-upload-feature">
                 <label>Character / Introduction Video:</label>
                 <div class="file-input-wrapper">
@@ -228,6 +245,7 @@
                 <p class="hint-text">Upload a short video introducing yourself and your character. Max 35MB.</p>
                 <p id="characterVideoSizeHint" class="hint-text"></p>
               </div>
+              <p class="hint-text">Attach proof videos for each metric. If verified by a trainer/coach, check the box and include who verified it.</p>
               <div class="metric-proof-grid">
                 <div class="metric-proof-item">
                   <label>40-Yard Dash Video:</label>
@@ -478,23 +496,6 @@
                 </div>
 
                 <div class="media-upload-col">
-                  <label>Add Highlight Video (one at a time):</label>
-                  <div class="file-input-wrapper">
-                    <input type="file" name="highlightVideos" id="highlightVideosInput" accept="video/*" onchange="enforceSingleHighlightVideo(this)">
-                  </div>
-                    <p class="hint-text">Upload one highlight video per save. Max 35MB.</p>
-                  <p id="videoSizeHint" class="hint-text"></p>
-
-                  <label>Link to Highlight Video (YouTube, Hudl, etc.):</label>
-                  <div id="videoLinkInputs">
-                    <div class="video-link-input-row">
-                      <input type="text" id="videoLinkTitle" placeholder="Title (optional)" class="vl-title">
-                      <input type="url" id="videoLinkUrl" placeholder="https://..." class="vl-url">
-                      <button type="button" onclick="addVideoLink()" class="btn-add-link">+ Add Link</button>
-                    </div>
-                  </div>
-                  <div id="existingVideoLinks"></div>
-
                   <label>Add Additional Images:</label>
                   <div class="file-input-wrapper">
                     <input type="file" name="additionalImages" accept="image/*" multiple>

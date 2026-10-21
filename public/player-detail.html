@@ -1144,7 +1144,7 @@
               videoHTML += JSON.parse(player.video_links).map(link => {
                 const embedUrl = getEmbedUrl(link.url);
                 if (embedUrl) {
-                  return `<iframe src="${embedUrl}" class="profile-video" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+                  return `<iframe src="${embedUrl}" class="profile-video" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
                 }
                 return `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="video-link-card">
                   <span class="video-link-icon">&#9654;</span>
