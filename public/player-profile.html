@@ -236,6 +236,8 @@
                 <div class="file-input-wrapper">
                   <input type="file" name="highlightVideos" id="highlightVideosInput" accept="video/*" onchange="enforceSingleHighlightVideo(this)">
                 </div>
+                <label for="highlightVideoTitle">Title (optional):</label>
+                <input type="text" name="highlightVideoTitle" id="highlightVideoTitle" maxlength="255" placeholder="e.g. Junior Season Highlights">
                 <p class="hint-text">Upload one highlight video per save. Max 35MB.</p>
                 <p id="videoSizeHint" class="hint-text"></p>
 
@@ -2289,7 +2291,11 @@
         html += `<div class="profile-section profile-highlight-videos-section"><h2 class="section-title-small profile-unified-title"><span class="profile-section-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="12" rx="2"></rect><polygon points="12,12 8.5,9.8 8.5,14.2"></polygon><path d="M17 9l4-2v10l-4-2"></path></svg></span>HIGHLIGHT VIDEOS</h2><div class="videos-list">`;
         if (hasUploadedVideos) {
           const videos = JSON.parse(profile.highlight_videos);
-          html += videos.map(video => `<video controls src="/uploads/${video}" class="profile-video"></video>`).join('');
+          const videoTitles = profile.highlight_video_titles ? JSON.parse(profile.highlight_video_titles) : {};
+          html += videos.map(video => {
+            const videoTitle = videoTitles[video];
+            return `<div class="profile-video-item">${videoTitle ? `<p class="highlight-video-title">${escapeHtmlTooltip(videoTitle)}</p>` : ''}<video controls src="/uploads/${video}" class="profile-video"></video></div>`;
+          }).join('');
         }
         if (hasVideoLinks) {
           const links = JSON.parse(profile.video_links);
@@ -2944,11 +2950,14 @@
 
         if (profile.highlight_videos) {
           const videos = JSON.parse(profile.highlight_videos);
+          const videoTitles = profile.highlight_video_titles ? JSON.parse(profile.highlight_video_titles) : {};
           if (videos.length > 0) {
             videosHTML += `<div class="media-item full-width"><h3>Highlight Videos (${videos.length})</h3><div class="media-grid">`;
             videos.forEach(video => {
+              const videoTitle = videoTitles[video];
               videosHTML += `
                 <div class="media-item-wrapper">
+                  ${videoTitle ? `<p class="highlight-video-title">${escapeHtmlTooltip(videoTitle)}</p>` : ''}
                   <video controls src="/uploads/${video}" class="current-video"></video>
                   <button onclick="deleteVideo('${video}')" class="delete-media-btn">🗑️ Delete</button>
                 </div>

@@ -1197,6 +1197,14 @@ label {
   gap: 20px;
 }
 
+.highlight-video-title {
+  margin: 0 0 10px;
+  color: #1e3c72;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 .media-item-wrapper {
   position: relative;
   background: white;
@@ -3522,6 +3530,11 @@ textarea {
   justify-content: center;
 }
 
+.profile-video-item {
+  max-width: 400px;
+  width: 100%;
+}
+
 .profile-video {
   width: 100%;
   max-width: 400px;
@@ -5389,6 +5402,10 @@ body.player-profile-theme .videos-list {
   grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
   justify-content: flex-start;
   gap: 18px;
+}
+
+body.player-profile-theme .profile-video-item {
+  max-width: 100%;
 }
 
 body.player-profile-theme .profile-video {

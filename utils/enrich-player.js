@@ -66,7 +66,7 @@ async function enrichPlayerProfiles(profiles) {
   if (playerIds.length === 0) return profiles;
 
   const [videos, videoLinks, images, metricVideos, schoolInterestsRaw, contacts] = await Promise.all([
-    db.prepare('SELECT user_id, filename FROM player_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
+    db.prepare('SELECT user_id, filename, title FROM player_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, id, url, title FROM player_video_links WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, filename FROM player_images WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
     db.prepare('SELECT user_id, metric_key, video_filename, is_verified, verified_by, recorded_at FROM player_metric_videos WHERE user_id = ANY(?::int[]) ORDER BY user_id, id').all(playerIds),
@@ -87,6 +87,10 @@ async function enrichPlayerProfiles(profiles) {
   ]);
 
   const videosByUser = groupRowsByUser(videos, row => row.filename);
+  const videoTitlesByUser = groupRowsByUser(
+    videos.filter(row => row.title),
+    row => ({ filename: row.filename, title: row.title })
+  );
   const videoLinksByUser = groupRowsByUser(videoLinks, row => ({ id: row.id, url: row.url, title: row.title }));
   const imagesByUser = groupRowsByUser(images, row => row.filename);
   const metricVideosByUser = groupRowsByUser(metricVideos, row => ({
@@ -143,6 +147,8 @@ async function enrichPlayerProfiles(profiles) {
     const contactsForUser = contactsByUser.get(playerId) || [];
 
     profile.highlight_videos = videosForUser.length > 0 ? JSON.stringify(videosForUser) : null;
+    const highlightVideoTitles = Object.fromEntries((videoTitlesByUser.get(playerId) || []).map(item => [item.filename, item.title]));
+    profile.highlight_video_titles = Object.keys(highlightVideoTitles).length > 0 ? JSON.stringify(highlightVideoTitles) : null;
     profile.video_links = videoLinksForUser.length > 0 ? JSON.stringify(videoLinksForUser) : null;
     profile.additional_images = imagesForUser.length > 0 ? JSON.stringify(imagesForUser) : null;
     profile.metric_videos = metricVideosForUser.length > 0 ? JSON.stringify(metricVideosForUser) : null;

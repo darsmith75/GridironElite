@@ -886,9 +886,10 @@ router.post('/player/profile', requireAuth, playerProfileUploadMiddleware, async
       }
 
       if (files?.highlightVideos) {
-        const insertVideo = tx.prepare('INSERT INTO player_videos (user_id, filename) VALUES (?, ?)');
+        const insertVideo = tx.prepare('INSERT INTO player_videos (user_id, filename, title) VALUES (?, ?, ?)');
+        const highlightTitle = String(data.highlightVideoTitle || '').trim().slice(0, 255) || null;
         for (const f of files.highlightVideos) {
-          await insertVideo.run(req.session.userId, userPrefix + f.filename);
+          await insertVideo.run(req.session.userId, userPrefix + f.filename, highlightTitle);
         }
       }
 

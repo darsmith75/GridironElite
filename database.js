@@ -150,6 +150,7 @@ const createTablesSQL = `
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     filename TEXT NOT NULL,
+    title VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
@@ -579,6 +580,7 @@ const alterTablesSQL = `
   ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_3_label TEXT;
   ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_4_label TEXT;
   ALTER TABLE player_stat_slots ADD COLUMN IF NOT EXISTS slot_5_label TEXT;
+  ALTER TABLE player_videos ADD COLUMN IF NOT EXISTS title VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS twitter_handle VARCHAR(255);
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS follows_player_on_twitter BOOLEAN NOT NULL DEFAULT FALSE;
   ALTER TABLE school_contacts ADD COLUMN IF NOT EXISTS instagram_handle VARCHAR(255);
