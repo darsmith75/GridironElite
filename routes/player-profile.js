@@ -1090,6 +1090,23 @@ router.post('/player/character-video/delete', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/player/video/title', requireAuth, async (req, res) => {
+  try {
+    const filename = String(req.body?.filename || '').trim();
+    const title = String(req.body?.title || '').trim().slice(0, 255) || null;
+    if (!filename) return res.status(400).json({ error: 'Filename is required' });
+
+    const result = await db.prepare('UPDATE player_videos SET title = ? WHERE user_id = ? AND filename = ?')
+      .run(title, req.session.userId, filename);
+    if (!result.changes) return res.status(404).json({ error: 'Video not found' });
+
+    res.json({ success: true, title });
+  } catch (error) {
+    console.error('Update video title error:', error);
+    res.status(500).json({ error: 'Failed to update video title' });
+  }
+});
+
 router.post('/player/video/delete', requireAuth, async (req, res) => {
   try {
     const filename = req.body?.filename;
@@ -1150,6 +1167,23 @@ router.post('/player/video-link', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Add video link error:', error);
     res.status(500).json({ error: 'Failed to add video link' });
+  }
+});
+
+router.patch('/player/video-link/:id/title', requireAuth, async (req, res) => {
+  try {
+    const linkId = parseInt(req.params.id, 10);
+    const title = String(req.body?.title || '').trim().slice(0, 255) || null;
+    if (isNaN(linkId)) return res.status(400).json({ error: 'Invalid ID' });
+
+    const result = await db.prepare('UPDATE player_video_links SET title = ? WHERE id = ? AND user_id = ?')
+      .run(title, linkId, req.session.userId);
+    if (!result.changes) return res.status(404).json({ error: 'Video link not found' });
+
+    res.json({ success: true, title });
+  } catch (error) {
+    console.error('Update video link title error:', error);
+    res.status(500).json({ error: 'Failed to update video link title' });
   }
 });
 

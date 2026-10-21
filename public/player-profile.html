@@ -2954,11 +2954,16 @@
           if (videos.length > 0) {
             videosHTML += `<div class="media-item full-width"><h3>Highlight Videos (${videos.length})</h3><div class="media-grid">`;
             videos.forEach(video => {
-              const videoTitle = videoTitles[video];
+              const videoTitle = videoTitles[video] || '';
               videosHTML += `
                 <div class="media-item-wrapper">
-                  ${videoTitle ? `<p class="highlight-video-title">${escapeHtmlTooltip(videoTitle)}</p>` : ''}
                   <video controls src="/uploads/${video}" class="current-video"></video>
+                  <div class="video-title-editor">
+                    <label class="video-title-editor-label" for="uploadedVideoTitle-${encodeURIComponent(video)}">Title (optional):</label>
+                    <input type="text" id="uploadedVideoTitle-${encodeURIComponent(video)}" maxlength="255" value="${escapeHtmlTooltip(videoTitle)}" placeholder="e.g. Junior Season Highlights">
+                    <button type="button" onclick="saveUploadedVideoTitle('${encodeURIComponent(video)}')" class="btn-add-link video-title-save-btn">Save Title</button>
+                    <div class="metric-upload-status" aria-live="polite"></div>
+                  </div>
                   <button onclick="deleteVideo('${video}')" class="delete-media-btn">🗑️ Delete</button>
                 </div>
               `;
@@ -2982,6 +2987,12 @@
                         <span>${link.title || link.url}</span>
                       </a>`
                   }
+                  <div class="video-title-editor">
+                    <label class="video-title-editor-label" for="linkedVideoTitle-${link.id}">Title (optional):</label>
+                    <input type="text" id="linkedVideoTitle-${link.id}" maxlength="255" value="${escapeHtmlTooltip(link.title || '')}" placeholder="Video title">
+                    <button type="button" onclick="saveLinkedVideoTitle(${link.id})" class="btn-add-link video-title-save-btn">Save Title</button>
+                    <div class="metric-upload-status" aria-live="polite"></div>
+                  </div>
                   <button onclick="deleteVideoLink(${link.id})" class="delete-media-btn">🗑️ Delete</button>
                 </div>
               `;
@@ -3085,6 +3096,63 @@
           loadTopSchools(),
           loadMyRatings()
         ]);
+      }
+    }
+
+    async function saveUploadedVideoTitle(encodedFilename) {
+      const filename = decodeURIComponent(encodedFilename);
+      const input = document.getElementById(`uploadedVideoTitle-${encodedFilename}`);
+      const editor = input?.closest('.video-title-editor');
+      const status = editor?.querySelector('.metric-upload-status');
+      const button = editor?.querySelector('.video-title-save-btn');
+      if (!input || !status || !button) return;
+
+      button.disabled = true;
+      status.className = 'metric-upload-status pending';
+      status.textContent = 'Saving title...';
+      try {
+        const res = await fetch('/api/player/video/title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, title: input.value.trim() })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Failed to save title');
+        status.className = 'metric-upload-status success';
+        status.textContent = 'Title saved';
+      } catch (error) {
+        status.className = 'metric-upload-status error';
+        status.textContent = error.message || 'Failed to save title';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function saveLinkedVideoTitle(linkId) {
+      const input = document.getElementById(`linkedVideoTitle-${linkId}`);
+      const editor = input?.closest('.video-title-editor');
+      const status = editor?.querySelector('.metric-upload-status');
+      const button = editor?.querySelector('.video-title-save-btn');
+      if (!input || !status || !button) return;
+
+      button.disabled = true;
+      status.className = 'metric-upload-status pending';
+      status.textContent = 'Saving title...';
+      try {
+        const res = await fetch(`/api/player/video-link/${linkId}/title`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: input.value.trim() })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Failed to save title');
+        status.className = 'metric-upload-status success';
+        status.textContent = 'Title saved';
+      } catch (error) {
+        status.className = 'metric-upload-status error';
+        status.textContent = error.message || 'Failed to save title';
+      } finally {
+        button.disabled = false;
       }
     }
 
