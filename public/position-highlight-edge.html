@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDGE Highlight Film Blueprint</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .position-highlight-page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8px 0 40px;
+    }
+    .position-highlight-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .position-highlight-back:hover { text-decoration: underline; }
+    .position-highlight-page .position-blueprint {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #133454;
+      background: radial-gradient(circle at 76% 8%, rgba(201, 150, 46, 0.28), transparent 28%), linear-gradient(135deg, #061727 0%, #0a2238 58%, #07121f 100%);
+      color: #f8fbff;
+      box-shadow: 0 14px 34px rgba(6, 23, 39, 0.24);
+    }
+    .position-highlight-page .position-blueprint-header {
+      padding: 22px 22px 18px;
+      border-top: 7px solid #e6a719;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+    }
+    .position-highlight-page .position-blueprint-kicker {
+      margin: 0 0 4px;
+      color: #e6a719;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .position-highlight-page .position-blueprint-title {
+      margin: 0;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(44px, 8vw, 88px);
+      line-height: 0.92;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .position-highlight-page .position-blueprint-subtitle {
+      margin: 9px 0 0;
+      max-width: 660px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .position-highlight-page .position-blueprint-badge {
+      border: 1px solid rgba(230, 167, 25, 0.48);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #e6a719;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      background: rgba(2, 11, 20, 0.42);
+    }
+    .position-highlight-page .position-blueprint-body {
+      padding: 0 22px 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .position-highlight-page .position-blueprint-section h4 {
+      margin: 0 0 10px;
+      padding-left: 12px;
+      border-left: 6px solid #e6a719;
+      color: #f7f7f7;
+      font-family: 'Oswald', sans-serif;
+      font-size: 19px;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+    }
+    .position-highlight-page .position-blueprint-section ol,
+    .position-highlight-page .position-blueprint-section ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+    }
+    .position-highlight-page .position-blueprint-section li,
+    .position-highlight-page .position-highlight-card {
+      border: 1px solid rgba(156, 185, 214, 0.22);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .position-highlight-page .position-blueprint-section strong,
+    .position-highlight-page .position-highlight-card strong {
+      display: block;
+      color: #fff;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 5px;
+    }
+    .position-highlight-page .position-highlight-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 6px;
+      margin-right: 7px;
+      background: #e6a719;
+      color: #07121f;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .position-highlight-page .position-highlight-full {
+      grid-column: 1 / -1;
+    }
+    .position-highlight-page .position-coach-note {
+      grid-column: 1 / -1;
+      border-radius: 10px;
+      padding: 16px;
+      background: #e6a719;
+      color: #07121f;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .position-highlight-page .position-coach-note strong {
+      display: block;
+      margin-bottom: 4px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 17px;
+      text-transform: uppercase;
+    }
+    @media (max-width: 800px) {
+      .position-highlight-page .position-blueprint-header,
+      .position-highlight-page .position-blueprint-body {
+        grid-template-columns: 1fr;
+      }
+      .position-highlight-page .position-blueprint-badge {
+        justify-self: start;
+      }
+    }
+  </style>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body class="player-profile-theme">
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <img src="/images/GridIronLogoWhiteBG.png" alt="" class="header-logo">
+        </div>
+        <nav class="top-nav-menu">
+          <a href="agent-dashboard.html" class="nav-link">Home</a>
+          <a href="player-profile.html" class="nav-link">My Profile</a>
+          <a href="#" onclick="logout(); return false;" class="nav-link">Sign out</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <main class="position-highlight-page">
+        <a href="resources.html?topic=highlight-film" class="position-highlight-back">← Back to Highlight Film</a>
+
+        <article class="position-blueprint">
+          <div class="position-blueprint-header">
+            <div>
+              <p class="position-blueprint-kicker">What college coaches want to see on your Hudl film</p>
+              <h1 class="position-blueprint-title">EDGE</h1>
+              <p class="position-blueprint-subtitle">Your highlight film is your resume. Every rep is an opportunity to prove you can impact the game. Show coaches you win with skill, speed, effort, and football IQ.</p>
+            </div>
+            <div class="position-blueprint-badge">EDGE Highlight Film Blueprint</div>
+          </div>
+
+          <div class="position-blueprint-body">
+            <section class="position-blueprint-section position-highlight-full">
+              <h4>Core Evaluation Areas</h4>
+              <ul>
+                <li><strong>Effort</strong>Relentless motor on every play.</li>
+                <li><strong>Technique</strong>Use hands and win with skill.</li>
+                <li><strong>Speed</strong>Get off the ball and close fast.</li>
+                <li><strong>Play Recognition</strong>Read, react, and make plays.</li>
+                <li><strong>Production</strong>Make game-changing plays.</li>
+              </ul>
+            </section>
+
+            <section class="position-blueprint-section">
+              <h4>Part 1: Highlights – What to Show</h4>
+              <ol>
+                <li><span class="position-highlight-number">1</span><strong>Get-Off / First Step</strong>Beat the tackle's punch. Explode off the line. Create immediate advantage.</li>
+                <li><span class="position-highlight-number">2</span><strong>Pass Rush Moves</strong>Show your best moves. Variety: speed, power, finesse. Finish the rush.</li>
+                <li><span class="position-highlight-number">3</span><strong>Finishing Plays</strong>Sacks, QB hits, hurries. Strip-sacks and forced fumbles. Don't just get there — finish.</li>
+                <li><span class="position-highlight-number">4</span><strong>Run Defense</strong>Set the edge. Pursue and contain. Stop the run.</li>
+                <li><span class="position-highlight-number">5</span><strong>Impact Plays</strong>Turnovers caused. Big momentum swings. Third-down stops and goal-line stands.</li>
+                <li><span class="position-highlight-number">6</span><strong>Consistency / Motor</strong>Non-stop effort all game. Hustle on every down. High-motor plays stand out.</li>
+              </ol>
+            </section>
+
+            <section class="position-blueprint-section">
+              <h4>Part 2: What Coaches Evaluate</h4>
+              <ol>
+                <li><span class="position-highlight-number">1</span><strong>Alignment &amp; Stance</strong>Proper stance and alignment. Good pad level. Versatility on the line.</li>
+                <li><span class="position-highlight-number">2</span><strong>Get-Off &amp; Explosion</strong>Quick first step. Explode into your rush. Beat the tackle out of his stance.</li>
+                <li><span class="position-highlight-number">3</span><strong>Hand Usage &amp; Technique</strong>Use hands to win: stab, swipe, rip, swim. Disengage from blocks. Keep blockers guessing.</li>
+                <li><span class="position-highlight-number">4</span><strong>Speed to Power</strong>Convert speed to power. Collapse the pocket. Drive through the play.</li>
+                <li><span class="position-highlight-number">5</span><strong>Footwork &amp; Angles</strong>Proper rush angles. Don't run yourself past the play. Bend and turn the corner.</li>
+                <li><span class="position-highlight-number">6</span><strong>Play Recognition &amp; IQ</strong>Read formations and keys. React to run vs. pass. Anticipate and be one step ahead.</li>
+                <li><span class="position-highlight-number">7</span><strong>Discipline &amp; Contain</strong>Maintain contain. Don't get edged. Do your job every down.</li>
+                <li><span class="position-highlight-number">8</span><strong>Production</strong>Sacks, QB hits, hurries. Tackles for loss. Forced fumbles and recoveries.</li>
+              </ol>
+            </section>
+
+            <section class="position-blueprint-section">
+              <h4>Tips</h4>
+              <ul>
+                <li>Lead with your best plays.</li>
+                <li>Quality over quantity.</li>
+                <li>Show range: rush, run D, pursuit.</li>
+                <li>End with your best play.</li>
+              </ul>
+            </section>
+
+            <section class="position-blueprint-section">
+              <h4>Bonus: What Separates You</h4>
+              <ul>
+                <li>Relentless effort.</li>
+                <li>Versatility across the line.</li>
+                <li>High motor, every rep.</li>
+                <li>Leadership on and off the field.</li>
+                <li>Film shows who works.</li>
+              </ul>
+            </section>
+
+            <div class="position-coach-note">
+              <strong>Final Tip</strong>
+              <p>Coaches watch thousands of players. Make your film unforgettable. Show them why you deserve a roster spot. Your film is your resume — make every rep count.</p>
+            </div>
+          </div>
+        </article>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    checkAuth('player');
+  </script>
+</body>
+</html>

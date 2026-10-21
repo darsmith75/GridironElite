@@ -115,6 +115,19 @@
       line-height: 1.55;
     }
     .resources-guide li + li { margin-top: 6px; }
+    .position-highlight-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 4px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: #1e3c72;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .position-highlight-link:hover { background: #2a5298; }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -211,6 +224,7 @@
                 <li>RB: vision, contact balance, pass protection reps, and burst through tight windows.</li>
                 <li>OL/DL/LB/DB: hand usage, leverage, pursuit effort, and finish through whistle.</li>
                 <li>Need a template for your own position?</li>
+                <li id="edgeHighlightGuideWrap" hidden><a class="position-highlight-link" href="position-highlight-edge.html">View EDGE highlight film blueprint</a></li>
               </ul>
             </article>
             <article>
@@ -543,6 +557,22 @@
     }));
     window.addEventListener('popstate', showResourceTopic);
     showResourceTopic();
+
+    async function showPositionHighlightGuideLink() {
+      try {
+        const res = await fetch('/api/player/profile');
+        if (!res.ok) return;
+        const profile = await res.json();
+        const position = String(profile.position || '').trim().toUpperCase();
+        if (position === 'EDGE' || position === 'DE' || position === 'OLB') {
+          const wrap = document.getElementById('edgeHighlightGuideWrap');
+          if (wrap) wrap.hidden = false;
+        }
+      } catch (_) {
+        // Keep the generic guidance if the profile cannot be loaded.
+      }
+    }
+    showPositionHighlightGuideLink();
   </script>
 </body>
 </html>
