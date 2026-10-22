@@ -2730,14 +2730,35 @@
       }
     }
 
+    function getResourcesTabFromUrl() {
+      const tab = new URLSearchParams(window.location.search).get('tab');
+      return ['timeline', 'position', 'journal'].includes(tab) ? tab : 'timeline';
+    }
+
+    function syncResourcesTabToUrl(tabName) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tabName);
+      if (window.location.href !== url.href) history.pushState(null, '', url);
+    }
+
+    function activateResourcesTabFromUrl() {
+      activateResourcesTab(getResourcesTabFromUrl());
+    }
+
     function initializeResourcesTab() {
       document.querySelectorAll('.resources-tab').forEach((btn) => {
-        btn.addEventListener('click', () => activateResourcesTab(btn.dataset.tab));
+        btn.addEventListener('click', () => {
+          activateResourcesTab(btn.dataset.tab);
+          syncResourcesTabToUrl(btn.dataset.tab);
+        });
       });
+      window.addEventListener('popstate', activateResourcesTabFromUrl);
 
       document.querySelectorAll('.year-node').forEach((node) => {
         node.addEventListener('click', () => renderTimelineYear(node.dataset.year));
       });
+
+      activateResourcesTabFromUrl();
 
       // Initialize: determine player's year and render roadmap
       const playerYear = getPlayerTimelineYear();
