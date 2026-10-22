@@ -547,6 +547,9 @@
         if (active) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       });
+      const positionBlueprint = document.getElementById('positionBlueprint');
+      if (positionBlueprint) positionBlueprint.hidden = topic !== 'highlight-film';
+      if (topic === 'highlight-film') showPositionBlueprint();
       document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
     }
 
@@ -560,19 +563,21 @@
     showResourceTopic();
 
     async function showPositionBlueprint() {
+      const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
+      if (topic !== 'highlight-film') return;
       const container = document.getElementById('positionBlueprint');
-      if (!container) return;
+      if (!container || container.dataset.loaded === 'true') return;
       try {
         const res = await fetch('/api/player/profile');
         if (!res.ok) return;
         const profile = await res.json();
-        container.hidden = false;
         renderPositionBlueprint(profile.position || '');
+        container.dataset.loaded = 'true';
+        container.hidden = false;
       } catch (_) {
         // Keep the general highlight guidance if the position cannot be loaded.
       }
     }
-    showPositionBlueprint();
   </script>
 </body>
 </html>
