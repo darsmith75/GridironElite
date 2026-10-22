@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="position-blueprint.css">
   <style>
     .resources-shell {
       max-width: 1200px;
@@ -47,7 +48,7 @@
       grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 15px;
     }
-    .resources-topic[hidden], .resources-guide[hidden], .resources-subnav[hidden] { display: none; }
+    .resources-topic[hidden], .resources-guide[hidden], .resources-subnav[hidden], .resources-position-highlight[hidden] { display: none; }
     body.player-profile-theme .resources-card {
       min-height: 206px;
       text-decoration: none;
@@ -115,6 +116,18 @@
       line-height: 1.55;
     }
     .resources-guide li + li { margin-top: 6px; }
+    .resources-position-highlight { margin-top: 16px; }
+    .resources-position-highlight .position-blueprint-kicker {
+      margin: 0 0 4px;
+      color: #e6a719;
+      font-size: 13px;
+    }
+    .resources-position-highlight .position-blueprint-subtitle {
+      margin: 9px 0 0;
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .resources-position-highlight .position-highlight-core { grid-column: 1 / -1; }
+    .resources-position-highlight .position-coach-note p { color: inherit; }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -204,16 +217,6 @@
               </ul>
             </article>
             <article>
-              <h3>Position-Specific Examples</h3>
-              <ul>
-                <li>QB: pocket movement, decision speed, accuracy by level, and third-down execution.</li>
-                <li>WR/TE: release vs press, route pacing, separation, contested catches, and run-after-catch.</li>
-                <li>RB: vision, contact balance, pass protection reps, and burst through tight windows.</li>
-                <li>OL/DL/LB/DB: hand usage, leverage, pursuit effort, and finish through whistle.</li>
-                <li>Need a template for your own position?</li>
-              </ul>
-            </article>
-            <article>
               <h3>Common Mistakes</h3>
               <ul>
                 <li>Too many low-impact clips and not enough true evaluation reps.</li>
@@ -223,62 +226,75 @@
               </ul>
             </article>
           </div>
-          <div class="resources-guide" id="edge-highlight-content" hidden>
-            <article>
-              <h3>EDGE Highlight Film: Core Evaluation Areas</h3>
-              <ul>
-                <li><strong>Effort:</strong> Relentless motor on every play.</li>
-                <li><strong>Technique:</strong> Use your hands and win with skill.</li>
-                <li><strong>Speed:</strong> Get off the ball and close fast.</li>
-                <li><strong>Play recognition:</strong> Read, react, and make plays.</li>
-                <li><strong>Production:</strong> Make game-changing plays.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>Highlights: What to Show</h3>
-              <ol>
-                <li><strong>Get-off and first step:</strong> Beat the tackle's punch and create an immediate advantage.</li>
-                <li><strong>Pass-rush moves:</strong> Show variety—speed, power, and finesse—and finish the rush.</li>
-                <li><strong>Finishing plays:</strong> Include sacks, QB hits, hurries, strip-sacks, and forced fumbles.</li>
-                <li><strong>Run defense:</strong> Set the edge, pursue, contain, and stop the run.</li>
-                <li><strong>Impact plays:</strong> Show turnovers, third-down stops, and goal-line stands.</li>
-                <li><strong>Consistency and motor:</strong> Include effort and hustle on every down, not only splash plays.</li>
-              </ol>
-            </article>
-            <article>
-              <h3>What Coaches Evaluate</h3>
-              <ul>
-                <li>Alignment, stance, pad level, and versatility along the line.</li>
-                <li>First-step quickness and explosion off the ball.</li>
-                <li>Hand usage: stab, swipe, rip, and swim; disengage and keep blockers guessing.</li>
-                <li>Speed-to-power, pocket collapse, and ability to drive through the play.</li>
-                <li>Rush angles, bend, and the discipline not to run past the play.</li>
-                <li>Formation recognition, run-versus-pass reaction, and contain responsibility.</li>
-                <li>Production: sacks, QB hits, hurries, tackles for loss, and forced fumbles.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>Film Tips</h3>
-              <ul>
-                <li>Lead with your best plays and prioritize quality over quantity.</li>
-                <li>Show range: pass rush, run defense, and pursuit.</li>
-                <li>End with your best play; keep effort and versatility visible throughout.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>What Separates You</h3>
-              <ul>
-                <li>Relentless effort and a high motor on every rep.</li>
-                <li>Versatility across the line.</li>
-                <li>Leadership on and off the field.</li>
-                <li>Film that shows how hard you work.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>Final Tip</h3>
-              <p>Coaches watch thousands of players. Make your film memorable: it is your resume, and every rep should show why you deserve a roster spot.</p>
-            </article>
-          </div>
+          <article class="position-blueprint resources-position-highlight" id="edge-highlight-content" aria-labelledby="edge-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">What college coaches want to see on your film</p>
+                <h3 class="position-blueprint-title" id="edge-highlight-title">EDGE</h3>
+                <p class="position-blueprint-subtitle">Your highlight film is your resume. Show coaches you win with skill, speed, effort, and football IQ.</p>
+              </div>
+              <div class="position-blueprint-badge">EDGE Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-core">
+                <h4>Core Evaluation Areas</h4>
+                <div class="position-trait-grid">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Effort:</b> Relentless motor on every play.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Technique:</b> Use your hands and win with skill.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Speed:</b> Get off the ball and close fast.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Play recognition:</b> Read, react, and make plays.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Production:</b> Make game-changing plays.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Highlights: What to Show</h4>
+                <ol class="position-check-grid">
+                  <li><span><strong>Get-off and first step:</strong> Beat the tackle's punch and create an immediate advantage.</span></li>
+                  <li><span><strong>Pass-rush moves:</strong> Show variety—speed, power, and finesse—and finish the rush.</span></li>
+                  <li><span><strong>Finishing plays:</strong> Include sacks, QB hits, hurries, strip-sacks, and forced fumbles.</span></li>
+                  <li><span><strong>Run defense:</strong> Set the edge, pursue, contain, and stop the run.</span></li>
+                  <li><span><strong>Impact plays:</strong> Show turnovers, third-down stops, and goal-line stands.</span></li>
+                  <li><span><strong>Consistency and motor:</strong> Include effort and hustle on every down, not only splash plays.</span></li>
+                </ol>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What Coaches Evaluate</h4>
+                <ul class="position-check-grid">
+                  <li>Alignment, stance, pad level, and versatility along the line.</li>
+                  <li>First-step quickness and explosion off the ball.</li>
+                  <li>Hand usage: stab, swipe, rip, and swim; disengage and keep blockers guessing.</li>
+                  <li>Speed-to-power, pocket collapse, and ability to drive through the play.</li>
+                  <li>Rush angles, bend, and the discipline not to run past the play.</li>
+                  <li>Formation recognition, run-versus-pass reaction, and contain responsibility.</li>
+                  <li>Production: sacks, QB hits, hurries, tackles for loss, and forced fumbles.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Film Tips</h4>
+                <ul class="position-skill-grid">
+                  <li>Lead with your best plays and prioritize quality over quantity.</li>
+                  <li>Show range: pass rush, run defense, and pursuit.</li>
+                  <li>End with your best play; keep effort and versatility visible throughout.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What Separates You</h4>
+                <ul class="position-skill-grid">
+                  <li>Relentless effort and a high motor on every rep.</li>
+                  <li>Versatility across the line.</li>
+                  <li>Leadership on and off the field.</li>
+                  <li>Film that shows how hard you work.</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Coaches watch thousands of players. Make your film memorable: it is your resume, and every rep should show why you deserve a roster spot.</p>
+                </div>
+              </div>
+            </div>
+          </article>
           <div class="resources-guide" id="communication-content" hidden>
             <article>
               <h3>When to Contact Coaches</h3>
@@ -589,7 +605,7 @@
         else link.removeAttribute('aria-current');
       });
       const edgeHighlightContent = document.getElementById('edge-highlight-content');
-      edgeHighlightContent.hidden = topic !== 'highlight-film' || edgeHighlightContent.dataset.loaded !== 'true';
+      edgeHighlightContent.hidden = topic !== 'highlight-film' || edgeHighlightContent.dataset.eligible !== 'true';
       if (topic === 'highlight-film') showPositionHighlightGuide();
       document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
     }
@@ -617,7 +633,8 @@
         const profile = await res.json();
         const position = String(profile.position || '').trim().toUpperCase();
         const currentTopic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
-        guide.hidden = currentTopic !== 'highlight-film' || !['EDGE', 'DE', 'OLB'].includes(position);
+        guide.dataset.eligible = String(['EDGE', 'DE', 'OLB'].includes(position));
+        guide.hidden = currentTopic !== 'highlight-film' || guide.dataset.eligible !== 'true';
         guide.dataset.loaded = 'true';
       } catch (error) {
         console.error('Unable to load the player position for the highlight-film guide.', error);
