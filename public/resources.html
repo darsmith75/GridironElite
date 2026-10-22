@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="position-blueprint.css">
   <style>
     .resources-shell {
       max-width: 1200px;
@@ -116,9 +115,6 @@
       line-height: 1.55;
     }
     .resources-guide li + li { margin-top: 6px; }
-    .resources-position-blueprint {
-      margin-top: 16px;
-    }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -227,15 +223,61 @@
               </ul>
             </article>
           </div>
-          <div id="positionBlueprint" class="position-blueprint resources-position-blueprint" hidden>
-            <div class="position-blueprint-header">
-              <div>
-                <p class="position-blueprint-kicker">What college coaches look for</p>
-                <h3 class="position-blueprint-title">Position</h3>
-                <p class="position-blueprint-subtitle">Loading your position blueprint...</p>
-              </div>
-              <div class="position-blueprint-badge">My Position Blueprint</div>
-            </div>
+          <div class="resources-guide" id="edge-highlight-content" hidden>
+            <article>
+              <h3>EDGE Highlight Film: Core Evaluation Areas</h3>
+              <ul>
+                <li><strong>Effort:</strong> Relentless motor on every play.</li>
+                <li><strong>Technique:</strong> Use your hands and win with skill.</li>
+                <li><strong>Speed:</strong> Get off the ball and close fast.</li>
+                <li><strong>Play recognition:</strong> Read, react, and make plays.</li>
+                <li><strong>Production:</strong> Make game-changing plays.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Highlights: What to Show</h3>
+              <ol>
+                <li><strong>Get-off and first step:</strong> Beat the tackle's punch and create an immediate advantage.</li>
+                <li><strong>Pass-rush moves:</strong> Show variety—speed, power, and finesse—and finish the rush.</li>
+                <li><strong>Finishing plays:</strong> Include sacks, QB hits, hurries, strip-sacks, and forced fumbles.</li>
+                <li><strong>Run defense:</strong> Set the edge, pursue, contain, and stop the run.</li>
+                <li><strong>Impact plays:</strong> Show turnovers, third-down stops, and goal-line stands.</li>
+                <li><strong>Consistency and motor:</strong> Include effort and hustle on every down, not only splash plays.</li>
+              </ol>
+            </article>
+            <article>
+              <h3>What Coaches Evaluate</h3>
+              <ul>
+                <li>Alignment, stance, pad level, and versatility along the line.</li>
+                <li>First-step quickness and explosion off the ball.</li>
+                <li>Hand usage: stab, swipe, rip, and swim; disengage and keep blockers guessing.</li>
+                <li>Speed-to-power, pocket collapse, and ability to drive through the play.</li>
+                <li>Rush angles, bend, and the discipline not to run past the play.</li>
+                <li>Formation recognition, run-versus-pass reaction, and contain responsibility.</li>
+                <li>Production: sacks, QB hits, hurries, tackles for loss, and forced fumbles.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Film Tips</h3>
+              <ul>
+                <li>Lead with your best plays and prioritize quality over quantity.</li>
+                <li>Show range: pass rush, run defense, and pursuit.</li>
+                <li>End with your best play; keep effort and versatility visible throughout.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>What Separates You</h3>
+              <ul>
+                <li>Relentless effort and a high motor on every rep.</li>
+                <li>Versatility across the line.</li>
+                <li>Leadership on and off the field.</li>
+                <li>Film that shows how hard you work.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Final Tip</h3>
+              <p>Coaches watch thousands of players. Make your film memorable: it is your resume, and every rep should show why you deserve a roster spot.</p>
+            </article>
           </div>
           <div class="resources-guide" id="communication-content" hidden>
             <article>
@@ -509,7 +551,6 @@
   </div>
 
   <script src="app.js"></script>
-  <script src="position-blueprint.js"></script>
   <script>
     checkAuth('player');
 
@@ -547,9 +588,9 @@
         if (active) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       });
-      const positionBlueprint = document.getElementById('positionBlueprint');
-      if (positionBlueprint) positionBlueprint.hidden = topic !== 'highlight-film';
-      if (topic === 'highlight-film') showPositionBlueprint();
+      const edgeHighlightContent = document.getElementById('edge-highlight-content');
+      edgeHighlightContent.hidden = topic !== 'highlight-film' || edgeHighlightContent.dataset.loaded !== 'true';
+      if (topic === 'highlight-film') showPositionHighlightGuide();
       document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
     }
 
@@ -562,20 +603,24 @@
     window.addEventListener('popstate', showResourceTopic);
     showResourceTopic();
 
-    async function showPositionBlueprint() {
+    async function showPositionHighlightGuide() {
       const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
       if (topic !== 'highlight-film') return;
-      const container = document.getElementById('positionBlueprint');
-      if (!container || container.dataset.loaded === 'true') return;
+      const guide = document.getElementById('edge-highlight-content');
+      if (!guide || guide.dataset.loaded === 'true') return;
       try {
         const res = await fetch('/api/player/profile');
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.error('Unable to load the player position for the highlight-film guide.', res.status);
+          return;
+        }
         const profile = await res.json();
-        renderPositionBlueprint(profile.position || '');
-        container.dataset.loaded = 'true';
-        container.hidden = false;
-      } catch (_) {
-        // Keep the general highlight guidance if the position cannot be loaded.
+        const position = String(profile.position || '').trim().toUpperCase();
+        const currentTopic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
+        guide.hidden = currentTopic !== 'highlight-film' || !['EDGE', 'DE', 'OLB'].includes(position);
+        guide.dataset.loaded = 'true';
+      } catch (error) {
+        console.error('Unable to load the player position for the highlight-film guide.', error);
       }
     }
   </script>
