@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="position-blueprint.css">
   <style>
     .resources-shell {
       max-width: 1200px;
@@ -115,19 +116,9 @@
       line-height: 1.55;
     }
     .resources-guide li + li { margin-top: 6px; }
-    .position-highlight-link {
-      display: inline-flex;
-      align-items: center;
-      margin-top: 4px;
-      padding: 9px 12px;
-      border-radius: 8px;
-      background: #1e3c72;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      text-decoration: none;
+    .resources-position-blueprint {
+      margin-top: 16px;
     }
-    .position-highlight-link:hover { background: #2a5298; }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -224,7 +215,6 @@
                 <li>RB: vision, contact balance, pass protection reps, and burst through tight windows.</li>
                 <li>OL/DL/LB/DB: hand usage, leverage, pursuit effort, and finish through whistle.</li>
                 <li>Need a template for your own position?</li>
-                <li id="edgeHighlightGuideWrap" hidden><a class="position-highlight-link" href="position-highlight-edge.html">View EDGE highlight film blueprint</a></li>
               </ul>
             </article>
             <article>
@@ -236,6 +226,16 @@
                 <li>Outdated film that does not represent your current size, speed, or role.</li>
               </ul>
             </article>
+          </div>
+          <div id="positionBlueprint" class="position-blueprint resources-position-blueprint" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">What college coaches look for</p>
+                <h3 class="position-blueprint-title">Position</h3>
+                <p class="position-blueprint-subtitle">Loading your position blueprint...</p>
+              </div>
+              <div class="position-blueprint-badge">My Position Blueprint</div>
+            </div>
           </div>
           <div class="resources-guide" id="communication-content" hidden>
             <article>
@@ -509,6 +509,7 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="position-blueprint.js"></script>
   <script>
     checkAuth('player');
 
@@ -558,21 +559,20 @@
     window.addEventListener('popstate', showResourceTopic);
     showResourceTopic();
 
-    async function showPositionHighlightGuideLink() {
+    async function showPositionBlueprint() {
+      const container = document.getElementById('positionBlueprint');
+      if (!container) return;
       try {
         const res = await fetch('/api/player/profile');
         if (!res.ok) return;
         const profile = await res.json();
-        const position = String(profile.position || '').trim().toUpperCase();
-        if (position === 'EDGE' || position === 'DE' || position === 'OLB') {
-          const wrap = document.getElementById('edgeHighlightGuideWrap');
-          if (wrap) wrap.hidden = false;
-        }
+        container.hidden = false;
+        renderPositionBlueprint(profile.position || '');
       } catch (_) {
-        // Keep the generic guidance if the profile cannot be loaded.
+        // Keep the general highlight guidance if the position cannot be loaded.
       }
     }
-    showPositionHighlightGuideLink();
+    showPositionBlueprint();
   </script>
 </body>
 </html>
