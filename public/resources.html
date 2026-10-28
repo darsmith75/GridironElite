@@ -74,6 +74,7 @@
     .resources-topic p { margin: 0; color: #4f5f7a; font-size: 14px; }
     .resources-subnav {
       display: flex;
+      flex-wrap: wrap;
       gap: 20px;
       border-bottom: 1px solid #d5deea;
       margin-bottom: 20px;
@@ -95,6 +96,7 @@
       display: grid;
       gap: 12px;
     }
+    .resources-guide article[hidden] { display: none; }
     .resources-guide article {
       border: 1px solid #d5deea;
       border-radius: 8px;
@@ -253,10 +255,16 @@
             <a href="resources.html?topic=college-visits">College Visits</a>
             <a href="resources.html?topic=college-visits&amp;section=considerations">School Considerations</a>
           </nav>
+          <nav class="resources-subnav" id="highlight-film-subnav" aria-label="Highlight Film sections" hidden>
+            <a href="resources.html?topic=highlight-film">What Coaches Want to See</a>
+            <a href="resources.html?topic=highlight-film&amp;section=film-length">Film Length</a>
+            <a href="resources.html?topic=highlight-film&amp;section=best-plays-first">Best Plays First</a>
+            <a href="resources.html?topic=highlight-film&amp;section=common-mistakes">Common Mistakes</a>
+          </nav>
           <h2 id="resources-topic-title"></h2>
           <p id="resources-topic-placeholder">Content coming soon.</p>
           <div class="resources-guide" id="highlight-film-content" hidden>
-            <article>
+            <article data-section="coaches">
               <h3>What Coaches Want to See</h3>
               <ul>
                 <li>Plays that translate to their level: speed, physicality, technique, and football IQ.</li>
@@ -265,7 +273,7 @@
                 <li>Situational value: third down, red zone, special teams, and late-game reps.</li>
               </ul>
             </article>
-            <article>
+            <article data-section="film-length" hidden>
               <h3>Film Length</h3>
               <ul>
                 <li>Aim for a concise highlight: typically 3 to 5 minutes.</li>
@@ -274,7 +282,7 @@
                 <li>Update throughout the season instead of waiting for year-end.</li>
               </ul>
             </article>
-            <article>
+            <article data-section="best-plays-first" hidden>
               <h3>Best Plays First</h3>
               <ul>
                 <li>Your first 20 to 30 seconds should show your highest-level traits immediately.</li>
@@ -283,7 +291,7 @@
                 <li>Do not bury your best reps at the end.</li>
               </ul>
             </article>
-            <article>
+            <article data-section="common-mistakes" hidden>
               <h3>Common Mistakes</h3>
               <ul>
                 <li>Too many low-impact clips and not enough true evaluation reps.</li>
@@ -2001,6 +2009,21 @@
       document.getElementById('resources-topic-title').textContent = isCollegeVisits && visitsSection === 'considerations' ? 'School Considerations' : title;
       document.getElementById('resources-topic-placeholder').hidden = topic === 'highlight-film' || topic === 'social-media-communication' || topic === 'camps-showcases' || isCollegeVisits;
       document.getElementById('highlight-film-content').hidden = topic !== 'highlight-film';
+      const highlightSubnav = document.getElementById('highlight-film-subnav');
+      highlightSubnav.hidden = topic !== 'highlight-film';
+      const highlightLinks = [...highlightSubnav.querySelectorAll('a')];
+      const requestedSection = new URLSearchParams(window.location.search).get('section');
+      const selectedHighlightLink = highlightLinks.find(link => new URL(link.href).searchParams.get('section') === requestedSection) || highlightLinks[0];
+      const highlightSection = new URL(selectedHighlightLink.href).searchParams.get('section') || 'coaches';
+      highlightLinks.forEach(link => {
+        const active = link === selectedHighlightLink;
+        link.classList.toggle('active', active);
+        if (active) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+      document.querySelectorAll('#highlight-film-content article').forEach(article => {
+        article.hidden = article.dataset.section !== highlightSection;
+      });
       document.getElementById('communication-content').hidden = topic !== 'social-media-communication';
       document.getElementById('camps-content').hidden = topic !== 'camps-showcases';
       document.getElementById('visits-content').hidden = !isCollegeVisits || visitsSection !== 'visits';
