@@ -128,6 +128,73 @@
     }
     .resources-position-highlight .position-highlight-core { grid-column: 1 / -1; }
     .resources-position-highlight .position-coach-note p { color: inherit; }
+    .resources-position-highlight .position-highlight-full { grid-column: 1 / -1; }
+    .resources-position-highlight .position-trait-grid-wide { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .position-highlight-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .position-highlight-tab {
+      border: 1px solid rgba(230, 167, 25, 0.48);
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: rgba(2, 11, 20, 0.42);
+      color: rgba(255, 255, 255, 0.86);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .position-highlight-tab:hover { border-color: #e6a719; color: #fff; }
+    .position-highlight-tab[aria-selected="true"] {
+      border-color: #e6a719;
+      background: #e6a719;
+      color: #061727;
+    }
+    .position-highlight-tab:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+    .position-highlight-tabpanel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+    }
+    .position-highlight-tabpanel[hidden] { display: none; }
+    .position-highlight-role {
+      grid-column: 1 / -1;
+      border: 1px solid rgba(156, 185, 214, 0.22);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: rgba(9, 40, 65, 0.78);
+    }
+    .resources-position-highlight .position-highlight-role p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .resources-position-highlight .position-highlight-role p + p { margin-top: 6px; }
+    .position-highlight-role strong { color: #e6a719; }
+    .resources-position-highlight .position-highlight-role .position-highlight-role-title {
+      margin: 0 0 6px;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .position-highlight-questions { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .resources-position-highlight .position-trait-grid-wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .position-highlight-tabpanel { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .resources-position-highlight .position-trait-grid-wide { grid-template-columns: 1fr; }
+      .position-highlight-tab { flex: 1 1 100%; text-align: left; }
+    }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
@@ -226,7 +293,7 @@
               </ul>
             </article>
           </div>
-          <article class="position-blueprint resources-position-highlight" id="edge-highlight-content" aria-labelledby="edge-highlight-title" hidden>
+          <article class="position-blueprint resources-position-highlight" id="edge-highlight-content" data-positions="EDGE,DE,OLB" aria-labelledby="edge-highlight-title" hidden>
             <div class="position-blueprint-header">
               <div>
                 <p class="position-blueprint-kicker">What college coaches want to see on your film</p>
@@ -291,6 +358,1348 @@
                 <div>
                   <strong>Final Tip</strong>
                   <p>Coaches watch thousands of players. Make your film memorable: it is your resume, and every rep should show why you deserve a roster spot.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="te-highlight-content" data-positions="TE,TIGHTEND" aria-labelledby="te-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">What to highlight on film</p>
+                <h3 class="position-blueprint-title" id="te-highlight-title">TE</h3>
+                <p class="position-blueprint-subtitle">Show college coaches you can win your role and make plays. Your film should show that you win consistently and make plays that help your team score and win.</p>
+              </div>
+              <div class="position-blueprint-badge">Tight End Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Every TE Film Should Show</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Effort:</b> Play with energy every snap.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Technique:</b> Use great technique consistently.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Versatility:</b> Line up in multiple spots and do multiple jobs.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Football IQ:</b> Make smart reads and be in the right place.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Toughness:</b> Block, compete, and win in traffic.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Reliability:</b> Be a target your team can count on.</span></div>
+                  <div class="position-trait-card"><strong>07</strong><span><b>Impact:</b> Make plays that change the game.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Highlights by Tight End Role</h4>
+                <div class="position-highlight-tabs" role="tablist" aria-label="Tight end roles">
+                  <button type="button" class="position-highlight-tab" role="tab" id="te-tab-y" aria-controls="te-panel-y" aria-selected="true">Y &middot; In-Line</button>
+                  <button type="button" class="position-highlight-tab" role="tab" id="te-tab-h" aria-controls="te-panel-h" aria-selected="false" tabindex="-1">H &middot; H-Back</button>
+                  <button type="button" class="position-highlight-tab" role="tab" id="te-tab-f" aria-controls="te-panel-f" aria-selected="false" tabindex="-1">F &middot; Flex / Slot</button>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="te-panel-y" aria-labelledby="te-tab-y" tabindex="0">
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">Y &middot; In-Line Tight End</p>
+                    <p>The in-line blocker and play-action threat. <strong>Alignment:</strong> attached to the line.</p>
+                    <p><strong>Key roles:</strong> in-line blocker (run and pass), play-action threat, short-to-intermediate receiver, and red-zone target.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>1. In-Line Blocking</h4>
+                    <ul class="position-check-grid">
+                      <li>Variety: zone, gap, man, and combo blocks.</li>
+                      <li>Get good angles and leverage.</li>
+                      <li>Explode off the line, sustain, and finish.</li>
+                      <li>Seal the edge and close the hole.</li>
+                      <li>Drive defenders off the ball.</li>
+                      <li>Finish every play.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>2. Pass Protection</h4>
+                    <ul class="position-check-grid">
+                      <li>Proper set: feet, hands, and pad level.</li>
+                      <li>Punch with your hands.</li>
+                      <li>Anchor against the bull rush.</li>
+                      <li>Mirror and stay in front.</li>
+                      <li>Show awareness of stunts and blitzes.</li>
+                      <li>Chip, then release into your route.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>3. Receiving</h4>
+                    <ul class="position-check-grid">
+                      <li>Run routes at full speed with precision.</li>
+                      <li>Get open against man and zone.</li>
+                      <li>Show strong hands.</li>
+                      <li>High-point the ball.</li>
+                      <li>Break tackles and gain extra yards after the catch.</li>
+                      <li>Show body control.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>4. Red Zone / Goal Line</h4>
+                    <ul class="position-check-grid">
+                      <li>Be a big target who catches in traffic.</li>
+                      <li>Use your size and body to shield defenders.</li>
+                      <li>High-point touchdown catches.</li>
+                      <li>Block and seal for the extra yards.</li>
+                      <li>Win 50/50 balls.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>5. Competitiveness &amp; Effort</h4>
+                    <ul class="position-skill-grid">
+                      <li>Finish every rep.</li>
+                      <li>Hustle to the ball.</li>
+                      <li>Celebrate teammates.</li>
+                      <li>Bring sideline energy and leadership.</li>
+                    </ul>
+                  </section>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="te-panel-h" aria-labelledby="te-tab-h" tabindex="0" hidden>
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">H &middot; H-Back</p>
+                    <p>The versatile moving piece. <strong>Alignments:</strong> off tackle (left or right), offset in the backfield, and wide or slot off the line.</p>
+                    <p><strong>Key roles:</strong> lead blocker, short-yardage and fullback role, play-action flat or swing routes, and occasional downfield receiver.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>1. Lead Blocking / Run Game</h4>
+                    <ul class="position-check-grid">
+                      <li>Lead the way through the hole.</li>
+                      <li>Get out in space and deliver a blow.</li>
+                      <li>Maintain leverage while moving.</li>
+                      <li>Make the linebacker miss.</li>
+                      <li>Show cut blocks on linebackers and DBs.</li>
+                      <li>Finish the block by driving your feet.</li>
+                      <li>Open running lanes for big plays.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>2. Versatility in Alignment</h4>
+                    <ul class="position-check-grid">
+                      <li>Line up in multiple spots: H, wing, and offset.</li>
+                      <li>Show motion in, out, and across the formation.</li>
+                      <li>Shift defenders with motion.</li>
+                      <li>Create mismatches.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>3. Receiving / Pass Game</h4>
+                    <ul class="position-check-grid">
+                      <li>Run every route with quick, reliable hands.</li>
+                      <li>Run option routes against zone.</li>
+                      <li>Work the middle of the field with seams and digs.</li>
+                      <li>Catch and run in the screen game.</li>
+                      <li>On play-action, sell the block, release, and catch.</li>
+                      <li>Show downfield ability when asked.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>4. Short Yardage / Goal Line</h4>
+                    <ul class="position-check-grid">
+                      <li>Run like a bowling ball and move the pile.</li>
+                      <li>Push defenders and gain tough yards.</li>
+                      <li>Find the end zone.</li>
+                      <li>Be physical and dependable.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>5. Football IQ &amp; Execution</h4>
+                    <ul class="position-skill-grid">
+                      <li>Know your assignments.</li>
+                      <li>Make correct reads.</li>
+                      <li>Adjust to defensive looks.</li>
+                      <li>Be a problem-solver on the field.</li>
+                    </ul>
+                  </section>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="te-panel-f" aria-labelledby="te-tab-f" tabindex="0" hidden>
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">F &middot; Flex / Slot Tight End</p>
+                    <p>The matchup problem. <strong>Alignments:</strong> flexed off the line, in the slot inside the numbers, and wide outside the numbers.</p>
+                    <p><strong>Key roles:</strong> slot receiver, mismatch against linebackers and DBs, move tight end, option-route runner, and RPO or quick-game target.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>1. Route Running</h4>
+                    <ul class="position-check-grid">
+                      <li>Run crisp, precise routes.</li>
+                      <li>Show the route tree: slant, speed out, stick, dig, corner, post, cross, whip, mesh, choice, and seam.</li>
+                      <li>Create separation against DBs and linebackers.</li>
+                      <li>Use releases: jab, swipe, and speed.</li>
+                      <li>Win at the top of routes.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>2. Getting Open vs. Coverage</h4>
+                    <ul class="position-check-grid">
+                      <li>Beat press coverage.</li>
+                      <li>Use your body and hands.</li>
+                      <li>Work the middle against zone.</li>
+                      <li>Find soft spots.</li>
+                      <li>Adjust routes based on coverage.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>3. YAC / After the Catch</h4>
+                    <ul class="position-check-grid">
+                      <li>Catch and go.</li>
+                      <li>Break tackles.</li>
+                      <li>Make defenders miss.</li>
+                      <li>Turn short catches into big plays.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>4. RPO / Quick Game</h4>
+                    <ul class="position-check-grid">
+                      <li>Be a reliable quick target.</li>
+                      <li>Read the defense and adjust.</li>
+                      <li>Get open fast.</li>
+                      <li>Make plays in space.</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>5. Versatility &amp; Motion</h4>
+                    <ul class="position-skill-grid">
+                      <li>Move all over the formation.</li>
+                      <li>Show snaps in the slot, wide, at wing, and in the backfield.</li>
+                      <li>Motion across the formation.</li>
+                      <li>Line up next to receivers and create mismatches.</li>
+                    </ul>
+                  </section>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Present a 6&ndash;10 Minute Film</h4>
+                <ul class="position-skill-grid">
+                  <li>Quality over quantity.</li>
+                  <li>Give every clip a purpose.</li>
+                  <li>Start strong and end strong.</li>
+                  <li>Use labels, arrows, and slow motion.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Things to Include</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Big plays:</strong> touchdowns and explosive plays.</span></li>
+                  <li><span><strong>Key third downs:</strong> conversions.</span></li>
+                  <li><span><strong>Two-minute offense:</strong> poise and execution.</span></li>
+                  <li><span><strong>Top competition:</strong> games against good teams.</span></li>
+                  <li><span><strong>Different looks:</strong> multiple formations and motions.</span></li>
+                  <li><span><strong>Special teams:</strong> punt and field-goal blocking, if applicable.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>How to Make Your Film Stand Out</h4>
+                <ul class="position-check-grid">
+                  <li>Start with your best plays; the first 30 seconds matter.</li>
+                  <li>Use text or graphics for down, distance, score, and key information.</li>
+                  <li>Cut dead time: no huddles and few pre-snap clips.</li>
+                  <li>Show full speed, then slow motion for key moments.</li>
+                  <li>Keep clips between 5 and 15 seconds.</li>
+                  <li>End with a highlight-reel finish.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What College Coaches Are Looking For</h4>
+                <ul class="position-check-grid position-highlight-questions">
+                  <li>Can you help us win on first, second, and third down?</li>
+                  <li>Can you block and be physical in the run game?</li>
+                  <li>Can you protect our quarterback?</li>
+                  <li>Can you catch and be a threat in the passing game?</li>
+                  <li>Can you create mismatches?</li>
+                  <li>Are you tough, smart, and coachable?</li>
+                  <li>Do you take pride in the details?</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Be the player they can't take off the field. Block. Catch. Compete. Win.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="wr-highlight-content" data-positions="WR,WIDERECEIVER,WIDERECEIVERS,RECEIVER" aria-labelledby="wr-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">What to highlight on film</p>
+                <h3 class="position-blueprint-title" id="wr-highlight-title">WR</h3>
+                <p class="position-blueprint-subtitle">A film guide for high school wide receivers. Show your role, your ability to get open, and the plays that make coaches trust you.</p>
+              </div>
+              <div class="position-blueprint-badge">Wide Receiver Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>College Coaches Are Watching for Three Things</h4>
+                <div class="position-metric-grid">
+                  <div class="position-metric-card"><strong>01</strong><span>Can you get open?</span></div>
+                  <div class="position-metric-card"><strong>02</strong><span>Can you make plays?</span></div>
+                  <div class="position-metric-card"><strong>03</strong><span>Can they trust you?</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Highlights by Wide Receiver Role</h4>
+                <div class="position-highlight-tabs" role="tablist" aria-label="Wide receiver roles">
+                  <button type="button" class="position-highlight-tab" role="tab" id="wr-tab-x" aria-controls="wr-panel-x" aria-selected="true">X &middot; Weak Side</button>
+                  <button type="button" class="position-highlight-tab" role="tab" id="wr-tab-z" aria-controls="wr-panel-z" aria-selected="false" tabindex="-1">Z &middot; Strong Side</button>
+                  <button type="button" class="position-highlight-tab" role="tab" id="wr-tab-slot" aria-controls="wr-panel-slot" aria-selected="false" tabindex="-1">Slot &middot; Inside</button>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="wr-panel-x" aria-labelledby="wr-tab-x" tabindex="0">
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">X Receiver &middot; Weak Side</p>
+                    <p><strong>Alignment:</strong> typically away from the tight end, often isolated on the boundary (short side of the field) in a one-on-one matchup with a cornerback.</p>
+                    <p><strong>Primary role:</strong> the outside go-to threat who wins one-on-one matchups and makes explosive plays downfield.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>Best for Showing</h4>
+                    <div class="position-trait-grid">
+                      <div class="position-trait-card"><strong>01</strong><span>Speed</span></div>
+                      <div class="position-trait-card"><strong>02</strong><span>Deep-threat ability</span></div>
+                      <div class="position-trait-card"><strong>03</strong><span>One-on-one wins</span></div>
+                      <div class="position-trait-card"><strong>04</strong><span>Contested catches</span></div>
+                    </div>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>Routes &amp; Situations to Show</h4>
+                    <ul class="position-check-grid">
+                      <li>Go routes</li>
+                      <li>Posts</li>
+                      <li>Deep corners</li>
+                      <li>Comebacks</li>
+                      <li>Outs</li>
+                      <li>Digs</li>
+                      <li>Back-shoulder fades</li>
+                      <li>Red-zone and 50/50 balls</li>
+                      <li>Third down and long yardage</li>
+                      <li>Screens</li>
+                      <li>End-arounds and reverses</li>
+                      <li>Downfield blocking</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>Show Versatility</h4>
+                    <ul class="position-skill-grid">
+                      <li>Show motions and slot reps.</li>
+                      <li>Include different alignments.</li>
+                    </ul>
+                  </section>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="wr-panel-z" aria-labelledby="wr-tab-z" tabindex="0" hidden>
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">Z Receiver &middot; Strong Side / Tight End Side</p>
+                    <p><strong>Alignment:</strong> about one yard behind the line of scrimmage, usually on the same side as the tight end or another receiver. The off-the-line alignment helps avoid press coverage.</p>
+                    <p><strong>Motion and versatility:</strong> can motion before the snap. As a flanker, the Z receiver uses intermediate routes, jet sweeps, and movement inside or outside to create space.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>Best for Showing</h4>
+                    <div class="position-trait-grid">
+                      <div class="position-trait-card"><strong>01</strong><span>Quickness</span></div>
+                      <div class="position-trait-card"><strong>02</strong><span>Route running</span></div>
+                      <div class="position-trait-card"><strong>03</strong><span>YAC ability</span></div>
+                      <div class="position-trait-card"><strong>04</strong><span>Versatility</span></div>
+                    </div>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>Routes &amp; Situations to Show</h4>
+                    <ul class="position-check-grid">
+                      <li>Hitches</li>
+                      <li>Outs</li>
+                      <li>Slants</li>
+                      <li>Shallow crosses</li>
+                      <li>Choice routes</li>
+                      <li>Sticks</li>
+                      <li>Drags</li>
+                      <li>Angles</li>
+                      <li>Jet sweeps and orbit motion</li>
+                      <li>Bubble and swing screens</li>
+                      <li>Play-action and RPO</li>
+                      <li>Third down and medium yardage</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>Show Versatility</h4>
+                    <ul class="position-skill-grid">
+                      <li>Run plays from different alignments.</li>
+                      <li>Move around the formation.</li>
+                    </ul>
+                  </section>
+                </div>
+                <div class="position-highlight-tabpanel" role="tabpanel" id="wr-panel-slot" aria-labelledby="wr-tab-slot" tabindex="0" hidden>
+                  <div class="position-highlight-role">
+                    <p class="position-highlight-role-title">Slot Receiver &middot; In the Slot</p>
+                    <p><strong>Flexibility:</strong> the slot is the primary spot, but versatile receivers also move around, including lining up outside.</p>
+                    <p><strong>Role:</strong> work the middle of the field and serve as a target on crucial short-yardage passing downs.</p>
+                    <p><strong>Matchup weapon:</strong> create mismatches against linebackers and smaller defenders.</p>
+                  </div>
+                  <section class="position-blueprint-section">
+                    <h4>Best for Showing</h4>
+                    <div class="position-trait-grid">
+                      <div class="position-trait-card"><strong>01</strong><span>Separation</span></div>
+                      <div class="position-trait-card"><strong>02</strong><span>Hands</span></div>
+                      <div class="position-trait-card"><strong>03</strong><span>Short-yardage production</span></div>
+                      <div class="position-trait-card"><strong>04</strong><span>Football IQ</span></div>
+                    </div>
+                  </section>
+                  <section class="position-blueprint-section">
+                    <h4>Routes &amp; Situations to Show</h4>
+                    <ul class="position-check-grid">
+                      <li>Slants</li>
+                      <li>Drags</li>
+                      <li>Crossers</li>
+                      <li>Option routes</li>
+                      <li>Choice routes</li>
+                      <li>Texas and levels concepts</li>
+                      <li>Mesh</li>
+                      <li>Shallow crosses</li>
+                      <li>Bubble and tunnel screens</li>
+                      <li>Third down and short yardage</li>
+                      <li>Red-zone seams and quick outs</li>
+                      <li>Motions, bunches, and stacks</li>
+                    </ul>
+                  </section>
+                  <section class="position-blueprint-section position-highlight-full">
+                    <h4>Show Versatility</h4>
+                    <ul class="position-skill-grid">
+                      <li>Show outside alignments and backfield reps.</li>
+                      <li>Include motions.</li>
+                    </ul>
+                  </section>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Route Running</h4>
+                <ul class="position-check-grid">
+                  <li>Crisp releases with no wasted steps.</li>
+                  <li>Proper stems and speed into and out of breaks.</li>
+                  <li>Sharp breaks and footwork.</li>
+                  <li>Sell fakes and changes of direction.</li>
+                  <li>Create separation at all levels.</li>
+                  <li>Run the entire route through the whistle.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Hands &amp; Catching</h4>
+                <ul class="position-check-grid">
+                  <li>Extend and catch away from your body.</li>
+                  <li>High-point the football.</li>
+                  <li>Track the ball over your shoulder.</li>
+                  <li>One-handed catches.</li>
+                  <li>Contested-catch ability.</li>
+                  <li>Body control and concentration.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Playmaking</h4>
+                <ul class="position-check-grid">
+                  <li>Yards after the catch.</li>
+                  <li>Be elusive in space.</li>
+                  <li>Make defenders miss.</li>
+                  <li>Turn short plays into big plays.</li>
+                  <li>Show awareness of leverage.</li>
+                  <li>Score when you get the ball.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Blocking &amp; Effort</h4>
+                <ul class="position-check-grid">
+                  <li>Be a willing blocker on every play.</li>
+                  <li>Use proper technique.</li>
+                  <li>Show downfield blocking.</li>
+                  <li>Finish every rep with effort.</li>
+                  <li>Hustle on every play.</li>
+                  <li>Bring great teammate energy.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Football IQ</h4>
+                <ul class="position-check-grid">
+                  <li>Understand assignments.</li>
+                  <li>Read coverages.</li>
+                  <li>Adjust to leverage.</li>
+                  <li>Find soft spots in zone.</li>
+                  <li>Make smart decisions.</li>
+                  <li>Know down and distance.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Physical Tools</h4>
+                <ul class="position-check-grid">
+                  <li>Top-end speed.</li>
+                  <li>Burst and acceleration.</li>
+                  <li>Change of direction.</li>
+                  <li>Jump-ball ability.</li>
+                  <li>Body control.</li>
+                  <li>Length and play strength.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Build Your Film the Right Way</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Quality over quantity:</strong> 10&ndash;15 minutes of your best plays beats 30-plus minutes of everything.</span></li>
+                  <li><span><strong>Front-load your film:</strong> put your best plays at the beginning and hook coaches in the first 30 seconds.</span></li>
+                  <li><span><strong>Show variety:</strong> include routes, situations, alignments, YAC, blocking, and all aspects of your game.</span></li>
+                  <li><span><strong>Know your role:</strong> tailor the film to X, Z, or Slot, while showing versatility.</span></li>
+                  <li><span><strong>Include information:</strong> add your name, height, weight, GPA, class year, and contact information.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Technical Requirements</h4>
+                <ul class="position-check-grid">
+                  <li>Film in widescreen; avoid vertical phone clips.</li>
+                  <li>Use All-22 film when possible for the best evaluation.</li>
+                  <li>Use end-zone and sideline angles.</li>
+                  <li>Include game sound so coaches can listen to effort and calls.</li>
+                  <li>Edit out dead time, including huddles and time between plays.</li>
+                  <li>Use high-quality, well-lit footage.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Situations to Include</h4>
+                <ul class="position-skill-grid">
+                  <li><span><strong>First down:</strong> show consistency.</span></li>
+                  <li><span><strong>Second and medium:</strong> sustained drives at 3&ndash;7 yards.</span></li>
+                  <li><span><strong>Third down:</strong> show short-, medium-, and long-yardage conversions.</span></li>
+                  <li><span><strong>Red zone:</strong> execute under pressure.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Don't Forget to Show</h4>
+                <ul class="position-check-grid">
+                  <li>Pre-snap alignments: wide, slot, and motion.</li>
+                  <li>How you move and get lined up in motion.</li>
+                  <li>Routes against man coverage.</li>
+                  <li>Routes against zone coverage.</li>
+                  <li>Adjustments to coverage.</li>
+                  <li>Chemistry with your quarterback: trust and connection.</li>
+                  <li>Celebrations that show personality and production.</li>
+                  <li>Effort on every play; coaches notice.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What to Avoid</h4>
+                <ul class="position-mistake-list">
+                  <li>Too much filler: long games, huddles, or breaks in the action.</li>
+                  <li>Vertical phone video.</li>
+                  <li>Bad angles: behind the play or too far away.</li>
+                  <li>Only highlights; show full routes sometimes.</li>
+                  <li>Penalties, drops, and mistakes, unless showing how you bounce back.</li>
+                  <li>Over-editing with music and graphics.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Bonus Tips</h4>
+                <ul class="position-skill-grid">
+                  <li>Send your film to coaches early and follow up.</li>
+                  <li>Keep your film updated weekly.</li>
+                  <li>Personalize emails and build relationships.</li>
+                  <li>Be active on social media, including X/Twitter and Hudl.</li>
+                  <li>Highlight academics, attitude, and your GPA.</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Your film is your resume. Make every rep count. Earn their attention. Earn your opportunity.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="qb-highlight-content" data-positions="QB,QUARTERBACK" aria-labelledby="qb-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">Film highlights: what to show college coaches</p>
+                <h3 class="position-blueprint-title" id="qb-highlight-title">QB</h3>
+                <p class="position-blueprint-subtitle">Show that you are a smart, accurate, and confident quarterback who can make all the throws, lead your team, and win in big moments.</p>
+              </div>
+              <div class="position-blueprint-badge">Quarterback Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Overall Goal</h4>
+                <div class="position-highlight-role">
+                  <p>Show coaches you can make every throw, lead your team, and win when the moment is biggest.</p>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Position-Specific Highlights</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Accuracy &amp; Ball Placement:</b> Short, intermediate, and deep accuracy; throw receivers open; show touch on deep balls, tight-window placement, consistent footwork, and every throw in the playbook.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Decision Making:</b> Read defenses before and after the snap, identify coverages and rotations, make the right read, take what the defense gives, avoid turnovers, and check down when needed.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Pocket Presence:</b> Stay calm under pressure, navigate the pocket, move with purpose, escape and extend plays, keep your eyes downfield, and avoid negative plays and sacks.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Arm Talent &amp; Velocity:</b> Show arm strength on all routes, make every throw, throw on the run, drive deep balls, layer throws, and throw with confidence.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Leadership &amp; Command:</b> Show huddle leadership, command at the line, rally the team, poise in big moments, game-winning drives, and competitive toughness.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Mobility &amp; Athleticism:</b> Use your legs when it is there, scramble effectively, buy time, make plays outside the pocket, keep drives alive, and be a threat with your legs.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Physical Traits &amp; Prototype</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Height and size:</strong> ideal QB range shown as 6'1&quot;&ndash;6'5&quot;, 180&ndash;230+ lbs.</span></li>
+                  <li><span><strong>Arm strength:</strong> deep-ball velocity and zip.</span></li>
+                  <li><span><strong>Athleticism:</strong> speed, agility, mobility, and balance.</span></li>
+                  <li><span><strong>Durability:</strong> ability to take hits and stay healthy.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Technical Skills</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Footwork:</strong> base, timing, drops, and alignment.</span></li>
+                  <li><span><strong>Mechanics:</strong> throwing motion, release, and consistency.</span></li>
+                  <li><span><strong>Hand placement:</strong> proper grip, control, and follow-through.</span></li>
+                  <li><span><strong>Route discipline:</strong> execute RPOs, play action, and timing.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Mentality &amp; IQ</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Football IQ:</strong> understand coverages, fronts, and blitzes.</span></li>
+                  <li><span><strong>Preparation:</strong> show study habits and command of the playbook.</span></li>
+                  <li><span><strong>Process:</strong> handle adversity, mistakes, and pressure.</span></li>
+                  <li><span><strong>Competitor:</strong> want the ball in big moments.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Intangibles</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Leadership:</strong> command respect in the locker room.</span></li>
+                  <li><span><strong>Communication:</strong> be clear and consistent.</span></li>
+                  <li><span><strong>Work ethic:</strong> film, weight room, and practice habits.</span></li>
+                  <li><span><strong>Character:</strong> coachability, accountability, and maturity.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What to Include in Your Film</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Full-game film:</b> show consistency from start to finish.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Best games:</b> include quality opponents.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Show all throws:</b> short, mid-range, deep, and on the run.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Big situations:</b> red zone, third down, two-minute, and clutch moments.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Smart decisions:</b> limit mistakes and turnovers and show how you handle tough plays.</span></div>
+                </div>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Your film is your resume. Make every rep count. Earn their attention. Earn your opportunity.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="cb-highlight-content" data-positions="CB,CORNERBACK,CORNERBACKS" aria-labelledby="cb-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">High school cornerbacks: what to highlight on film</p>
+                <h3 class="position-blueprint-title" id="cb-highlight-title">CB</h3>
+                <p class="position-blueprint-subtitle">Show college coaches you can lock down and make plays. Win your matchup consistently, make plays on the ball, and help your team win.</p>
+              </div>
+              <div class="position-blueprint-badge">Cornerback Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What College Coaches Want to See</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Football IQ:</b> Diagnose, react, and make the right play.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Speed &amp; Agility:</b> Run, change direction, and stay with anyone.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Man Coverage:</b> Lock up receivers one-on-one.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Ball Skills:</b> Make plays on the ball.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Consistency:</b> Repeat your performance against good competition.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Physicality:</b> Tackle well and compete every snap.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>1. Pre-Snap &amp; Recognition</h4>
+                <ul class="position-check-grid">
+                  <li>Show alignment variety: press, off, inside, and outside.</li>
+                  <li>Identify route combinations.</li>
+                  <li>Communicate coverage and leverage.</li>
+                  <li>Check the QB and understand formation and motion.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>2. Press &amp; Jam Technique</h4>
+                <ul class="position-check-grid">
+                  <li>Show explosive press technique.</li>
+                  <li>Keep hands inside and deliver a good punch.</li>
+                  <li>Control the receiver at the line.</li>
+                  <li>Disrupt timing without drawing flags.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>3. Man Coverage Skills</h4>
+                <ul class="position-check-grid">
+                  <li>Mirror and stay in phase.</li>
+                  <li>Turn your hips and run.</li>
+                  <li>Show eye discipline; don't peek.</li>
+                  <li>Use your hands without holding.</li>
+                  <li>Stay with the receiver through the catch.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>4. Zone Coverage &amp; Awareness</h4>
+                <ul class="position-check-grid">
+                  <li>Show drops, depth, and landmarks.</li>
+                  <li>Read the QB and route combinations.</li>
+                  <li>Key and break on the ball.</li>
+                  <li>Pass off routes.</li>
+                  <li>Communicate switches and matchups.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>5. Ball Skills &amp; Turnovers</h4>
+                <ul class="position-check-grid">
+                  <li>Interceptions and pass breakups.</li>
+                  <li>Swat and bat balls down.</li>
+                  <li>High-point the ball.</li>
+                  <li>Play through the ball.</li>
+                  <li>Show body control in the air.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>6. Run Support &amp; Tackling</h4>
+                <ul class="position-check-grid">
+                  <li>Tackle in space.</li>
+                  <li>Take proper pursuit angles.</li>
+                  <li>Force plays inside.</li>
+                  <li>Fill the alley.</li>
+                  <li>Finish every tackle.</li>
+                  <li>Show reliable tackling without misses.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>7. Compete &amp; Finish</h4>
+                <ul class="position-skill-grid">
+                  <li>Give effort every snap.</li>
+                  <li>Finish the play.</li>
+                  <li>Compete with confidence and sportsmanship.</li>
+                  <li>Celebrate plays.</li>
+                  <li>Lead by example.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Types of Plays to Include</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Man coverage:</b> press man, off man, trail technique, jump balls, and back-shoulder coverage.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Zone coverage:</b> Cover 2 and 3, quarters and Cover 4, robber, pattern match, and palms or cloud.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Transitions:</b> press to off, off to bail, zone to man, man to zone, and switches.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Playmaking:</b> interceptions, pass breakups, forced fumbles, touchdown-saving plays, and fourth-down stops.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Big-game clips:</b> top receivers, strong teams, critical situations, and game-winning plays.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Present a 6&ndash;10 Minute Film</h4>
+                <ul class="position-skill-grid">
+                  <li>Quality over quantity.</li>
+                  <li>Give every clip a purpose.</li>
+                  <li>Start strong and end strong.</li>
+                  <li>Use labels, arrows, and slow motion.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What to Show Throughout Your Film</h4>
+                <ul class="position-check-grid">
+                  <li>Start with explosive plays.</li>
+                  <li>Include varied matchups, coverages, and formations.</li>
+                  <li>Show plays from multiple angles: sideline and end zone.</li>
+                  <li>Use slow motion to show technique and details.</li>
+                  <li>Keep clips short, 3&ndash;8 seconds, and to the point.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Cornerback Measurables</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Speed:</strong> 40-yard dash and 10/20 split.</span></li>
+                  <li><span><strong>Change of direction:</strong> shuttle, 3-cone, and pro agility.</span></li>
+                  <li><span><strong>Explosion:</strong> vertical jump and broad jump.</span></li>
+                  <li><span><strong>Physical:</strong> strength, tackling, and physical play.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Tips to Stand Out</h4>
+                <ul class="position-check-grid">
+                  <li>Show versatility: outside, slot, and nickel.</li>
+                  <li>Show leadership in the huddle and through communication.</li>
+                  <li>Highlight academics and character moments, if possible.</li>
+                  <li>Keep your best plays early.</li>
+                  <li>End with a highlight-reel finish.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Things to Include</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Big plays:</strong> interceptions, breakups, and fumble recoveries.</span></li>
+                  <li><span><strong>Key third downs:</strong> critical stops.</span></li>
+                  <li><span><strong>Red zone and goal line:</strong> lock-down plays.</span></li>
+                  <li><span><strong>Two-minute defense:</strong> clutch stops.</span></li>
+                  <li><span><strong>Top receivers:</strong> show your best matchups.</span></li>
+                  <li><span><strong>Special teams:</strong> punt and kick coverage, plus returns.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>What College Coaches Are Looking For</h4>
+                <ul class="position-check-grid position-highlight-questions">
+                  <li>Can you shut down their best receiver?</li>
+                  <li>Can you play multiple coverages?</li>
+                  <li>Do you have great ball skills?</li>
+                  <li>Can you tackle in space?</li>
+                  <li>Do you compete every snap?</li>
+                  <li>Do you communicate and lead?</li>
+                  <li>Do you make game-changing plays?</li>
+                  <li>Do you take pride in your details?</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Lock down. Make plays. Change the game. That's what cornerbacks do.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="lb-highlight-content" data-positions="LB,LINEBACKER,LINEBACKERS,MLB,MIDDLELINEBACKER,ILB" aria-labelledby="lb-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">High school linebackers: what to highlight on film</p>
+                <h3 class="position-blueprint-title" id="lb-highlight-title">LB</h3>
+                <p class="position-blueprint-subtitle">Off-ball linebacker film should show that you diagnose, attack, and finish. Show coaches your instincts, range, production, consistency, and physicality.</p>
+              </div>
+              <div class="position-blueprint-badge">Linebacker Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What College Coaches Want to See</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Football IQ:</b> Diagnose, react, and make the right play.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Athleticism:</b> Run, change direction, cover, and close.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Production:</b> Make plays that impact the game.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Consistency:</b> Repeat your performance against good competition.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Physicality:</b> Shed blocks, tackle well, and finish.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>1. Pre-Snap: Instincts &amp; Football IQ</h4>
+                <ul class="position-check-grid">
+                  <li>Show alignment variety: stand-up, stacked, and wide 9.</li>
+                  <li>Point out formation, strength, and motion adjustments.</li>
+                  <li>Communicate green-dot calls, checks, and alerts.</li>
+                  <li>Show checks to your position teammates.</li>
+                  <li>Identify keys: run/pass, QB intent, and backfield action.</li>
+                  <li>Show patience versus play action.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>2. Diagnosis &amp; Reads</h4>
+                <ul class="position-check-grid">
+                  <li>Read and react to run versus pass.</li>
+                  <li>Show you can key and diagnose quickly.</li>
+                  <li>React to play-side versus away-from-play action.</li>
+                  <li>Trigger downhill on run plays.</li>
+                  <li>Drop with your eyes on the QB in pass plays.</li>
+                  <li>Recognize screens, draws, and misdirection.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>3. Athleticism (Must Show)</h4>
+                <ul class="position-check-grid">
+                  <li>Show sideline-to-sideline speed and closing speed to the ball.</li>
+                  <li>Change direction and accelerate.</li>
+                  <li>Backpedal, shuffle, and transition.</li>
+                  <li>Show range in coverage.</li>
+                  <li>Jump to deflect passes and compete for contested plays.</li>
+                  <li>Burst through the line into gaps.</li>
+                  <li>Recover quickly when out of position.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>4. Coverage Skills</h4>
+                <ul class="position-check-grid">
+                  <li>Show coverage drops: hook, curl, flat, and seam.</li>
+                  <li>Match up with RBs, TEs, and slot receivers.</li>
+                  <li>Show zone coverage awareness and positioning.</li>
+                  <li>Read QB eyes and anticipate throws.</li>
+                  <li>Break on the ball and make a play on it.</li>
+                  <li>Defend passes and show versatility in multiple coverages.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>5. Run Defense</h4>
+                <ul class="position-check-grid">
+                  <li>Come downhill and fill with power.</li>
+                  <li>Take on blocks and shed effectively.</li>
+                  <li>Use proper leverage and angles.</li>
+                  <li>Tackle in space and stop the run behind the line of scrimmage.</li>
+                  <li>Pursue plays from the backside.</li>
+                  <li>Show gang tackling and team run fits.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>6. Blitzing Ability</h4>
+                <ul class="position-check-grid">
+                  <li>Show timed blitzes and vary the looks: A-gap, B-gap, edge, and delayed.</li>
+                  <li>Explode off the line.</li>
+                  <li>Win with speed, power, or technique.</li>
+                  <li>Finish the play: sacks, tackles for loss, and hurries.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>7. Physicality &amp; Finish</h4>
+                <ul class="position-check-grid">
+                  <li>Deliver a pop when hitting.</li>
+                  <li>Wrap up and drive through tackles.</li>
+                  <li>Finish every play.</li>
+                  <li>Show aggression and play with violence.</li>
+                  <li>Include big-hit clips and celebrate plays with energy.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>8. Big-Game / Big-Play Highlights</h4>
+                <ul class="position-check-grid">
+                  <li>Show plays against good offenses and athletes.</li>
+                  <li>Highlight turnovers forced: interceptions, forced fumbles, and recoveries.</li>
+                  <li>Include game-changing plays: fourth-down stops and goal-line stands.</li>
+                  <li>Show clutch moments in close games.</li>
+                  <li>Highlight leadership in key situations.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Athleticism Showcase: Must-Have Clips</h4>
+                <ul class="position-check-grid position-highlight-questions">
+                  <li>Chase plays from sideline to sideline.</li>
+                  <li>Backpedal and turn to run with a receiver.</li>
+                  <li>High-point jumps and tipped passes.</li>
+                  <li>Accelerate to close on a screen.</li>
+                  <li>Change direction to avoid blocks.</li>
+                  <li>Show long-pursuit and recovery plays.</li>
+                  <li>Show blitz pickup and speed-rush wins.</li>
+                  <li>Pair film with measurables: 40-yard dash, shuttle, and broad jump.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Recommended Film Length &amp; Structure</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Total length:</strong> 3&ndash;5 minutes.</span></li>
+                  <li><span><strong>Clip length:</strong> 3&ndash;8 seconds.</span></li>
+                  <li><span><strong>Total clips:</strong> 40&ndash;60 plays.</span></li>
+                  <li><span><strong>Suggested order:</strong> intro, run defense, man/zone coverage, blitzes, big plays and turnovers, then game highlights and leadership.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Do</h4>
+                <ul class="position-check-grid">
+                  <li>Edit the film to your best plays.</li>
+                  <li>Keep clips short and to the point; start with your best plays.</li>
+                  <li>Include stats and game information.</li>
+                  <li>Show full speed and multiple angles when possible.</li>
+                  <li>Use titles or text to explain plays.</li>
+                  <li>Organize your film by category.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Don't</h4>
+                <ul class="position-mistake-list">
+                  <li>Include penalties or mistakes.</li>
+                  <li>Make the film too long.</li>
+                  <li>Include plays where you are not involved.</li>
+                  <li>Use music or extra effects.</li>
+                  <li>Forget athletic plays in coverage.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Things to Include</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Big plays:</strong> takeaways and explosive plays.</span></li>
+                  <li><span><strong>Key third downs:</strong> conversions.</span></li>
+                  <li><span><strong>Two-minute offense:</strong> poise and execution.</span></li>
+                  <li><span><strong>Top competition:</strong> games against good teams.</span></li>
+                  <li><span><strong>Different looks:</strong> multiple formations and motions.</span></li>
+                  <li><span><strong>Special teams:</strong> punt and field-goal blocking, if applicable.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Tips to Stand Out</h4>
+                <ul class="position-skill-grid">
+                  <li>Show versatility across positions and packages.</li>
+                  <li>Display leadership on and off the field.</li>
+                  <li>Update your film regularly.</li>
+                  <li>Include your recruiting profile: Hudl, NCSA, RecruitMe, etc.</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Be the guy they can't take off the field. Diagnose. Attack. Finish. Dominate.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="s-highlight-content" data-positions="S,SAFETY,FS,SS,FREESAFETY,STRONGSAFETY" aria-labelledby="s-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">High school safeties: what to highlight on film</p>
+                <h3 class="position-blueprint-title" id="s-highlight-title">S</h3>
+                <p class="position-blueprint-subtitle">Show college coaches you can make plays and lead the back end. Read, react, and make plays consistently to help your team win.</p>
+              </div>
+              <div class="position-blueprint-badge">Safety Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What College Coaches Want to See</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Football IQ:</b> Diagnose, read, and make the right play.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Speed &amp; Range:</b> Get to the ball and cover ground.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Ball Skills:</b> Create turnovers and make game-changing plays.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Reliability:</b> Tackle well and consistently do your job.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Leadership:</b> Communicate, adjust, and lead teammates.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Physicality:</b> Play tough and compete every snap.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>1. Pre-Snap &amp; Diagnosis</h4>
+                <ul class="position-check-grid">
+                  <li>Show alignment variety: high, box, rotated, and deep.</li>
+                  <li>Identify formation, down, and distance.</li>
+                  <li>Communicate coverage and leverage.</li>
+                  <li>Adjust to motion and shifts.</li>
+                  <li>Show defensive IQ.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>2. Coverage &amp; Range</h4>
+                <ul class="position-check-grid">
+                  <li>Show deep-third and deep-half coverage.</li>
+                  <li>Show tackle-to-tackle coverage.</li>
+                  <li>Recognize routes and react.</li>
+                  <li>Break on the ball.</li>
+                  <li>Close with speed to make plays.</li>
+                  <li>Play the sidelines and over the top.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>3. Run Support &amp; Tackling</h4>
+                <ul class="position-check-grid">
+                  <li>Fill the alley and fit the run.</li>
+                  <li>Read keys and attack fast.</li>
+                  <li>Pursue from sideline to sideline.</li>
+                  <li>Show open-field tackling.</li>
+                  <li>Tackle in space.</li>
+                  <li>Finish every play.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>4. Ball Skills &amp; Turnovers</h4>
+                <ul class="position-check-grid">
+                  <li>Interceptions and pass breakups.</li>
+                  <li>Strip and scoop fumbles.</li>
+                  <li>Make plays on tipped balls.</li>
+                  <li>Find the ball and finish the play.</li>
+                  <li>High-point the football.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>5. Blitzing &amp; Pressures</h4>
+                <ul class="position-check-grid">
+                  <li>Show blitz variety: slot, edge, and A-gap.</li>
+                  <li>Explode off the line.</li>
+                  <li>Create pressure on the QB.</li>
+                  <li>Show A-gap, B-gap, and slot blitzes.</li>
+                  <li>Time your blitzes perfectly.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>6. Special Teams Impact</h4>
+                <ul class="position-check-grid">
+                  <li>Show key plays on kickoff.</li>
+                  <li>Make an impact in punt coverage.</li>
+                  <li>Show field-goal blocks or pressure.</li>
+                  <li>Tackle in space.</li>
+                  <li>Bring hustle and effort on every play.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Types of Plays to Include</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Turnovers:</b> interceptions, pass breakups, fumble recoveries, and forced fumbles.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Game-changing plays:</b> fourth-down stops, red-zone stands, momentum shifts, and big hits.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Coverage:</b> deep coverage, man-to-man, match coverage, and robber or hook plays.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Run defense:</b> stops, tackles for loss, pursuit plays, and open-field tackles.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Blitzes:</b> QB pressures, sacks, hurries, and disrupting the play.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Leadership &amp; effort:</b> communication, adjustments, hustle plays, and team energy.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What to Show Throughout Your Film</h4>
+                <ul class="position-check-grid position-highlight-questions">
+                  <li>Start with your best plays; the first 30 seconds matter.</li>
+                  <li>Show variety: coverage, run support, blitzes, and turnovers.</li>
+                  <li>Show multiple angles when possible.</li>
+                  <li>Use slow motion for key plays: tackles, interceptions, and hits.</li>
+                  <li>Keep clips short and to the point: 3&ndash;8 seconds each.</li>
+                  <li>Prioritize quality over quantity; every clip should have a purpose.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Safety Measurables</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Speed:</strong> 40-yard dash, 10/20 split, and max speed.</span></li>
+                  <li><span><strong>Change of direction:</strong> shuttle, 3-cone, and pro agility.</span></li>
+                  <li><span><strong>Explosion:</strong> vertical jump, broad jump, and power.</span></li>
+                  <li><span><strong>Physical:</strong> bench, squat, and strength.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Extra Tips to Stand Out</h4>
+                <ul class="position-check-grid">
+                  <li>Show versatility: play multiple positions in the back end.</li>
+                  <li>Highlight academics and character moments, if possible.</li>
+                  <li>Show leadership: huddle communication and adjustments.</li>
+                  <li>Update your film regularly.</li>
+                  <li>Include your recruiting profile: Hudl, NCSA, RecruitMe, etc.</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Read it. React. Attack. Make plays. Win games. Lock down the game.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="ot-highlight-content" data-positions="OT,OFFENSIVETACKLE,TACKLE" aria-labelledby="ot-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">Offensive tackle film highlights: what to show college coaches</p>
+                <h3 class="position-blueprint-title" id="ot-highlight-title">OT</h3>
+                <p class="position-blueprint-subtitle">Show that you are a dominant, reliable, and intelligent offensive tackle who protects the quarterback and creates opportunities in the run game.</p>
+              </div>
+              <div class="position-blueprint-badge">Offensive Tackle Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Overall Goal</h4>
+                <div class="position-highlight-role">
+                  <p>Show coaches you can protect the quarterback, move defenders, and finish consistently in both the pass and run game.</p>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Position-Specific Highlights</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Pass Protection:</b> Kick-slide and set with quick, balanced feet; anchor against power, mirror and recover against speed, keep hands inside, and show a range of rush moves.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Run Blocking:</b> Drive defenders off the ball, move people on down blocks, create and sustain space, seal the edge, pull and lead, and finish blocks.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Athleticism &amp; Movement:</b> Show get-off on run and pass plays, lateral agility, reach and climb ability, movement in space, foot speed, and body control.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Technique &amp; Fundamentals:</b> Maintain stance and pad level, consistent hand placement, tight elbows, leverage, balance, controlled footwork, and a dominant finish.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Strength &amp; Finish:</b> Drive defenders off the line, sustain blocks through the whistle, finish on the ground when necessary, and control defensive ends and linebackers.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Football IQ &amp; Discipline:</b> Recognize stunts and adjustments, pick up blitzes, communicate line calls, stay disciplined in pass protection, and play clean, penalty-free football.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Physical Traits &amp; Prototype</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Length and size:</strong> ideal tackle range shown as 6'5&quot;&ndash;6'8&quot;, 290&ndash;330+ lbs, with appropriate arm length.</span></li>
+                  <li><span><strong>Athleticism:</strong> footwork, agility, flexibility, balance, and ability to move in space.</span></li>
+                  <li><span><strong>Bend and flexibility:</strong> bend at hips, knees, and ankles to stay low and efficient.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Technical Skills</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Pass protection:</strong> anchor strength, quick hands, mirror ability, and recovery.</span></li>
+                  <li><span><strong>Run blocking:</strong> drive power, combo blocking, movement skills, and ability to finish.</span></li>
+                  <li><span><strong>Hand technique:</strong> independent hands, timing, punch placement, and re-striking ability.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Mentality &amp; Character</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Toughness:</strong> play through the whistle, finish every rep, and love physical competition.</span></li>
+                  <li><span><strong>Leadership:</strong> communicate on the line, set the tone, and hold teammates accountable.</span></li>
+                  <li><span><strong>Work ethic:</strong> show consistent effort, coachability, and attention to detail.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Intangibles</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Football IQ:</strong> understand schemes, protections, and opponent looks.</span></li>
+                  <li><span><strong>Consistency:</strong> be reliable rep after rep, in practice and games.</span></li>
+                  <li><span><strong>Motor:</strong> bring high effort every snap; no plays off.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What to Include in Your Film</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Best plays only:</b> prioritize quality over quantity.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Full-game reps:</b> show consistency from start to finish.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Variety:</b> show different opponents, techniques, and situations.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Multiple angles:</b> use end-zone, sideline, and behind-the-play views.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Consistent performance:</b> show dominance in both pass and run game.</span></div>
+                </div>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Your film is your resume. Make every rep count. Earn their attention. Earn your opportunity.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="position-blueprint resources-position-highlight" id="rb-highlight-content" data-positions="RB,RUNNINGBACK,RUNNINGBACKS,HB,TAILBACK" aria-labelledby="rb-highlight-title" hidden>
+            <div class="position-blueprint-header">
+              <div>
+                <p class="position-blueprint-kicker">What to highlight on film</p>
+                <h3 class="position-blueprint-title" id="rb-highlight-title">RB</h3>
+                <p class="position-blueprint-subtitle">A complete film guide for high school running backs. Show your vision, versatility, toughness, and ability to make plays.</p>
+              </div>
+              <div class="position-blueprint-badge">Running Back Highlight Film Blueprint</div>
+            </div>
+            <div class="position-blueprint-body">
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>College Coaches Are Watching for Three Things</h4>
+                <div class="position-metric-grid">
+                  <div class="position-metric-card"><strong>01</strong><span>Can you get open?</span></div>
+                  <div class="position-metric-card"><strong>02</strong><span>Can you make plays?</span></div>
+                  <div class="position-metric-card"><strong>03</strong><span>Can they trust you?</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>Position-Specific Highlights</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span><b>Vision &amp; Running Style:</b> Press the line, see the hole, hit it fast; show patience, cutbacks, secondary moves, finishing runs, and your power-speed combination.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span><b>Elusiveness &amp; Agility:</b> Make defenders miss in space; show footwork, open-field moves, acceleration, top-end speed, contact balance, and yards created on your own.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span><b>Pass Catching:</b> Show reliable hands, catches out of the backfield, route running, ball adjustment, YAC, and matchups against linebackers and DBs.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span><b>Pass Protection:</b> Pick up blitzes; show proper fit, square strike, staying in front, identifying threats, and willingness to protect the QB in key moments.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span><b>Football IQ &amp; Decisions:</b> Read blocks, choose the right cut, show patience and timing, know when to bounce or cut back, and protect the football.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span><b>Toughness &amp; Character:</b> Run through contact, finish every play, compete every down, do the dirty work, and show leadership, accountability, and energy.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Physical Traits</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Height and weight:</strong> ideal RB range shown as 5'9&quot;&ndash;6'1&quot;, 185&ndash;215+ lbs.</span></li>
+                  <li><span><strong>Speed:</strong> 40-yard dash, burst, and acceleration.</span></li>
+                  <li><span><strong>Explosion:</strong> jump, quickness, and change of direction.</span></li>
+                  <li><span><strong>Strength:</strong> lower-body power and contact balance.</span></li>
+                  <li><span><strong>Durability:</strong> handle the load and stay healthy.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Technical Skills</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Ball security:</strong> high and tight; protect the football.</span></li>
+                  <li><span><strong>Footwork:</strong> quick first step, balance, and lateral agility.</span></li>
+                  <li><span><strong>Hand placement:</strong> stiff-arm, protect the ball, and block properly.</span></li>
+                  <li><span><strong>Route running:</strong> crisp routes, separate, and understand zones.</span></li>
+                  <li><span><strong>Pass protection:</strong> consistent technique and reliability.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Mentality &amp; IQ</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Find the edge:</strong> vision to press and cut.</span></li>
+                  <li><span><strong>Situational awareness:</strong> down, distance, and clock.</span></li>
+                  <li><span><strong>Learning:</strong> pick up plays quickly and adapt to the game plan.</span></li>
+                  <li><span><strong>Focus:</strong> stay locked in every down and every game.</span></li>
+                  <li><span><strong>Competitor:</strong> want the ball in big moments.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Intangibles</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Work ethic:</strong> film study, lifts, and extra work.</span></li>
+                  <li><span><strong>Leadership:</strong> set the tone.</span></li>
+                  <li><span><strong>Character:</strong> coachable, accountable, and trustworthy.</span></li>
+                  <li><span><strong>Attitude:</strong> handle adversity.</span></li>
+                  <li><span><strong>Culture fit:</strong> add to the locker room.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section position-highlight-full">
+                <h4>What to Include in Your Film</h4>
+                <div class="position-trait-grid position-trait-grid-wide">
+                  <div class="position-trait-card"><strong>01</strong><span>Best plays first; make a strong first impression.</span></div>
+                  <div class="position-trait-card"><strong>02</strong><span>Variety: inside and outside runs, catches, pass protection, and big plays.</span></div>
+                  <div class="position-trait-card"><strong>03</strong><span>Full-game reps to show consistency and durability.</span></div>
+                  <div class="position-trait-card"><strong>04</strong><span>All three phases: running, receiving, and pass protection.</span></div>
+                  <div class="position-trait-card"><strong>05</strong><span>Impact plays: touchdowns, first downs, and big moments.</span></div>
+                  <div class="position-trait-card"><strong>06</strong><span>Edit out the fluff; keep the film clean, focused, and effective.</span></div>
+                </div>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Running Back Routes to Show</h4>
+                <ul class="position-check-grid">
+                  <li>Swing</li>
+                  <li>Cut</li>
+                  <li>Flat</li>
+                  <li>Post</li>
+                  <li>Angle</li>
+                  <li>Corner</li>
+                  <li>Wheel</li>
+                  <li>Fade</li>
+                  <li>Check release</li>
+                  <li>Option</li>
+                  <li>Middle screen</li>
+                  <li>Shake</li>
+                  <li>Slip screen</li>
+                  <li>Texas</li>
+                  <li>Out</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Situations to Show</h4>
+                <ul class="position-check-grid position-highlight-questions">
+                  <li><strong>First down:</strong> set the tone.</li>
+                  <li><strong>Second and medium:</strong> make plays.</li>
+                  <li><strong>Third down:</strong> show catching and pass protection.</li>
+                  <li><strong>Red zone:</strong> inside the 20.</li>
+                  <li><strong>Two-minute drill:</strong> execution.</li>
+                  <li><strong>Goal line:</strong> power and toughness.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Don't Forget to Show</h4>
+                <ul class="position-check-grid">
+                  <li>Pre-snap alignment: wide, offset, and in-line.</li>
+                  <li>Motions: how you move and get lined up.</li>
+                  <li>Routes versus man coverage.</li>
+                  <li>Routes versus zone coverage.</li>
+                  <li>Chemistry with your QB: trust and connection.</li>
+                  <li>Celebrations: personality and production.</li>
+                  <li>Effort on every play; coaches notice.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Build Your Film the Right Way</h4>
+                <ul class="position-check-grid">
+                  <li><span><strong>Quality over quantity:</strong> 10&ndash;15 minutes of your best plays is better than 30+ minutes of everything.</span></li>
+                  <li><span><strong>Front-load your film:</strong> put your best plays first and hook coaches in the first 30 seconds.</span></li>
+                  <li><span><strong>Show variety:</strong> runs, catches, pass protection, route running, vision, and versatility.</span></li>
+                  <li><span><strong>Know your role:</strong> tailor film to your strengths, such as power, elusive running, third down, or return work, while showing versatility.</span></li>
+                  <li><span><strong>Include information:</strong> height, weight, GPA, class year, and contact information.</span></li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Technical Requirements</h4>
+                <ul class="position-check-grid">
+                  <li>Film in widescreen; avoid vertical phone clips.</li>
+                  <li>Get All-22 film when possible for the best evaluation.</li>
+                  <li>Use end-zone and sideline angles.</li>
+                  <li>Include game sound so coaches can hear effort and calls.</li>
+                  <li>Edit out dead time, including huddles and time between plays.</li>
+                  <li>Use high-quality, well-lit footage.</li>
+                </ul>
+              </section>
+              <section class="position-blueprint-section">
+                <h4>Bonus Tips</h4>
+                <ul class="position-skill-grid">
+                  <li>Send your film to coaches early and follow up.</li>
+                  <li>Keep your film updated weekly.</li>
+                  <li>Personalize emails and build relationships.</li>
+                  <li>Be active on social media, including X/Twitter and Hudl.</li>
+                  <li>Highlight your academics, attitude, and GPA.</li>
+                </ul>
+              </section>
+              <div class="position-coach-note">
+                <div class="position-coach-note-icon" aria-hidden="true">&#127944;</div>
+                <div>
+                  <strong>Final Tip</strong>
+                  <p>Your film is your resume. Make every rep count. Earn their attention. Earn their opportunity.</p>
                 </div>
               </div>
             </div>
@@ -571,6 +1980,7 @@
     checkAuth('player');
 
     const resourceCards = [...document.querySelectorAll('.resources-card')];
+    let positionHighlightLoaded = false;
     function showResourceTopic() {
       const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
       const selectedCard = resourceCards.find(card => new URL(card.href).searchParams.get('topic') === topic);
@@ -604,8 +2014,9 @@
         if (active) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       });
-      const edgeHighlightContent = document.getElementById('edge-highlight-content');
-      edgeHighlightContent.hidden = topic !== 'highlight-film' || edgeHighlightContent.dataset.eligible !== 'true';
+      document.querySelectorAll('.resources-position-highlight').forEach(guide => {
+        guide.hidden = topic !== 'highlight-film' || guide.dataset.eligible !== 'true';
+      });
       if (topic === 'highlight-film') showPositionHighlightGuide();
       document.title = document.getElementById('resources-topic-title').textContent + ' | Resources';
     }
@@ -621,9 +2032,7 @@
 
     async function showPositionHighlightGuide() {
       const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
-      if (topic !== 'highlight-film') return;
-      const guide = document.getElementById('edge-highlight-content');
-      if (!guide || guide.dataset.loaded === 'true') return;
+      if (topic !== 'highlight-film' || positionHighlightLoaded) return;
       try {
         const res = await fetch('/api/player/profile');
         if (!res.ok) {
@@ -631,15 +2040,46 @@
           return;
         }
         const profile = await res.json();
-        const position = String(profile.position || '').trim().toUpperCase();
+        const position = String(profile.position || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         const currentTopic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
-        guide.dataset.eligible = String(['EDGE', 'DE', 'OLB'].includes(position));
-        guide.hidden = currentTopic !== 'highlight-film' || guide.dataset.eligible !== 'true';
-        guide.dataset.loaded = 'true';
+        document.querySelectorAll('.resources-position-highlight').forEach(guide => {
+          const positions = (guide.dataset.positions || '').split(',');
+          guide.dataset.eligible = String(Boolean(position) && positions.includes(position));
+          guide.hidden = currentTopic !== 'highlight-film' || guide.dataset.eligible !== 'true';
+        });
+        positionHighlightLoaded = true;
       } catch (error) {
         console.error('Unable to load the player position for the highlight-film guide.', error);
       }
     }
+
+    document.querySelectorAll('.position-highlight-tabs').forEach(tablist => {
+      const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+      const selectTab = (selected, focus) => {
+        tabs.forEach(tab => {
+          const active = tab === selected;
+          tab.setAttribute('aria-selected', String(active));
+          tab.tabIndex = active ? 0 : -1;
+          document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+        });
+        if (focus) selected.focus();
+      };
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectTab(tab, false));
+        tab.addEventListener('keydown', event => {
+          const keyTargets = {
+            ArrowRight: tabs[(index + 1) % tabs.length],
+            ArrowLeft: tabs[(index - 1 + tabs.length) % tabs.length],
+            Home: tabs[0],
+            End: tabs[tabs.length - 1]
+          };
+          const target = keyTargets[event.key];
+          if (!target) return;
+          event.preventDefault();
+          selectTab(target, true);
+        });
+      });
+    });
   </script>
 </body>
 </html>
