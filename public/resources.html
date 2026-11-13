@@ -123,19 +123,19 @@
       line-height: 1.55;
     }
     .resources-guide li + li { margin-top: 6px; }
-    .email-template {
+    .email-template, .resource-example {
       margin-top: 12px;
       border: 1px solid #d5deea;
       border-radius: 6px;
       padding: 12px 14px;
       background: #fff;
     }
-    .email-template summary {
+    .email-template summary, .resource-example summary {
       color: #0b1f4b;
       font-weight: 700;
       cursor: pointer;
     }
-    .email-template summary:focus-visible,
+    .email-template summary:focus-visible, .resource-example summary:focus-visible,
     .email-template button:focus-visible { outline: 2px solid #0b1f4b; outline-offset: 3px; }
     .email-template-message {
       margin: 14px 0;
@@ -157,15 +157,12 @@
     }
     .email-template button:hover { background: #1e3c72; }
     .resources-topic .email-copy-status { margin-top: 8px; color: #3d4e68; }
-    #communication-content article[data-section="texting-etiquette"] h5 {
-      margin: 16px 0 6px;
-      color: #0b1f4b;
-      font-size: 14px;
-    }
-    #communication-content article[data-section="texting-etiquette"] p {
+    #communication-content .resource-example p {
+      margin: 12px 0 0;
       color: #3d4e68;
       line-height: 1.55;
     }
+    #communication-content .resource-example ul { margin-top: 10px; }
     #athletic-development-content.resources-guide article {
       padding: 24px clamp(20px, 3vw, 30px);
       background: linear-gradient(180deg, #fff 0%, #f8faff 100%);
@@ -2235,36 +2232,133 @@ John Doe</pre>
                 <li>Ask for an offer directly.</li>
               </ul>
               <h4>Texting Examples</h4>
-              <h5>1. Following Up After Sending Film</h5>
+              <details class="resource-example">
+              <summary>1. Following Up After Sending Film</summary>
               <p>Hi Coach Smith, I hope you're doing well. I wanted to follow up and make sure you received my latest highlight film. I appreciate your time and would love to hear any feedback when you have the opportunity. Thank you, Coach!</p>
-              <h5>2. Inviting a Coach to a Game</h5>
+              </details>
+              <details class="resource-example">
+              <summary>2. Inviting a Coach to a Game</summary>
               <p>Hi Coach Smith, I hope you're doing well. I wanted to let you know we'll be playing this Friday at 7:00 PM against Malvern Prep. I'd love the opportunity for you to see me compete if you're in the area. Thank you for your continued interest!</p>
-              <h5>3. Sharing a New Offer</h5>
+              </details>
+              <details class="resource-example">
+              <summary>3. Sharing a New Offer</summary>
               <p>Hi Coach Smith, I wanted to share that I was recently blessed to receive an offer from the University of ________. I appreciate all of the time you've invested in recruiting me and wanted to keep you updated. Thank you, Coach!</p>
-              <h5>4. Camp Registration Confirmation</h5>
+              </details>
+              <details class="resource-example">
+              <summary>4. Camp Registration Confirmation</summary>
               <p>Hi Coach Smith, I just wanted to let you know that I've officially registered for your upcoming camp. I'm excited for the opportunity to compete and learn from your coaching staff. Looking forward to seeing you soon!</p>
-              <h5>5. Thank You After Receiving an Offer</h5>
+              </details>
+              <details class="resource-example">
+              <summary>5. Thank You After Receiving an Offer</summary>
               <p>Thank you so much for believing in me and offering me the opportunity to become part of your program. I'm truly grateful for your confidence in me and my family. We look forward to continuing our relationship throughout the recruiting process.</p>
-              <h5>6. Scheduling a Visit</h5>
+              </details>
+              <details class="resource-example">
+              <summary>6. Scheduling a Visit</summary>
               <p>Hi Coach Smith, I hope you're doing well. My family and I are planning to be on campus next month and wanted to see if there might be an opportunity to visit with you and your staff. Thank you for your time, Coach!</p>
-              <h5>7. Academic Update</h5>
+              </details>
+              <details class="resource-example">
+              <summary>7. Academic Update</summary>
               <p>Hi Coach Smith, I wanted to share a quick academic update. I recently finished the semester with a 4.0 GPA and wanted to keep you informed. Thank you for your continued support and interest!</p>
-              <h5>8. Injury Update</h5>
+              </details>
+              <details class="resource-example">
+              <summary>8. Injury Update</summary>
               <p>Hi Coach Smith, I wanted to keep you updated. I recently suffered a minor injury but I'm working hard through rehab and expect to be back soon. I'll continue to keep you updated on my progress. Thank you for your support.</p>
-              <h5>9. Commitment Timeline Update</h5>
+              </details>
+              <details class="resource-example">
+              <summary>9. Commitment Timeline Update</summary>
               <p>Hi Coach Smith, I wanted to let you know that my family and I are planning to make our college decision sometime this fall. I appreciate everything you and your staff have done for me, and I wanted to keep you informed throughout the process.</p>
-              <h5>10. Holiday Greeting</h5>
+              </details>
+              <details class="resource-example">
+              <summary>10. Holiday Greeting</summary>
               <p>Hi Coach Smith, I just wanted to wish you and your family a wonderful Thanksgiving. Thank you for everything you've done for me throughout my recruiting journey. I truly appreciate your time and support.</p>
-              <h5>Bonus: Checking In</h5>
+              </details>
+              <details class="resource-example">
+              <summary>Bonus: Checking In</summary>
               <p>Hi Coach Smith, I hope you're having a great week. I just wanted to check in and let you know I'm continuing to work hard both on the field and in the classroom. Thank you again for your continued interest, and I hope to speak with you soon.</p>
+              </details>
             </article>
             <article data-section="calling-coaches" hidden>
               <h3>Calling Coaches</h3>
+              <h4>Best Practices</h4>
               <ul>
-                <li>Prepare three talking points before you call: update, fit question, and next step.</li>
-                <li>Practice a 20-second introduction so you sound confident and clear.</li>
-                <li>If you get voicemail, leave a concise message and follow up once by text or email.</li>
-                <li>After calls, log notes and action items so you can follow up accurately.</li>
+                <li>Answer the phone professionally.</li>
+                <li>Find a quiet place without distractions.</li>
+                <li>Be on time for scheduled calls.</li>
+                <li>Speak clearly and confidently.</li>
+                <li>Be yourself&#8212;don't try to memorize every answer.</li>
+                <li>Let the coach finish speaking before responding.</li>
+                <li>Listen carefully and ask thoughtful questions.</li>
+                <li>Keep your parents off the phone unless the coach asks to speak with them.</li>
+                <li>Always thank the coach before ending the conversation.</li>
+                <li>Send a follow-up text or email thanking the coach for their time.</li>
+              </ul>
+              <h4>Calling Examples</h4>
+              <details class="resource-example">
+                <summary>Example 1: Answering the Phone</summary>
+                <p><strong>Coach:</strong> "Hi John, this is Coach Smith from State University."</p>
+                <p><strong>Athlete:</strong> "Hi Coach Smith! It's great to hear from you. Thank you for taking the time to call me today."</p>
+              </details>
+              <details class="resource-example">
+                <summary>Example 2: Tell Me About Yourself</summary>
+                <p><strong>Coach:</strong> "Tell me a little about yourself."</p>
+                <p><strong>Athlete:</strong> "I'm a 2028 EDGE from Central High School. I take a lot of pride in working hard both on the field and in the classroom. I enjoy competing, being a great teammate, and I'm always looking for ways to improve. Academics and finding the right fit are just as important to me as football."</p>
+              </details>
+              <details class="resource-example">
+                <summary>Example 3: Why Are You Interested in Our Program?</summary>
+                <p><strong>Coach:</strong> "Why are you interested in our school?"</p>
+                <p><strong>Athlete:</strong> "I've really enjoyed learning about your program. I like the culture your coaching staff has built, the way you develop players, and the academic opportunities your university offers. I'm excited to continue learning more."</p>
+              </details>
+              <details class="resource-example">
+                <summary>Example 4: Discussing Your Goals</summary>
+                <p><strong>Coach:</strong> "What are your goals?"</p>
+                <p><strong>Athlete:</strong> "My goal is to compete at the highest level possible while earning a great education. I want to continue developing as a player and eventually contribute to a championship program."</p>
+              </details>
+              <details class="resource-example">
+                <summary>Example 5: Asking Good Questions</summary>
+                <p>At the end of the call, it's a good idea to ask thoughtful questions, such as:</p>
+                <ul>
+                  <li>What qualities do you look for in players at my position?</li>
+                  <li>What can I improve before my next visit or camp?</li>
+                  <li>How would you describe your team's culture?</li>
+                  <li>What does player development look like in your program?</li>
+                  <li>What academic resources are available for student-athletes?</li>
+                  <li>What are the next steps in your recruiting process?</li>
+                </ul>
+              </details>
+              <details class="resource-example">
+                <summary>Example 6: Ending the Conversation</summary>
+                <p>"Coach, I really appreciate you taking the time to speak with me today. Thank you for answering my questions and telling me more about your program. I look forward to staying in touch and hope to see you again soon."</p>
+              </details>
+              <h4>Common Mistakes to Avoid</h4>
+              <ul>
+                <li>Giving one-word answers.</li>
+                <li>Interrupting the coach.</li>
+                <li>Letting your parents answer questions directed at you.</li>
+                <li>Sounding distracted or unprepared.</li>
+                <li>Talking negatively about other schools or coaches.</li>
+                <li>Asking about NIL or playing time too early in the relationship.</li>
+                <li>Forgetting to thank the coach before ending the call.</li>
+              </ul>
+              <h4>Conversation Checklist</h4>
+              <h4>Before the Call</h4>
+              <ul>
+                <li>Review the school's football program.</li>
+                <li>Know why you're interested in the university.</li>
+                <li>Prepare 3&#8211;5 questions to ask.</li>
+                <li>Find a quiet place.</li>
+              </ul>
+              <h4>During the Call</h4>
+              <ul>
+                <li>Speak confidently.</li>
+                <li>Listen carefully.</li>
+                <li>Be respectful and honest.</li>
+                <li>Take notes if needed.</li>
+              </ul>
+              <h4>After the Call</h4>
+              <ul>
+                <li>Send a thank-you text or email within 24 hours.</li>
+                <li>Record important notes about the conversation.</li>
+                <li>Set reminders for any next steps.</li>
               </ul>
             </article>
             <article data-section="social-media-best-practices" hidden>
