@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Us / Support - Gridiron Athletes</title>
+  <title>Contact Support | Gridiron Athletes</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     .top-nav-menu {
@@ -15,76 +15,83 @@
     .info-page-shell {
       max-width: 1100px;
       margin: 0 auto;
-      padding: 18px 16px 0;
+      padding: 28px 16px 48px;
     }
-    .info-hero {
-      background: linear-gradient(135deg, #17315f 0%, #27549a 100%);
-      color: #fff;
-      border-radius: 14px;
-      padding: 28px;
-      box-shadow: 0 8px 22px rgba(23, 49, 95, 0.22);
-      margin-bottom: 18px;
+    .support-intro {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #d6deea;
+      padding-bottom: 20px;
     }
-    .info-hero h1 {
+    .support-intro-label {
+      margin: 0 0 6px;
+      color: #9a6d12;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .support-intro h1 {
       margin: 0 0 8px;
-      color: #fff;
+      color: #17315f;
       font-size: 30px;
     }
-    .info-hero p {
+    .support-intro > p:last-child {
+      max-width: 700px;
       margin: 0;
-      max-width: 800px;
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.9);
-    }
-    .support-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 14px;
-    }
-    .support-card {
-      background: #fff;
-      border: 1px solid #d6deea;
-      border-radius: 12px;
-      padding: 18px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    }
-    .support-card h2 {
-      margin: 0 0 8px;
-      font-size: 18px;
-      color: #1e3c72;
-    }
-    .support-card p,
-    .support-card li {
       color: #42536c;
+      font-size: 15px;
       line-height: 1.6;
-      font-size: 14px;
     }
-    .support-card ul {
+    .support-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+      align-items: start;
+      gap: 28px;
+    }
+    .support-guide {
+      border-left: 3px solid #c9962e;
+      padding: 4px 0 4px 18px;
+    }
+    .support-guide h2 {
+      margin: 0 0 10px;
+      color: #17315f;
+      font-size: 17px;
+    }
+    .support-guide p,
+    .support-guide li {
+      color: #42536c;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .support-guide p { margin: 0 0 10px; }
+    .support-guide ul {
+      display: grid;
+      gap: 9px;
       margin: 0;
       padding-left: 18px;
     }
     .contact-form-card {
-      margin-top: 16px;
       background: #fff;
       border: 1px solid #d6deea;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      border-radius: 9px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(23, 49, 95, 0.05);
     }
     .contact-form-card h2 {
       margin: 0 0 6px;
+      color: #17315f;
       font-size: 20px;
-      color: #1e3c72;
     }
     .contact-form-card p {
-      margin: 0 0 16px;
+      margin: 0 0 20px;
       color: #42536c;
       font-size: 14px;
+      line-height: 1.55;
     }
     .contact-form-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(180px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
     }
     .contact-form-field {
       display: flex;
@@ -95,44 +102,56 @@
       grid-column: 1 / -1;
     }
     .contact-form-field label {
-      color: #1e3c72;
+      color: #17315f;
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.2px;
     }
     .contact-form-field input,
+    .contact-form-field select,
     .contact-form-field textarea {
+      box-sizing: border-box;
       width: 100%;
       border: 1px solid #c9d5e5;
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 10px 12px;
       font-size: 14px;
       color: #2f3e55;
       font-family: inherit;
       background: #fff;
-      box-sizing: border-box;
+    }
+    .contact-form-field input:focus,
+    .contact-form-field select:focus,
+    .contact-form-field textarea:focus {
+      border-color: #1e3c72;
+      outline: 2px solid rgba(30, 60, 114, 0.16);
     }
     .contact-form-field textarea {
-      min-height: 140px;
+      min-height: 160px;
       resize: vertical;
     }
+    .contact-form-hint {
+      margin: 7px 0 0 !important;
+      color: #607087 !important;
+      font-size: 12px !important;
+    }
     .contact-submit-row {
-      margin-top: 14px;
+      margin-top: 18px;
       display: flex;
       align-items: center;
-      gap: 12px;
       flex-wrap: wrap;
+      gap: 12px;
     }
     .contact-submit-btn {
+      border: none;
+      border-radius: 6px;
+      padding: 11px 18px;
       background: #17315f;
       color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
     }
+    .contact-submit-btn:hover { background: #23477f; }
     .contact-submit-btn:disabled {
       opacity: 0.7;
       cursor: not-allowed;
@@ -148,10 +167,15 @@
     .contact-status.success {
       color: #166534;
     }
-    @media (max-width: 700px) {
-      .contact-form-grid {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 760px) {
+      .support-layout { grid-template-columns: 1fr; }
+      .support-guide { grid-row: 2; }
+    }
+    @media (max-width: 560px) {
+      .info-page-shell { padding-top: 20px; }
+      .contact-form-card { padding: 18px; }
+      .contact-form-grid { grid-template-columns: 1fr; }
+      .contact-form-field-full { grid-column: auto; }
     }
   </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -190,66 +214,76 @@
 
     <div class="dashboard-container">
       <div class="info-page-shell">
-        <section class="info-hero">
-          <h1>Contact Us / Support</h1>
-          <p>If you need help with your account, profile access, platform behavior, or organization setup, start with the most direct support path below.</p>
+        <section class="support-intro">
+          <p class="support-intro-label">Gridiron Athletes</p>
+          <h1>How can we help?</h1>
+          <p>Send us a message about your account or the platform. We&#39;ll reply to the email address you provide.</p>
         </section>
 
-        <div class="support-grid">
-          <article class="support-card">
-            <h2>Players</h2>
+        <div class="support-layout">
+          <section class="contact-form-card">
+            <h2>Send a message</h2>
+            <p>Choose a topic and tell us what happened. A few details will help us understand your question.</p>
+            <form id="supportContactForm">
+              <div class="contact-form-grid">
+                <div class="contact-form-field">
+                  <label for="supportName">Your name</label>
+                  <input id="supportName" name="name" type="text" maxlength="120" autocomplete="name" required>
+                </div>
+                <div class="contact-form-field">
+                  <label for="supportEmail">Email address</label>
+                  <input id="supportEmail" name="email" type="email" maxlength="180" autocomplete="email" required>
+                </div>
+                <div class="contact-form-field">
+                  <label for="supportRole">I am a</label>
+                  <select id="supportRole" name="role" required>
+                    <option value="">Select your role</option>
+                    <option value="Player">Player</option>
+                    <option value="Parent or guardian">Parent or guardian</option>
+                    <option value="Coach">Coach</option>
+                    <option value="Agent">Agent</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="contact-form-field">
+                  <label for="supportTopic">Topic</label>
+                  <select id="supportTopic" name="topic" required>
+                    <option value="">Choose a topic</option>
+                    <option value="Account access or login">Account access or login</option>
+                    <option value="Player profile">Player profile</option>
+                    <option value="Organization setup or access">Organization setup or access</option>
+                    <option value="Technical issue">Technical issue</option>
+                    <option value="Something else">Something else</option>
+                  </select>
+                </div>
+                <div class="contact-form-field contact-form-field-full">
+                  <label for="supportPage">Page or feature (optional)</label>
+                  <input id="supportPage" name="page" type="text" maxlength="150" placeholder="For example, Player Profile or Resources">
+                </div>
+                <div class="contact-form-field contact-form-field-full">
+                  <label for="supportMessage">How can we help?</label>
+                  <textarea id="supportMessage" name="message" maxlength="3500" placeholder="Tell us what you were trying to do, what happened, and what you expected instead." required></textarea>
+                  <p class="contact-form-hint">Please don&#39;t include your password or other sensitive account information.</p>
+                </div>
+              </div>
+              <div class="contact-submit-row">
+                <button id="supportSubmitBtn" type="submit" class="contact-submit-btn">Send message</button>
+                <div id="supportStatus" class="contact-status" aria-live="polite"></div>
+              </div>
+            </form>
+          </section>
+
+          <aside class="support-guide">
+            <h2>A few useful details</h2>
+            <p>If you can, include:</p>
             <ul>
-              <li>For recruiting profile issues, start with your coach, agent, or organization contact.</li>
-              <li>If you were invited to the platform, reply to the original invitation or onboarding thread for the fastest help.</li>
+              <li>The page or feature you were using.</li>
+              <li>What you expected to happen and what happened instead.</li>
+              <li>The name of your organization, if your question is about organization access.</li>
             </ul>
-          </article>
-          <article class="support-card">
-            <h2>Coaches / Agents</h2>
-            <ul>
-              <li>Use your organization administrator or platform owner as the first support channel for setup, access, or operational issues.</li>
-              <li>Document the page, action, and expected result when reporting bugs to speed up troubleshooting.</li>
-            </ul>
-          </article>
-          <article class="support-card">
-            <h2>What To Include</h2>
-            <ul>
-              <li>Your role and account email</li>
-              <li>The page where the issue happened</li>
-              <li>What you expected to happen</li>
-              <li>What actually happened</li>
-              <li>Screenshots when helpful</li>
-            </ul>
-          </article>
+            <p>For player profile access or an invitation, your coach, agent, or organization contact may be able to help first.</p>
+          </aside>
         </div>
-
-        <section class="contact-form-card">
-          <h2>Email Support</h2>
-          <p>Send a support message directly to our inbox. We will follow up at the email address you provide.</p>
-          <form id="supportContactForm">
-            <div class="contact-form-grid">
-              <div class="contact-form-field">
-                <label for="supportName">Name</label>
-                <input id="supportName" name="name" type="text" maxlength="120" required>
-              </div>
-              <div class="contact-form-field">
-                <label for="supportEmail">Email Address</label>
-                <input id="supportEmail" name="email" type="email" maxlength="180" required>
-              </div>
-              <div class="contact-form-field contact-form-field-full">
-                <label for="supportSubject">Subject</label>
-                <input id="supportSubject" name="subject" type="text" maxlength="200" required>
-              </div>
-              <div class="contact-form-field contact-form-field-full">
-                <label for="supportMessage">Message</label>
-                <textarea id="supportMessage" name="message" maxlength="4000" required></textarea>
-              </div>
-            </div>
-            <div class="contact-submit-row">
-              <button id="supportSubmitBtn" type="submit" class="contact-submit-btn">Send Email</button>
-              <div id="supportStatus" class="contact-status" aria-live="polite"></div>
-            </div>
-          </form>
-        </section>
       </div>
     </div>
   </div>
@@ -263,14 +297,23 @@
       const statusEl = document.getElementById('supportStatus');
 
       const formData = new FormData(form);
+      const role = String(formData.get('role') || '').trim();
+      const topic = String(formData.get('topic') || '').trim();
+      const page = String(formData.get('page') || '').trim();
+      const details = String(formData.get('message') || '').trim();
       const payload = {
         name: String(formData.get('name') || '').trim(),
         email: String(formData.get('email') || '').trim(),
-        subject: String(formData.get('subject') || '').trim(),
-        message: String(formData.get('message') || '').trim()
+        subject: `Gridiron Support: ${topic}`,
+        message: [
+          `Role: ${role}`,
+          `Page or feature: ${page || 'Not specified'}`,
+          '',
+          details
+        ].join('\n')
       };
 
-      if (!payload.name || !payload.email || !payload.subject || !payload.message) {
+      if (!payload.name || !payload.email || !role || !topic || !details) {
         statusEl.textContent = 'Please complete all fields.';
         statusEl.className = 'contact-status error';
         return;
@@ -297,7 +340,8 @@
         statusEl.className = 'contact-status success';
         form.reset();
       } catch (error) {
-        statusEl.textContent = 'Network error. Please try again.';
+        console.error('Unable to send the support message.', error);
+        statusEl.textContent = 'A network error prevented your message from being sent. Please try again.';
         statusEl.className = 'contact-status error';
       } finally {
         submitBtn.disabled = false;
