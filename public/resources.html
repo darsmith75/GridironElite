@@ -65,11 +65,23 @@
       margin-bottom: 0;
     }
     .resources-topic { padding: 24px 0 8px; }
+    .resources-topic-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
     .resources-topic h2 {
-      margin: 0 0 12px;
+      margin: 0;
       color: #0f1f3f;
       font-family: 'Oswald', sans-serif;
       font-size: 26px;
+    }
+    .resources-topic-logo {
+      width: 48px;
+      height: 40px;
+      flex: 0 0 auto;
+      object-fit: contain;
     }
     .resources-topic p { margin: 0; color: #4f5f7a; font-size: 14px; }
     .resources-subnav {
@@ -95,11 +107,6 @@
     .resources-guide {
       display: grid;
       gap: 12px;
-    }
-    .highlight-film-hudl-logo {
-      width: 120px;
-      max-width: 100%;
-      height: auto;
     }
     .resources-guide article[hidden] { display: none; }
     .resources-guide article {
@@ -568,7 +575,10 @@
             <a href="resources.html?topic=camps-showcases&amp;section=prepare-and-pack">Prepare &amp; Pack</a>
             <a href="resources.html?topic=camps-showcases&amp;section=following-up-afterward">Follow Up</a>
           </nav>
-          <h2 id="resources-topic-title"></h2>
+          <div class="resources-topic-heading">
+            <img class="resources-topic-logo" id="resources-topic-logo" alt="" hidden>
+            <h2 id="resources-topic-title"></h2>
+          </div>
           <p id="resources-topic-placeholder">Content coming soon.</p>
           <div class="resources-guide" id="athletic-development-content" hidden>
             <article data-section="testing-performance-metrics">
@@ -738,7 +748,6 @@
             </article>
           </div>
           <div class="resources-guide" id="highlight-film-content" hidden>
-            <img class="highlight-film-hudl-logo" src="/images/logos/Hudl_logo.png" alt="Hudl">
             <article data-section="coaches">
               <h3>What Coaches Want to See</h3>
               <ul>
@@ -3168,12 +3177,26 @@ John Doe</pre>
       const topic = new URLSearchParams(window.location.search).get('topic') || 'athletic-development';
       const selectedCard = resourceCards.find(card => new URL(card.href).searchParams.get('topic') === topic);
       const section = document.getElementById('resources-topic');
+      const topicLogo = document.getElementById('resources-topic-logo');
       resourceCards.forEach(card => {
         card.classList.toggle('active', card === selectedCard);
         if (card === selectedCard) card.setAttribute('aria-current', 'page');
         else card.removeAttribute('aria-current');
       });
       section.hidden = !selectedCard;
+      const topicLogoSource = {
+        'highlight-film': '/images/logos/Hudl_logo.png',
+        'social-media-communication': '/images/logos/X_logo.png'
+      }[topic];
+      if (selectedCard && topicLogoSource) {
+        topicLogo.src = topicLogoSource;
+        topicLogo.alt = topic === 'highlight-film' ? 'Hudl' : 'X';
+        topicLogo.hidden = false;
+      } else {
+        topicLogo.removeAttribute('src');
+        topicLogo.alt = '';
+        topicLogo.hidden = true;
+      }
       if (!selectedCard) {
         document.title = 'Player Resources';
         return;
