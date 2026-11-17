@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Combine &amp; Showcase Inquiries | Gridiron Athletes</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    .camp-inquiry-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 22px 16px 48px;
+    }
+    .camp-inquiry-back {
+      display: inline-block;
+      margin-bottom: 14px;
+      color: #1e3c72;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .camp-inquiry-back:hover { text-decoration: underline; }
+    .camp-inquiry-hero {
+      margin-bottom: 20px;
+      border-radius: 12px;
+      padding: clamp(22px, 4vw, 36px);
+      background: linear-gradient(135deg, #051f56 0%, #0a2f7c 60%, #1a4fa8 100%);
+      color: #fff;
+      box-shadow: 0 8px 28px rgba(5, 20, 70, 0.2);
+    }
+    .camp-inquiry-hero h1 {
+      margin: 0 0 10px;
+      color: #fff;
+      font-family: 'Oswald', sans-serif;
+      font-size: clamp(26px, 4vw, 36px);
+    }
+    .camp-inquiry-hero p {
+      max-width: 760px;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+    .camp-inquiry-card {
+      border: 1px solid #d5deea;
+      border-radius: 10px;
+      padding: clamp(18px, 3vw, 28px);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(14, 34, 74, 0.07);
+    }
+    .camp-inquiry-card h2 {
+      margin: 0 0 8px;
+      color: #0b1f4b;
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+    }
+    .camp-inquiry-card > p {
+      margin: 0 0 20px;
+      color: #4f5f7a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .camp-inquiry-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .camp-inquiry-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .camp-inquiry-field-full { grid-column: 1 / -1; }
+    .camp-inquiry-field label {
+      color: #1e3c72;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .camp-inquiry-field input,
+    .camp-inquiry-field select,
+    .camp-inquiry-field textarea {
+      box-sizing: border-box;
+      width: 100%;
+      border: 1px solid #c9d5e5;
+      border-radius: 7px;
+      padding: 10px 12px;
+      background: #fff;
+      color: #2f3e55;
+      font: inherit;
+      font-size: 14px;
+    }
+    .camp-inquiry-field textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+    .camp-inquiry-field input:focus,
+    .camp-inquiry-field select:focus,
+    .camp-inquiry-field textarea:focus {
+      border-color: #1e3c72;
+      outline: 2px solid rgba(30, 60, 114, 0.18);
+    }
+    .camp-inquiry-submit-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .camp-inquiry-submit {
+      border: 0;
+      border-radius: 7px;
+      padding: 11px 18px;
+      background: #0b1f4b;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .camp-inquiry-submit:hover { background: #1e3c72; }
+    .camp-inquiry-submit:disabled { opacity: 0.65; cursor: wait; }
+    .camp-inquiry-status {
+      min-height: 20px;
+      color: #3d4e68;
+      font-size: 13px;
+    }
+    .camp-inquiry-status.error { color: #b91c1c; }
+    .camp-inquiry-status.success { color: #166534; }
+    @media (max-width: 640px) {
+      .camp-inquiry-form-grid { grid-template-columns: 1fr; }
+      .camp-inquiry-field-full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body class="player-profile-theme">
+  <div class="dashboard-wrapper">
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="header-left">
+          <a href="resources.html?topic=camps-showcases" aria-label="Return to Camps and Showcases resources">
+            <img src="/images/GridIronLogoWhiteBG.png" alt="Gridiron Athletes" class="header-logo">
+          </a>
+        </div>
+        <nav class="top-nav-menu" aria-label="Main navigation">
+          <a href="resources.html?topic=camps-showcases" class="nav-link">Camps &amp; Showcases</a>
+          <a href="contact-support.html" class="nav-link">Contact Us / Support</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="dashboard-container">
+      <main class="camp-inquiry-page">
+        <a class="camp-inquiry-back" href="resources.html?topic=camps-showcases&amp;section=which-camps-matter">&larr; Back to camp guidance</a>
+        <section class="camp-inquiry-hero">
+          <h1>GridIron Combines &amp; Private Showcases</h1>
+          <p>Interested in a GridIron-hosted combine or a private showcase? Send us a few details about the athlete and what you have in mind, and our team will follow up using the email address you provide.</p>
+        </section>
+
+        <section class="camp-inquiry-card">
+          <h2>Tell us what you are looking for</h2>
+          <p>Use this form to ask about combine events, private showcase packages, or which option may fit your recruiting goals.</p>
+          <form id="campInquiryForm">
+            <div class="camp-inquiry-form-grid">
+              <div class="camp-inquiry-field">
+                <label for="contactName">Your name (athlete or parent)</label>
+                <input id="contactName" name="name" type="text" maxlength="120" autocomplete="name" required>
+              </div>
+              <div class="camp-inquiry-field">
+                <label for="contactEmail">Email address</label>
+                <input id="contactEmail" name="email" type="email" maxlength="180" autocomplete="email" required>
+              </div>
+              <div class="camp-inquiry-field">
+                <label for="athleteName">Athlete name</label>
+                <input id="athleteName" name="athleteName" type="text" maxlength="120" autocomplete="off">
+              </div>
+              <div class="camp-inquiry-field">
+                <label for="graduationYear">Graduation year</label>
+                <input id="graduationYear" name="graduationYear" type="text" inputmode="numeric" maxlength="4" autocomplete="off">
+              </div>
+              <div class="camp-inquiry-field">
+                <label for="athletePosition">Athlete position</label>
+                <input id="athletePosition" name="athletePosition" type="text" maxlength="80" autocomplete="off">
+              </div>
+              <div class="camp-inquiry-field">
+                <label for="eventInterest">Interested in</label>
+                <select id="eventInterest" name="eventInterest" required>
+                  <option value="">Select an option</option>
+                  <option value="GridIron-hosted combine">GridIron-hosted combine</option>
+                  <option value="Private showcase package">Private showcase package</option>
+                  <option value="Both">Both</option>
+                  <option value="Help choosing">Help choosing</option>
+                </select>
+              </div>
+              <div class="camp-inquiry-field camp-inquiry-field-full">
+                <label for="inquiryDetails">What would you like to know?</label>
+                <textarea id="inquiryDetails" name="details" maxlength="3000" required></textarea>
+              </div>
+            </div>
+            <div class="camp-inquiry-submit-row">
+              <button id="campInquirySubmit" class="camp-inquiry-submit" type="submit">Send Inquiry</button>
+              <div id="campInquiryStatus" class="camp-inquiry-status" aria-live="polite"></div>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script>
+    const campInquiryForm = document.getElementById('campInquiryForm');
+    campInquiryForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const formData = new FormData(campInquiryForm);
+      const name = String(formData.get('name') || '').trim();
+      const email = String(formData.get('email') || '').trim();
+      const eventInterest = String(formData.get('eventInterest') || '').trim();
+      const details = String(formData.get('details') || '').trim();
+      const status = document.getElementById('campInquiryStatus');
+      const submit = document.getElementById('campInquirySubmit');
+
+      if (!name || !email || !eventInterest || !details) {
+        status.textContent = 'Please complete all required fields.';
+        status.className = 'camp-inquiry-status error';
+        return;
+      }
+
+      const message = [
+        `Interest: ${eventInterest}`,
+        `Athlete: ${String(formData.get('athleteName') || '').trim() || 'Not provided'}`,
+        `Graduation year: ${String(formData.get('graduationYear') || '').trim() || 'Not provided'}`,
+        `Position: ${String(formData.get('athletePosition') || '').trim() || 'Not provided'}`,
+        '',
+        'Additional details:',
+        details
+      ].join('\n');
+
+      submit.disabled = true;
+      status.textContent = 'Sending your inquiry...';
+      status.className = 'camp-inquiry-status';
+      try {
+        const response = await fetch('/api/support/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            email,
+            subject: 'GridIron Combine & Private Showcase Inquiry',
+            message
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          status.textContent = result.error || 'Unable to send your inquiry. Please try again.';
+          status.className = 'camp-inquiry-status error';
+          return;
+        }
+
+        status.textContent = 'Your inquiry has been sent. Thank you.';
+        status.className = 'camp-inquiry-status success';
+        campInquiryForm.reset();
+      } catch (error) {
+        console.error('Unable to submit the combine and showcase inquiry.', error);
+        status.textContent = 'A network error prevented your inquiry from being sent. Please try again.';
+        status.className = 'camp-inquiry-status error';
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

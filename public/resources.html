@@ -186,6 +186,11 @@
       margin: 20px 0 8px;
       font-size: 15px;
     }
+    #communication-content.resources-guide article.communication-card > h5 {
+      margin: 18px 0 6px;
+      color: #0b1f4b;
+      font-size: 14px;
+    }
     #athletic-development-content.resources-guide article > p,
     #communication-content.resources-guide article.communication-card > p {
       margin: 0 0 14px;
@@ -305,6 +310,164 @@
       text-transform: uppercase;
     }
     .position-highlight-questions { grid-template-columns: 1fr; }
+    .camps-guidance {
+      padding: clamp(20px, 3vw, 32px);
+    }
+    .camp-intro {
+      margin-bottom: 22px;
+      border-left: 4px solid #c9962e;
+      padding: 4px 0 4px 16px;
+    }
+    .camp-intro p,
+    .camp-tier p,
+    .camp-content-section p,
+    .camp-event-card p {
+      color: #3d4e68;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .camp-intro p + p,
+    .camp-tier p + p,
+    .camp-content-section p + p,
+    .camp-event-card p + p { margin-top: 8px; }
+    .camp-tier {
+      margin-top: 18px;
+      border: 1px solid #d5deea;
+      border-radius: 10px;
+      padding: 18px;
+      background: #fff;
+    }
+    .camp-tier > h4 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    .camp-tier-stars {
+      color: #c9962e;
+      font-size: 18px;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    .camp-provider-bars {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .camp-provider-bar,
+    .camp-inquiry-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid #d5deea;
+      border-left: 5px solid #c9962e;
+      border-radius: 8px;
+      padding: 13px 16px;
+      background: linear-gradient(110deg, #0b1f4b, #1e3c72);
+      color: #fff;
+      text-decoration: none;
+    }
+    .camp-provider-bar:hover,
+    .camp-inquiry-bar:hover { background: linear-gradient(110deg, #132d62, #28539a); }
+    .camp-provider-bar:focus-visible,
+    .camp-inquiry-bar:focus-visible { outline: 3px solid #c9962e; outline-offset: 3px; }
+    .camp-provider-name { font-weight: 800; letter-spacing: 0.3px; }
+    .camp-provider-action { color: #f4d98c; font-size: 13px; font-weight: 700; }
+    .camp-inquiry-bar {
+      justify-content: flex-start;
+      margin: 12px 0 18px;
+    }
+    .camp-inquiry-bar img {
+      width: 96px;
+      max-height: 68px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .camp-inquiry-copy { display: grid; gap: 4px; flex: 1; }
+    .camp-inquiry-copy strong { font-size: 15px; }
+    .camp-inquiry-copy span { color: rgba(255, 255, 255, 0.84); font-size: 13px; }
+    .camp-inquiry-action { color: #f4d98c; font-size: 13px; font-weight: 800; white-space: nowrap; }
+    .camp-content-section {
+      margin-top: 28px;
+      border-top: 1px solid #d5deea;
+      padding-top: 22px;
+    }
+    .camp-content-section > h4 {
+      margin: 0 0 16px;
+      font-size: 21px;
+    }
+    .camp-event-card {
+      margin-top: 14px;
+      border: 1px solid #d5deea;
+      border-radius: 9px;
+      padding: 18px;
+      background: #fff;
+    }
+    .camp-event-card > h5 {
+      margin: 0 0 12px;
+      color: #0b1f4b;
+      font-size: 17px;
+    }
+    .camp-event-card h6 {
+      margin: 16px 0 8px;
+      color: #0b1f4b;
+      font-size: 14px;
+    }
+    .camp-event-card p { margin: 8px 0; }
+    .camp-event-card ul {
+      margin: 8px 0 14px;
+      padding-left: 22px;
+      color: #3d4e68;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .camp-event-card li + li { margin-top: 5px; }
+    .camp-event-icon { margin-right: 7px; }
+    .camp-checklist {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 14px !important;
+      padding: 0 !important;
+      list-style: none;
+    }
+    .camp-checklist li {
+      display: flex;
+      gap: 9px;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .camp-checkmark { color: #16834b; font-weight: 800; }
+    .camp-pros-cons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .camp-pros-cons > div {
+      border-radius: 7px;
+      padding: 12px 14px;
+      background: #f4f7fb;
+    }
+    .camp-pros-cons h6 { margin-top: 0; }
+    .camp-timeline-wrap { overflow-x: auto; margin-top: 12px; }
+    .camp-timeline {
+      width: 100%;
+      border-collapse: collapse;
+      color: #3d4e68;
+      font-size: 14px;
+    }
+    .camp-timeline th,
+    .camp-timeline td {
+      border: 1px solid #d5deea;
+      padding: 11px 13px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .camp-timeline th { background: #eef3fa; color: #0b1f4b; }
     @media (max-width: 900px) {
       .resources-position-highlight .position-trait-grid-wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .position-highlight-tabpanel { grid-template-columns: 1fr; }
@@ -312,6 +475,10 @@
     @media (max-width: 640px) {
       .resources-position-highlight .position-trait-grid-wide { grid-template-columns: 1fr; }
       .position-highlight-tab { flex: 1 1 100%; text-align: left; }
+      .camp-pros-cons { grid-template-columns: 1fr; }
+      .camp-provider-bar { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .camp-inquiry-bar { align-items: flex-start; flex-wrap: wrap; }
+      .camp-inquiry-action { margin-left: 105px; }
     }
     @media (max-width: 1024px) {
       .resources-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -2388,7 +2555,7 @@ John Doe</pre>
                 <li>Set reminders for any next steps.</li>
               </ul>
             </article>
-            <article data-section="social-media-best-practices" hidden>
+            <article class="communication-card" data-section="social-media-best-practices" hidden>
               <h3>Best Practices for X (Twitter)</h3>
               <p>X is one of the most important platforms in college football recruiting. Many college coaches use it to discover prospects, evaluate character, and stay updated on athletes. Your profile should reflect the type of student-athlete every program would be proud to recruit.</p>
               <h4>Profile Setup</h4>
@@ -2602,14 +2769,179 @@ John Doe</pre>
             </article>
           </div>
           <div class="resources-guide" id="camps-content" hidden>
-            <article data-section="which-camps-matter">
-              <h3>Which Camps Matter?</h3>
-              <ul>
-                <li>Prioritize camps where schools you already communicate with will actually evaluate your position.</li>
-                <li>Focus on quality over quantity: a few strong performances beat a packed but unfocused schedule.</li>
-                <li>Use camp choices to answer your current recruiting question: exposure, validation, or offer movement.</li>
-                <li>Avoid events that do not provide position-specific testing or coach interaction.</li>
-              </ul>
+            <article class="camps-guidance" data-section="which-camps-matter">
+              <h3>Choosing the Right Events at the Right Time</h3>
+              <div class="camp-intro">
+                <p><strong>Not every camp is worth attending.</strong></p>
+                <p>The goal isn&#39;t to attend the most camps. The goal is to attend the <strong>right camps</strong> that maximize exposure, improve recruiting relationships, and give you the best return on your investment.</p>
+              </div>
+
+              <section class="camp-tier">
+                <h4>Tier 1 &ndash; Must Attend <span class="camp-tier-stars" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span></h4>
+                <p>These are the camps that provide the best combination of exposure, competition, verified testing, and recruiting value.</p>
+                <div class="camp-provider-bars">
+                  <a class="camp-provider-bar" href="https://underarmournext.com/football/camp-series/" target="_blank" rel="noopener noreferrer">
+                    <span class="camp-provider-name">UNDER ARMOUR</span><span class="camp-provider-action">Explore the Under Armour Next camp series &rsaquo;</span>
+                  </a>
+                  <a class="camp-provider-bar" href="https://www.elite11.com/" target="_blank" rel="noopener noreferrer">
+                    <span class="camp-provider-name">ELITE 11</span><span class="camp-provider-action">Visit Elite 11 &rsaquo;</span>
+                  </a>
+                  <a class="camp-provider-bar" href="https://www.on3.com/rivals/" target="_blank" rel="noopener noreferrer">
+                    <span class="camp-provider-name">RIVALS CAMPS</span><span class="camp-provider-action">Explore Rivals &rsaquo;</span>
+                  </a>
+                  <a class="camp-provider-bar" href="https://prepredzone.com/" target="_blank" rel="noopener noreferrer">
+                    <span class="camp-provider-name">PREP REDZONE</span><span class="camp-provider-action">Visit Prep Redzone &rsaquo;</span>
+                  </a>
+                </div>
+              </section>
+
+              <section class="camp-tier">
+                <h4>Tier 2 &ndash; Excellent Investment <span class="camp-tier-stars" aria-label="4 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span></h4>
+                <h5>Individual College Prospect Camps</h5>
+                <p>These are some of the best recruiting camps <strong>if the school is genuinely recruiting you.</strong></p>
+              </section>
+
+              <section class="camp-tier">
+                <h4>Tier 3 &ndash; Great for Development <span class="camp-tier-stars" aria-label="4 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span></h4>
+                <p>Examples:</p>
+                <a class="camp-inquiry-bar" href="combine-showcase-inquiry.html">
+                  <img src="/images/GridIronLogoWhiteBG.png" alt="GridIron Athletes">
+                  <span class="camp-inquiry-copy">
+                    <strong>GRIDIRON HOSTED COMBINES &amp; PRIVATE SHOWCASES</strong>
+                    <span>Ask about our combines and private showcase packages.</span>
+                  </span>
+                  <span class="camp-inquiry-action">Learn More &rsaquo;</span>
+                </a>
+                <h5>Position-specific camps</h5>
+                <ul>
+                  <li>DL Academy</li>
+                  <li>OL Masterminds</li>
+                  <li>QB academies</li>
+                  <li>Garage Strength events</li>
+                  <li>Position trainers</li>
+                  <li>GridIron Hosted Combines</li>
+                </ul>
+              </section>
+
+              <section class="camp-content-section">
+                <h4>Types of Football Camps &amp; Events</h4>
+                <section class="camp-event-card">
+                  <h5><span class="camp-event-icon" aria-hidden="true">&#127979;</span>College Prospect Camps</h5>
+                  <p><strong>Best For:</strong> Rising Sophomores, Juniors &amp; Seniors</p>
+                  <h6>Purpose</h6>
+                  <p>Allows athletes to work directly with college coaching staffs while being evaluated by that specific university.</p>
+                  <h6>Benefits</h6>
+                  <ul class="camp-checklist">
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Build relationships with coaches</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Receive direct coaching</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Earn camp invitations</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Potential scholarship offers</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Measure yourself against other recruits</li>
+                  </ul>
+                  <div class="camp-pros-cons">
+                    <div><h6>Pros</h6><ul><li>Coaches evaluate you firsthand</li><li>Great networking opportunity</li><li>Can dramatically increase recruiting interest</li><li>Learn exactly what that school values</li></ul></div>
+                    <div><h6>Cons</h6><ul><li>Usually only one coaching staff</li><li>Can become expensive with travel</li><li>Not every athlete will receive personal attention</li></ul></div>
+                  </div>
+                  <h6>Best Time to Attend</h6>
+                  <ul><li>Summer before Sophomore Year</li><li>Summer before Junior Year</li><li>Summer before Senior Year</li></ul>
+                </section>
+
+                <section class="camp-event-card">
+                  <h5><span class="camp-event-icon" aria-hidden="true">&#11088;</span>Elite Showcase Camps</h5>
+                  <p>Examples:</p>
+                  <ul><li>Under Armour</li><li>Rivals</li><li>Prep Redzone</li><li>NXGN</li><li>NextGen</li><li>UC Report</li><li>Elite 11 (Quarterbacks)</li></ul>
+                  <h6>Purpose</h6>
+                  <p>Compete against top talent while gaining national exposure.</p>
+                  <h6>Benefits</h6>
+                  <ul class="camp-checklist">
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Recruiting exposure</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Rankings</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Verified athletic testing</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Media coverage</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>National recognition</li>
+                  </ul>
+                  <div class="camp-pros-cons">
+                    <div><h6>Pros</h6><ul><li>Multiple colleges may review results</li><li>Excellent exposure</li><li>Opportunity to improve recruiting rankings</li></ul></div>
+                    <div><h6>Cons</h6><ul><li>Very competitive</li><li>Little individual coaching</li><li>Exposure isn&#39;t guaranteed</li></ul></div>
+                  </div>
+                  <h6>Best Time</h6>
+                  <p>Sophomore and Junior years.</p>
+                </section>
+
+                <section class="camp-event-card">
+                  <h5><span class="camp-event-icon" aria-hidden="true">&#128202;</span>Combine Events</h5>
+                  <h6>Purpose</h6>
+                  <p>Measure athletic performance with verified testing.</p>
+                  <h6>Examples</h6>
+                  <ul><li>40 Yard Dash</li><li>Shuttle</li><li>Vertical</li><li>Broad Jump</li><li>Bench Press</li><li>Position Drills</li></ul>
+                  <h6>Benefits</h6>
+                  <ul class="camp-checklist">
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Verified athletic numbers</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Compare against recruits nationally</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Build recruiting profile</li>
+                  </ul>
+                  <p><strong>Best For:</strong> Athletes looking to improve measurable data.</p>
+                </section>
+
+                <section class="camp-event-card">
+                  <h5><span class="camp-event-icon" aria-hidden="true">&#127944;</span>Mega Camps</h5>
+                  <p>Mega Camps feature coaches from dozens of universities.</p>
+                  <h6>Benefits</h6>
+                  <ul class="camp-checklist">
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Exposure to many schools in one day</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Cost effective</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Great networking</li>
+                  </ul>
+                  <div class="camp-pros-cons">
+                    <div><h6>Pros</h6><p>One trip can expose an athlete to 30&ndash;100 schools.</p></div>
+                    <div><h6>Cons</h6><p>Less one-on-one coaching.</p></div>
+                  </div>
+                </section>
+
+                <section class="camp-event-card">
+                  <h5><span class="camp-event-icon" aria-hidden="true">&#128170;</span>Position Specific Camps</h5>
+                  <h6>Examples</h6>
+                  <ul><li>Defensive Line Camps</li><li>Quarterback Academies</li><li>Receiver Camps</li><li>OL/DL Camps</li></ul>
+                  <h6>Purpose</h6>
+                  <p>Develop technique with position experts.</p>
+                  <h6>Benefits</h6>
+                  <ul class="camp-checklist">
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Skill development</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Film opportunities</li>
+                    <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Better football IQ</li>
+                  </ul>
+                </section>
+              </section>
+
+              <section class="camp-content-section">
+                <h4>Recommended Recruiting Timeline</h4>
+                <div class="camp-timeline-wrap">
+                  <table class="camp-timeline">
+                    <thead><tr><th scope="col">Grade</th><th scope="col">Recommended Events</th></tr></thead>
+                    <tbody>
+                      <tr><th scope="row">Freshman</th><td>Local skills camps, position training, combines</td></tr>
+                      <tr><th scope="row">Sophomore</th><td>Position camps, showcases, first college camps</td></tr>
+                      <tr><th scope="row">Junior</th><td>College camps, elite showcases, mega camps</td></tr>
+                      <tr><th scope="row">Senior</th><td>Camps only at schools actively recruiting you</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="camp-content-section">
+                <h4>Before You Register</h4>
+                <p>Prioritize events where schools you already communicate with will evaluate your position. Focus on quality over quantity, choose events that answer a recruiting need (exposure, validation, or offer movement), and avoid events without position-specific testing or coach interaction.</p>
+                <p>Ask yourself:</p>
+                <ul class="camp-checklist">
+                  <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Is this school recruiting me?</li>
+                  <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Have I communicated with the coaches?</li>
+                  <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Does this event fit my position?</li>
+                  <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>Will I actually be evaluated?</li>
+                  <li><span class="camp-checkmark" aria-hidden="true">&#10003;</span>What is my goal?</li>
+                </ul>
+                <p>Possible goals:</p>
+                <ul><li>Exposure?</li><li>Development?</li><li>Offer?</li><li>Relationship Building?</li></ul>
+              </section>
             </article>
             <article data-section="prospect-camps-vs-showcases" hidden>
               <h3>Prospect Camps vs. Showcases</h3>
